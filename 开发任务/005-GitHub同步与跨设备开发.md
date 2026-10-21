@@ -2,11 +2,11 @@
 
 [CODEX_LONG_TASK_CONTINUE_V3]
 
-- 当前状态：2026-10-21 用户明确要求创建公开仓库并推送当前软件全部源码。准备发布 `luojiang419/LR-source`，保留原私有仓库 `luojiang419/LR`。
-- 下一步：创建独立源码快照、推送公开仓库 `main` 并核验远端。
-- TODO：公开仓库创建、推送、文件完整性及可见性核验。
-- 最近验证：已检查 GitHub 登录账号、原仓库可见性和当前源码清单；凭据候选均为测试占位符。源码约 7.3 MB，无超大文件。
-- branch/commit：开发分支仍为 `codex/mouse-driver-hot-refresh`，基线 `e089791`；公开快照使用独立分支 `public/source-snapshot`，不切换开发分支、不改动其暂存区。
+- 当前状态：2026-10-21 已按用户明确要求创建公开仓库 `luojiang419/LR-source` 并推送当前完整源码快照，保留原私有仓库 `luojiang419/LR`。
+- 下一步：新设备运行 `git clone https://github.com/luojiang419/LR-source.git`，按 README 恢复开发环境；进行中功能继续按对应任务文档推进。
+- TODO：本轮源码发布无剩余功能项；新设备安装与构建在目标设备执行。
+- 最近验证：公开仓库匿名访问成功，默认分支 `main`；345 个文件的路径、模式及 blob hash 与本地快照逐项一致；密钥模式和本地凭据交叉检查通过，无超大文件。本轮未运行软件回归或构建。
+- branch/commit：开发分支仍为 `codex/mouse-driver-hot-refresh`，基线 `e089791`；公开分支 `public/source-snapshot` 对应远端 `main`，初始快照 `fbf2138`，随后仅提交本同步文档；未切换开发分支或改动其暂存区。
 - 阻塞：无。
 
 ## 公开源码交付范围
