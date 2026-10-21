@@ -1,0 +1,52 @@
+/* 四种风格共用：主页面入口在顶栏，照片工具在原导航栏横向排列。 */
+html[data-hardcore-preview] .header-primary-actions>.workspace-tabs {
+  display:flex;flex:none;align-self:center;margin-left:12px;padding:3px;gap:4px;
+  border:1px solid var(--theme-border);border-radius:999px;background:var(--glass-field,var(--theme-control));
+}
+html[data-hardcore-preview] .header-primary-actions>.workspace-tabs button {
+  padding:7px 18px;border:0;border-radius:999px;font-size:12px;white-space:nowrap;
+}
+html[data-hardcore-preview] .header-primary-actions>.workspace-tabs button[aria-selected=true] {
+  background:var(--glass-button,var(--theme-raised));color:var(--theme-text);box-shadow:var(--glass-button-shadow,none);
+}
+html[data-hardcore-preview] .workspace-navigation.workspace-tool-navigation {
+  display:flex;flex-direction:column;order:0;position:relative;bottom:auto;min-height:0;flex:none;
+}
+html[data-hardcore-preview] .workspace-tool-navigation>#selection-tools {
+  position:relative;min-width:0;width:100%;min-height:42px;padding-left:88px;border:0;background:transparent;
+}
+html[data-hardcore-preview] .workspace-tool-navigation>#selection-tools>summary {
+  position:absolute;left:0;top:0;display:flex;align-items:center;gap:5px;width:88px;min-height:42px;
+  padding:6px 8px;list-style:none;box-sizing:border-box;
+}
+.workspace-tool-navigation>#selection-tools>summary::-webkit-details-marker {display:none;}
+.workspace-tool-navigation>#selection-tools>summary::before {content:'▸';}
+.workspace-tool-navigation>#selection-tools[open]>summary::before {content:'▾';}
+.workspace-tool-content {display:flex;align-items:center;flex-wrap:wrap;min-width:0;gap:4px 12px;}
+html[data-hardcore-preview] .workspace-tool-content>.filterbar {
+  flex:0 1 620px;min-width:0;min-height:42px;padding:4px 0;border:0;gap:10px;flex-wrap:nowrap;
+}
+html[data-hardcore-preview] .workspace-tool-content>.filterbar .browse-status {flex:0 1 auto;min-width:0;}
+html[data-hardcore-preview] .workspace-tool-content>.filterbar input {flex:1 1 100px;width:130px;min-width:90px;max-width:160px;}
+html[data-hardcore-preview] .workspace-tool-content>.viewbar {
+  flex:1 1 650px;min-width:0;min-height:42px;padding:4px 0;border:0;flex-wrap:nowrap;gap:10px;
+}
+html[data-hardcore-preview] .workspace-tool-content>.viewbar .loupe-heading {min-width:180px;}
+.workspace-tool-content>#sku-live-bar {flex-basis:100%;order:2;margin:0;}
+html[data-hardcore-preview] .workspace-tabs-detached>.workspace-tabs {align-self:center;flex:none;}
+@media(max-width:1100px) {
+  html[data-hardcore-preview] .header-primary-actions>.workspace-tabs {margin-left:4px;}
+  html[data-hardcore-preview] .header-primary-actions>.workspace-tabs button {padding:7px 13px;}
+  html[data-hardcore-preview] .workspace-tool-content>.filterbar {flex-basis:100%;}
+  html[data-hardcore-preview] .workspace-tool-content>.viewbar {flex-basis:100%;}
+}
+@media(max-width:700px) {
+  html[data-hardcore-preview] .workspace-tool-navigation>#selection-tools {padding-left:0;padding-top:34px;min-height:34px;}
+  html[data-hardcore-preview] .workspace-tool-navigation>#selection-tools>summary {min-height:34px;width:100%;}
+  .workspace-tool-content {gap:4px;}
+  html[data-hardcore-preview] .workspace-tool-content>.filterbar {flex-wrap:wrap;gap:6px;}
+  html[data-hardcore-preview] .workspace-tool-content>.filterbar .browse-status {flex:1 1 120px;}
+  html[data-hardcore-preview] .workspace-tool-content>.filterbar input {flex-basis:100%;max-width:none;}
+  html[data-hardcore-preview] .workspace-tool-content>.viewbar {overflow-x:auto;}
+  html[data-hardcore-preview] .header-primary-actions>.workspace-tabs {margin-left:0;}
+}

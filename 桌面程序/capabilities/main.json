@@ -1,0 +1,6 @@
+{
+  "identifier": "main",
+  "windows": ["main"],
+  "remote": {"urls": ["http://127.0.0.1:*/*"]},
+  "permissions": ["core:default", "allow-choose-folders", "allow-save-manifest", "allow-save-sku-workbook", "allow-finish-close", "allow-desktop-ready", "allow-close-for-update"]
+}

@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>末帧 LINK · 软硬件选片演示</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <header class="header"><a class="brand" href="index.html">末帧 <span>LINK</span></a><span class="badge">软硬件流程演示</span><a class="doc-link" href="软硬件演示方案.md">阅读完整方案 ↗</a></header>
+  <main>
+    <section class="intro"><p class="eyebrow">SHOOT. REVIEW. PRESS.</p><h1>满意这一张，按一下。</h1><p>相机传图到电脑，实体按钮标记屏幕上的照片，选好再交给 Lightroom Classic。</p></section>
+    <div class="flow" aria-label="连接架构"><div><span>01</span><strong>相机</strong><small>独立传图链路</small></div><b aria-hidden="true">→</b><div><span>02</span><strong>电脑接收目录</strong><small>写完 → 配对 → 显示</small></div><b aria-hidden="true">→</b><div class="flow-active"><span>03</span><strong>末帧 + 实体按钮</strong><small>Wi-Fi / USB 双向确认</small></div><b aria-hidden="true">→</b><div><span>04</span><strong>Lightroom Classic</strong><small>清单 → 桥接 → 星级</small></div></div>
+    <section class="workspace" aria-label="流程模拟工作台">
+      <div class="viewer">
+        <div class="panel-bar"><strong>现场接片</strong><span class="badge">内存模拟 · 示意画面</span></div>
+        <div class="screen" id="screen"><div class="empty"><span class="empty-symbol">＋</span><h2>等待第一张照片</h2><p>点击下方「模拟拍摄 +1」开始体验</p></div></div>
+        <div class="photo-meta"><div><strong id="filename">尚无照片</strong><span id="pairing">原图不读写</span></div><span id="rating" aria-live="polite">未标星</span></div>
+        <div class="toolbar"><button class="primary" id="capture">模拟拍摄 +1</button><button id="next" disabled>下一张 →</button><label class="check"><input id="auto" type="checkbox"> 自动过片</label><span id="queue">待看 0 张</span></div>
+        <div class="filmstrip" id="filmstrip" aria-label="已接收照片"></div>
+      </div>
+      <aside class="controller" aria-label="实体按钮模拟器">
+        <div class="panel-bar"><strong>实体按钮</strong><span class="small">ESP32-S3</span></div>
+        <div class="connection"><label for="transport">连接方式</label><select id="transport"><option value="wifi">Wi-Fi 局域网</option><option value="usb">USB CDC 数据线</option></select><button id="connection">断开</button></div>
+        <div class="device"><div class="device-top"><span>FRAMEKEEP / ONE</span><span class="led" id="led"></span></div><button id="star" class="physical" aria-label="实体按钮：给屏幕当前照片标 1 星"><span aria-hidden="true">★</span><small>按一下标星</small></button><p class="device-caption">锁定当前显示照片 · 收到确认才报成功</p></div>
+        <p id="status" class="status" role="status">已连接，等待照片</p>
+        <label class="delay-label" for="delay">指令传输延迟（模拟值）</label><select id="delay"><option value="60">正常 · 60ms</option><option value="900">弱网 · 900ms</option><option value="25" disabled>USB · 25ms（固定）</option></select>
+        <p class="hint">Wi-Fi 下试试：选择 900ms，按下按钮后立即切到下一张。迟到指令会被拒绝，避免标错。</p>
+        <div class="device-actions"><button id="retry" disabled>重发上一事件</button><button id="undo" disabled>撤销标星</button></div>
+      </aside>
+    </section>
+    <section class="handoff"><div><p class="eyebrow">READY FOR EDITING</p><h2><span id="selected">0</span> 张已选，交给 LR。</h2><p>正式版复用现有桥接：先导入原片，再匹配清单、确认写星。也可扩展“仅复制已选原片”。</p></div><div><button id="export" disabled>下载模拟清单 ↓</button><p class="small">仅用于核对演示结果，不能导入 LR</p></div></section>
+    <section class="bottom"><div><div class="section-title"><h2>事件回执</h2><span class="small">最近 8 条</span></div><ol id="log" aria-live="polite"><li>等待模拟拍摄。连接、延迟与保存均为流程模拟。</li></ol></div><div class="implementation"><h2>从演示到样机</h2><p><strong>已有基础</strong> 独立选片程序、SQLite、RAW/JPG 配对、LR 桥接。</p><p><strong>待开发</strong> 实时目录监听、按钮固件、USB / Wi-Fi 网关、令牌与原子评级。</p><p><strong>推荐顺序</strong> USB 台架 → 实时接片 → 无线按钮 → 指定相机现场联调。</p></div></section>
+    <footer>本页不连接硬件、不读取相机目录、不修改原片或 LR。刷新重置全部演示状态。自动过片间隔为 1.5 秒。<a href="软硬件演示方案.md">硬件清单、接线与实施计划 ↗</a></footer>
+  </main>
+</body>
+</html>

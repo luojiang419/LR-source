@@ -1,0 +1,20 @@
+[package]
+name = "framekeep-desktop"
+version = "1.0.0"
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "=2.7.3", features = [] }
+
+[dependencies]
+tauri = { version = "=2.12.4", features = [] }
+tauri-plugin-dialog = "=2.7.1"
+tauri-plugin-single-instance = "=2.4.5"
+serde_json = "1"
+uuid = { version = "=1.26.0", features = ["v4"] }
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true
+panic = "abort"

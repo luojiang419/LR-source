@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="180" viewBox="0 0 240 180">
+  <title>末帧 · 从照片到精选归档</title>
+  <defs>
+    <linearGradient id="photo" x2="1" y2="1"><stop stop-color="#516a75"/><stop offset="1" stop-color="#263d4c"/></linearGradient>
+    <symbol id="star" viewBox="0 0 20 20"><path d="m10 1 2.8 5.7 6.3.9-4.5 4.4 1 6.2-5.6-3-5.6 3 1-6.2L.9 7.6l6.3-.9Z"/></symbol>
+  </defs>
+  <circle cx="126" cy="85" r="69" fill="none" stroke="#91a9ad" stroke-opacity=".2"/>
+  <circle cx="126" cy="85" r="54" fill="none" stroke="#91a9ad" stroke-opacity=".12" stroke-dasharray="3 7"/>
+  <g opacity=".45" transform="translate(28 44) rotate(-13 54 41)"><rect width="108" height="82" rx="9" fill="#667c83"/><rect x="6" y="6" width="96" height="58" rx="5" fill="#a4b2b4"/></g>
+  <g>
+    <animateTransform attributeName="transform" type="translate" values="0 3;0 -3;0 3" dur="4s" repeatCount="indefinite"/>
+    <rect x="56" y="35" width="116" height="90" rx="10" fill="#edf0e8" stroke="#99aaa6" stroke-opacity=".55"/>
+    <rect x="63" y="42" width="102" height="64" rx="6" fill="url(#photo)"/>
+    <circle cx="140" cy="57" r="7" fill="#e3b17f"/>
+    <path d="m63 98 29-31 21 24 17-14 35 29H63Z" fill="#7d9692"/>
+    <path d="m63 98 29-31 21 24 17-14 35 29" fill="none" stroke="#adc1b5" stroke-width="1.5"/>
+    <rect x="72" y="113" width="48" height="3" rx="1.5" fill="#84968e"/>
+    <rect x="126" y="113" width="24" height="3" rx="1.5" fill="#bdc8bc"/>
+    <rect x="61" y="40" width="106" height="68" rx="7" fill="none" stroke="#d9aa73" stroke-width="2" opacity=".3">
+      <animate attributeName="opacity" values=".2;.9;.2" dur="4s" repeatCount="indefinite"/>
+    </rect>
+  </g>
+  <g fill="#c69459">
+    <use href="#star" x="66" y="136" width="16" height="16"><animate attributeName="opacity" values=".2;1;1;.2" keyTimes="0;.15;.8;1" dur="4s" repeatCount="indefinite"/></use>
+    <use href="#star" x="87" y="136" width="16" height="16"><animate attributeName="opacity" values=".2;.2;1;1;.2" keyTimes="0;.15;.3;.8;1" dur="4s" repeatCount="indefinite"/></use>
+    <use href="#star" x="108" y="136" width="16" height="16"><animate attributeName="opacity" values=".2;.2;1;1;.2" keyTimes="0;.3;.45;.8;1" dur="4s" repeatCount="indefinite"/></use>
+    <use href="#star" x="129" y="136" width="16" height="16"><animate attributeName="opacity" values=".2;.2;1;1;.2" keyTimes="0;.45;.6;.8;1" dur="4s" repeatCount="indefinite"/></use>
+    <use href="#star" x="150" y="136" width="16" height="16"><animate attributeName="opacity" values=".2;.2;1;1;.2" keyTimes="0;.6;.75;.8;1" dur="4s" repeatCount="indefinite"/></use>
+  </g>
+  <g transform="translate(166 88)"><rect width="43" height="35" rx="8" fill="#344b49" stroke="#98b2a4"/><path d="m12 18 7 7 13-15" fill="none" stroke="#e0bf85" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><animate attributeName="opacity" values=".25;.25;1;1;.25" keyTimes="0;.6;.75;.9;1" dur="4s" repeatCount="indefinite"/></g>
+</svg>

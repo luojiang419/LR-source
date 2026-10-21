@@ -1,0 +1,106 @@
+@import url("classic-themes.css");
+@import url("view-menu.css");
+@import url("toolbar-layout.css");
+/* 硬核候选布局；经典主题材质单独限定作用域。 */
+:root[data-hardcore-preview=true]{
+  --theme-color-scheme:dark;--theme-bg:#1b1b1b;--theme-panel:#1e1f1f;
+  --theme-raised:#292928;--theme-soft:#222323;--theme-control:#1a1a1a;
+  --theme-hover:#303130;--theme-text:#f0eee9;--theme-text-soft:#d2d0cb;
+  --theme-muted:#a7a6a2;--theme-faint:#7b7a77;--theme-border:rgba(255,255,255,.09);
+  --theme-border-strong:rgba(255,255,255,.18);--theme-accent:#343635;
+  --theme-on-accent:#f0eee9;--theme-emphasis:#79c99e;--theme-selected:#28382f;
+  --theme-selected-text:#f0eee9;--theme-selected-edge:#79c99e;
+  --theme-success:#79c99e;--theme-success-soft:#24332b;--theme-warning:#e5c38e;
+  --theme-warning-soft:#352f24;--theme-danger:#ff8d86;--theme-danger-soft:#3a1c1d;
+  --theme-shadow:rgba(0,0,0,.3);--theme-backdrop:rgba(0,0,0,.62);
+  --theme-toast:#f0eee9;--theme-toast-text:#1b1b1b;
+  --theme-toggle-knob:#f0eee9;--theme-toggle-knob-on:#1b1b1b;
+}
+.hardcore-swatch{background:linear-gradient(90deg,#1b1b1b 25%,#292928 25%,#292928 75%,#79c99e 75%)}
+html[data-hardcore-preview=true] .workbench{background:var(--theme-bg)}
+html[data-hardcore-preview=true] .app-header{order:0;padding:10px 20px;gap:20px;min-height:60px}
+html[data-hardcore-preview=true] #selection-page,
+html[data-hardcore-preview=true] #sku-dialog{order:1}
+html[data-hardcore-preview=true] .workspace-navigation{order:3;min-height:48px;border-top:1px solid var(--theme-border);border-bottom:0;grid-template-columns:1fr auto 1fr}
+html[data-hardcore-preview=true] .statusbar{order:2;padding:4px 20px;background:var(--theme-bg)}
+html[data-hardcore-preview=true] .workspace-tabs button{font-size:12px;border-bottom:0;border-top:2px solid transparent;padding:12px 22px;background:transparent}
+html[data-hardcore-preview=true] .workspace-tabs button[aria-selected=true]{border-top-color:var(--theme-success);background:var(--theme-raised)}
+html[data-hardcore-preview=true] .workspace-layout-actions button{background:transparent;border-color:transparent;color:var(--theme-muted)}
+html[data-hardcore-preview=true] .workspace-layout-actions button[aria-pressed=true]{background:var(--theme-raised);color:var(--theme-text)}
+html[data-hardcore-preview=true] #selection-page{--left-column:278px;--right-column:290px}
+html[data-hardcore-preview=true] #selection-page.left-collapsed{--left-column:24px}
+html[data-hardcore-preview=true] #selection-page.right-collapsed{--right-column:24px}
+html[data-hardcore-preview=true] .library-layout{padding:14px 20px 0;gap:12px}
+html[data-hardcore-preview=true] .left-panel,
+html[data-hardcore-preview=true] .right-panel,
+html[data-hardcore-preview=true] .library-main{border-radius:8px;overflow:hidden;background:var(--theme-panel)}
+html[data-hardcore-preview=true] .panel-edge{background:transparent;color:var(--theme-muted);font-size:10px;min-height:25px}
+html[data-hardcore-preview=true] .folders{border-bottom:0}
+html[data-hardcore-preview=true] .folders>.panel-title{height:45px;padding:0 12px;gap:8px;background:transparent}
+html[data-hardcore-preview=true] .folders>.panel-title strong{font-size:13px}
+html[data-hardcore-preview=true] .folder-panel-actions{gap:7px}
+html[data-hardcore-preview=true] #folder-watch{font-size:11px;padding:6px 9px;border:1px solid var(--theme-border);border-radius:4px;color:var(--theme-text)}
+html[data-hardcore-preview=true] .folder-row{padding:12px;font-size:12px}
+html[data-hardcore-preview=true] .folder-parent{font-size:10px;padding-left:12px}
+html[data-hardcore-preview=true] .source-caption{font-size:10px;padding:12px}
+html[data-hardcore-preview=true] .left-footer{padding:9px}
+html[data-hardcore-preview=true] .left-footer button{font-size:10px}
+html[data-hardcore-preview=true] .selection-tools{background:var(--theme-panel)}
+html[data-hardcore-preview=true] .selection-tools>summary{padding:9px 12px;font-size:11px}
+html[data-hardcore-preview=true] .filterbar,
+html[data-hardcore-preview=true] .browse-status,
+html[data-hardcore-preview=true] .viewbar{background:transparent;border:0}
+html[data-hardcore-preview=true] .filterbar{flex-wrap:wrap;gap:6px}
+html[data-hardcore-preview=true] .browse-status{flex:1;min-width:70px;padding:3px}
+html[data-hardcore-preview=true] .filterbar input{width:130px;flex:1;min-width:90px;max-width:180px}
+html[data-hardcore-preview=true] .viewbar{flex-wrap:wrap;gap:6px}
+html[data-hardcore-preview=true] .viewbar .thumbnail-control{margin-left:auto}
+html[data-hardcore-preview=true] .photo-stage,
+html[data-hardcore-preview=true] .catalog-view{background:#171717}
+html[data-hardcore-preview=true] .film-panel{border-top:1px solid var(--theme-border);padding:0 10px 8px}
+html[data-hardcore-preview=true] .film-toolbar{border:0}
+html[data-hardcore-preview=true] .film-toolbar>span{display:none}
+html[data-hardcore-preview=true] .film-toolbar>div{min-width:0;flex-wrap:wrap;gap:5px}
+html[data-hardcore-preview=true] .filmstrip{gap:5px;height:94px;background:transparent;border:0;padding:0}
+html[data-hardcore-preview=true] .film-item{border-radius:4px;width:64px}
+html[data-hardcore-preview=true] .film-panel:not([open]){padding-bottom:0}
+html[data-hardcore-preview=true] .rating-section,
+html[data-hardcore-preview=true] .side-section{border-bottom:1px solid var(--theme-border)}
+html[data-hardcore-preview=true] .side-section>summary,
+html[data-hardcore-preview=true] .rating-section>.panel-title{background:transparent;padding:12px;font-size:12px}
+html[data-hardcore-preview=true] button{border-radius:4px}
+html[data-hardcore-preview=true] .header-actions button{font-size:11px;padding:7px 9px}
+@media(max-width:1180px) and (min-width:761px){
+  html[data-hardcore-preview=true] #selection-page{--left-column:230px;--right-column:260px}
+  html[data-hardcore-preview=true] #selection-page.left-collapsed{--left-column:24px}
+  html[data-hardcore-preview=true] #selection-page.right-collapsed{--right-column:24px}
+  html[data-hardcore-preview=true] .library-layout{padding:10px 12px 0;gap:10px}
+  html[data-hardcore-preview=true] .app-header{padding:8px 12px;gap:10px}
+  html[data-hardcore-preview=true] .identity>span:last-child{display:none}
+  html[data-hardcore-preview=true] .workspace-layout-actions{gap:2px;padding:4px}
+  html[data-hardcore-preview=true] .workspace-layout-actions button{padding:5px 6px}
+}
+@media(max-width:760px){
+  html[data-hardcore-preview=true] .workbench{height:auto;min-height:100dvh;overflow:visible}
+  html[data-hardcore-preview=true] .app-header{flex-wrap:wrap;padding:10px 12px;gap:8px}
+  html[data-hardcore-preview=true] .header-actions{flex-wrap:wrap;gap:5px}
+  html[data-hardcore-preview=true] .header-actions .session-title{flex-basis:100%;margin:0;order:2}
+  html[data-hardcore-preview=true] .header-actions button{font-size:10px;padding:6px}
+  html[data-hardcore-preview=true] #selection-page{overflow:visible}
+  html[data-hardcore-preview=true] #selection-page>.library-layout{display:flex;flex-direction:column;padding:12px;gap:12px}
+  html[data-hardcore-preview=true] .left-panel,
+  html[data-hardcore-preview=true] .right-panel{display:flex;max-height:500px;flex:none}
+  html[data-hardcore-preview=true] .left-panel{order:1;min-height:220px}
+  html[data-hardcore-preview=true] .library-main{order:0;min-height:580px;height:70dvh;flex:none}
+  html[data-hardcore-preview=true] .right-panel{order:2}
+  html[data-hardcore-preview=true] .workspace-navigation{position:sticky;bottom:0;z-index:5;display:flex;flex-direction:column-reverse;background:var(--theme-panel)}
+  html[data-hardcore-preview=true] .workspace-layout-actions{flex-wrap:wrap;padding:5px;justify-content:center;gap:2px}
+  html[data-hardcore-preview=true] .workspace-layout-actions button{font-size:10px;padding:5px}
+  html[data-hardcore-preview=true] .workspace-tabs button{padding:10px 20px}
+  html[data-hardcore-preview=true] .filterbar{align-items:center}
+  html[data-hardcore-preview=true] .filterbar input{max-width:none;flex-basis:100%;width:100%}
+  html[data-hardcore-preview=true] .left-collapsed .left-panel,
+  html[data-hardcore-preview=true] .right-collapsed .right-panel{min-height:25px;height:25px}
+  html[data-hardcore-preview=true] .side-section{min-width:0}
+  html[data-hardcore-preview=true] .statusbar{padding:6px 12px}
+}

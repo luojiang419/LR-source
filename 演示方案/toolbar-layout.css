@@ -1,0 +1,141 @@
+/* 四种风格共用：主页面入口在底部，选片工具并入顶栏。 */
+/* 文件夹和监控入口固定在左栏底部，不随文件夹/照片列表滚动。 */
+.folder-sidebar-footer {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));flex:none;gap:6px;padding:8px;border-top:1px solid var(--theme-border);background:var(--theme-panel);}
+html[data-hardcore-layout] .folder-sidebar-footer>:is(#open-folder,#folder-watch) {min-width:0;min-height:34px;padding:7px 4px;font-size:11px;line-height:1.5;white-space:normal;overflow-wrap:anywhere;}
+.left-collapsed .folder-sidebar-footer {display:none;}
+html[data-hardcore-layout] .workbench.workspace-with-bottom-tabs {height:100dvh;min-height:0;overflow:hidden;}
+.workspace-with-bottom-tabs>.workspace-bottom-bar {order:3;flex:none;min-width:0;width:100%;border-top:1px solid var(--theme-border);background:var(--glass-panel,var(--theme-panel));}
+html[data-hardcore-layout] .workspace-bottom-bar>.workspace-tabs {
+  display:flex;align-items:stretch;justify-content:center;flex:none;width:100%;min-width:0;
+  height:calc(48px + env(safe-area-inset-bottom,0px));padding:0 max(20px,env(safe-area-inset-right,0px)) env(safe-area-inset-bottom,0px) max(20px,env(safe-area-inset-left,0px));
+  gap:0;margin:0;border:0;border-radius:0;background:transparent;
+}
+html[data-hardcore-layout] .workspace-bottom-bar .workspace-tabs>[role=tab] {
+  position:relative;display:flex;align-items:center;justify-content:center;flex:0 1 160px;min-width:0;gap:8px;
+  height:100%;min-height:0;padding:0 16px;border:0;border-radius:0;font-size:12px;
+  color:var(--theme-muted);background:transparent;box-shadow:none;
+}
+.workspace-bottom-bar [role=tab] svg {width:16px;height:16px;flex:none;}
+.workspace-tab-label {min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+html[data-hardcore-layout] .workspace-bottom-bar .workspace-tabs>[role=tab]:hover {color:var(--theme-text);background:var(--theme-hover);}
+html[data-hardcore-layout] .workspace-bottom-bar .workspace-tabs>[aria-selected=true] {color:var(--theme-text);background:color-mix(in srgb,var(--theme-emphasis) 8%,transparent);}
+.workspace-bottom-bar [aria-selected=true]::before {content:'';position:absolute;top:-1px;left:16px;right:16px;height:2px;background:var(--theme-emphasis);}
+html[data-hardcore-layout] .workspace-bottom-bar [role=tab]:focus-visible {outline:2px solid var(--theme-emphasis);outline-offset:-4px;}
+html[data-hardcore-layout] .workspace-with-bottom-tabs>.statusbar {order:2;flex:none;}
+@media(max-width:760px) {
+  html[data-hardcore-layout] .workspace-bottom-bar>.workspace-tabs {height:calc(56px + env(safe-area-inset-bottom,0px));padding-inline:0;}
+  html[data-hardcore-layout] .workspace-bottom-bar .workspace-tabs>[role=tab] {flex:1 1 0;flex-direction:column;gap:4px;padding:5px 2px;font-size:10px;}
+  .workspace-bottom-bar [aria-selected=true]::before {left:8px;right:8px;}
+  html[data-hardcore-layout] .workspace-with-bottom-tabs>#selection-page {overflow:auto;}
+  html[data-hardcore-layout] .workspace-with-bottom-tabs>#selection-page>.library-layout {flex:none;min-height:0;}
+}
+html[data-hardcore-layout] .app-header.header-with-tools {flex-wrap:nowrap;gap:14px;min-width:0;}
+html[data-hardcore-layout] .header-with-tools>.header-actions {flex:1 0 290px;min-width:0;width:auto;flex-wrap:nowrap;}
+.header-with-tools .header-primary-actions:empty {display:none;}
+html[data-hardcore-layout] .header-with-tools .session-title {margin-left:0;max-width:180px;}
+html[data-hardcore-layout] .app-header>#selection-tools {
+  position:relative;flex:0 1 550px;min-width:74px;width:auto;min-height:36px;padding-left:74px;border:0;background:transparent;
+}
+html[data-hardcore-layout] .app-header>#selection-tools:not([open]) {flex:0 0 74px;width:74px;}
+html[data-hardcore-layout] .app-header>#selection-tools>summary {
+  position:absolute;left:0;top:0;display:flex;align-items:center;gap:4px;width:74px;min-height:36px;
+  padding:6px 4px;list-style:none;box-sizing:border-box;white-space:nowrap;
+}
+.app-header>#selection-tools>summary::-webkit-details-marker {display:none;}
+.app-header>#selection-tools>summary::before {content:'▸';}
+.app-header>#selection-tools[open]>summary::before {content:'▾';}
+/* 筛选、统计和搜索保持单排，空间不足时只滚动工具内容。 */
+.workspace-tool-content {display:flex;align-items:center;flex-wrap:nowrap;min-width:0;max-width:100%;min-height:36px;gap:8px;overflow-x:auto;scrollbar-width:none;}
+.workspace-tool-content::-webkit-scrollbar {display:none;}
+html[data-hardcore-layout] .workspace-tool-content>.filterbar {
+  flex:0 0 auto;min-width:0;min-height:36px;padding:0;border:0;gap:8px;flex-wrap:nowrap;
+}
+html[data-hardcore-layout] .workspace-tool-content>.filterbar .browse-status {flex:none;min-width:0;}
+html[data-hardcore-layout] .workspace-tool-content>.filterbar input {flex:none;width:120px;min-width:100px;max-width:140px;}
+html[data-hardcore-layout] .preview-toolbar>.viewbar {
+  flex:1;min-width:0;min-height:34px;padding:0;border:0;flex-wrap:nowrap;gap:8px;overflow-x:auto;scrollbar-width:none;background:transparent;
+}
+html[data-hardcore-layout] .preview-toolbar .loupe-heading {flex:0 0 auto;min-width:0;gap:8px;padding:0;white-space:nowrap;}
+.preview-toolbar .loupe-heading>div {display:flex;flex-wrap:nowrap;align-items:center;gap:6px;}
+.preview-toolbar .loupe-heading button {margin-left:0;}
+.preview-toolbar #loupe-name {max-width:130px;overflow:hidden;text-overflow:ellipsis;}
+@media(max-width:760px) {
+  html[data-hardcore-layout] .app-header.header-with-tools {flex-wrap:wrap;gap:6px 10px;}
+  html[data-hardcore-layout] .header-with-tools>.header-actions {flex:1 1 auto;max-width:100%;}
+  html[data-hardcore-layout] .header-with-tools .session-title {flex-basis:0;order:0;margin:0;}
+  html[data-hardcore-layout] .app-header>#selection-tools {order:2;flex:1 0 100%;width:100%;}
+  html[data-hardcore-layout] .app-header>#selection-tools:not([open]) {flex-basis:74px;width:74px;}
+}
+
+/* 主图底部以原有控件替换旧的组号/时间/预览说明。 */
+html[data-hardcore-layout] .loupe-caption.preview-toolbar {display:flex;align-items:center;gap:12px;min-height:42px;flex:none;padding:4px 10px;border-top:1px solid var(--theme-border);}
+.preview-toolbar>.viewbar::-webkit-scrollbar {display:none;}
+.preview-toolbar .viewbar>* {flex-shrink:0;}
+.preview-toolbar .photo-navigation {display:flex;align-items:center;gap:10px;flex:none;white-space:nowrap;}
+.preview-toolbar .photo-navigation button {font-size:15px;}
+.preview-toolbar .sort-control {display:flex;}
+
+/* 图片大小调节悬浮于照片区域，移入预览或用键盘聚焦时显示。 */
+.preview-surface {position:relative;display:flex;flex-direction:column;flex:1;min-width:0;min-height:0;isolation:isolate;overflow:hidden;}
+.preview-surface>.thumbnail-control {
+  position:absolute;right:12px;bottom:12px;z-index:4;display:flex;gap:7px;max-width:calc(100% - 24px);
+  margin:0;padding:9px 12px;border:1px solid var(--theme-border);border-radius:12px;
+  color:var(--theme-text);background:color-mix(in srgb,var(--theme-panel) 76%,transparent);
+  box-shadow:0 4px 18px var(--theme-shadow);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  opacity:0;pointer-events:none;transform:translateY(4px);
+  transition:opacity var(--motion-fast,120ms) var(--motion-ease,ease),transform var(--motion-normal,200ms) var(--motion-ease,ease);
+}
+.preview-surface>.thumbnail-control input {width:90px;min-width:40px;flex-shrink:1;}
+.preview-surface>.thumbnail-control button {padding:2px 5px;}
+.preview-surface>.thumbnail-control output {min-width:38px;}
+.preview-surface:hover>.thumbnail-control,
+.preview-surface>.thumbnail-control:has(:focus-visible),
+.preview-surface>.thumbnail-control:has(input:active) {opacity:1;pointer-events:auto;transform:none;}
+@media(hover:none) {.preview-surface>.thumbnail-control {opacity:1;pointer-events:auto;transform:none;}}
+@media(prefers-reduced-motion:reduce) {.preview-surface>.thumbnail-control {transition:none;}}
+
+/* 选片右侧独立页面：照片操作与当前拍摄清单。 */
+.right-panel>.sidebar-body {display:flex;flex-direction:column;overflow:hidden;}
+.selection-sidebar-tabs {display:flex;gap:4px;flex:none;padding:8px;border-bottom:1px solid var(--theme-border);background:var(--theme-panel);}
+.selection-sidebar-tabs button {flex:1;min-width:0;min-height:32px;padding:6px 4px;font-size:11px;border:1px solid transparent;border-radius:6px;color:var(--theme-text-soft);}
+.selection-sidebar-tabs button[aria-selected=true] {background:var(--theme-selected);border-color:var(--theme-selected-edge);color:var(--theme-selected-text);}
+.selection-sidebar-page {flex:1;min-width:0;min-height:0;overflow:auto;scrollbar-width:none;}
+.selection-sidebar-page::-webkit-scrollbar {display:none;}
+#current-shooting-panel {display:flex;flex-direction:column;overflow:hidden;}
+#current-shooting-panel>.sku-live-bar {display:flex;flex-direction:column;align-items:stretch;flex:none;gap:9px;min-width:0;margin:0;padding:12px 10px;border:0;border-bottom:1px solid var(--theme-border);background:transparent;white-space:normal;}
+#current-shooting-panel>.sku-live-bar>strong {display:none;}
+#current-shooting-panel :is(select,button) {min-width:0;width:100%;max-width:100%;min-height:32px;white-space:normal;}
+#current-shooting-panel #sku-live-count {font-size:10px;line-height:1.6;overflow-wrap:anywhere;}
+.sku-current-table {min-height:0;flex:1;overflow:auto;scrollbar-width:thin;scrollbar-color:var(--theme-muted) transparent;}
+.sku-current-table table {width:100%;border-collapse:collapse;table-layout:fixed;font-size:10px;text-align:left;}
+.sku-current-table th {position:sticky;top:0;z-index:1;padding:10px 6px;background:var(--theme-panel);color:var(--theme-text-soft);font-weight:500;}
+.sku-current-table th:first-child {width:38px;}
+.sku-current-table th:last-child {width:72px;}
+.sku-current-table td {padding:9px 6px;border-bottom:1px solid var(--theme-border);color:var(--theme-text);overflow-wrap:anywhere;vertical-align:middle;}
+.sku-current-table tbody tr:hover {background:var(--theme-hover);}
+.sku-current-table .sku-state {font-size:9px;white-space:normal;}
+.sku-current-table .current-shooting-empty {padding:18px 10px;color:var(--theme-muted);line-height:1.7;}
+.shooting-manual-field {display:flex;flex-direction:column;gap:8px;padding:12px 10px;font-size:11px;color:var(--theme-text-soft);}
+.shooting-manual-field[hidden] {display:none;}
+.shooting-manual-field input {width:100%;min-width:0;}
+.shooting-automation {flex:none;min-width:0;padding:12px 10px 10px;border-bottom:1px solid var(--theme-border);background:var(--theme-panel);}
+.shooting-import-line,.shooting-auto-line {display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0;}
+.shooting-import-line strong {font-size:11px;font-weight:600;color:var(--theme-text-soft);}
+.shooting-import-line button {flex:none;min-height:28px;padding:4px 9px;font-size:10px;border-radius:6px;}
+.shooting-document {margin:6px 0 12px;color:var(--theme-muted);font-size:10px;line-height:1.5;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.shooting-auto-line {color:var(--theme-text);font-size:11px;font-weight:500;cursor:pointer;}
+#shooting-full-auto {flex:0 0 36px;width:36px;min-width:36px;height:20px;min-height:20px;margin:0;padding:0;}
+.shooting-auto-status {margin:7px 0 0;color:var(--theme-muted);font-size:10px;line-height:1.6;overflow-wrap:anywhere;}
+.shooting-automation.is-enabled .shooting-auto-status {color:var(--theme-selected-text);}
+.shooting-list-views {display:flex;flex:none;gap:4px;padding:7px 8px;border-bottom:1px solid var(--theme-border);}
+.shooting-list-views[hidden] {display:none;}
+#current-shooting-panel .shooting-list-views button {flex:1;min-height:28px;padding:4px;font-size:10px;border:1px solid transparent;border-radius:5px;}
+.shooting-list-views button[aria-selected=true] {background:var(--theme-selected);border-color:var(--theme-selected-edge)!important;color:var(--theme-selected-text);}
+.shooting-list-views button span {font-variant-numeric:tabular-nums;opacity:.7;margin-left:3px;}
+.sku-common-memberships {display:flex;flex-direction:column;align-items:flex-start;gap:5px;}
+.sku-common-memberships button {display:inline-flex;align-items:center;justify-content:space-between;gap:8px;max-width:100%;padding:4px 6px;border:1px solid var(--theme-border);border-radius:5px;font-size:10px;text-align:left;white-space:normal;overflow-wrap:anywhere;}
+.sku-common-memberships button>span:first-child {min-width:0;}
+.sku-common-memberships .sku-state {flex:none;}
+.sku-current-table.is-common th:last-child {width:47%;}
+#current-shooting-panel .sku-common-memberships {align-items:stretch;}
+#current-shooting-panel .sku-common-memberships button {flex-direction:column;align-items:flex-start;gap:4px;min-height:0;padding:5px;font-size:9px;}

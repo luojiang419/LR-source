@@ -1,0 +1,494 @@
+<style>
+#framekeep-preview {
+  --fk-bg:#f6eee4; --fk-panel:#faf2e7; --fk-raised:#fffaf4; --fk-soft:#efe2d2;
+  --fk-control:#f7efe5; --fk-hover:#f1e5d7; --fk-text:#332d28; --fk-text-soft:#58514b;
+  --fk-muted:#766f68; --fk-faint:#9b9288; --fk-line:rgba(91,74,54,.12); --fk-line-strong:rgba(91,74,54,.24);
+  --fk-accent:#9a6636; --fk-on-accent:#fff9f0; --fk-selected:#ead8c4; --fk-success:#26734d;
+  --fk-danger:#b42318; --fk-danger-soft:#fceae8; --fk-shadow:rgba(92,72,48,.10);
+  color-scheme:light; color:var(--fk-text); background:var(--fk-bg);
+  font:13px/1.5 "Segoe UI","Microsoft YaHei",sans-serif; container-type:inline-size;
+  width:100%; position:relative; isolation:isolate;
+}
+#framekeep-preview[data-theme="dark"] {
+  --fk-bg:#1a1a1a; --fk-panel:#1e1e1e; --fk-raised:#20201f; --fk-soft:#222221;
+  --fk-control:#292928; --fk-hover:#30302f; --fk-text:#f0eee9; --fk-text-soft:#d2d0cb;
+  --fk-muted:#a7a6a2; --fk-faint:#7b7a77; --fk-line:rgba(255,255,255,.08); --fk-line-strong:rgba(255,255,255,.16);
+  --fk-accent:#3a3a39; --fk-on-accent:#f4f2ed; --fk-selected:#2b2b2a; --fk-success:#72d6a0;
+  --fk-danger:#ff8d86; --fk-danger-soft:#3a1c1d; --fk-shadow:rgba(0,0,0,.24); color-scheme:dark;
+}
+#framekeep-preview[data-theme="pure-white"] {
+  --fk-bg:#fff; --fk-panel:#fff; --fk-raised:#fff; --fk-soft:#fafafa;
+  --fk-control:#fafafa; --fk-hover:#f5f5f5; --fk-text:#171717; --fk-text-soft:#404040;
+  --fk-muted:#737373; --fk-faint:#a3a3a3; --fk-line:rgba(23,23,23,.12); --fk-line-strong:rgba(23,23,23,.24);
+  --fk-accent:#171717; --fk-on-accent:#fff; --fk-selected:#f5f5f5; --fk-success:#26734d;
+  --fk-danger:#b42318; --fk-danger-soft:#fceae8; --fk-shadow:rgba(23,23,23,.08); color-scheme:light;
+}
+#framekeep-preview * {box-sizing:border-box;}
+#framekeep-preview [hidden] {display:none!important;}
+#framekeep-preview button, #framekeep-preview input, #framekeep-preview select {font:inherit;}
+#framekeep-preview button {display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:34px;padding:7px 12px;border:1px solid var(--fk-line);border-radius:9px;background:var(--fk-control);color:var(--fk-text);white-space:nowrap;transition:background .18s cubic-bezier(.22,1,.36,1),border-color .18s,color .18s,transform .18s;}
+#framekeep-preview button:hover {background:var(--fk-hover);border-color:var(--fk-line-strong);}
+#framekeep-preview button:active {transform:translateY(1px);}
+#framekeep-preview button:disabled {color:var(--fk-muted);background:var(--fk-soft);opacity:.5;transform:none;}
+#framekeep-preview button.fk-primary {background:var(--fk-accent);color:var(--fk-on-accent);border-color:var(--fk-accent);}
+#framekeep-preview button.fk-primary:hover {background:color-mix(in srgb,var(--fk-accent),var(--fk-text) 14%);box-shadow:0 4px 12px var(--fk-shadow);}
+#framekeep-preview button.fk-ghost {background:transparent;border-color:transparent;color:var(--fk-muted);}
+#framekeep-preview button.fk-ghost:hover {color:var(--fk-text);background:var(--fk-hover);}
+#framekeep-preview button.fk-icon {width:34px;padding:7px;flex-shrink:0;}
+#framekeep-preview button.fk-danger {color:var(--fk-danger);}
+#framekeep-preview button.fk-danger[aria-pressed="true"] {background:var(--fk-danger-soft);border-color:var(--fk-danger);}
+#framekeep-preview button:focus-visible, #framekeep-preview input:focus-visible, #framekeep-preview select:focus-visible, #framekeep-preview summary:focus-visible {outline:2px solid var(--fk-accent);outline-offset:3px;}
+#framekeep-preview input, #framekeep-preview select {min-width:0;max-width:100%;color:var(--fk-text);background:var(--fk-control);border:1px solid var(--fk-line);border-radius:8px;padding:8px 10px;}
+#framekeep-preview input[type="range"] {width:100%;padding:0;accent-color:var(--fk-accent);}
+#framekeep-preview input[type="checkbox"] {accent-color:var(--fk-accent);}
+#framekeep-preview svg {width:16px;height:16px;stroke-width:1.7;flex-shrink:0;}
+#framekeep-preview h1,#framekeep-preview h2,#framekeep-preview h3,#framekeep-preview p {margin:0;}
+#framekeep-preview h1 {font-size:23px;line-height:1.25;letter-spacing:-.6px;font-weight:500;}
+#framekeep-preview h2 {font-size:18px;font-weight:500;}
+#framekeep-preview h3 {font-size:13px;font-weight:500;}
+#framekeep-preview .fk-muted {color:var(--fk-muted);}
+#framekeep-preview .fk-small {font-size:11px;}
+#framekeep-preview .fk-row {display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+#framekeep-preview .fk-between {justify-content:space-between;}
+#framekeep-preview .fk-shell {display:grid;grid-template-columns:186px minmax(0,1fr);min-height:690px;}
+#framekeep-preview .fk-sidebar {background:var(--fk-panel);border-right:1px solid var(--fk-line);display:flex;flex-direction:column;padding:22px 13px 15px;gap:23px;min-width:0;}
+#framekeep-preview .fk-brand {display:flex;align-items:center;gap:10px;padding:0 8px;}
+#framekeep-preview .fk-brand-mark {font-size:28px;letter-spacing:-3px;line-height:1;color:var(--fk-text);}
+#framekeep-preview .fk-brand strong {font-size:17px;letter-spacing:2px;font-weight:500;}
+#framekeep-preview .fk-brand small {display:block;color:var(--fk-muted);font-size:10px;letter-spacing:1.6px;margin-top:2px;}
+#framekeep-preview .fk-nav {display:flex;flex-direction:column;gap:6px;}
+#framekeep-preview .fk-nav button {justify-content:flex-start;min-height:40px;gap:10px;border-color:transparent;background:transparent;color:var(--fk-muted);padding:10px 12px;}
+#framekeep-preview .fk-nav button[aria-pressed="true"] {background:var(--fk-accent);border-color:var(--fk-accent);color:var(--fk-on-accent);}
+#framekeep-preview .fk-nav button:not([aria-pressed="true"]):hover {background:var(--fk-hover);color:var(--fk-text);}
+#framekeep-preview .fk-nav button .fk-live-dot {margin-left:auto;}
+#framekeep-preview .fk-section-label {display:flex;align-items:center;justify-content:space-between;color:var(--fk-muted);font-size:11px;padding:0 10px;margin-bottom:8px;}
+#framekeep-preview .fk-folder {width:100%;text-align:left;justify-content:flex-start;background:transparent;border-color:transparent;font-size:12px;padding:9px;gap:8px;}
+#framekeep-preview .fk-folder[aria-pressed="true"] {background:var(--fk-selected);border-color:var(--fk-line-strong);}
+#framekeep-preview .fk-folder span {flex:1;min-width:0;white-space:normal;}
+#framekeep-preview .fk-folder small {color:var(--fk-muted);font-size:11px;}
+#framekeep-preview .fk-side-note {padding:8px 10px;color:var(--fk-muted);font-size:11px;line-height:1.8;}
+#framekeep-preview .fk-side-bottom {margin-top:auto;border-top:1px solid var(--fk-line);padding:12px 3px 0;display:flex;flex-direction:column;gap:5px;}
+#framekeep-preview .fk-side-bottom button {justify-content:flex-start;font-size:12px;}
+#framekeep-preview .fk-live-dot {width:6px;height:6px;background:var(--fk-success);border-radius:50%;display:inline-block;flex-shrink:0;}
+#framekeep-preview .fk-workspace {min-width:0;display:flex;flex-direction:column;}
+#framekeep-preview .fk-topbar {min-height:59px;padding:12px 25px;display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px solid var(--fk-line);flex-wrap:wrap;background:var(--fk-panel);}
+#framekeep-preview .fk-crumb {display:flex;align-items:center;gap:8px;color:var(--fk-muted);font-size:11px;}
+#framekeep-preview .fk-crumb strong {font-weight:400;color:var(--fk-text);}
+#framekeep-preview .fk-theme-picker {display:flex;gap:3px;padding:3px;border:1px solid var(--fk-line);border-radius:11px;background:var(--fk-bg);}
+#framekeep-preview .fk-theme-picker button {min-height:28px;padding:4px 9px;border-color:transparent;background:transparent;color:var(--fk-muted);font-size:11px;gap:5px;border-radius:7px;}
+#framekeep-preview .fk-theme-picker button[aria-pressed="true"] {background:var(--fk-raised);color:var(--fk-text);border-color:var(--fk-line-strong);box-shadow:0 2px 5px var(--fk-shadow);}
+#framekeep-preview .fk-theme-swatch {width:11px;height:11px;border-radius:50%;border:1px solid var(--fk-line-strong);display:inline-block;}
+#framekeep-preview .fk-theme-swatch[data-swatch="light"] {background:#ead8c4;}
+#framekeep-preview .fk-theme-swatch[data-swatch="dark"] {background:#292928;}
+#framekeep-preview .fk-theme-swatch[data-swatch="pure-white"] {background:#fff;}
+#framekeep-preview .fk-demo-label {font-size:10px;color:var(--fk-muted);border:1px solid var(--fk-line);border-radius:5px;padding:2px 6px;letter-spacing:1px;}
+#framekeep-preview .fk-page-head {display:flex;align-items:center;justify-content:space-between;gap:14px;padding:16px 25px 14px;flex-wrap:wrap;}
+#framekeep-preview .fk-page-head p {font-size:11px;color:var(--fk-muted);margin-top:4px;}
+#framekeep-preview .fk-page-actions {display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
+#framekeep-preview .fk-page-actions button {font-size:12px;}
+#framekeep-preview .fk-content {padding:0 25px 20px;flex:1;min-width:0;}
+#framekeep-preview .fk-editor {display:grid;grid-template-columns:minmax(0,1fr) 224px;gap:16px;align-items:start;}
+#framekeep-preview .fk-canvas-col {min-width:0;}
+#framekeep-preview .fk-browser-tools {display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:13px;flex-wrap:wrap;}
+#framekeep-preview .fk-filters {display:flex;gap:2px;flex-wrap:wrap;}
+#framekeep-preview .fk-filters button {min-height:29px;padding:4px 8px;border-color:transparent;color:var(--fk-muted);background:transparent;font-size:11px;}
+#framekeep-preview .fk-filters button[aria-pressed="true"] {color:var(--fk-text);background:var(--fk-selected);border-color:var(--fk-line);}
+#framekeep-preview .fk-filters small {font-size:10px;opacity:.7;margin-left:3px;}
+#framekeep-preview .fk-search {display:flex;align-items:center;gap:6px;min-width:100px;width:152px;background:var(--fk-control);border:1px solid var(--fk-line);border-radius:8px;padding:0 8px;color:var(--fk-muted);}
+#framekeep-preview .fk-search input {width:100%;background:transparent;border:0;padding:6px 0;font-size:11px;}
+#framekeep-preview .fk-stage {background:var(--fk-soft);border:1px solid var(--fk-line);border-radius:13px;position:relative;padding:12px;}
+#framekeep-preview .fk-stage-info {display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:24px;font-size:11px;color:var(--fk-muted);}
+#framekeep-preview .fk-filetype {font-size:9px;letter-spacing:.6px;padding:2px 6px;background:var(--fk-panel);border-radius:5px;color:var(--fk-text-soft);}
+#framekeep-preview .fk-stage-image {height:290px;display:flex;align-items:center;justify-content:center;padding:12px 22px;}
+#framekeep-preview .fk-stage-image img {max-width:100%;height:100%;object-fit:contain;display:block;border-radius:3px;box-shadow:0 5px 17px var(--fk-shadow);}
+#framekeep-preview .fk-stage-footer {display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;}
+#framekeep-preview .fk-stage-footer button {min-height:27px;height:27px;font-size:11px;padding:4px 7px;background:var(--fk-panel);}
+#framekeep-preview .fk-stage-footer button.fk-icon {width:29px;}
+#framekeep-preview .fk-stage-footer button[aria-pressed="true"] {background:var(--fk-selected);border-color:var(--fk-line-strong);}
+#framekeep-preview .fk-key {font-size:9px;border:1px solid var(--fk-line-strong);padding:1px 4px;border-radius:4px;color:var(--fk-muted);font-family:inherit;}
+#framekeep-preview .fk-film-head {display:flex;align-items:center;justify-content:space-between;font-size:10px;color:var(--fk-muted);padding:13px 1px 8px;}
+#framekeep-preview .fk-film {display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:6px;}
+#framekeep-preview button.fk-thumb {display:flex;flex-direction:column;gap:4px;min-width:0;padding:5px 4px 4px;background:var(--fk-panel);border-color:transparent;border-radius:8px;}
+#framekeep-preview .fk-thumb img {width:100%;height:58px;object-fit:contain;border-radius:3px;}
+#framekeep-preview .fk-thumb small {font-size:9px;color:var(--fk-muted);}
+#framekeep-preview .fk-thumb[aria-pressed="true"] {background:var(--fk-selected);border-color:var(--fk-accent);box-shadow:0 0 0 1px var(--fk-accent);}
+#framekeep-preview .fk-inspector {background:var(--fk-panel);border:1px solid var(--fk-line);border-radius:13px;overflow:hidden;}
+#framekeep-preview .fk-inspector section {padding:15px;border-bottom:1px solid var(--fk-line);}
+#framekeep-preview .fk-inspector section:last-child {border-bottom:0;}
+#framekeep-preview .fk-eyebrow {font-size:10px;color:var(--fk-muted);margin-bottom:6px;}
+#framekeep-preview .fk-filename {font-size:13px;font-weight:500;overflow-wrap:anywhere;}
+#framekeep-preview .fk-rating {display:flex;align-items:center;justify-content:space-between;gap:4px;margin:13px 0 11px;}
+#framekeep-preview .fk-rating button {width:31px;min-height:31px;padding:5px;border-color:transparent;background:transparent;color:var(--fk-faint);}
+#framekeep-preview .fk-rating button svg {width:21px;height:21px;}
+#framekeep-preview .fk-rating button[data-on="true"] {color:var(--fk-text);}
+#framekeep-preview .fk-rating button[data-on="true"] svg {fill:currentColor;}
+#framekeep-preview .fk-rating-actions {display:flex;gap:5px;}
+#framekeep-preview .fk-rating-actions button {font-size:10px;min-height:28px;padding:4px 8px;}
+#framekeep-preview .fk-metadata {margin:12px 0 0;display:grid;grid-template-columns:65px minmax(0,1fr);gap:7px;font-size:11px;}
+#framekeep-preview .fk-metadata dt {color:var(--fk-muted);}
+#framekeep-preview .fk-metadata dd {margin:0;text-align:right;overflow-wrap:anywhere;}
+#framekeep-preview .fk-sku-chip {margin-top:12px;border:1px solid var(--fk-line);border-radius:8px;background:var(--fk-control);padding:10px;display:flex;align-items:center;justify-content:space-between;gap:5px;font-size:11px;}
+#framekeep-preview .fk-sku-chip small {display:block;font-size:10px;color:var(--fk-muted);margin-top:3px;}
+#framekeep-preview .fk-success {color:var(--fk-success);}
+#framekeep-preview details {padding:14px 15px;}
+#framekeep-preview summary {color:var(--fk-text);font-size:12px;}
+#framekeep-preview .fk-rule {display:flex;flex-direction:column;gap:12px;padding-top:13px;font-size:11px;}
+#framekeep-preview .fk-segment {display:flex;gap:3px;padding:3px;border-radius:8px;background:var(--fk-soft);}
+#framekeep-preview .fk-segment button {flex:1;padding:4px 6px;font-size:10px;min-height:27px;border-color:transparent;background:transparent;color:var(--fk-muted);}
+#framekeep-preview .fk-segment button[aria-pressed="true"] {background:var(--fk-raised);border-color:var(--fk-line);color:var(--fk-text);box-shadow:0 2px 5px var(--fk-shadow);}
+#framekeep-preview .fk-check {display:flex;align-items:center;gap:7px;}
+#framekeep-preview .fk-footer {display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 25px;border-top:1px solid var(--fk-line);font-size:10px;color:var(--fk-muted);background:var(--fk-panel);}
+#framekeep-preview .fk-gallery {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;}
+#framekeep-preview button.fk-photo {position:relative;display:flex;flex-direction:column;align-items:stretch;min-width:0;padding:9px;background:var(--fk-panel);border:1px solid var(--fk-line);border-radius:11px;text-align:left;gap:7px;}
+#framekeep-preview .fk-photo img {height:135px;width:100%;object-fit:contain;background:var(--fk-soft);border-radius:6px;}
+#framekeep-preview .fk-photo span {font-size:10px;overflow:hidden;text-overflow:ellipsis;}
+#framekeep-preview .fk-photo small {font-size:10px;color:var(--fk-muted);}
+#framekeep-preview .fk-photo[aria-pressed="true"] {border-color:var(--fk-accent);box-shadow:0 0 0 1px var(--fk-accent);background:var(--fk-selected);}
+#framekeep-preview .fk-empty {padding:60px 15px;text-align:center;color:var(--fk-muted);}
+#framekeep-preview .fk-live-line {display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;border:1px solid var(--fk-line);border-radius:9px;padding:11px 13px;background:var(--fk-panel);margin-bottom:13px;font-size:11px;}
+#framekeep-preview .fk-live-line button {font-size:10px;min-height:27px;padding:4px 8px;}
+#framekeep-preview .fk-progress-summary {display:flex;align-items:center;gap:30px;padding:20px 0 25px;flex-wrap:wrap;}
+#framekeep-preview .fk-progress-metric {font-size:24px;letter-spacing:-.6px;font-weight:400;}
+#framekeep-preview .fk-progress-metric small {font-size:11px;color:var(--fk-muted);letter-spacing:0;margin-left:7px;}
+#framekeep-preview .fk-progress-track {width:150px;max-width:100%;height:5px;background:var(--fk-soft);border-radius:5px;margin-top:8px;}
+#framekeep-preview .fk-progress-track span {display:block;width:67%;height:100%;background:var(--fk-accent);border-radius:5px;}
+#framekeep-preview .fk-table {border-collapse:collapse;width:100%;font-size:11px;table-layout:fixed;}
+#framekeep-preview .fk-table th {text-align:left;font-weight:400;color:var(--fk-muted);border-bottom:1px solid var(--fk-line-strong);padding:12px;}
+#framekeep-preview .fk-table td {padding:14px 12px;border-bottom:1px solid var(--fk-line);overflow-wrap:anywhere;}
+#framekeep-preview .fk-table td img {width:34px;height:44px;object-fit:cover;border-radius:4px;}
+#framekeep-preview .fk-table td button {font-size:10px;min-height:28px;padding:5px 9px;}
+#framekeep-preview .fk-asset-tools {display:flex;align-items:center;gap:10px;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;}
+#framekeep-preview .fk-modal-layer {position:absolute;inset:0;z-index:10;background:color-mix(in srgb,var(--fk-bg) 68%,transparent);backdrop-filter:blur(7px);display:flex;align-items:flex-start;justify-content:center;padding:90px 16px 25px;}
+#framekeep-preview .fk-modal {width:430px;max-width:100%;background:var(--fk-raised);border:1px solid var(--fk-line-strong);border-radius:17px;box-shadow:0 24px 70px var(--fk-shadow);overflow:hidden;}
+#framekeep-preview .fk-modal-head {display:flex;align-items:center;justify-content:space-between;gap:8px;padding:19px 22px;border-bottom:1px solid var(--fk-line);}
+#framekeep-preview .fk-modal-body {padding:21px 22px;display:flex;flex-direction:column;gap:17px;}
+#framekeep-preview .fk-modal-body p {font-size:12px;color:var(--fk-muted);line-height:1.8;}
+#framekeep-preview .fk-modal-body label {display:flex;flex-direction:column;gap:7px;font-size:11px;}
+#framekeep-preview .fk-modal-foot {padding:14px 22px;border-top:1px solid var(--fk-line);display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;}
+#framekeep-preview .fk-modal-foot button {font-size:12px;}
+#framekeep-preview .fk-modal-theme {display:flex;gap:8px;}
+#framekeep-preview .fk-modal-theme button {flex:1;padding:12px 6px;flex-direction:column;font-size:11px;background:var(--fk-panel);}
+#framekeep-preview .fk-modal-theme button[aria-pressed="true"] {border-color:var(--fk-accent);background:var(--fk-selected);}
+#framekeep-preview .fk-style-samples {display:flex;gap:7px;flex-wrap:wrap;}
+#framekeep-preview .fk-style-samples button {font-size:11px;}
+#framekeep-preview .fk-toast {position:absolute;z-index:20;bottom:48px;left:50%;transform:translateX(-50%);padding:10px 18px;max-width:90%;text-align:center;border-radius:10px;background:var(--fk-text);color:var(--fk-bg);box-shadow:0 5px 22px var(--fk-shadow);font-size:12px;}
+#framekeep-preview[data-focus="true"] .fk-sidebar, #framekeep-preview[data-focus="true"] .fk-inspector {display:none;}
+#framekeep-preview[data-focus="true"] .fk-shell, #framekeep-preview[data-focus="true"] .fk-editor {grid-template-columns:minmax(0,1fr);}
+#framekeep-preview[data-focus="true"] .fk-stage-image {height:430px;}
+#framekeep-preview[data-focus="true"] .fk-gallery {grid-template-columns:repeat(6,minmax(0,1fr));}
+@container (min-width:1350px) {
+  #framekeep-preview .fk-shell {grid-template-columns:208px minmax(0,1fr);}
+  #framekeep-preview .fk-editor {grid-template-columns:minmax(0,1fr) 258px;gap:22px;}
+  #framekeep-preview .fk-stage-image {height:390px;}
+  #framekeep-preview .fk-content {padding-left:30px;padding-right:30px;}
+  #framekeep-preview .fk-gallery {grid-template-columns:repeat(5,minmax(0,1fr));}
+}
+@container (max-width:1100px) {
+  #framekeep-preview .fk-shell {grid-template-columns:159px minmax(0,1fr);}
+  #framekeep-preview .fk-sidebar {padding:22px 9px 14px;}
+  #framekeep-preview .fk-editor {grid-template-columns:minmax(0,1fr) 204px;gap:12px;}
+  #framekeep-preview .fk-page-head, #framekeep-preview .fk-topbar {padding-left:18px;padding-right:18px;}
+  #framekeep-preview .fk-content {padding-left:18px;padding-right:18px;}
+  #framekeep-preview .fk-gallery {grid-template-columns:repeat(3,minmax(0,1fr));}
+  #framekeep-preview .fk-stage-image {height:290px;}
+  #framekeep-preview .fk-inspector section {padding:13px;}
+  #framekeep-preview .fk-film {grid-template-columns:repeat(6,minmax(0,1fr));}
+  #framekeep-preview .fk-film .fk-thumb:nth-child(n+7) {display:none;}
+}
+@container (max-width:850px) {
+  #framekeep-preview .fk-editor {grid-template-columns:minmax(0,1fr);}
+  #framekeep-preview .fk-inspector {display:grid;grid-template-columns:1fr 1fr;}
+  #framekeep-preview .fk-inspector section:first-child {border-right:1px solid var(--fk-line);}
+  #framekeep-preview .fk-inspector section:nth-child(2) {grid-row:span 2;}
+  #framekeep-preview .fk-film .fk-thumb:nth-child(n+7) {display:flex;}
+  #framekeep-preview .fk-film {grid-template-columns:repeat(8,minmax(0,1fr));}
+}
+@container (max-width:640px) {
+  #framekeep-preview .fk-shell {grid-template-columns:minmax(0,1fr);}
+  #framekeep-preview .fk-sidebar {border-right:0;border-bottom:1px solid var(--fk-line);padding:14px;gap:14px;}
+  #framekeep-preview .fk-brand {padding:0 3px;}
+  #framekeep-preview .fk-brand small {display:none;}
+  #framekeep-preview .fk-nav {display:grid;grid-template-columns:1fr 1fr;gap:4px;}
+  #framekeep-preview .fk-nav button {flex:1;justify-content:center;min-height:36px;padding:8px;font-size:11px;gap:5px;}
+  #framekeep-preview .fk-nav button .fk-live-dot {display:none;}
+  #framekeep-preview .fk-folder-section, #framekeep-preview .fk-side-bottom {display:none;}
+  #framekeep-preview .fk-topbar {padding:12px 14px;}
+  #framekeep-preview .fk-demo-label {margin-left:auto;}
+  #framekeep-preview .fk-theme-picker {margin-left:auto;}
+  #framekeep-preview .fk-page-head {padding:18px 14px;}
+  #framekeep-preview .fk-page-head h1 {font-size:21px;}
+  #framekeep-preview .fk-page-actions {gap:5px;}
+  #framekeep-preview .fk-page-actions button {font-size:11px;padding:6px 9px;}
+  #framekeep-preview .fk-content {padding:0 14px 16px;}
+  #framekeep-preview .fk-stage {padding:10px;}
+  #framekeep-preview .fk-stage-image {height:300px;padding:12px;}
+  #framekeep-preview .fk-film {grid-template-columns:repeat(4,minmax(0,1fr));}
+  #framekeep-preview .fk-gallery {grid-template-columns:repeat(2,minmax(0,1fr));}
+  #framekeep-preview .fk-search {width:100%;}
+  #framekeep-preview .fk-table th, #framekeep-preview .fk-table td {padding:10px 5px;font-size:10px;}
+  #framekeep-preview .fk-table th:nth-child(3), #framekeep-preview .fk-table td:nth-child(3) {display:none;}
+  #framekeep-preview .fk-table td button {padding:4px 5px;white-space:normal;}
+  #framekeep-preview .fk-inspector {grid-template-columns:minmax(0,1fr);}
+  #framekeep-preview .fk-inspector section:first-child {border-right:0;}
+  #framekeep-preview .fk-inspector section:nth-child(2) {grid-row:auto;}
+  #framekeep-preview .fk-rating {justify-content:flex-start;gap:7px;}
+  #framekeep-preview .fk-footer {padding:10px 14px;}
+  #framekeep-preview .fk-key-help {display:none;}
+  #framekeep-preview[data-focus="true"] .fk-gallery {grid-template-columns:repeat(2,minmax(0,1fr));}
+  #framekeep-preview .fk-modal-layer {padding-top:40px;}
+}
+@media (prefers-reduced-motion:reduce) {#framekeep-preview * {transition:none!important;}}
+@media (pointer:coarse) {#framekeep-preview button {min-height:44px;} #framekeep-preview input {font-size:16px;}}
+</style>
+<div id="framekeep-preview" data-theme="light" data-focus="false">
+  <div class="fk-shell">
+    <aside class="fk-sidebar" aria-label="主导航">
+      <div class="fk-brand"><span class="fk-brand-mark">F.</span><div><strong>末帧</strong><small>FRAMEKEEP STUDIO</small></div></div>
+      <nav class="fk-nav" aria-label="工作空间">
+        <button type="button" data-page="selection" aria-pressed="true"><i data-lucide="layout-grid" aria-hidden="true"></i>选片工作台</button>
+        <button type="button" data-page="monitor" aria-pressed="false"><i data-lucide="radio" aria-hidden="true"></i>现场监控<span class="fk-live-dot" aria-hidden="true"></span></button>
+        <button type="button" data-page="progress" aria-pressed="false"><i data-lucide="list-checks" aria-hidden="true"></i>拍摄进度</button>
+        <button type="button" data-page="assets" aria-pressed="false"><i data-lucide="images" aria-hidden="true"></i>资产管理</button>
+      </nav>
+      <section class="fk-folder-section">
+        <div class="fk-section-label"><span>工作文件夹</span><button type="button" class="fk-icon fk-ghost" data-modal="folder" aria-label="添加工作文件夹"><i data-lucide="plus" aria-hidden="true"></i></button></div>
+        <button type="button" class="fk-folder" data-folder="0" aria-pressed="true"><i data-lucide="folder-open" aria-hidden="true"></i><span>秋季上新 · Look 03</span><small>12</small></button>
+        <button type="button" class="fk-folder" data-folder="1" aria-pressed="false"><i data-lucide="folder" aria-hidden="true"></i><span>细节与补拍</span><small>6</small></button>
+        <p class="fk-side-note">RAW + JPG 智能配对<br>每个文件夹独立保存评级</p>
+      </section>
+      <div class="fk-side-bottom">
+        <button type="button" class="fk-ghost" data-modal="remote"><i data-lucide="mouse" aria-hidden="true"></i>鼠标遥控</button>
+        <button type="button" class="fk-ghost" data-modal="raw"><i data-lucide="files" aria-hidden="true"></i>RAW 评级补写</button>
+        <button type="button" class="fk-ghost" data-modal="settings"><i data-lucide="settings-2" aria-hidden="true"></i>偏好设置</button>
+        <div class="fk-side-note fk-row"><span class="fk-live-dot" aria-hidden="true"></span>本地工作空间</div>
+      </div>
+    </aside>
+    <main class="fk-workspace">
+      <header class="fk-topbar">
+        <div class="fk-crumb"><i data-lucide="folder-open" aria-hidden="true"></i><span>工作空间</span><span>/</span><strong id="fk-breadcrumb">秋季上新</strong></div>
+        <div class="fk-row"><span class="fk-demo-label">布局演示</span><div class="fk-theme-picker" role="group" aria-label="界面主题">
+          <button type="button" data-theme-choice="light" aria-pressed="true"><span class="fk-theme-swatch" data-swatch="light" aria-hidden="true"></span>象牙白</button>
+          <button type="button" data-theme-choice="dark" aria-pressed="false"><span class="fk-theme-swatch" data-swatch="dark" aria-hidden="true"></span>星夜黑</button>
+          <button type="button" data-theme-choice="pure-white" aria-pressed="false"><span class="fk-theme-swatch" data-swatch="pure-white" aria-hidden="true"></span>醇白</button>
+        </div></div>
+      </header>
+      <div class="fk-page-head">
+        <div><h1 id="fk-page-title">选片工作台</h1><p id="fk-page-subtitle">秋季上新 · Look 03<span>　/　12 张照片 · RAW + JPG</span></p></div>
+        <div class="fk-page-actions">
+          <button type="button" class="fk-ghost fk-icon" id="fk-focus" aria-label="专注模式" aria-pressed="false" data-tooltip="收起导航与详情，专注看图"><i data-lucide="maximize" aria-hidden="true"></i></button>
+          <button type="button" data-modal="lightroom"><i data-lucide="external-link" aria-hidden="true"></i>发送 LR</button>
+          <button type="button" class="fk-primary" data-modal="export"><i data-lucide="upload" aria-hidden="true"></i>导出选片</button>
+        </div>
+      </div>
+      <div class="fk-content">
+        <div id="fk-photo-page">
+          <div id="fk-monitor-line" class="fk-live-line" hidden>
+            <div class="fk-row"><span class="fk-live-dot" aria-hidden="true"></span><span id="fk-watch-label">监控演示 · 自动跟随最新照片</span></div>
+            <div class="fk-row"><button type="button" id="fk-follow" aria-pressed="true">暂停跟随</button><button type="button" id="fk-simulate"><i data-lucide="plus" aria-hidden="true"></i>模拟新照片</button></div>
+          </div>
+          <div class="fk-editor">
+            <div class="fk-canvas-col">
+              <div class="fk-browser-tools">
+                <div class="fk-filters" role="group" aria-label="照片筛选">
+                  <button type="button" data-filter="all" aria-pressed="true">全部 <small id="fk-count-all">12</small></button>
+                  <button type="button" data-filter="picked" aria-pressed="false">已选 <small id="fk-count-picked">4</small></button>
+                  <button type="button" data-filter="unpicked" aria-pressed="false">未选 <small id="fk-count-unpicked">8</small></button>
+                </div>
+                <label class="fk-search"><i data-lucide="search" aria-hidden="true"></i><input type="search" id="fk-search" placeholder="搜索照片" aria-label="搜索照片文件名"></label>
+              </div>
+              <div id="fk-single" class="fk-stage">
+                <div class="fk-stage-info"><span id="fk-stage-name">XSY_0944.CR3</span><span class="fk-filetype">RAW + JPG</span></div>
+                <div class="fk-stage-image" id="fk-photo-surface"></div>
+                <div class="fk-stage-footer">
+                  <div class="fk-row" role="group" aria-label="浏览模式">
+                    <button type="button" data-view="single" aria-pressed="true" aria-label="单张预览"><i data-lucide="square" aria-hidden="true"></i></button>
+                    <button type="button" data-view="grid" aria-pressed="false" aria-label="网格浏览"><i data-lucide="layout-grid" aria-hidden="true"></i></button>
+                    <span class="fk-muted fk-small">适应画布</span>
+                  </div>
+                  <div class="fk-row"><button type="button" id="fk-prev" class="fk-icon" aria-label="上一张"><i data-lucide="chevron-left" aria-hidden="true"></i></button><span class="fk-muted fk-small" id="fk-position">06 / 12</span><button type="button" id="fk-next" class="fk-icon" aria-label="下一张"><i data-lucide="chevron-right" aria-hidden="true"></i></button></div>
+                </div>
+              </div>
+              <div id="fk-grid-wrap" hidden><div class="fk-row fk-between" style="margin-bottom:12px"><span id="fk-grid-result" class="fk-muted fk-small">12 张照片</span><button type="button" id="fk-return-single" class="fk-ghost"><i data-lucide="square" aria-hidden="true"></i>单张预览</button></div><div class="fk-gallery" id="fk-gallery"></div></div>
+              <div id="fk-no-results" class="fk-empty" hidden>没有符合条件的照片</div>
+              <div class="fk-film-head"><span>胶片条 <span id="fk-film-summary">12 张</span></span><span class="fk-key-help">← → 切换　/　1–5 标星</span></div>
+              <div class="fk-film" id="fk-film" aria-label="照片胶片条"></div>
+            </div>
+            <aside class="fk-inspector" aria-label="照片详情与评级">
+              <section>
+                <p class="fk-eyebrow">当前照片</p><div class="fk-filename" id="fk-filename">XSY_0944.CR3</div>
+                <div class="fk-row fk-between" style="margin-top:5px"><span class="fk-small fk-muted" id="fk-rating-label">已选 · 3 星</span><span class="fk-small fk-muted" id="fk-save-note">演示评级</span></div>
+                <div class="fk-rating" id="fk-rating" role="group" aria-label="照片星级"></div>
+                <div class="fk-rating-actions"><button type="button" class="fk-danger" id="fk-reject" aria-pressed="false"><i data-lucide="x" aria-hidden="true"></i>暂不选 <span class="fk-key">X</span></button><button type="button" class="fk-ghost" id="fk-clear">清除 <span class="fk-key">0</span></button></div>
+              </section>
+              <section>
+                <h3>照片信息</h3>
+                <dl class="fk-metadata"><dt>相机</dt><dd>Canon EOS R6 II</dd><dt>拍摄时间</dt><dd id="fk-time">10:06:14</dd><dt>快门 / 光圈</dt><dd>1/125s · f/14</dd><dt>感光度</dt><dd>ISO 320</dd><dt>样片尺寸</dt><dd>533 × 800</dd></dl>
+                <div class="fk-sku-chip"><div>SKU · FK-2026-03<small>卡其色 · 试穿正面</small></div><i data-lucide="check" class="fk-success" aria-label="已关联"></i></div>
+              </section>
+              <details><summary>选片规则</summary><div class="fk-rule">
+                <div class="fk-row fk-between"><span class="fk-muted">每组保留</span><span id="fk-keep-label">末 1 张</span></div>
+                <div class="fk-segment" role="group" aria-label="保留偏好"><button type="button" data-keep="1" aria-pressed="true">最后 1 张</button><button type="button" data-keep="2" aria-pressed="false">最后 2 张</button></div>
+                <label for="fk-threshold" class="fk-row fk-between"><span class="fk-muted">分组间隔</span><span><output id="fk-threshold-value">4</output> 秒</span></label><input id="fk-threshold" type="range" min="1" max="15" value="4">
+                <label class="fk-check"><input type="checkbox" checked id="fk-protect">保护人工评级</label>
+              </div></details>
+            </aside>
+          </div>
+        </div>
+        <section id="fk-progress-page" hidden aria-label="拍摄进度演示">
+          <div class="fk-asset-tools"><div class="fk-filters" aria-label="拍摄任务筛选"><button type="button" data-sku-filter="all" aria-pressed="true">全部款号</button><button type="button" data-sku-filter="pending" aria-pressed="false">待拍摄</button></div><button type="button" data-modal="sheet"><i data-lucide="sheet" aria-hidden="true"></i>导入工作表</button></div>
+          <div class="fk-progress-summary"><div><span class="fk-progress-metric">4<small>/ 6 款已完成</small></span><div class="fk-progress-track" role="progressbar" aria-label="拍摄完成度" aria-valuenow="67" aria-valuemin="0" aria-valuemax="100"><span></span></div></div><div><span class="fk-progress-metric">2<small>款待拍摄</small></span></div><span class="fk-muted fk-small">秋季上新 · 第一批 / 演示工作表</span></div>
+          <table class="fk-table"><thead><tr><th style="width:13%">预览</th><th style="width:28%">款号 / 商品</th><th>照片</th><th>拍摄状态</th><th style="width:22%">操作</th></tr></thead><tbody id="fk-sku-rows"></tbody></table>
+        </section>
+        <section id="fk-assets-page" hidden aria-label="资产管理演示">
+          <div class="fk-asset-tools"><div class="fk-filters" role="group" aria-label="资产筛选"><button type="button" data-asset-filter="all" aria-pressed="true">全部资产</button><button type="button" data-asset-filter="picked" aria-pressed="false">已选照片</button></div><span class="fk-small fk-muted">本地样片 · <span id="fk-asset-count">12</span> 项</span></div>
+          <div class="fk-gallery" id="fk-asset-gallery"></div>
+        </section>
+      </div>
+      <footer class="fk-footer"><span class="fk-row"><span class="fk-live-dot" aria-hidden="true"></span><span id="fk-footer-label">独立演示 · 评级仅在本次预览中生效</span></span><span id="fk-footer-count">12 张照片 · 已选 4 张</span></footer>
+    </main>
+  </div>
+  <div class="fk-modal-layer" id="fk-modal-layer" hidden><section class="fk-modal" role="dialog" aria-modal="true" aria-labelledby="fk-modal-title"><div class="fk-modal-head"><h2 id="fk-modal-title">偏好设置</h2><button type="button" class="fk-icon fk-ghost" id="fk-modal-close" aria-label="关闭弹窗"><i data-lucide="x" aria-hidden="true"></i></button></div><div class="fk-modal-body" id="fk-modal-body"></div><div class="fk-modal-foot" id="fk-modal-foot"></div></section></div>
+  <div class="fk-toast" id="fk-toast" role="status" aria-live="polite" hidden></div>
+</div>
+<script>
+(() => {
+  'use strict';
+  const root=document.getElementById('framekeep-preview');
+  const photos=__FRAMEKEEP_PHOTOS__;
+  const find=id=>root.querySelector('#'+id);
+  const all=selector=>Array.from(root.querySelectorAll(selector));
+  const icon=name=>'<i data-lucide="'+name+'" aria-hidden="true"></i>';
+  const icons=()=>{if(typeof lucide!=='undefined')lucide.createIcons({root,attrs:{width:16,height:16}});};
+  const state={page:'selection',view:'single',filter:'all',assetFilter:'all',skuFilter:'all',current:5,folder:0,query:'',focus:false,follow:true,arrivals:0,theme:'light',modal:null};
+  let toastTimer,lastFocus=null;
+  const titleMap={selection:'选片工作台',monitor:'现场监控',progress:'拍摄进度',assets:'资产管理'};
+  const folders=['秋季上新 · Look 03','细节与补拍'];
+  const folderPhotos=()=>state.folder===0?photos:photos.slice(6);
+  const filtered=()=>folderPhotos().filter(p=>(state.filter==='all'||(state.filter==='picked'?p.rating>0:p.rating<=0))&&p.name.toLowerCase().includes(state.query));
+  const currentPhoto=()=>photos[state.current];
+  const message=text=>{clearTimeout(toastTimer);find('fk-toast').textContent=text;find('fk-toast').hidden=false;toastTimer=setTimeout(()=>find('fk-toast').hidden=true,2600);};
+  function theme(next){
+    state.theme=next;root.dataset.theme=next;
+    all('[data-theme-choice]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.themeChoice===next)));
+    try{localStorage.setItem('framekeep-layout-preview-theme-v1',next);}catch{}
+  }
+  function counts(){
+    const items=folderPhotos(),picked=items.filter(p=>p.rating>0).length;
+    find('fk-count-all').textContent=items.length;find('fk-count-picked').textContent=picked;find('fk-count-unpicked').textContent=items.length-picked;
+    find('fk-footer-count').textContent=items.length+' 张照片 · 已选 '+picked+' 张';
+  }
+  function card(p,asset=false){
+    return '<button type="button" class="fk-photo cursor-interaction" data-photo="'+p.id+'" aria-label="'+(asset?'查看资产 ':'选择照片 ')+p.name+'" aria-pressed="'+(currentPhoto().id===p.id)+'"><img src="'+p.src+'" alt="'+p.name+' 卡其色短裤试穿照片" loading="lazy"><span>'+p.name+(asset?'.JPG':'.CR3')+'</span><small>'+(p.rating>0?p.rating+' 星 · 已选':p.rating<0?'暂不选':'未评级')+'</small></button>';
+  }
+  function renderPhotos(){
+    const list=filtered(),p=currentPhoto(),position=list.indexOf(p);
+    find('fk-single').hidden=state.view!=='single'||!list.length;find('fk-grid-wrap').hidden=state.view!=='grid'||!list.length;find('fk-no-results').hidden=!!list.length;
+    find('fk-position').textContent=String(position+1).padStart(2,'0')+' / '+list.length;
+    find('fk-stage-name').textContent=p.name+'.CR3';find('fk-filename').textContent=p.name+'.CR3';
+    const surface=find('fk-photo-surface');let img=surface.querySelector('img');
+    if(!img){img=document.createElement('img');surface.append(img);}
+    if(img.getAttribute('src')!==p.src)img.src=p.src;img.alt=p.name+' 卡其色短裤试穿照片';
+    find('fk-time').textContent=p.time;
+    find('fk-rating-label').textContent=p.rating>0?'已选 · '+p.rating+' 星':p.rating<0?'暂不选':'等待评级';
+    find('fk-reject').setAttribute('aria-pressed',String(p.rating<0));
+    find('fk-rating').innerHTML=[1,2,3,4,5].map(n=>'<button type="button" class="cursor-interaction" data-rating="'+n+'" data-on="'+(p.rating>=n)+'" aria-label="标记为 '+n+' 星" aria-pressed="'+(p.rating===n)+'">'+icon('star')+'</button>').join('');
+    const limit=root.clientWidth<=1100&&root.clientWidth>850?6:8;
+    const start=Math.max(0,Math.min(Math.max(0,position-2),Math.max(0,list.length-limit)));
+    find('fk-film').innerHTML=list.slice(start,start+limit).map(x=>'<button type="button" class="fk-thumb cursor-interaction" data-photo="'+x.id+'" aria-label="浏览 '+x.name+'" aria-pressed="'+(x.id===p.id)+'"><img src="'+x.thumb+'" alt="'+x.name+' 缩略图"><small>'+x.name.slice(-4)+(x.rating>0?' · '+x.rating+'星':'')+'</small></button>').join('');
+    find('fk-film-summary').textContent=list.length+' 张';
+    find('fk-prev').disabled=position<=0;find('fk-next').disabled=position<0||position>=list.length-1;
+    find('fk-grid-result').textContent=list.length+' 张照片';
+    if(state.view==='grid')find('fk-gallery').innerHTML=list.map(x=>card(x)).join('');
+    all('[data-view]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.view===state.view)));
+    counts();icons();
+  }
+  function applyFilter(){const list=filtered();if(list.length&&!list.includes(currentPhoto()))state.current=photos.indexOf(list[0]);renderPhotos();}
+  function renderAssets(){const items=folderPhotos().filter(p=>state.assetFilter==='all'||p.rating>0);find('fk-asset-gallery').innerHTML=items.map(p=>card(p,true)).join('');find('fk-asset-count').textContent=items.length;icons();}
+  function renderProgress(){
+    find('fk-sku-rows').innerHTML=Array.from({length:6},(_,i)=>({i,done:i<4})).filter(x=>state.skuFilter==='all'||!x.done).map(({i,done})=>'<tr><td><img src="'+photos[i*2].thumb+'" alt="款号 '+String(i+1).padStart(2,'0')+' 样片"></td><td>FK-2026-'+String(i+1).padStart(2,'0')+'<div class="fk-muted fk-small">'+['卡其色短裤','米白色短裤','浅卡其短裤','灰绿色短裤','深蓝色短裤','砂色短裤'][i]+'</div></td><td>'+([12,8,10,6,0,0][i])+' 张</td><td class="'+(done?'fk-success':'fk-muted')+'">'+(done?'已完成':'待拍摄')+'</td><td><button type="button" data-sku="'+i+'">'+(done?'查看照片':'开始拍摄')+'</button></td></tr>').join('');
+  }
+  function page(next){
+    state.page=next;
+    all('[data-page]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.page===next)));
+    find('fk-page-title').textContent=titleMap[next];
+    find('fk-page-subtitle').textContent=next==='progress'?'秋季上新 · 第一批 / 演示工作表':next==='assets'?'按款号归档，让每一张照片都有迹可循':next==='monitor'?'照片传入、即时预览、随手标星 · 模拟状态':folders[state.folder]+'　/　'+folderPhotos().length+' 张照片 · RAW + JPG';
+    find('fk-photo-page').hidden=!['selection','monitor'].includes(next);find('fk-progress-page').hidden=next!=='progress';find('fk-assets-page').hidden=next!=='assets';
+    find('fk-monitor-line').hidden=next!=='monitor';find('fk-focus').hidden=!['selection','monitor'].includes(next);
+    if(next==='monitor'){state.view='single';state.filter='all';state.query='';find('fk-search').value='';state.current=photos.indexOf(folderPhotos().at(-1));syncFilter();renderPhotos();}
+    if(next==='selection')renderPhotos();if(next==='assets')renderAssets();if(next==='progress')renderProgress();
+  }
+  function syncFilter(){all('[data-filter]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.filter===state.filter)));}
+  function rate(n){currentPhoto().rating=n;find('fk-save-note').textContent='本次预览已更新';applyFilter();}
+  function move(n){const list=filtered(),idx=list.indexOf(currentPhoto()),p=list[idx+n];if(p){state.current=photos.indexOf(p);if(state.page==='monitor'){state.follow=false;watchLabel();}renderPhotos();}}
+  function watchLabel(){find('fk-follow').setAttribute('aria-pressed',String(state.follow));find('fk-follow').textContent=state.follow?'暂停跟随':'恢复跟随';find('fk-watch-label').textContent='监控演示 · '+(state.follow?'自动跟随最新照片':'跟随已暂停')+(state.arrivals?' · 已模拟 '+state.arrivals+' 次传入':'');}
+  const themesMarkup=()=>'<div class="fk-modal-theme" role="group" aria-label="外观主题">'+[['light','象牙白'],['dark','星夜黑'],['pure-white','醇白']].map(([key,label])=>'<button type="button" class="cursor-interaction" data-theme-choice="'+key+'" aria-pressed="'+(state.theme===key)+'"><span class="fk-theme-swatch" data-swatch="'+key+'" aria-hidden="true"></span>'+label+'</button>').join('')+'</div>';
+  const modalContent={
+    settings:()=>({title:'偏好设置',body:'<div><p style="margin-bottom:12px">外观主题</p>'+themesMarkup()+'</div><div><p style="margin-bottom:10px">按钮样式</p><div class="fk-style-samples"><button type="button" class="fk-primary" data-sample="主按钮">主按钮</button><button type="button" data-sample="次按钮">次按钮</button><button type="button" class="fk-ghost" data-sample="轻量按钮">轻量按钮</button><button type="button" disabled>不可用</button></div></div><p>整体配色与 SHIYIN-AI 的象牙白、星夜黑、醇白保持一致。</p>',action:'完成'}),
+    folder:()=>({title:'添加工作文件夹',body:'<p>选择照片目录后，RAW 与 JPG 将配对显示。此处预览已有样片文件夹。</p><label>示例文件夹<input readonly value="秋季上新 · Look 03 / 演示样片"></label><label class="fk-check" style="flex-direction:row"><input type="checkbox" checked>包含子文件夹</label>',action:'打开示例文件夹'}),
+    lightroom:()=>({title:'发送到 Lightroom Classic',body:'<p>将已选照片和人工星级交接到 Lightroom Classic，保留原有文件位置。</p><div class="fk-sku-chip"><span>LR 桥接</span><span class="fk-muted">演示 · 未连接</span></div><div class="fk-row fk-between"><span>待发送照片</span><span>'+folderPhotos().filter(p=>p.rating>0).length+' 张</span></div><p>正式连接后，这里显示桥接状态与同步确认。本演示仅预览交接界面。</p>',action:'了解了'}),
+    export:()=>({title:'导出选片结果',body:'<p>按当前文件夹汇总已选照片与星级，交付给后续修图流程。</p><div class="fk-row fk-between"><span>已选照片</span><strong>'+folderPhotos().filter(p=>p.rating>0).length+' 张</strong></div><label>导出内容<select><option>文件名 + 星级清单</option><option>Lightroom 交接清单</option></select></label><p>演示仅生成浏览器示例清单，不读取原照片或写入 XMP。</p>',action:'下载示例清单'}),
+    remote:()=>({title:'鼠标遥控',body:'<p>拍摄时，用无线鼠标为当前照片标星。</p><dl class="fk-metadata"><dt>左键</dt><dd>增加一星</dd><dt>右键</dt><dd>减少一星</dd><dt>滚轮</dt><dd>上一张 / 下一张</dd><dt>设备状态</dt><dd>演示 · 未连接</dd></dl><p>本演示不接管鼠标；可使用键盘 1–5 和方向键体验评级。</p>',action:'了解了'}),
+    raw:()=>({title:'RAW 评级补写',body:'<p>现场先为 JPG 评级，稍后拷入同名 RAW，再确认同步。</p><div class="fk-sku-chip"><span>JPG → 同名 RAW</span><span>等待核对</span></div><p>本次只展示界面流程，不扫描目录，也不修改文件元数据。</p>',action:'了解了'}),
+    sheet:()=>({title:'导入拍摄工作表',body:'<p>正式界面支持工作表和款号核对；本次使用 6 款商品的模拟清单。</p><label>工作表<select><option>秋季上新 · 第一批</option></select></label>',action:'使用示例工作表'})
+  };
+  function closeModal(){find('fk-modal-layer').hidden=true;state.modal=null;if(lastFocus&&lastFocus.isConnected)lastFocus.focus();}
+  function openModal(key){
+    const content=modalContent[key]();lastFocus=document.activeElement;state.modal=key;
+    find('fk-modal-title').textContent=content.title;find('fk-modal-body').innerHTML=content.body;
+    find('fk-modal-foot').innerHTML='<button type="button" class="fk-ghost cursor-interaction" data-close-modal>取消</button><button type="button" class="fk-primary cursor-interaction" id="fk-modal-action">'+content.action+'</button>';
+    find('fk-modal-layer').hidden=false;icons();find('fk-modal-close').focus();
+  }
+  function exportSample(){
+    const rows=['\ufeff文件名,星级',...folderPhotos().filter(p=>p.rating>0).map(p=>p.name+'.CR3,'+p.rating)];
+    const blob=new Blob([rows.join('\r\n')],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');
+    a.href=url;a.download='末帧-演示选片清单.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  }
+  root.addEventListener('click',event=>{
+    const b=event.target.closest('button');if(!b||!root.contains(b)||b.disabled)return;
+    if(b.dataset.themeChoice){theme(b.dataset.themeChoice);return;}
+    if(b.dataset.page){page(b.dataset.page);return;}
+    if(b.dataset.modal){openModal(b.dataset.modal);return;}
+    if(b.hasAttribute('data-close-modal')||b.id==='fk-modal-close'){closeModal();return;}
+    if(b.id==='fk-modal-action'){const key=state.modal;if(key==='export')exportSample();closeModal();if(key==='folder'){state.folder=0;syncFolder();page('selection');}else if(key==='sheet')page('progress');return;}
+    if(b.dataset.sample){message(b.dataset.sample+' · 点击状态');return;}
+    if(b.dataset.folder!==undefined){state.folder=Number(b.dataset.folder);state.current=photos.indexOf(folderPhotos()[0]);state.filter='all';state.query='';find('fk-search').value='';syncFilter();syncFolder();page('selection');return;}
+    if(b.dataset.filter){state.filter=b.dataset.filter;syncFilter();applyFilter();return;}
+    if(b.dataset.photo!==undefined){state.current=photos.findIndex(p=>String(p.id)===b.dataset.photo);if(state.page==='assets'){state.view='single';state.filter='all';state.query='';find('fk-search').value='';syncFilter();page('selection');}else if(state.page==='monitor'){state.follow=false;watchLabel();}renderPhotos();return;}
+    if(b.dataset.rating){rate(Number(b.dataset.rating));return;}
+    if(b.dataset.view){state.view=b.dataset.view;renderPhotos();return;}
+    if(b.dataset.keep){all('[data-keep]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));find('fk-keep-label').textContent='末 '+b.dataset.keep+' 张';return;}
+    if(b.dataset.skuFilter){state.skuFilter=b.dataset.skuFilter;all('[data-sku-filter]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));renderProgress();return;}
+    if(b.dataset.assetFilter){state.assetFilter=b.dataset.assetFilter;all('[data-asset-filter]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));renderAssets();return;}
+    if(b.dataset.sku!==undefined){state.current=Number(b.dataset.sku)*2;state.folder=0;state.filter='all';state.query='';state.view='single';find('fk-search').value='';syncFilter();syncFolder();page(Number(b.dataset.sku)<4?'selection':'monitor');return;}
+    if(b.id==='fk-prev')move(-1);if(b.id==='fk-next')move(1);if(b.id==='fk-reject')rate(currentPhoto().rating<0?0:-1);if(b.id==='fk-clear')rate(0);
+    if(b.id==='fk-return-single'){state.view='single';renderPhotos();}
+    if(b.id==='fk-focus'){state.focus=!state.focus;root.dataset.focus=String(state.focus);b.setAttribute('aria-pressed',String(state.focus));b.setAttribute('aria-label',state.focus?'退出专注模式':'专注模式');}
+    if(b.id==='fk-follow'){state.follow=!state.follow;watchLabel();}
+    if(b.id==='fk-simulate'){state.arrivals++;watchLabel();if(state.follow){const items=folderPhotos();state.current=photos.indexOf(items[state.arrivals%items.length]);renderPhotos();}message('已模拟一张照片传入；未连接真实相机');}
+  });
+  function syncFolder(){all('[data-folder]').forEach(b=>b.setAttribute('aria-pressed',String(Number(b.dataset.folder)===state.folder)));find('fk-breadcrumb').textContent=state.folder?'细节与补拍':'秋季上新';}
+  find('fk-search').addEventListener('input',e=>{state.query=e.target.value.trim().toLowerCase();applyFilter();});
+  find('fk-threshold').addEventListener('input',e=>find('fk-threshold-value').textContent=e.target.value);
+  find('fk-modal-layer').addEventListener('click',e=>{if(e.target===find('fk-modal-layer'))closeModal();});
+  root.addEventListener('keydown',event=>{
+    if(state.modal){
+      if(event.key==='Escape'){event.preventDefault();closeModal();return;}
+      if(event.key==='Tab'){
+        const targets=Array.from(find('fk-modal-layer').querySelectorAll('button:not(:disabled),input,select')).filter(x=>!x.hidden);
+        if(event.shiftKey&&document.activeElement===targets[0]){event.preventDefault();targets.at(-1).focus();}
+        else if(!event.shiftKey&&document.activeElement===targets.at(-1)){event.preventDefault();targets[0].focus();}
+      }return;
+    }
+    if(/INPUT|TEXTAREA|SELECT/.test(event.target.tagName)||!['selection','monitor'].includes(state.page))return;
+    if(event.key==='ArrowRight'){event.preventDefault();move(1);}if(event.key==='ArrowLeft'){event.preventDefault();move(-1);}
+    if(/^[0-5]$/.test(event.key)){event.preventDefault();rate(Number(event.key));}
+    if(event.key.toLowerCase()==='x'){event.preventDefault();rate(currentPhoto().rating<0?0:-1);}
+    if(event.key.toLowerCase()==='g'){state.view='grid';renderPhotos();}if(event.key.toLowerCase()==='e'){state.view='single';renderPhotos();}
+  });
+  all('button').forEach(b=>b.classList.add('cursor-interaction'));
+  try{const saved=localStorage.getItem('framekeep-layout-preview-theme-v1');if(['light','dark','pure-white'].includes(saved))theme(saved);}catch{}
+  let lastFilmLimit=0;
+  new ResizeObserver(()=>{const limit=root.clientWidth<=1100&&root.clientWidth>850?6:8;if(limit!==lastFilmLimit){lastFilmLimit=limit;renderPhotos();}}).observe(root);
+  renderPhotos();renderProgress();icons();
+})();
+</script>

@@ -1,0 +1,119 @@
+/* 工作台动效令牌：业务状态同步生效，视觉过渡由浏览器负责。 */
+:root {
+  --motion-ease: cubic-bezier(.22, 1, .36, 1);
+  --motion-fast: 120ms;
+  --motion-normal: 200ms;
+  --motion-panel: 240ms;
+}
+
+/* 只过渡明确的外观属性，避免干扰图片拖动、缩放和大量缩略图布局。 */
+button, summary, input, select, textarea, .model-card, .photo-card, .watch-thumb {
+  transition: background-color var(--motion-fast) var(--motion-ease),
+    color var(--motion-fast) var(--motion-ease),
+    border-color var(--motion-fast) var(--motion-ease),
+    box-shadow var(--motion-fast) var(--motion-ease);
+}
+.workspace-tabs button, .model-tabs button {
+  transition-duration: var(--motion-normal);
+}
+.toast {
+  transition: opacity var(--motion-fast) var(--motion-ease),
+    transform var(--motion-normal) var(--motion-ease);
+}
+
+/* 页面只在显示时入场；旧页立即让出布局，实时入库与表格刷新不重播。 */
+#selection-page:not(.hidden), #sku-dialog:not(.hidden), #app-settings-page:not(.hidden),
+#catalog-view:not(.hidden), #loupe-view:not(.hidden),
+#photo-grid:not(.hidden), #photo-list:not(.hidden),
+#model-catalog:not(.hidden), #model-editor:not(.hidden),
+.watch-browser:not(.hidden) {
+  animation: motion-surface-in var(--motion-normal) var(--motion-ease) backwards;
+}
+@keyframes motion-surface-in {
+  from { opacity: 0; translate: 0 5px; }
+  to { opacity: 1; translate: none; }
+}
+
+/* display/overlay离散过渡保留离场画面，不改写showModal/close或延迟业务。 */
+dialog {
+  opacity: 0;
+  translate: 0 10px;
+  scale: .985;
+  transition: opacity var(--motion-normal) var(--motion-ease),
+    translate var(--motion-normal) var(--motion-ease),
+    scale var(--motion-normal) var(--motion-ease),
+    display var(--motion-normal) allow-discrete,
+    overlay var(--motion-normal) allow-discrete;
+}
+dialog[open] { opacity: 1; translate: none; scale: 1; }
+dialog:not([open]) { pointer-events: none; }
+dialog::backdrop {
+  background-color: transparent;
+  transition: background-color var(--motion-normal) var(--motion-ease),
+    display var(--motion-normal) allow-discrete,
+    overlay var(--motion-normal) allow-discrete;
+}
+dialog[open]::backdrop { background-color: var(--theme-backdrop); }
+dialog:not([open])::backdrop { pointer-events: none; }
+@starting-style {
+  dialog[open] { opacity: 0; translate: 0 10px; scale: .985; }
+  dialog[open]::backdrop { background-color: transparent; }
+}
+
+.photo-context-menu {
+  transform-origin: top left;
+  opacity: 1;
+  translate: none;
+  scale: 1;
+  transition: opacity var(--motion-fast) var(--motion-ease),
+    translate var(--motion-fast) var(--motion-ease),
+    scale var(--motion-fast) var(--motion-ease),
+    display var(--motion-fast) allow-discrete;
+}
+.photo-context-menu[hidden] { opacity: 0; translate: 0 -4px; scale: .98; pointer-events: none; }
+@starting-style {
+  .photo-context-menu:not([hidden]) { opacity: 0; translate: 0 -4px; scale: .98; }
+}
+
+.library-layout {
+  transition: grid-template-columns var(--motion-panel) var(--motion-ease);
+}
+@supports (interpolate-size: allow-keywords) {
+  .app-header {
+    interpolate-size: allow-keywords;
+    height: auto;
+    opacity: 1;
+    overflow: clip;
+    transition: height var(--motion-panel) var(--motion-ease),
+      min-height var(--motion-panel) var(--motion-ease),
+      padding-block var(--motion-panel) var(--motion-ease),
+      opacity var(--motion-normal) var(--motion-ease),
+      display var(--motion-panel) allow-discrete;
+  }
+  .app-header.hidden { height: 0; min-height: 0; padding-block: 0; opacity: 0; pointer-events: none; }
+  @starting-style {
+    .app-header:not(.hidden) { height: 0; min-height: 0; padding-block: 0; opacity: 0; }
+  }
+}
+/* 原生details内容块可反向插值，快速重复点击无需排队或JS定时器。 */
+@supports (interpolate-size: allow-keywords) and selector(details::details-content) {
+  details { interpolate-size: allow-keywords; }
+  details::details-content {
+    block-size: 0;
+    opacity: 0;
+    overflow: clip;
+    transition: block-size var(--motion-panel) var(--motion-ease),
+      opacity var(--motion-normal) var(--motion-ease),
+      content-visibility var(--motion-panel) allow-discrete;
+  }
+  details[open]::details-content { block-size: auto; opacity: 1; }
+  details:not([open])::details-content { pointer-events: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after, *::backdrop, details::details-content {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}

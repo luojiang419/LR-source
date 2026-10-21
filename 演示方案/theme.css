@@ -1,0 +1,154 @@
+/* SHIYIN 三主题：只负责外观，工作台尺寸、位置与折叠规则仍由 style.css 管理。 */
+:root {
+  --theme-color-scheme:dark;
+  --theme-bg:#1a1a1a;
+  --theme-panel:#1e1e1e;
+  --theme-raised:#20201f;
+  --theme-soft:#222221;
+  --theme-control:#292928;
+  --theme-hover:#30302f;
+  --theme-text:#f0eee9;
+  --theme-text-soft:#d2d0cb;
+  --theme-muted:#a7a6a2;
+  --theme-faint:#7b7a77;
+  --theme-border:rgba(255,255,255,.08);
+  --theme-border-strong:rgba(255,255,255,.16);
+  --theme-accent:#3a3a39;
+  --theme-on-accent:#f4f2ed;
+  --theme-emphasis:#f0eee9;
+  --theme-selected:#2b2b2a;
+  --theme-selected-text:#f0eee9;
+  --theme-selected-edge:#a7a6a2;
+  --theme-success:#72d6a0;
+  --theme-success-soft:#24332b;
+  --theme-warning:#e5c38e;
+  --theme-warning-soft:#352f24;
+  --theme-danger:#ff8d86;
+  --theme-danger-soft:#3a1c1d;
+  --theme-shadow:rgba(0,0,0,.30);
+  --theme-backdrop:rgba(0,0,0,.62);
+  --theme-toast:#f0eee9;
+  --theme-toast-text:#1a1a1a;
+  --theme-toggle-knob:#f0eee9;
+  --theme-toggle-knob-on:#1a1a1a;
+  --bg:var(--theme-bg);
+  --panel:var(--theme-panel);
+  --line:var(--theme-border);
+  --text:var(--theme-text);
+  --muted:var(--theme-muted);
+  --accent:var(--theme-emphasis);
+  color-scheme:var(--theme-color-scheme);
+  background:var(--theme-bg);
+}
+:root[data-framekeep-theme="light"] {
+  --theme-color-scheme:light;
+  --theme-bg:#f6eee4;
+  --theme-panel:#faf2e7;
+  --theme-raised:#fffaf4;
+  --theme-soft:#efe2d2;
+  --theme-control:#f7efe5;
+  --theme-hover:#f1e5d7;
+  --theme-text:#332d28;
+  --theme-text-soft:#58514b;
+  --theme-muted:#766f68;
+  --theme-faint:#9b9288;
+  --theme-border:rgba(91,74,54,.12);
+  --theme-border-strong:rgba(91,74,54,.24);
+  --theme-accent:#9a6636;
+  --theme-on-accent:#fff9f0;
+  --theme-emphasis:#9a6636;
+  --theme-selected:#ead8c4;
+  --theme-selected-text:#332d28;
+  --theme-selected-edge:#9a6636;
+  --theme-success:#26734d;
+  --theme-success-soft:#e5eddf;
+  --theme-warning:#8b5e24;
+  --theme-warning-soft:#f2e5ce;
+  --theme-danger:#b42318;
+  --theme-danger-soft:#fceae8;
+  --theme-shadow:rgba(92,72,48,.13);
+  --theme-backdrop:rgba(51,45,40,.36);
+  --theme-toast:#332d28;
+  --theme-toast-text:#fff9f0;
+  --theme-toggle-knob:#fffaf4;
+  --theme-toggle-knob-on:#fffaf4;
+}
+:root[data-framekeep-theme="pure-white"] {
+  --theme-color-scheme:light;
+  --theme-bg:#ffffff;
+  --theme-panel:#ffffff;
+  --theme-raised:#ffffff;
+  --theme-soft:#fafafa;
+  --theme-control:#fafafa;
+  --theme-hover:#f5f5f5;
+  --theme-text:#171717;
+  --theme-text-soft:#404040;
+  --theme-muted:#737373;
+  --theme-faint:#a3a3a3;
+  --theme-border:rgba(23,23,23,.12);
+  --theme-border-strong:rgba(23,23,23,.24);
+  --theme-accent:#171717;
+  --theme-on-accent:#ffffff;
+  --theme-emphasis:#171717;
+  --theme-selected:#f5f5f5;
+  --theme-selected-text:#171717;
+  --theme-selected-edge:#737373;
+  --theme-success:#26734d;
+  --theme-success-soft:#e8f1eb;
+  --theme-warning:#8b5e24;
+  --theme-warning-soft:#f6eddb;
+  --theme-danger:#b42318;
+  --theme-danger-soft:#fceae8;
+  --theme-shadow:rgba(23,23,23,.12);
+  --theme-backdrop:rgba(23,23,23,.36);
+  --theme-toast:#171717;
+  --theme-toast-text:#ffffff;
+  --theme-toggle-knob:#ffffff;
+  --theme-toggle-knob-on:#ffffff;
+}
+
+/* 按钮保留原来的宽高与间距，采用演示确认的圆角、实心/描边层级。 */
+body {background:var(--theme-bg);}
+button {border-radius:8px;}
+button:hover {background:var(--theme-hover);}
+button.bordered {background:var(--theme-control);border-color:var(--theme-border-strong);color:var(--theme-text);}
+button.bordered:hover {background:var(--theme-hover);}
+button.primary {background:var(--theme-accent);border-color:var(--theme-accent);color:var(--theme-on-accent);}
+button.primary:hover {background:color-mix(in srgb,var(--theme-accent),var(--theme-text) 14%);border-color:var(--theme-accent);box-shadow:0 3px 10px var(--theme-shadow);}
+button:disabled {color:var(--theme-muted);box-shadow:none;}
+button.primary:disabled {background:var(--theme-control);border-color:var(--theme-border);color:var(--theme-muted);}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible {outline-color:var(--theme-emphasis);}
+input:not([type="checkbox"]):not([type="range"]),select,textarea {border-radius:8px;}
+/* 原生下拉弹层使用不透明主题底色，避免浅色文字落在系统白底上。 */
+select {color-scheme:var(--theme-color-scheme);}
+select option,select optgroup {color:var(--theme-text);background-color:var(--theme-control);}
+select option:disabled,select optgroup:disabled {color:var(--theme-muted);}
+dialog {background:var(--theme-raised);border-color:var(--theme-border-strong);border-radius:14px;box-shadow:0 20px 70px var(--theme-shadow);}
+dialog::backdrop {background:var(--theme-backdrop);}
+.app-logo {color:var(--theme-text);}
+.grid-cover,.image-button,.image-button:hover {background:transparent;}
+.photo-card {border-radius:5px;}
+.photo-card.focused,.watch-thumb.active {background:var(--theme-selected);border-color:var(--theme-selected-edge);}
+.inline-stars button,.stars button {background:transparent;}
+.inline-stars button:hover,.stars button:hover {background:var(--theme-hover);}
+.rating-actions button[aria-pressed="true"] {color:var(--theme-danger);border-color:var(--theme-danger);background:var(--theme-danger-soft);}
+.photo-card.asset-selected {outline:2px solid var(--theme-emphasis);outline-offset:-4px;box-shadow:none;}
+.photo-context-menu {border-radius:9px;}
+input.toggle-switch[type="checkbox"]:checked {background:var(--theme-emphasis);border-color:var(--theme-emphasis);}
+input.toggle-switch[type="checkbox"]:checked::before {background:var(--theme-toggle-knob-on);}
+
+/* 主题入口只增加一个紧凑按钮，不改动现有顶栏布局。 */
+.header-actions #theme-open {padding-inline:8px;}
+#theme-dialog {width:530px;}
+.theme-options {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:18px 0;}
+.theme-option {display:flex;flex-direction:column;gap:10px;min-width:0;white-space:normal;text-align:center;background:var(--theme-panel);border-color:var(--theme-border);padding:18px 10px;border-radius:11px;}
+.theme-option[aria-pressed="true"] {background:var(--theme-selected);border-color:var(--theme-selected-edge);box-shadow:inset 0 0 0 1px var(--theme-selected-edge);color:var(--theme-text);}
+.theme-option span:last-child {font-size:10px;color:var(--theme-muted);line-height:1.7;}
+.theme-swatch {display:block;width:36px;height:26px;border:1px solid var(--theme-border-strong);border-radius:7px;}
+.theme-swatch[data-swatch="light"] {background:#f6eee4;border-color:#cbb59c;}
+.theme-swatch[data-swatch="dark"] {background:#1a1a1a;border-color:#626260;}
+.theme-swatch[data-swatch="pure-white"] {background:#ffffff;border-color:#d4d4d4;}
+@media(max-width:580px) {
+  .theme-options {gap:6px;}
+  .theme-option {padding:14px 6px;}
+}

@@ -1,0 +1,33 @@
+/* 四风格共用入口，菜单直接承载原有布局按钮。 */
+.app-header:has(.view-menu){position:relative;z-index:30;overflow:visible;}
+.header-primary-actions:has(.view-menu){flex-wrap:wrap;}
+.view-menu{position:relative;display:inline-flex;flex:none;align-self:center;}
+.view-menu-panel{position:absolute;top:100%;left:0;width:196px;max-width:calc(100vw - 24px);padding-top:8px;z-index:60;}
+.view-menu-panel[hidden]{display:none;}
+#view-options{
+  display:flex;flex-direction:column;align-items:stretch;gap:3px;padding:6px;
+  border:1px solid var(--theme-border-strong);border-radius:14px;
+  background:color-mix(in srgb,var(--theme-panel) 94%,transparent);
+  box-shadow:inset 0 1px 0 var(--glass-highlight,rgba(255,255,255,.04)),0 12px 32px var(--theme-shadow);
+  backdrop-filter:blur(22px) saturate(115%);-webkit-backdrop-filter:blur(22px) saturate(115%);
+}
+#view-options.hidden{display:none;}
+#view-options button{
+  display:flex;align-items:center;gap:10px;min-height:35px;padding:7px 9px;
+  border:1px solid transparent;border-radius:9px;text-align:left;font-size:12px;
+  color:var(--theme-text);background:transparent;box-shadow:none;
+}
+#view-options button::before{
+  content:'';display:inline-flex;align-items:center;justify-content:center;flex:none;
+  width:16px;height:16px;border:1px solid var(--theme-border-strong);border-radius:5px;
+  font-size:12px;line-height:1;color:var(--theme-on-accent);
+}
+#view-options button[aria-checked=true]::before{content:'✓';background:var(--theme-accent);border-color:var(--theme-accent);}
+#view-options button:hover,#view-options button:focus-visible{background:var(--theme-hover);border-color:var(--theme-border);}
+#view-options #layout-focus{margin-top:3px;border-top-color:var(--theme-border);}
+.view-menu-detached{position:fixed;top:10px;left:12px;z-index:80;}
+.view-menu-detached #view-open{background:var(--theme-panel);border:1px solid var(--theme-border-strong);box-shadow:0 3px 12px var(--theme-shadow);}
+html[data-hardcore-preview=true] #view-options{border-radius:8px;backdrop-filter:none;-webkit-backdrop-filter:none;}
+html[data-hardcore-preview=true] #view-options button{border-radius:4px;}
+html[data-hardcore-preview=true] #view-options button[aria-checked=true]::before{background:var(--theme-success);border-color:var(--theme-success);color:#171717;}
+@media(prefers-reduced-transparency:reduce){#view-options{background:var(--theme-panel);backdrop-filter:none;-webkit-backdrop-filter:none;}}

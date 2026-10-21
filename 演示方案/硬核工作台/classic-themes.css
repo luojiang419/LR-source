@@ -1,0 +1,203 @@
+/* 三主题材质重设计，仅预览生效；不创建或替换业务组件。 */
+:root[data-hardcore-preview="false"] {
+  --theme-bg:#141517;--theme-panel:#202124;--theme-raised:#2a2b2e;
+  --theme-soft:#242528;--theme-control:#2c2d30;--theme-hover:#36373a;
+  --theme-text:#eeedeb;--theme-text-soft:#cfcecc;--theme-muted:#a5a5a7;
+  --theme-faint:#727377;--theme-border:rgba(255,255,255,.075);
+  --theme-border-strong:rgba(255,255,255,.14);
+  --theme-accent:#e3e1dc;--theme-on-accent:#242527;--theme-emphasis:#d7c6ac;
+  --theme-selected:#383632;--theme-selected-text:#f4eee5;--theme-selected-edge:#b6a58b;
+  --theme-shadow:rgba(0,0,0,.26);--theme-backdrop:rgba(8,9,11,.58);
+  --theme-toggle-knob-on:#242527;
+  --glass-panel:rgba(35,36,39,.78);--glass-field:rgba(255,255,255,.045);
+  --glass-toolbar:rgba(31,32,35,.76);--glass-highlight:rgba(255,255,255,.075);
+  --glass-divider:rgba(255,255,255,.065);--glass-wash:rgba(255,255,255,.025);
+  --glass-canvas:#1a1b1e;--glass-accent-wash:rgba(181,161,133,.07);
+  --glass-button:linear-gradient(180deg,rgba(255,255,255,.065),rgba(255,255,255,.025));
+  --glass-primary:linear-gradient(180deg,#f0eeea,#d3d0ca);
+  --glass-shadow:0 8px 28px rgba(0,0,0,.17),0 1px 3px rgba(0,0,0,.15);
+  --glass-button-shadow:0 2px 5px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.065);
+  --glass-inset:inset 0 1px 0 var(--glass-highlight);
+}
+:root[data-hardcore-preview="false"][data-framekeep-theme="light"] {
+  --theme-bg:#eee8df;--theme-panel:#faf6ef;--theme-raised:#fffcf8;
+  --theme-soft:#f4ede3;--theme-control:#fbf7f0;--theme-hover:#f0e7d9;
+  --theme-text:#40382f;--theme-text-soft:#64584b;--theme-muted:#786a5b;
+  --theme-faint:#b0a494;--theme-border:rgba(114,88,56,.095);
+  --theme-border-strong:rgba(114,88,56,.17);
+  --theme-accent:#886447;--theme-on-accent:#fffaf2;--theme-emphasis:#886447;
+  --theme-selected:#eadac7;--theme-selected-text:#4f3828;--theme-selected-edge:#b88f65;
+  --theme-shadow:rgba(101,76,45,.12);--theme-backdrop:rgba(59,49,37,.24);
+  --theme-toggle-knob-on:#fffaf2;
+  --glass-panel:rgba(255,251,245,.77);--glass-field:rgba(255,253,249,.7);
+  --glass-toolbar:rgba(255,251,245,.76);--glass-highlight:rgba(255,255,255,.9);
+  --glass-divider:rgba(114,88,56,.08);--glass-wash:rgba(255,255,255,.34);
+  --glass-canvas:#f4efe8;--glass-accent-wash:rgba(195,162,118,.13);
+  --glass-button:linear-gradient(180deg,rgba(255,255,255,.95),rgba(249,242,231,.72));
+  --glass-primary:linear-gradient(180deg,#a27e5b,#846044);
+  --glass-shadow:0 8px 26px rgba(105,81,49,.065),0 1px 3px rgba(105,81,49,.045);
+  --glass-button-shadow:0 2px 5px rgba(104,77,41,.07),inset 0 1px 0 rgba(255,255,255,.9);
+}
+:root[data-hardcore-preview="false"][data-framekeep-theme="pure-white"] {
+  --theme-bg:#edf0f3;--theme-panel:#fff;--theme-raised:#fff;
+  --theme-soft:#f5f6f8;--theme-control:#fcfcfd;--theme-hover:#edf0f4;
+  --theme-text:#252a32;--theme-text-soft:#515965;--theme-muted:#697382;
+  --theme-faint:#a7adb7;--theme-border:rgba(57,71,91,.09);
+  --theme-border-strong:rgba(57,71,91,.16);
+  --theme-accent:#303742;--theme-on-accent:#fff;--theme-emphasis:#424c5b;
+  --theme-selected:#e5eaf0;--theme-selected-text:#293442;--theme-selected-edge:#8594a6;
+  --theme-shadow:rgba(41,53,72,.12);--theme-backdrop:rgba(36,45,60,.23);
+  --theme-toggle-knob-on:#fff;
+  --glass-panel:rgba(255,255,255,.82);--glass-field:rgba(255,255,255,.76);
+  --glass-toolbar:rgba(255,255,255,.8);--glass-highlight:rgba(255,255,255,.96);
+  --glass-divider:rgba(57,71,91,.075);--glass-wash:rgba(255,255,255,.46);
+  --glass-canvas:#f2f4f7;--glass-accent-wash:rgba(172,188,209,.14);
+  --glass-button:linear-gradient(180deg,#fff,rgba(245,247,250,.8));
+  --glass-primary:linear-gradient(180deg,#485260,#2e3540);
+  --glass-shadow:0 8px 26px rgba(49,63,86,.06),0 1px 3px rgba(49,63,86,.045);
+  --glass-button-shadow:0 2px 5px rgba(48,61,84,.065),inset 0 1px 0 #fff;
+}
+
+/* 表面：柔和背景、透光面板、细高光边缘；照片本身不添加滤镜。 */
+html[data-hardcore-preview="false"] body {
+  background:radial-gradient(ellipse at 5% 0,var(--glass-accent-wash),transparent 48%),var(--theme-bg);
+}
+html[data-hardcore-preview="false"] .workbench {background:transparent;}
+html[data-hardcore-preview="false"] :is(.app-header,.left-panel,.right-panel,.library-main,.film-panel,.progress-sidebar,.progress-main) {
+  background:var(--glass-panel);border-color:var(--theme-border);
+  box-shadow:var(--glass-inset),var(--glass-shadow);
+  backdrop-filter:blur(22px) saturate(115%);-webkit-backdrop-filter:blur(22px) saturate(115%);
+}
+html[data-hardcore-preview="false"] .app-header {padding-block:10px;min-height:60px;}
+html[data-hardcore-preview="false"] .library-layout {gap:10px;padding:8px 12px 0;}
+html[data-hardcore-preview="false"] :is(.left-panel,.right-panel,.library-main) {border-radius:18px;overflow:hidden;}
+html[data-hardcore-preview="false"] .library-main {isolation:isolate;}
+html[data-hardcore-preview="false"] :is(.sidebar-body,.selection-tools,.filterbar,.browse-status,.viewbar,.loupe-heading,.loupe-caption) {background:transparent;}
+html[data-hardcore-preview="false"] .panel-edge {background:var(--glass-wash);border-color:var(--glass-divider);color:var(--theme-muted);}
+html[data-hardcore-preview="false"] :is(.side-section,.rating-section,.folders) {border-bottom-width:1px;border-color:var(--glass-divider);}
+html[data-hardcore-preview="false"] :is(.panel-title,.side-section>summary) {background:var(--glass-wash);border-color:var(--glass-divider);font-size:12px;padding-block:11px;}
+html[data-hardcore-preview="false"] .folder-row {font-size:11px;padding-block:11px;border-radius:10px;}
+html[data-hardcore-preview="false"] .folder-entry {border-color:var(--glass-divider);padding:4px 5px;}
+html[data-hardcore-preview="false"] .folder-row[aria-current=true] {background:var(--theme-selected);box-shadow:inset 3px 0 var(--theme-selected-edge);}
+html[data-hardcore-preview="false"] .folder-parent {font-size:9px;}
+html[data-hardcore-preview="false"] .source-caption {line-height:1.7;}
+html[data-hardcore-preview="false"] :is(.catalog-view,.photo-stage) {background:var(--glass-canvas);}
+html[data-hardcore-preview="false"] .photo-stage {border-radius:12px;}
+html[data-hardcore-preview="false"] .selection-tools {border-color:var(--glass-divider);}
+html[data-hardcore-preview="false"] .selection-tools>summary {font-size:11px;padding-block:8px;}
+html[data-hardcore-preview="false"] :is(.filterbar,.browse-status,.viewbar) {border-color:var(--glass-divider);}
+html[data-hardcore-preview="false"] .film-panel {margin:8px 12px 0;padding:0 8px 5px;border:1px solid var(--theme-border);border-radius:16px;}
+html[data-hardcore-preview="false"] .film-toolbar {border:0;padding-inline:5px;}
+html[data-hardcore-preview="false"] .filmstrip {background:transparent;border:0;gap:5px;padding:3px 1px;}
+html[data-hardcore-preview="false"] :is(.film-item,.photo-card) {border-radius:10px;background:var(--glass-field);}
+html[data-hardcore-preview="false"] .photo-card:not(.picked):not(.focused) {background:var(--glass-field);}
+html[data-hardcore-preview="false"] .photo-grid {gap:6px;padding:7px;background:var(--glass-canvas);}
+html[data-hardcore-preview="false"] :is(.photo-card.focused,.film-item.active,.watch-thumb.active) {background:var(--theme-selected);border-color:var(--theme-selected-edge);box-shadow:inset 0 0 0 1px var(--glass-highlight),0 2px 7px var(--theme-shadow);}
+html[data-hardcore-preview="false"] .statusbar {background:transparent;padding-inline:16px;}
+
+/* 控件：胶囊操作、柔和描边与两层轻投影；照片/星级操作保持透明。 */
+html[data-hardcore-preview="false"] button {border-radius:999px;transition:background-color 160ms ease,box-shadow 160ms ease,border-color 160ms ease;}
+html[data-hardcore-preview="false"] :is(button.bordered,.header-actions>button,.header-primary-actions>button,.rating-actions button,.segmented button,.side-buttons button,.asset-actions button,.sku-toolbar button,.dialog-actions button,.model-tabs button) {
+  background:var(--glass-button);border:1px solid var(--theme-border-strong);color:var(--theme-text);
+  box-shadow:var(--glass-button-shadow);
+}
+html[data-hardcore-preview="false"] .header-actions button {font-size:11px;padding:8px 12px;}
+html[data-hardcore-preview="false"] :is(button.primary,.header-actions button.primary,.asset-actions button.primary,.sku-toolbar button.primary,.dialog-actions button.primary) {
+  background:var(--glass-primary);border-color:color-mix(in srgb,var(--theme-accent),transparent 25%);color:var(--theme-on-accent);
+  box-shadow:0 3px 8px var(--theme-shadow),inset 0 1px 0 rgba(255,255,255,.16);font-weight:600;
+}
+html[data-hardcore-preview="false"] button:not(:disabled):not(.image-button,.grid-cover,.list-preview):hover {background-color:var(--theme-hover);}
+html[data-hardcore-preview="false"] :is(button.bordered,.header-actions button,.segmented button,.dialog-actions button):not(:disabled):hover {
+  border-color:var(--theme-selected-edge);box-shadow:0 4px 10px var(--theme-shadow),var(--glass-inset);
+}
+html[data-hardcore-preview="false"] button.primary:not(:disabled):hover {background:var(--glass-primary);box-shadow:0 5px 13px var(--theme-shadow),var(--glass-inset);}
+html[data-hardcore-preview="false"] button:not(:disabled):not(.image-button,.grid-cover,.list-preview):active {box-shadow:inset 0 1px 3px var(--theme-shadow);}
+html[data-hardcore-preview="false"] button:disabled {background:var(--glass-field);border-color:var(--theme-border);color:var(--theme-muted);box-shadow:none;opacity:.55;}
+html[data-hardcore-preview="false"] :is(button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible) {outline:2px solid var(--theme-emphasis);outline-offset:3px;}
+html[data-hardcore-preview="false"] :is(.stars button,.inline-stars button,.image-button,.grid-cover,.list-preview,.list-name,.folder-panel-actions button,.panel-edge) {background:transparent;border-color:transparent;box-shadow:none;}
+html[data-hardcore-preview="false"] :is(.image-button,.grid-cover,.list-preview) {border-radius:0;}
+html[data-hardcore-preview="false"] .stars button {color:var(--theme-faint);}
+html[data-hardcore-preview="false"] .stars button.on {color:var(--theme-text);}
+html[data-hardcore-preview="false"] .rating-actions button[aria-pressed=true] {background:var(--theme-danger-soft);border-color:var(--theme-danger);color:var(--theme-danger);}
+html[data-hardcore-preview="false"] :is(.view-switch,.photo-filters,.segmented) {border-radius:999px;background:var(--glass-field);box-shadow:inset 0 1px 3px var(--theme-shadow);padding:3px;gap:3px;}
+html[data-hardcore-preview="false"] :is(.view-switch button,.photo-filters button,.segmented button) {border-color:transparent;background:transparent;box-shadow:none;}
+html[data-hardcore-preview="false"] :is(.view-switch button.active,.photo-filters button.active,.segmented button.active,.model-tabs button.active) {
+  background:var(--glass-button);border-color:var(--theme-border-strong);color:var(--theme-text);box-shadow:var(--glass-button-shadow);
+}
+html[data-hardcore-preview="false"] :is(input:not([type=checkbox]):not([type=range]):not([type=file]),select,textarea) {
+  background:var(--glass-field);border:1px solid var(--theme-border-strong);color:var(--theme-text);border-radius:11px;
+  box-shadow:inset 0 1px 3px var(--theme-shadow);padding-block:7px;
+}
+html[data-hardcore-preview="false"] input::placeholder {color:var(--theme-muted);opacity:1;}
+html[data-hardcore-preview="false"] :is(#sku-search,#mouse-device) {border-radius:11px;background:var(--glass-field);box-shadow:inset 0 1px 3px var(--theme-shadow);}
+html[data-hardcore-preview="false"] .sku-product-image {border-radius:10px;box-shadow:none;}
+html[data-hardcore-preview="false"] :is(input[type=checkbox],input[type=range]) {accent-color:var(--theme-emphasis);}
+
+/* 既有导航、弹窗、菜单和拍摄进度沿用同一材质。 */
+html[data-hardcore-preview="false"] .workspace-navigation {
+  margin:8px 12px 0;padding:6px 8px;border:1px solid var(--theme-border);border-radius:16px;
+  background:var(--glass-panel);box-shadow:var(--glass-inset),var(--glass-shadow);
+  backdrop-filter:blur(22px) saturate(115%);-webkit-backdrop-filter:blur(22px) saturate(115%);
+}
+html[data-hardcore-preview="false"] .workspace-layout-actions {gap:5px;}
+html[data-hardcore-preview="false"] .workspace-layout-actions button {background:var(--glass-panel);border-color:var(--theme-border);box-shadow:var(--glass-button-shadow);}
+html[data-hardcore-preview="false"] .workspace-layout-actions button[aria-pressed=true] {background:var(--glass-button);color:var(--theme-text);border-color:var(--theme-border-strong);}
+html[data-hardcore-preview="false"] .workspace-navigation .workspace-tabs {gap:4px;background:var(--glass-field);border:1px solid var(--theme-border);border-radius:999px;padding:3px;box-shadow:inset 0 1px 3px var(--theme-shadow);}
+html[data-hardcore-preview="false"] .workspace-tabs button {border-radius:999px;border:0;padding:9px 23px;font-size:12px;}
+html[data-hardcore-preview="false"] .workspace-tabs button[aria-selected=true] {background:var(--glass-button);color:var(--theme-text);box-shadow:var(--glass-button-shadow);}
+html[data-hardcore-preview="false"] :is(dialog,.photo-context-menu) {
+  background:var(--glass-panel);border:1px solid var(--theme-border-strong);border-radius:22px;
+  backdrop-filter:blur(26px) saturate(115%);-webkit-backdrop-filter:blur(26px) saturate(115%);
+  box-shadow:var(--glass-inset),0 24px 80px var(--theme-shadow),0 4px 15px var(--theme-shadow);
+}
+html[data-hardcore-preview="false"] dialog::backdrop {background:var(--theme-backdrop);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);}
+html[data-hardcore-preview="false"] dialog .dialog-heading h2 {font-weight:600;letter-spacing:.02em;}
+html[data-hardcore-preview="false"] :is(.photo-context-menu button,.theme-option) {border-radius:13px;}
+html[data-hardcore-preview="false"] .theme-options:has([data-hardcore-choice]) {grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
+html[data-hardcore-preview="false"] .theme-option {background:var(--glass-field);box-shadow:var(--glass-button-shadow);border-color:var(--theme-border);align-items:center;}
+html[data-hardcore-preview="false"] .theme-option[aria-pressed=true] {background:var(--theme-selected);border-color:var(--theme-selected-edge);box-shadow:inset 0 0 0 1px var(--theme-selected-edge);}
+html[data-hardcore-preview="false"] :is(.model-card,.progress-fold,.progress-summary>div,.watch-plan,.asset-archive-card,.run-state) {border-radius:14px;border-color:var(--theme-border);background:var(--glass-field);box-shadow:var(--glass-inset);}
+html[data-hardcore-preview="false"] #sku-dialog.shooting-progress {background:transparent;padding:12px;}
+html[data-hardcore-preview="false"] :is(.progress-main,.progress-sidebar) {border:1px solid var(--theme-border);border-radius:18px;overflow:hidden;}
+html[data-hardcore-preview="false"] .progress-list {border:0;background:transparent;}
+html[data-hardcore-preview="false"] .progress-sidebar-footer {background:var(--glass-toolbar);border-color:var(--glass-divider);}
+html[data-hardcore-preview="false"] :is(.sku-sheet-tabs button,.sku-sheet-badge) {border-radius:999px;}
+html[data-hardcore-preview="false"] .sku-sheet-tabs button[aria-pressed=true] {background:var(--theme-selected);box-shadow:var(--glass-button-shadow);}
+html[data-hardcore-preview="false"] :is(.metadata,.current-filename,.side-body) {color:var(--theme-text);}
+html[data-hardcore-preview="false"] .summary-line {border-color:var(--glass-divider);}
+@media(max-width:1150px) {
+  html[data-hardcore-preview="false"] .header-actions button {font-size:10px;padding:7px 8px;}
+  html[data-hardcore-preview="false"] .workspace-layout-actions {gap:3px;}
+  html[data-hardcore-preview="false"] .workspace-layout-actions button {padding:5px 7px;}
+}
+@media(max-width:700px) {
+  html[data-hardcore-preview="false"] .workbench {height:auto;min-height:100dvh;overflow:visible;}
+  html[data-hardcore-preview="false"] #selection-page {overflow:visible;}
+  html[data-hardcore-preview="false"] #selection-page>.library-layout {display:flex;flex-direction:column;}
+  html[data-hardcore-preview="false"] .library-main {order:0;flex:none;min-height:560px;height:70dvh;width:100%;}
+  html[data-hardcore-preview="false"] :is(.left-panel,.right-panel) {display:flex;flex:none;width:100%;max-height:450px;}
+  html[data-hardcore-preview="false"] .left-panel {order:1;min-height:200px;}
+  html[data-hardcore-preview="false"] .right-panel {order:2;}
+  html[data-hardcore-preview="false"] .left-collapsed .left-panel,
+  html[data-hardcore-preview="false"] .right-collapsed .right-panel {min-height:25px;height:25px;}
+  html[data-hardcore-preview="false"] .library-layout {padding:5px 6px 0;gap:6px;}
+  html[data-hardcore-preview="false"] :is(.left-panel,.right-panel,.library-main) {border-radius:13px;}
+  html[data-hardcore-preview="false"] .film-panel {margin:6px 6px 0;border-radius:13px;}
+  html[data-hardcore-preview="false"] .app-header {padding:8px;}
+  html[data-hardcore-preview="false"] .header-actions button {font-size:10px;padding:6px 8px;}
+  html[data-hardcore-preview="false"] .header-actions {width:100%;flex-wrap:wrap;}
+  html[data-hardcore-preview="false"] :is(.filterbar,.viewbar) {flex-wrap:wrap;}
+  html[data-hardcore-preview="false"] .filterbar input {width:100%;}
+  html[data-hardcore-preview="false"] .browse-status {flex:1;}
+  html[data-hardcore-preview="false"] .workspace-navigation {margin:6px 6px 0;padding:5px 4px;border-radius:13px;}
+  html[data-hardcore-preview="false"] .workspace-layout-actions {gap:2px;flex-wrap:wrap;}
+  html[data-hardcore-preview="false"] .workspace-layout-actions button {padding:5px 6px;}
+  html[data-hardcore-preview="false"] .workspace-tabs button {padding:8px 19px;}
+  html[data-hardcore-preview="false"] dialog {border-radius:18px;}
+}
+@media(prefers-reduced-transparency:reduce) {
+  html[data-hardcore-preview="false"] :is(.app-header,.workspace-navigation,.left-panel,.right-panel,.library-main,.film-panel,.progress-sidebar,.progress-main,dialog,.photo-context-menu) {background:var(--theme-panel);backdrop-filter:none;-webkit-backdrop-filter:none;}
+}
+@media(prefers-reduced-motion:reduce) {
+  html[data-hardcore-preview="false"] button {transition:none;}
+}
