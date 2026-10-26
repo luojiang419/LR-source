@@ -4,6 +4,7 @@ import hashlib
 import json
 import sqlite3
 import threading
+import time
 import uuid
 from collections import deque
 from contextlib import contextmanager
@@ -14,11 +15,17 @@ import media_engine as media
 def now():return datetime.now(timezone.utc).isoformat()
 def stable_json(data):return json.dumps(data,ensure_ascii=False,sort_keys=True,separators=(',',':'))
 
+def folder_name(folder):
+    root=Path(folder)
+    return root.name or root.anchor.rstrip('\\/') or str(root)
+
 class Store:
     def __init__(self,data,root):
         self.data=Path(data);self.data.mkdir(parents=True,exist_ok=True);self.root=Path(root);self.db=self.data/'framekeep.sqlite3';self.jobs={};self.lock=threading.Lock()
-        self.scan_queue=deque();self.scan_worker_running=False;self.scan_cancellations={}
+        self.scan_queue=deque();self.scan_worker_running=False;self.scan_cancellations={};self.browser_lock=threading.RLock();self.browser_totals={}
         self.on_catalog=None
+        self.on_previews=None
+        self.discovery=None
         with self.connect() as c:
             c.execute('PRAGMA journal_mode=WAL')
             c.executescript('''CREATE TABLE IF NOT EXISTS sessions(id TEXT PRIMARY KEY,root TEXT NOT NULL,name TEXT NOT NULL,snapshot TEXT NOT NULL DEFAULT '',revision INTEGER NOT NULL DEFAULT 0,state TEXT NOT NULL DEFAULT '{}',updated TEXT NOT NULL);
@@ -29,6 +36,8 @@ class Store:
             CREATE TABLE IF NOT EXISTS bridge_jobs(id TEXT PRIMARY KEY,created TEXT NOT NULL,status TEXT NOT NULL,manifest TEXT NOT NULL,result TEXT);
             ''')
         self._retire_ai_selection()
+        import session_browser
+        with self.connect() as c:session_browser.install(c)
 
     def _retire_ai_selection(self):
         """只迁移已采用的历史评级；保留分析记录，不重新分析或删除数据。"""
@@ -73,12 +82,22 @@ class Store:
         sid=sid or self.active_id()
         with self.connect() as c:r=c.execute('SELECT * FROM sessions WHERE id=?',(sid,)).fetchone()
         if not r:return None
-        result=dict(r);result['state']=json.loads(result['state']);return result
-    def records(self,sid=None):
+        result=dict(r);result['state']=json.loads(result['state']);result['name']=result['name'] or folder_name(result['root']);return result
+    def records(self,sid=None,ids=None):
         sid=sid or self.active_id()
+        if ids is not None:
+            ids=list(dict.fromkeys(ids))
+            if not ids:return []
+            with self.connect() as c:return [json.loads(r[0]) for r in c.execute('SELECT data FROM captures WHERE session=? AND id IN ('+','.join('?' for _ in ids)+') ORDER BY position',(sid,*ids))]
         with self.connect() as c:return [json.loads(r[0]) for r in c.execute('SELECT data FROM captures WHERE session=? ORDER BY position',(sid,))]
+
+    def iter_records(self,sid,batch=256):
+        with self.connect() as c:
+            cursor=c.execute('SELECT data FROM captures WHERE session=? ORDER BY position,id',(sid,))
+            while rows:=cursor.fetchmany(batch):
+                yield [json.loads(r[0]) for r in rows]
     def sessions(self):
-        with self.connect() as c:return [dict(r) for r in c.execute('SELECT s.id,s.name,s.root,s.updated,COUNT(c.id) AS capture_count FROM sessions s LEFT JOIN captures c ON c.session=s.id WHERE NOT EXISTS (SELECT 1 FROM settings WHERE key=\'removed_session:\'||s.id) GROUP BY s.id ORDER BY s.root COLLATE NOCASE')]
+        with self.connect() as c:return [dict(r,name=r['name'] or folder_name(r['root'])) for r in c.execute('SELECT s.id,s.name,s.root,s.updated,COUNT(c.id) AS capture_count FROM sessions s LEFT JOIN captures c ON c.session=s.id WHERE NOT EXISTS (SELECT 1 FROM settings WHERE key=\'removed_session:\'||s.id) GROUP BY s.id ORDER BY s.root COLLATE NOCASE')]
     def folder_state(self):
         with self.connect() as c:
             removed={r[0].casefold() for r in c.execute("SELECT value FROM settings WHERE key LIKE 'removed_session:%'")}
@@ -128,7 +147,7 @@ class Store:
                 existing=next((j for j in self.jobs.values() if j['folder'].casefold()==folder.casefold() and j['status'] in ('queued','running','cancelling')),None)
                 if existing:ids.append(existing['id']);continue
                 job=uuid.uuid4().hex;self.scan_cancellations[job]=threading.Event()
-                self.jobs[job]={'id':job,'folder':folder,'name':Path(folder).name,'recursive':bool(recursive),'status':'queued','stage':'queued','done':0,'total':0,'error':None}
+                self.jobs[job]={'id':job,'folder':folder,'name':folder_name(folder),'recursive':bool(recursive),'status':'queued','stage':'queued','done':0,'total':0,'error':None}
                 self.scan_queue.append((job,folder,bool(recursive),activate));ids.append(job)
             if not self.scan_worker_running:
                 self.scan_worker_running=True
@@ -154,11 +173,37 @@ class Store:
         try:
             if cancel.is_set():raise media.ScanCancelled()
             status.update(status='running',stage='discovering')
-            root,shots=media.discover(folder,recursive,cancel=cancel)
+            from file_safety import photo_directory
+            photo_directory(folder,self.data)
+            early={}
+            exiftool=None
+            def indexed_ready(base,pairs):
+                nonlocal exiftool
+                if not self.on_previews:return
+                status['stage']='indexed_previews';status['indexed_candidates']=len(pairs)
+                exiftool=media.find_exiftool(self.root)
+                session=media.ExifToolSession(exiftool,timeout=3);started=time.monotonic()
+                try:
+                    for start in range(0,len(pairs),24):
+                        if time.monotonic()-started>=3:break
+                        session.timeout=max(.1,3-(time.monotonic()-started))
+                        batch=pairs[start:start+24]
+                        if cancel.is_set():raise media.ScanCancelled()
+                        try:
+                            metadata=media.read_metadata([p for p,_ in batch],exiftool,cancel=cancel,session=session)
+                            records=[media.capture_record(base,p,q,m) for (p,q),m in zip(batch,metadata)]
+                        except (OSError,ValueError,RuntimeError) as exc:
+                            status['indexed_preview_error']=str(exc)[:160];break
+                        early.update((r['id'],r) for r in records)
+                        try:self.on_previews(str(base),records)
+                        except Exception as exc:status['preview_cache_error']=str(exc)[:160]
+                finally:session.close()
+                status['stage']='discovering'
+            root,shots=media.discover(folder,recursive,cancel=cancel,exclude=(self.data,),indexed=self.discovery,on_indexed=indexed_ready)
             if not shots:raise ValueError('目录中未发现支持的照片文件。')
             sid=hashlib.sha256(str(root).casefold().encode()).hexdigest()[:24];old={r['id']:r for r in self.records(sid)}
             old_paths={p.casefold():r for r in old.values() for p in (r.get('raw'),r.get('jpg')) if p}
-            status.update(total=len(shots),stage='metadata');exiftool=media.find_exiftool(self.root);records=[];pending=[]
+            status.update(total=len(shots),stage='metadata');exiftool=exiftool or media.find_exiftool(self.root);records=[];pending=[]
             for primary,companion in shots:
                 if cancel.is_set():raise media.ScanCancelled()
                 rel=str(primary.relative_to(root)).replace('\\','/');cid=hashlib.sha256(rel.casefold().encode()).hexdigest()[:24]
@@ -166,7 +211,11 @@ class Store:
                 if prior and 'liveRating' in prior:cid=prior['id']
                 fingerprint=media.fingerprint([primary]+([companion] if companion else []))
                 if cid in old and old[cid]['fingerprint']==fingerprint:records.append(old[cid]);status['done']+=1
+                elif cid in early and early[cid]['fingerprint']==fingerprint:records.append(early[cid]);status['done']+=1
                 else:pending.append((primary,companion))
+            if records and self.on_previews:
+                try:self.on_previews(str(root),records)
+                except Exception as exc:status['preview_cache_error']=str(exc)[:160]
             for start in range(0,len(pending),24):
                 if cancel.is_set():raise media.ScanCancelled()
                 batch=pending[start:start+24];status['current']=str(batch[0][0].relative_to(root))
@@ -175,6 +224,9 @@ class Store:
                     record=media.capture_record(root,primary,companion,m);prior=old_paths.get((record.get('raw') or record['jpg']).casefold())
                     if prior and 'liveRating' in prior:record.update(id=prior['id'],liveRating=prior['liveRating'])
                     records.append(record);status['done']+=1
+                if self.on_previews:
+                    try:self.on_previews(str(root),records[-len(batch):])
+                    except Exception as exc:status['preview_cache_error']=str(exc)[:160]
             def order(r):
                 if not r['time']:return (1,0,r['id'])
                 return (0,datetime.fromisoformat(r['time']).timestamp(),r['id'])
@@ -187,7 +239,7 @@ class Store:
             with self.lock:
                 if cancel.is_set():raise media.ScanCancelled()
                 with self.connect() as c:
-                    c.execute('INSERT INTO sessions(id,root,name,snapshot,revision,state,updated) VALUES (?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET root=excluded.root,snapshot=excluded.snapshot,revision=sessions.revision+1,state=excluded.state,updated=excluded.updated',(sid,str(root),root.name,snapshot,0,stable_json(state),now()))
+                    c.execute('INSERT INTO sessions(id,root,name,snapshot,revision,state,updated) VALUES (?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET root=excluded.root,snapshot=excluded.snapshot,revision=sessions.revision+1,state=excluded.state,updated=excluded.updated',(sid,str(root),folder_name(root),snapshot,0,stable_json(state),now()))
                     c.execute('DELETE FROM captures WHERE session=?',(sid,));c.executemany('INSERT INTO captures VALUES (?,?,?,?)',[(sid,r['id'],stable_json(r),i) for i,r in enumerate(records)])
                     if activate:c.execute("INSERT OR REPLACE INTO settings VALUES ('active',?)",(sid,))
                 status.update(session_id=sid,missing_time=sum(r['missingTime'] for r in records))
@@ -222,7 +274,7 @@ class Store:
         ratings={r['id']:(-1 if r['excluded'] else r['rating']) for r in self.manifest(False,sid)['captures']} if self.session(sid) else {}
         with self.connect() as c:
             c.execute('BEGIN IMMEDIATE')
-            c.execute('INSERT OR IGNORE INTO sessions VALUES (?,?,?,?,?,?,?)',(sid,str(root),root.name,'',0,'{}',now()))
+            c.execute('INSERT OR IGNORE INTO sessions VALUES (?,?,?,?,?,?,?)',(sid,str(root),folder_name(root),'',0,'{}',now()))
             c.execute('DELETE FROM settings WHERE key=?',('removed_session:'+sid,))
             for row in c.execute('SELECT id,data FROM captures WHERE session=?',(sid,)).fetchall():
                 r=json.loads(row['data'])
@@ -232,12 +284,21 @@ class Store:
         return sid
     def append_live(self,sid,records):
         """只更新照片目录，不改会话 state/revision；人工保存可并发进行。"""
-        added=[];changed=[]
+        added=[];changed=[];sidecar_changes=[]
         with self.connect() as c:
             c.execute('BEGIN IMMEDIATE')
             if not c.execute('SELECT 1 FROM sessions WHERE id=?',(sid,)).fetchone():raise ValueError('现场文件夹会话不存在。')
-            rows=c.execute('SELECT id,data,position FROM captures WHERE session=? ORDER BY position',(sid,)).fetchall()
-            known={row['id']:json.loads(row['data']) for row in rows};position=len(rows)
+            records=list(records);known={}
+            # 新图片/后到配对只查涉及的路径，不能为每张新图反复解码整个历史目录。
+            for start in range(0,len(records),128):
+                batch=records[start:start+128];ids=[r['id'] for r in batch]
+                paths=list({r[k] for r in batch for k in ('raw','jpg') if r.get(k)})
+                clauses=['p.id IN ('+','.join('?' for _ in ids)+')'];args=[sid,*ids]
+                if paths:
+                    marks=','.join('?' for _ in paths)
+                    clauses.extend(('p.raw COLLATE NOCASE IN ('+marks+')','p.jpg COLLATE NOCASE IN ('+marks+')'));args.extend(paths+paths)
+                for row in c.execute('SELECT c.id,c.data FROM browser_captures p JOIN captures c ON c.session=p.session AND c.id=p.id WHERE p.session=? AND ('+' OR '.join(clauses)+')',args):known[row['id']]=json.loads(row['data'])
+            position=c.execute('SELECT coalesce(max(position),-1)+1 FROM browser_captures WHERE session=?',(sid,)).fetchone()[0]
             by_path={p.casefold():r for r in known.values() for p in (r.get('raw'),r.get('jpg')) if p}
             for source in records:
                 r=dict(source)
@@ -250,7 +311,9 @@ class Store:
                 if previous:
                     r['id']=previous['id'];r['liveRating']=previous.get('liveRating',0)
                     if r.get('existingRating')!=previous.get('existingRating'):r['liveRating']=r.get('existingRating',0)
-                    if r['fingerprint']==previous['fingerprint']:continue
+                    if r['fingerprint']==previous['fingerprint'] and r.get('sidecarFingerprint')==previous.get('sidecarFingerprint'):continue
+                    if r.get('sidecarFingerprint')!=previous.get('sidecarFingerprint') and r.get('sidecarMetadata',{}).get('Rating') is not None:
+                        sidecar_changes.append(r)
                     c.execute('UPDATE captures SET data=? WHERE session=? AND id=?',(stable_json(r),sid,r['id']))
                 else:
                     r['liveRating']=r.get('existingRating',0)
@@ -260,8 +323,17 @@ class Store:
                     if path:by_path[path.casefold()]=r
                 changed.append(r['id'])
             if changed:
-                snapshot=hashlib.sha256(stable_json([(r['id'],r['fingerprint'],r['time']) for r in known.values()]).encode()).hexdigest()
+                digest=hashlib.sha256();digest.update(b'[');first=True
+                for row in c.execute('SELECT id,fingerprint,time FROM browser_captures WHERE session=? ORDER BY position,id',(sid,)):
+                    if not first:digest.update(b',')
+                    digest.update(stable_json(tuple(row)).encode());first=False
+                digest.update(b']');snapshot=digest.hexdigest()
                 c.execute('UPDATE sessions SET snapshot=?,updated=? WHERE id=?',(snapshot,now(),sid))
+        if sidecar_changes and getattr(self,'on_external_metadata',None):
+            self.on_external_metadata(sid,sidecar_changes)
+        if changed and self.on_previews:
+            try:self.on_previews(self.session(sid)['root'],[known[cid] for cid in changed])
+            except Exception:pass  # 缓存失败不回滚已入库照片，浏览时仍可按需生成。
         if changed and self.on_catalog:
             try:self.on_catalog(sid)
             except Exception:pass  # 目录已提交；后台消费者可在后续请求恢复。

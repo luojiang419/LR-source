@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 220" fill="none" color="#83bda4" role="img" aria-label="取景定格：对焦框聚合与快门定格">
+  <style>
+    .brackets{opacity:.2;transform-origin:180px 107px;animation:frame 6s ease-in-out infinite}.exposure{opacity:.03;animation:exposure 6s ease-in-out infinite}.shutter{opacity:.35;animation:shutter 6s ease-in-out infinite}
+    @keyframes frame{0%,18%,100%{transform:scale(1.1);opacity:.2}35%,65%{transform:scale(1);opacity:.9}}
+    @keyframes exposure{0%,48%,70%,100%{opacity:.03}52%,58%{opacity:.16}}
+    @keyframes shutter{0%,40%,65%,100%{opacity:.35}48%,58%{opacity:1}}
+    @media(prefers-reduced-motion:reduce){*{animation:none!important}}
+  </style>
+  <rect x="87" y="49" width="186" height="126" rx="12" fill="currentColor" fill-opacity=".025" stroke="currentColor" stroke-opacity=".18"/>
+  <path d="M149 49v126m62-126v126M87 91h186m-186 42h186" stroke="currentColor" stroke-opacity=".07"/>
+  <rect class="exposure" x="88" y="50" width="184" height="124" rx="11" fill="currentColor"/>
+  <g class="brackets" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M115 88V72h17m113 16V72h-17M115 135v16h17m113-16v16h-17"/></g>
+  <path d="M155 92h12l6-8h18l6 8h13a6 6 0 0 1 6 6v28a6 6 0 0 1-6 6h-55a6 6 0 0 1-6-6V98a6 6 0 0 1 6-6Z" stroke="currentColor" stroke-opacity=".6" stroke-width="1.5"/>
+  <circle cx="182" cy="111" r="13" stroke="currentColor" stroke-opacity=".75" stroke-width="1.5"/>
+  <circle class="shutter" cx="182" cy="111" r="5" fill="currentColor" fill-opacity=".4"/>
+  <path d="M67 63V39h25m201 24V39h-25M67 157v25h25m201-25v25h-25" stroke="currentColor" stroke-opacity=".14" stroke-linecap="round"/>
+  <path d="M150 195h60" stroke="currentColor" stroke-opacity=".12" stroke-linecap="round"/>
+</svg>

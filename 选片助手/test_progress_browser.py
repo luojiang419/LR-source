@@ -65,7 +65,7 @@ class ProgressBrowserTests(unittest.TestCase):
                         self.assertLess(geometry['listRight'],geometry['sidebarLeft']);self.assertLessEqual(geometry['listTop']-geometry['panelTop'],14)
                         for selector in ['#sku-sheet-tabs','.progress-heading','#progress-controls','#progress-statistics','.progress-tools','#sku-message','#sku-export','#sku-close']:
                             self.assertTrue(page.locator(selector).evaluate('(el)=>!!el.closest("#progress-sidebar")'),selector)
-                        self.assertFalse(page.locator('#sku-sheet-tabs').evaluate('(el)=>!!el.closest("#progress-controls")'));self.assertEqual(page.locator('#sku-sheet-tabs [data-progress-sheet]').count(),2);self.assertEqual(page.locator('#sku-sheet-tabs [role=tab]').count(),3);self.assertIn('公共',page.locator('#sku-common-tab').inner_text())
+                        self.assertFalse(page.locator('#sku-sheet-tabs').evaluate('(el)=>!!el.closest("#progress-controls")'));self.assertEqual(page.locator('#sku-sheet-tabs [data-progress-sheet]').count(),2);self.assertEqual(page.locator('#sku-sheet-tabs [role=tab]').count(),4);self.assertIn('公共',page.locator('#sku-common-tab').inner_text())
                         page.locator('#selection-tab').click();page.keyboard.press('2');page.locator('#sku-open').click()
                         page.wait_for_function('()=>document.getElementById("progress-shot")?.textContent==="1"');self.assertEqual(page.locator('#progress-pending').inner_text(),'1')
                         first=page.locator('#sku-rows tbody tr').first;self.assertIn('LC7877496-P804',first.inner_text());self.assertIn('2026-10-20 15:16:17.123+08:00',first.inner_text())
@@ -95,7 +95,7 @@ class ProgressBrowserTests(unittest.TestCase):
                         page.locator('#sku-filter').select_option('pending');self.assertEqual(page.locator('#sku-rows tbody .sku-sequence').all_text_contents(),['1']);self.assertEqual(page.locator('#progress-total').inner_text(),'2');page.locator('#sku-filter').select_option('all');self.assertEqual(page.locator('#sku-rows tbody tr').count(),2)
                         self.assertTrue(page.locator('#selection-page').is_hidden());self.assertFalse(page.locator('.film-panel').is_visible())
                         page.locator('#sku-open').focus();page.keyboard.press('3');self.assertEqual(store.session(sid)['state']['overrides'][store.records(sid)[0]['id']],2)
-                        first.locator('[data-completion]').click();page.wait_for_function('()=>document.querySelector(".sku-image-dialog>img")?.naturalWidth>0');self.assertIn('标签照片',page.locator('.sku-image-dialog h2').inner_text());page.locator('.sku-image-dialog button').click()
+                        first.locator('[data-completion]').click();page.wait_for_function('()=>document.querySelector("#sku-image-stage img")?.naturalWidth>0');self.assertIn('标签照片',page.locator('.sku-image-dialog h2').inner_text());page.locator('#sku-image-close').click()
                         page.screenshot(path=str(out/'progress-browser.png'))
                         for _ in range(2):
                             page.locator('#progress-controls > summary').click();page.wait_for_function('()=>document.getElementById("progress-controls").getBoundingClientRect().height<60')
@@ -105,7 +105,9 @@ class ProgressBrowserTests(unittest.TestCase):
                         page.locator('[data-progress-sheet="模特图"]').focus();page.keyboard.press('ArrowRight');self.assertEqual(page.locator('[data-progress-sheet="细节图"]').evaluate('(el)=>el===document.activeElement'),True);self.assertEqual(page.locator('[data-progress-sheet="模特图"]').get_attribute('aria-selected'),'true');page.keyboard.press('Enter');
                         page.wait_for_function('()=>document.getElementById("progress-shot").textContent==="0"');self.assertEqual(page.locator('#progress-pending').inner_text(),'2')
                         self.assertEqual(page.locator('#sku-rows tbody .sku-sequence').all_text_contents(),['1','2']);page.keyboard.press('3');self.assertEqual(store.session(sid)['state']['overrides'][store.records(sid)[0]['id']],2)
-                        page.keyboard.press('Home');page.keyboard.press('Enter');page.wait_for_function('()=>document.getElementById("progress-shot").textContent==="1"')
+                        page.keyboard.press('Home');page.keyboard.press('Enter');page.wait_for_function('()=>document.getElementById("sku-all-tab").getAttribute("aria-selected")==="true"')
+                        self.assertEqual(sku.project()['scope'],'细节图')
+                        page.keyboard.press('ArrowRight');page.keyboard.press('Enter');page.wait_for_function('()=>document.getElementById("progress-shot").textContent==="1"')
                         self.assertEqual(page.locator('#sku-sheet-panel').get_attribute('aria-labelledby'),'sku-sheet-tab-0')
 
                         self.assertEqual(page.locator('#sku-export').inner_text(),'导出拍摄记录');self.assertTrue(page.locator('#sku-export').is_visible());self.assertFalse(page.locator('#sku-export').evaluate('(el)=>!!el.closest("#progress-controls")'))
@@ -113,14 +115,18 @@ class ProgressBrowserTests(unittest.TestCase):
                         with page.expect_download() as download:page.locator('#sku-export').click()
                         target=out/'browser-export.xlsx';download.value.save_as(str(target));self.assertIsNone(download.value.failure());self.assertRegex(download.value.suggested_filename,r'^拍摄清单-拍摄记录-\d{8}-\d{6}\.xlsx$')
                         with ZipFile(io.BytesIO(fixture.fixture_book())) as original,ZipFile(target) as z:
-                            self.assertEqual(set(original.namelist()),set(z.namelist()))
+                            self.assertTrue(set(original.namelist())<=set(z.namelist()))
+                            self.assertTrue(any(name.startswith('xl/media/framekeep-sku-') for name in z.namelist()))
                             for name in original.namelist():
+                                if name in ('[Content_Types].xml','xl/workbook.xml','xl/_rels/workbook.xml.rels'):continue  # 新增图片、汇总页和列名映射关系，其余原部件保持。
                                 if not name.startswith('xl/worksheets/'):self.assertEqual(original.read(name),z.read(name),name)
                                 else:
                                     old=E.fromstring(original.read(name));new=E.fromstring(z.read(name));ns={'m':'http://schemas.openxmlformats.org/spreadsheetml/2006/main'}
                                     cells={c.get('r'):E.tostring(c) for c in new.findall('m:sheetData/m:row/m:c',ns)}
-                                    self.assertTrue(all(E.tostring(c)==cells[c.get('r')] for c in old.findall('m:sheetData/m:row/m:c',ns)))
-                                    self.assertIn('拍摄状态',z.read(name).decode());self.assertIn('拍摄完成时间',z.read(name).decode())
+                                    for cell in old.findall('m:sheetData/m:row/m:c',ns):
+                                        if name.endswith('sheet1.xml') and cell.get('r').startswith('C'):cell.set('r','F'+cell.get('r')[1:])  # 备注移到末列。
+                                        self.assertEqual(E.tostring(cell),cells[cell.get('r')])
+                                    self.assertIn('拍摄状态',z.read(name).decode());self.assertIn('款号图片',z.read(name).decode());self.assertIn('拍摄完成时间',z.read(name).decode())
                             self.assertIn('2026-10-20T15:16:17.123+08:00',z.read('xl/worksheets/sheet1.xml').decode());self.assertIn('已拍摄',z.read('xl/worksheets/sheet1.xml').decode())
                         # 桌面沿用原生另存为桥接；这里只验证前端传参及取消反馈，不声称操作了系统对话框。
                         page.evaluate('()=>window.FramekeepDesktop={saveSkuWorkbook:async(projectId,name)=>{window.__recordExport={projectId,name};return true}}');page.locator('#sku-export').click();page.wait_for_function('()=>document.getElementById("sku-message").textContent.startsWith("拍摄记录已导出")')
@@ -171,15 +177,15 @@ class ProgressBrowserTests(unittest.TestCase):
                                 modified.writestr(name,content)
                         page.locator('#sku-file').set_input_files({'name':'新拍摄文档.xlsx','mimeType':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','buffer':data.getvalue()})
                         page.wait_for_function('()=>document.querySelector("#sku-live-scope option[value=挂拍图]")')
-                        self.assertEqual(page.evaluate('FramekeepSku.currentType()'),'');self.assertNotIn('模特图',page.locator('#sku-live-scope').inner_text())
+                        self.assertEqual(page.evaluate('FramekeepSku.currentType()'),'平铺图');self.assertNotIn('模特图',page.locator('#sku-live-scope').inner_text())
                         page.screenshot(path=str(out/'imported-unselected.png'))
                         page.locator('#sku-panel-scope').select_option('平铺图');page.wait_for_function('()=>FramekeepSku.currentType()==="平铺图"')
                         page.locator('#sku-search').fill('P804');self.assertEqual(searchSummary.inner_text(),'款号搜索结果：平铺图 1张，挂拍图 1张');self.assertEqual(sheetCounts.all_text_contents(),['1/2','1/2']);page.locator('#sku-search').fill('')
                         page.locator('#sku-auto').uncheck();page.wait_for_function('()=>!document.getElementById("sku-auto").checked')
                         page.locator('#selection-tab').click();page.locator('#current-shooting-tab').click();page.locator('#sku-live-scope').select_option('挂拍图');page.locator('#photo-settings-tab').click();page.locator('#asset-sku').fill('MANUAL-123')
-                        with page.expect_response(lambda r:'/api/metadata/preview' in r.url) as response:page.locator('#asset-preview').click()
+                        with page.expect_response(lambda r:'/api/metadata/group/preview' in r.url) as response:page.locator('#asset-preview').click()
                         data=response.value.json();self.assertEqual(data['scope'],'挂拍图');self.assertEqual(data['project'],sku.project()['id'])
-                        page.locator('#asset-preview-dialog [data-close]').click();page.locator('#sku-open').click()
+                        page.locator('#asset-preview-dialog [data-close]').first.click();page.locator('#sku-open').click()
                         page.locator('#sku-projects').select_option(pid);page.wait_for_function('()=>FramekeepSku.currentType()==="模特图"')
                         self.assertEqual(page.evaluate('FramekeepSku.shootingTypes().sheets'),['模特图','细节图'])
                         self.assertFalse(errors,errors)

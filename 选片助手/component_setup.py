@@ -169,6 +169,9 @@ class ComponentManager:
                     with archive.open(entry) as src,temp.open('wb') as out:shutil.copyfileobj(src,out,1024*1024)
                     if digest(temp)!=record['sha256']:temp.unlink();raise ValueError('运行时文件校验失败')
                     os.replace(temp,target);self._remember(record)
+            # 解压后全部对应资产已验哈希才删除可再生压缩包；失败仍保留断点。
+            assets=[r for r in self.manifest['assets'] if r.get('archive')=='llama']
+            if assets and all(self._valid(r) for r in assets):archive_path.unlink(missing_ok=True)
 
     def _remember(self, record):
         stat=inside(self.root,record['path']).stat()

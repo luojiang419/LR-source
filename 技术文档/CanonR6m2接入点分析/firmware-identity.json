@@ -1,0 +1,47 @@
+{
+  "evidence_type": "ordinary local archive/header inspection; not REA firmware disassembly",
+  "source_page": "https://asia.canon/en/support/0401144702",
+  "download_url": "https://gdlp01.c-wss.com/gds/7/0400011447/01/eosr62-v170-win.zip",
+  "zip_bytes": 79450092,
+  "zip_sha256": "948a67521a7f62a9df1725f347a91385e9028d7743a80c8a4b6f33c38051986e",
+  "member": "R6217000.FIR",
+  "firmware_path": "G:\\app\\LR\\.runtime\\canon-r6m2-analysis\\R6217000.FIR",
+  "firmware_bytes": 76866784,
+  "firmware_sha256": "764cb4734ef204d8a6578a7351909263f322d0641acd8fe6bb9960b2016fc0d7",
+  "header_first128_hex": "81040080000000000000000000000000312e372e302e352e382e3900000000009aadd7b70001000020010000ffffffff90b14d00ffffffffe0e49404000000000000000004000000000000002000000024000000440000000001000090b04d0090b14d00503347042000000004dbdfc9abd3f4362e836e785e94f107f16cd03a",
+  "ascii_literal_first_offsets": {
+    "EOS R6": -1,
+    "EOS Utility": -1,
+    "Camera access point": -1,
+    "SSID": -1,
+    "Switch network": -1,
+    "1.7.0": 16
+  },
+  "sample_entropy": [
+    {
+      "offset": 0,
+      "length": 65536,
+      "entropy_bits_per_byte": 7.997
+    },
+    {
+      "offset": 1048576,
+      "length": 65536,
+      "entropy_bits_per_byte": 7.997
+    },
+    {
+      "offset": 16777216,
+      "length": 65536,
+      "entropy_bits_per_byte": 7.9972
+    },
+    {
+      "offset": 76801248,
+      "length": 65536,
+      "entropy_bits_per_byte": 7.9969
+    }
+  ],
+  "limitations": [
+    "Entropy does not distinguish encryption from compression.",
+    "Literal absence does not establish absence of the corresponding feature.",
+    "No code recovery, signature validation or firmware loading has been performed."
+  ]
+}

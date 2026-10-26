@@ -74,7 +74,7 @@ class UpdateClient:
             if not os.environ.get('FRAMEKEEP_DESKTOP_PID'): raise ValueError('请从桌面版使用独立更新器')
             native=self.root/'update/末帧更新器.exe'; worker=self.root/'update/update-worker.exe'
             if not native.is_file() or not worker.is_file(): raise ValueError('独立更新组件缺失，请运行轻量安装器修复')
-            self.session=Path(os.environ.get('LOCALAPPDATA',tempfile.gettempdir()))/'Framekeep/updates'/uuid.uuid4().hex
+            self.session=self.data/'maintenance/updates'/uuid.uuid4().hex
             self.session.mkdir(parents=True)
             for source in (native,worker): shutil.copy2(source,self.session/source.name)
             write_json(self.session/'session.json',{'mode':'update','session':str(self.session),'root':str(self.root),

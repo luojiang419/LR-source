@@ -1,0 +1,9 @@
+{
+  "scope": "in-memory negative controls only; synthetic checksums intentionally not repaired; no camera writes or modified NIF files",
+  "passed": [
+    "in-memory ctyp 2->1 is detected",
+    "unknown nested layout does not reuse field offsets",
+    "changed private bytes are not emitted"
+  ],
+  "baseline_sha256": "60224a81eb378750b858d18cbaa2e25b75450f9bd4f95e9c2c1b95b52e2e12d6"
+}

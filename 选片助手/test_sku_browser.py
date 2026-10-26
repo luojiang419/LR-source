@@ -93,7 +93,7 @@ class SkuBrowserTests(unittest.TestCase):
                         page.wait_for_function('()=>document.querySelectorAll("#sku-panel-scope option").length===3')
                         page.locator('#sku-panel-scope').select_option('模特图')
                         page.wait_for_function('()=>document.querySelector(".sku-product-image img")?.naturalWidth===40')
-                        page.locator('.sku-product-image').first.click();page.wait_for_function('()=>document.querySelector(".sku-image-dialog>img")?.naturalWidth===40');page.locator('.sku-image-dialog button').click()
+                        page.locator('.sku-product-image').first.click();page.wait_for_function('()=>document.querySelector("#sku-image-stage img")?.naturalWidth===40');page.locator('#sku-image-close').click()
                         page.wait_for_function('()=>document.querySelectorAll("#sku-panel-scope option").length===3')
                         page.locator('#sku-panel-scope').select_option('模特图');page.wait_for_function('()=>document.getElementById("sku-project-info").textContent.includes("模特图")');page.locator('#sku-close').click()
                         if not page.locator('#selection-tools').evaluate('(e)=>e.open'):page.locator('#view-open').hover();page.locator('#layout-tools').click()
@@ -111,7 +111,7 @@ class SkuBrowserTests(unittest.TestCase):
                         page.wait_for_function('()=>document.getElementById("sku-open").textContent.includes("1 已拍摄")')
                         state=sku.state();self.assertEqual(state['jobs'][0]['scope'],'模特图')
                         shot=[r for r in state['rows'] if r['status']=='已拍摄'];self.assertEqual([r['sheet'] for r in shot],['模特图'])
-                        self.assertEqual(page.locator('#sku-current-table tbody tr td:last-child').all_text_contents(),['未拍摄','未拍摄'])
+                        self.assertEqual(page.locator('#sku-current-table tbody .sku-state').all_text_contents(),['未拍摄','未拍摄'])
                         page.locator('#photo-settings-tab').click()
                         self.assertEqual(Upstream.calls[-1]['body']['model'],'mock-vision')
                         # 新标签走当前细节图；低置信结果必须复核。

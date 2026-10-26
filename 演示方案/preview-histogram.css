@@ -1,0 +1,20 @@
+/* 与标星控件近似等宽；半透明底保持曲线可辨，不拦截照片操作。 */
+.preview-surface>.preview-histogram{position:absolute;right:12px;bottom:12px;z-index:3;width:166px;max-width:calc(100% - 24px);height:108px;display:flex;flex-direction:column;gap:5px;padding:8px 9px 7px;border:1px solid var(--theme-border);border-radius:10px;background:color-mix(in srgb,var(--theme-panel) 74%,transparent);color:var(--theme-text-soft);box-shadow:0 4px 18px var(--theme-shadow);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);pointer-events:none;user-select:none;overflow:hidden;transition:opacity var(--motion-fast) var(--motion-ease)}
+.preview-surface>.preview-histogram[hidden]{display:none}
+.preview-surface>.preview-histogram.histogram-no-room{visibility:hidden}
+.preview-histogram>header,.preview-histogram>footer{display:flex;align-items:center;justify-content:space-between;gap:8px;flex:none;font-size:10px;line-height:1.2}
+.preview-histogram>footer{font-size:9px;color:var(--theme-muted);font-variant-numeric:tabular-nums}
+.histogram-legend{display:flex;gap:5px;font-size:9px}.histogram-legend i{font-style:normal;font-weight:600}
+.histogram-plot{position:relative;flex:1;min-height:0}.histogram-plot svg{display:block;width:100%;height:100%;overflow:hidden}
+.histogram-plot .histogram-grid{fill:none;stroke:var(--theme-text);stroke-opacity:.12;stroke-width:1;vector-effect:non-scaling-stroke}
+.histogram-plot path[data-channel]{stroke-width:.7;vector-effect:non-scaling-stroke;stroke-linejoin:round}
+.histogram-plot [data-channel=luma]{fill:var(--theme-text);fill-opacity:.18;stroke:var(--theme-text);stroke-opacity:.4}
+.histogram-legend [data-channel=red]{color:#e88a8c}.histogram-plot [data-channel=red]{fill:#e75e65;fill-opacity:.3;stroke:#ed858b}
+.histogram-legend [data-channel=green]{color:#7dc99d}.histogram-plot [data-channel=green]{fill:#4ab775;fill-opacity:.3;stroke:#81d7a3}
+.histogram-legend [data-channel=blue]{color:#8caef2}.histogram-plot [data-channel=blue]{fill:#5685db;fill-opacity:.32;stroke:#94b6f6}
+html[data-framekeep-theme=light] .histogram-legend [data-channel=red],html[data-framekeep-theme=pure-white] .histogram-legend [data-channel=red]{color:#a83845}
+html[data-framekeep-theme=light] .histogram-legend [data-channel=green],html[data-framekeep-theme=pure-white] .histogram-legend [data-channel=green]{color:#207d49}
+html[data-framekeep-theme=light] .histogram-legend [data-channel=blue],html[data-framekeep-theme=pure-white] .histogram-legend [data-channel=blue]{color:#386bbd}
+.histogram-plot>[role=status]{position:absolute;inset:0;display:grid;place-items:center;font-size:10px;color:var(--theme-muted)}
+.preview-histogram[data-state=ready] .histogram-plot>[role=status]{display:none}
+@media(max-width:520px){.preview-surface>.preview-histogram{width:154px;height:100px;padding:7px 8px}}

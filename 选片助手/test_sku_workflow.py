@@ -127,7 +127,7 @@ class SkuWorkflowTests(unittest.TestCase):
         self.sku=SkuService(self.store,self.providers,recognizer=recognize,clock=lambda:self.clock[0],autostart=False)
         self.pid=self.sku.import_file('task.xlsx',fixture_book(),self.sid)['project']['id']
         self.sku.configure(self.pid,self.sid,'模特图')
-        self.preview=patch('media_engine.preview',return_value=self.photos/'label0.JPG');self.preview.start()
+        self.preview=patch('media_engine.preview_bytes',return_value=(self.photos/'label0.JPG').read_bytes());self.preview.start()
         self.exif=patch('media_engine.find_exiftool',return_value=Path('test'));self.exif.start()
 
     def tearDown(self):
@@ -189,7 +189,7 @@ class SkuWorkflowTests(unittest.TestCase):
         self.rate(0,self.cids[1]);self.tick();self.assertEqual(self.statuses()[('模特图',2)],'未拍摄')
 
     def test_manual_fuzzy_review_confined_to_job_sheet(self):
-        self.sku.recognizer=lambda p,b:reading('LC7877496-P9O5')
+        self.sku.recognizer=lambda p,b:reading('LC7877496-P9O5',confidence=.5)
         self.rate(2);self.tick();job=self.sku.state()['jobs'][0];self.assertEqual(job['status'],'review')
         other=next(r for r in self.sku.rows(self.pid) if r['sheet']=='细节图')
         with self.assertRaisesRegex(ValueError,'所属工作表'):self.sku.review(job['id'],'confirm',other['id'])

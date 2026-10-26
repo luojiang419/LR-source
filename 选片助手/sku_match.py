@@ -18,6 +18,18 @@ def extract_codes(text):
     return result[:12]
 
 
+def extract_ocr_codes(text):
+    """优先读取明确的款号字段或完整混合编码，保留原文供复核。"""
+    text=str(text);explicit=[]
+    for line in text.splitlines():
+        field=re.search(r'(?:款\s*号|货\s*号|\bSKU\b|\bSTYLE(?:\s*NO\.?)?\b|\bITEM\s*NO\.?\b)\s*[:：#]?\s*([A-Za-z0-9Ａ-Ｚａ-ｚ０-９][A-Za-z0-9Ａ-Ｚａ-ｚ０-９_./－—\-]{3,79})',line,re.I)
+        if field and re.search(r'\d',normalize(field[1])) and field[1] not in explicit:explicit.append(field[1])
+    if explicit:return explicit[:12]
+    codes=extract_codes(text)
+    compact=[code for code in codes if re.fullmatch(r'[A-Za-z0-9Ａ-Ｚａ-ｚ０-９_./－—\-]{6,80}',code) and re.search(r'[A-Za-zＡ-Ｚａ-ｚ]',code)]
+    return compact or codes
+
+
 def distance(a,b):
     d=[[0.]*(len(b)+1) for _ in range(len(a)+1)]
     for i in range(len(a)+1):d[i][0]=float(i)

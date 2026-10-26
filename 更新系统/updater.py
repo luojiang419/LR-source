@@ -13,6 +13,7 @@ import stat
 import subprocess
 import sys
 import time
+import traceback
 import uuid
 import zipfile
 import urllib.request
@@ -174,6 +175,15 @@ def wait_exit(pid, timeout=120, cancel=None):
         time.sleep(0.2)
 
 
+def replace_program_file(source, target):
+    """短暂扫描占用可恢复；长期占用明确提示，不结束用户进程。"""
+    for attempt in range(30):
+        try:os.replace(source,target);return
+        except PermissionError as error:
+            if attempt==29:raise PermissionError(f'程序文件被占用，已保留恢复备份，请关闭使用该文件的程序后重试：{target}') from error
+            time.sleep(.1)
+
+
 def rollback(root: Path, session: Path):
     journal_path = session / "journal.json"
     if not journal_path.exists():
@@ -185,9 +195,12 @@ def rollback(root: Path, session: Path):
             backup = session / "backup" / change["path"]
             if not backup.is_file():
                 raise RuntimeError(f"回滚备份缺失：{change['path']}")
+            # 安装替换被拒绝时原文件没有变化，无需再替换同一个被占用文件。
+            if target.is_file() and sha256(target)==sha256(backup):continue
+            target.parent.mkdir(parents=True,exist_ok=True)
             temporary = target.with_name(target.name + ".framekeep-rollback")
             shutil.copy2(backup, temporary)
-            os.replace(temporary, target)
+            replace_program_file(temporary, target)
         else:
             target.unlink(missing_ok=True)
     installation.rollback_registration(root,session)
@@ -222,7 +235,7 @@ def install(root: Path, session: Path, manifest, fail_after=None):
             write_json(session / "journal.json", journal)
             temporary = target.with_name(target.name + ".framekeep-update")
             shutil.copy2(session / "stage" / relative, temporary)
-            os.replace(temporary, target)
+            replace_program_file(temporary, target)
             if target.stat().st_size != record["size"] or sha256(target) != record["sha256"]:
                 raise OSError(f"安装后文件校验失败：{relative}")
             emit(f"正在安装 {index + 1}/{len(manifest['files'])}", 30 + int((index + 1) * 55 / len(manifest["files"])))
@@ -349,11 +362,41 @@ def check_root(root, install_mode):
     if not install_mode and not known: raise ValueError('原软件目录无效')
 
 
+def retire_pending(root,receipt):
+    """只归档恢复指针；旧会话、备份、原图与资料始终保留。调用方持安装锁。"""
+    pending=root/'.update-state/pending.json'
+    if not pending.is_file():return
+    archived=pending.with_name('pending.uninstalled-'+uuid.uuid4().hex+'.json')
+    pending.rename(archived)
+    write_json(archived.with_suffix('.receipt.json'),{'root':str(root),'uninstallReceipt':str(receipt),'reason':'completed-uninstall'})
+
+
+def completed_uninstall_receipt(root,pending,home=None):
+    """兼容旧版成功卸载后的遗留指针，必须有同目录且晚于事务的完成证据。"""
+    if (root/installation.MARKER).exists() or (root/'末帧选片.exe').exists():return None
+    home=Path(home) if home is not None else installation.user_data().parent/'uninstall'
+    if not home.is_dir():return None
+    since=pending.stat().st_mtime
+    for folder in home.iterdir():
+        try:
+            status=folder/'status.json';settings=folder/'session.json'
+            if folder.is_symlink() or folder.is_junction() or not status.is_file() or status.stat().st_mtime<since:continue
+            receipt=read_json(status);setup=read_json(settings)
+            if isinstance(receipt,dict) and isinstance(setup,dict) and receipt.get('status')=='complete' and setup.get('mode')=='uninstall' and installation.same_path(setup.get('root',''),root):return status
+        except (OSError,ValueError,TypeError):continue
+    return None
+
+
 def recover_pending(root):
     pending = root / '.update-state/pending.json'
     if not pending.exists(): return
     state = read_json(pending); previous = Path(state['session'])
     if state.get('pid') and alive(state['pid']): raise RuntimeError('上次更新仍在执行')
+    receipt=completed_uninstall_receipt(root,pending)
+    if receipt:
+        retire_pending(root,receipt)
+        emit('已确认旧版成功卸载，旧恢复记录和备份保留，继续重新安装。',0)
+        return
     if Path(read_json(previous / 'session.json')['root']).resolve() != root:
         raise ValueError('恢复会话与安装目录不匹配')
     journal = read_json(previous / 'journal.json') if (previous / 'journal.json').exists() else {}
@@ -387,6 +430,8 @@ def run_uninstall(session,settings):
     emit('正在检查安装记录和运行状态…',10)
     with update_lock(root):
         result=installation.uninstall(root)
+        try:retire_pending(root,session/'status.json')
+        except OSError as error:result['recoveryWarning']=str(error)
         write_json(session/'status.json',result)
     (root/'.framekeep-update.lock').unlink(missing_ok=True)
     for directory in (root/'.update-state',root):
@@ -415,6 +460,23 @@ def prepare_components(root, data, session, settings):
     state=read_json(report) if report.is_file() else {}
     if child.returncode or state.get('status')!='ready':raise RuntimeError(state.get('message','组件准备进程未完成，请查看日志后重试'))
     return state
+
+
+def release_completed_payload(session):
+    """只释放已提交成功的事务载荷；失败及待回滚会话保留。"""
+    session=Path(session)
+    state=read_json(session/'status.json')
+    journal=read_json(session/'journal.json')
+    if state.get('status')!='complete' or journal.get('status')!='complete':return False
+    if session.is_symlink() or session.is_junction():raise ValueError('更新会话不能为链接')
+    for name in ('package.zip','stage','backup'):
+        path=session/name
+        if path.is_symlink() or path.is_junction():raise ValueError('更新载荷不能为链接')
+        if path.is_dir():
+            if any(p.is_symlink() or p.is_junction() for p in path.rglob('*')):raise ValueError('更新载荷包含链接')
+            shutil.rmtree(path)
+        else:path.unlink(missing_ok=True)
+    return True
 
 
 def run(session):
@@ -477,6 +539,9 @@ def run(session):
         if old_marker is not None:(session/'installation-marker.before').write_bytes(old_marker)
         try:
             install(root, session, manifest)
+            emit('正在核验安装目录 data 资料…',85)
+            data=installation.prepare_data_directory(root,data)
+            settings['data']=str(data);write_json(session/'session.json',settings)
             integrated=settings.get('integration',install_mode or installation.registered_here(root))
             state=installation.prepare_marker(root,data,manifest,integrated)
             components=prepare_components(root,data,session,settings) if settings.get('prepareComponents') else None
@@ -506,6 +571,9 @@ def run(session):
         finally:
             if (session/'journal.json').exists() and read_json(session/'journal.json')['status'] in ('complete','rolled-back'):
                 pending.unlink(missing_ok=True)
+        # 成功后的整包只用于当前事务；保留小型日志与清单，不永久积累大副本。
+        try:release_completed_payload(session)
+        except (OSError,ValueError) as error:write_json(session/'cleanup-warning.json',{'message':str(error)})
 
 
 if __name__ == '__main__':
@@ -523,6 +591,8 @@ if __name__ == '__main__':
         else: run(args.session.resolve(strict=True))
     except BaseException as error:
         if args.session:
+            try:(args.session/'error-traceback.log').write_text(traceback.format_exc(),encoding='utf8')
+            except OSError:pass
             status = args.session/'status.json'
             if not status.exists(): write_json(status,{'status':'error','message':str(error)})
         emit(f'未完成：{error}。下载分片、日志和备份均已保留。')

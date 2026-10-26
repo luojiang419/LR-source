@@ -19,6 +19,25 @@ from raw_reconcile import RawReconcile
 ROOT=Path(__file__).resolve().parents[1]
 
 class ArchiveSyncTests(unittest.TestCase):
+    def test_clearing_completed_metadata_retains_target_and_reappears_on_resync(self):
+        target_id=self.link.add_target(str(self.destination))['target_id'];self.finish(target_id)
+        # 单 JPG 夹具按现有规则因缺少 RAW 需复核，不能被清理。
+        self.assertEqual(self.link.clear_completed_tasks(),0)
+        self.assertEqual(self.link.task_state()['batches'][0]['status'],'attention')
+        # 注入已完成校验快照，验证展示清理边界，不将此当作真实 RAW 验收。
+        with self.archive.connect() as c:
+            c.execute("UPDATE archive_sync_targets SET verification=? WHERE id=?", ('{"status":"completed"}',target_id))
+        self.assertEqual(self.link.clear_completed_tasks(),1)
+        self.assertEqual(self.link.task_state()['batches'],[])
+        self.assertEqual(self.link.targets()[0]['id'],target_id)
+        before=sha(self.target)
+        self.link.close();self.link=RawReconcile(self.archive,autostart=False)
+        self.assertEqual(self.link.task_state()['batches'],[])
+        self.link.sync_target(target_id)
+        self.assertEqual(self.link.task_state()['batches'][0]['status'],'indexing')
+        self.assertEqual(sha(self.target),before)
+        self.wait_scan(self.link.targets()[0]['scan'])
+
     def setUp(self):
         self.temp=tempfile.TemporaryDirectory();self.base=Path(self.temp.name)
         self.source=self.base/'现场';self.source.mkdir();self.destination=self.base/'NAS归档';self.destination.mkdir()

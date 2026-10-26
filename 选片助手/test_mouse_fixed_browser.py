@@ -54,7 +54,8 @@ class FixedMouseBrowserTests(unittest.TestCase):
                         def close_panel():page.locator('#mouse-close').click();page.locator('#app-settings-close').click()
                         def repeated(packets):
                             sequence=remote.sequence
-                            feed(transport,*packets)
+                            for index in range(0,len(packets),2):
+                                page.wait_for_timeout(550);feed(transport,*packets[index:index+2])
                             # 等到协议包已全部解码并且前端有机会确认该批事件。
                             page.wait_for_timeout(400)
                             self.assertGreater(remote.sequence,sequence)
@@ -74,9 +75,13 @@ class FixedMouseBrowserTests(unittest.TestCase):
                         revision=store.session(sid)['revision'];repeated([(1,0),(2,0)]*3);rating(1);self.assertEqual(store.session(sid)['revision'],revision)
                         feed(transport,(4,0),(4,0),(4,0),(8,0));rating(2);page.evaluate('()=>FramekeepIO.flush()')
                         revision=store.session(sid)['revision'];repeated([(4,0),(8,0)]*3);rating(2);self.assertEqual(store.session(sid)['revision'],revision)
+                        # 固定方案快速双击同一键清零；取消也入库并保留撤销。
+                        page.wait_for_timeout(550);feed(transport,(4,0),(8,0),(4,0),(8,0));rating(0)
+                        page.evaluate('()=>FramekeepIO.flush()');self.assertEqual(archive.ratings.get([photos/'0.JPG']),0)
+                        page.keyboard.press('Control+z');rating(2)
                         page.keyboard.press('Control+z');rating(1)
                         feed(transport,(4,0),(8,0));rating(2);feed(transport,(1,0),(2,0));rating(1)
-                        page.keyboard.press('5');rating(5);feed(transport,(1,0),(2,0));rating(1)
+                        page.keyboard.press('5');rating(5);page.wait_for_timeout(550);feed(transport,(1,0),(2,0));rating(1)
                         page.keyboard.press('x');feed(transport,(4,0),(8,0));rating(2)
                         # 同一批先滚轮再右键，把两星写到下一张，上一张保持。
                         feed(transport,(0x400,-120),(4,0),(8,0));page.wait_for_function('(id)=>Framekeep.remoteTarget().photoId===id',arg=ids[1]);rating(2)
@@ -98,6 +103,8 @@ class FixedMouseBrowserTests(unittest.TestCase):
                         page.locator('#selection-tab').click();panel();mode('incremental');close_panel()
                         feed(transport,(1,0),(2,0));rating(1);feed(transport,(1,0),(2,0));rating(2)
                         panel();mode('fixed');close_panel();feed(transport,(1,0),(2,0));rating(1)
+                        page.wait_for_timeout(550);feed(transport,(1,0),(2,0),(1,0),(2,0));rating(0)
+                        page.wait_for_timeout(550);feed(transport,(1,0),(2,0));rating(1)
                         page.evaluate('()=>FramekeepIO.flush()');panel();page.locator('#mouse-stop').click()
                         page.wait_for_function('()=>document.getElementById("mouse-stop").disabled&&!document.getElementById("mouse-start").disabled')
                         self.assertEqual(transport.filters[-1],0)

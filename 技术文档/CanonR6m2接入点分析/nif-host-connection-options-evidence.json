@@ -1,0 +1,823 @@
+{
+  "artifact": "C:\\Program Files (x86)\\Canon\\EOS Network Setting Tool\\NESDK_MAUI.dll",
+  "sha256": "56562566f47819ae6a855b74473695da40296e6476bdab364c30e521d75de385",
+  "mvid": "429572e9-f955-4247-abc7-3bfb47d0ae90",
+  "read_only_static": true,
+  "methods": [
+    {
+      "token": "0x6000188",
+      "type": "com.canon.eos.EOSConnectCameraCommand",
+      "method": "executeCommand",
+      "rva": "0x8a90",
+      "instructions": [
+        {
+          "offset": "0x111",
+          "opcode": "ldnull",
+          "operand": "None"
+        },
+        {
+          "offset": "0x112",
+          "opcode": "stloc.s",
+          "operand": "local(0x0005)"
+        },
+        {
+          "offset": "0x114",
+          "opcode": "ldsfld",
+          "operand": "com.canon.eos.EDSDK.OBJ_NULL"
+        },
+        {
+          "offset": "0x119",
+          "opcode": "stloc.s",
+          "operand": "local(0x0006)"
+        },
+        {
+          "offset": "0x11b",
+          "opcode": "ldsfld",
+          "operand": "com.canon.eos.EDSDK.OBJ_NULL"
+        },
+        {
+          "offset": "0x120",
+          "opcode": "stloc.s",
+          "operand": "local(0x0007)"
+        },
+        {
+          "offset": "0x122",
+          "opcode": "ldloca.s",
+          "operand": "local(0x0006)"
+        },
+        {
+          "offset": "0x124",
+          "opcode": "call",
+          "operand": "com.canon.eos.EDSDK.EdsGetUPnPCameraList"
+        },
+        {
+          "offset": "0x129",
+          "opcode": "call",
+          "operand": "com.canon.eos.EOSException.throwIfSDKError_"
+        },
+        {
+          "offset": "0x12e",
+          "opcode": "ldloc.s",
+          "operand": "local(0x0006)"
+        },
+        {
+          "offset": "0x130",
+          "opcode": "ldloca.s",
+          "operand": "local(0x0000)"
+        },
+        {
+          "offset": "0x132",
+          "opcode": "call",
+          "operand": "com.canon.eos.EDSDK.EdsGetChildCount"
+        },
+        {
+          "offset": "0x137",
+          "opcode": "call",
+          "operand": "com.canon.eos.EOSException.throwIfSDKError_"
+        },
+        {
+          "offset": "0x13c",
+          "opcode": "ldc.i4.0",
+          "operand": "None"
+        },
+        {
+          "offset": "0x13d",
+          "opcode": "stloc.s",
+          "operand": "local(0x000A)"
+        },
+        {
+          "offset": "0x13f",
+          "opcode": "br.s",
+          "operand": "393"
+        },
+        {
+          "offset": "0x141",
+          "opcode": "ldloc.s",
+          "operand": "local(0x0006)"
+        },
+        {
+          "offset": "0x143",
+          "opcode": "ldloc.s",
+          "operand": "local(0x000A)"
+        },
+        {
+          "offset": "0x145",
+          "opcode": "ldloca.s",
+          "operand": "local(0x0007)"
+        },
+        {
+          "offset": "0x147",
+          "opcode": "call",
+          "operand": "com.canon.eos.EDSDK.EdsGetChildAtIndex"
+        },
+        {
+          "offset": "0x14c",
+          "opcode": "call",
+          "operand": "com.canon.eos.EOSException.throwIfSDKError_"
+        },
+        {
+          "offset": "0x151",
+          "opcode": "ldarg.0",
+          "operand": "None"
+        },
+        {
+          "offset": "0x152",
+          "opcode": "ldloc.s",
+          "operand": "local(0x0007)"
+        },
+        {
+          "offset": "0x154",
+          "opcode": "call",
+          "operand": "com.canon.eos.EOSConnectCameraCommand.getUPnPConnectionInfoFromCamera"
+        },
+        {
+          "offset": "0x159",
+          "opcode": "stloc.s",
+          "operand": "local(0x0005)"
+        },
+        {
+          "offset": "0x15b",
+          "opcode": "ldarg.0",
+          "operand": "None"
+        },
+        {
+          "offset": "0x15c",
+          "opcode": "ldfld",
+          "operand": "com.canon.eos.EOSConnectCameraCommand.mCameraIdentifier"
+        },
+        {
+          "offset": "0x161",
+          "opcode": "ldloc.s",
+          "operand": "local(0x0005)"
+        },
+        {
+          "offset": "0x163",
+          "opcode": "ldstr",
+          "operand": "'EOS_DETECT_CAMERA_MAC_ADDRESS'"
+        },
+        {
+          "offset": "0x168",
+          "opcode": "callvirt",
+          "operand": ".get_Item"
+        },
+        {
+          "offset": "0x16d",
+          "opcode": "callvirt",
+          "operand": ".Equals"
+        },
+        {
+          "offset": "0x172",
+          "opcode": "brtrue.s",
+          "operand": "398"
+        },
+        {
+          "offset": "0x174",
+          "opcode": "ldloc.s",
+          "operand": "local(0x0007)"
+        },
+        {
+          "offset": "0x176",
+          "opcode": "call",
+          "operand": "com.canon.eos.EDSDK.EdsRelease"
+        },
+        {
+          "offset": "0x17b",
+          "opcode": "pop",
+          "operand": "None"
+        },
+        {
+          "offset": "0x17c",
+          "opcode": "ldsfld",
+          "operand": "com.canon.eos.EDSDK.OBJ_NULL"
+        },
+        {
+          "offset": "0x181",
+          "opcode": "stloc.s",
+          "operand": "local(0x0007)"
+        },
+        {
+          "offset": "0x183",
+          "opcode": "ldloc.s",
+          "operand": "local(0x000A)"
+        },
+        {
+          "offset": "0x185",
+          "opcode": "ldc.i4.1",
+          "operand": "None"
+        },
+        {
+          "offset": "0x186",
+          "opcode": "add",
+          "operand": "None"
+        },
+        {
+          "offset": "0x187",
+          "opcode": "stloc.s",
+          "operand": "local(0x000A)"
+        },
+        {
+          "offset": "0x189",
+          "opcode": "ldloc.s",
+          "operand": "local(0x000A)"
+        },
+        {
+          "offset": "0x18b",
+          "opcode": "ldloc.0",
+          "operand": "None"
+        },
+        {
+          "offset": "0x18c",
+          "opcode": "blt.s",
+          "operand": "321"
+        },
+        {
+          "offset": "0x212",
+          "opcode": "ldarg.0",
+          "operand": "None"
+        },
+        {
+          "offset": "0x213",
+          "opcode": "ldfld",
+          "operand": "com.canon.eos.EOSConnectCameraCommand.mInitiatorGUID"
+        },
+        {
+          "offset": "0x218",
+          "opcode": "call",
+          "operand": "com.canon.eos.EOSCore.getGUIDStringToByteArray"
+        },
+        {
+          "offset": "0x21d",
+          "opcode": "stloc.s",
+          "operand": "local(0x0009)"
+        },
+        {
+          "offset": "0x21f",
+          "opcode": "ldloc.s",
+          "operand": "local(0x0007)"
+        },
+        {
+          "offset": "0x221",
+          "opcode": "ldarg.0",
+          "operand": "None"
+        },
+        {
+          "offset": "0x222",
+          "opcode": "ldfld",
+          "operand": "com.canon.eos.EOSConnectCameraCommand.mMobileDevName"
+        },
+        {
+          "offset": "0x227",
+          "opcode": "ldloc.s",
+          "operand": "local(0x0009)"
+        },
+        {
+          "offset": "0x229",
+          "opcode": "call",
+          "operand": "com.canon.eos.EDSDK.EdsPairingUPnPCamera"
+        },
+        {
+          "offset": "0x22e",
+          "opcode": "ldc.i4.0",
+          "operand": "None"
+        },
+        {
+          "offset": "0x22f",
+          "opcode": "cgt.un",
+          "operand": "None"
+        },
+        {
+          "offset": "0x231",
+          "opcode": "ldc.i4.0",
+          "operand": "None"
+        },
+        {
+          "offset": "0x232",
+          "opcode": "ldc.i4",
+          "operand": "268435715"
+        },
+        {
+          "offset": "0x237",
+          "opcode": "newobj",
+          "operand": "com.canon.eos.EOSError..ctor"
+        },
+        {
+          "offset": "0x23c",
+          "opcode": "call",
+          "operand": "com.canon.eos.EOSException.throwIf_"
+        },
+        {
+          "offset": "0x241",
+          "opcode": "ldloc.s",
+          "operand": "local(0x0007)"
+        },
+        {
+          "offset": "0x243",
+          "opcode": "call",
+          "operand": "com.canon.eos.EDSDK.EdsRelease"
+        },
+        {
+          "offset": "0x248",
+          "opcode": "pop",
+          "operand": "None"
+        },
+        {
+          "offset": "0x249",
+          "opcode": "ldarg.0",
+          "operand": "None"
+        },
+        {
+          "offset": "0x24a",
+          "opcode": "ldloc.s",
+          "operand": "local(0x0005)"
+        },
+        {
+          "offset": "0x24c",
+          "opcode": "newobj",
+          "operand": "com.canon.eos.EOSCamera..ctor"
+        },
+        {
+          "offset": "0x251",
+          "opcode": "stfld",
+          "operand": "com.canon.eos.EOSConnectCameraCommand.mConnectedCamera"
+        },
+        {
+          "offset": "0x256",
+          "opcode": "ldarg.0",
+          "operand": "None"
+        },
+        {
+          "offset": "0x257",
+          "opcode": "ldfld",
+          "operand": "com.canon.eos.EOSConnectCameraCommand.mConnectedCamera"
+        },
+        {
+          "offset": "0x25c",
+          "opcode": "callvirt",
+          "operand": "com.canon.eos.EOSCamera.connect"
+        },
+        {
+          "offset": "0x261",
+          "opcode": "callvirt",
+          "operand": "com.canon.eos.EOSError.get_ErrorID"
+        },
+        {
+          "offset": "0x266",
+          "opcode": "ldc.i4.0",
+          "operand": "None"
+        },
+        {
+          "offset": "0x267",
+          "opcode": "cgt.un",
+          "operand": "None"
+        },
+        {
+          "offset": "0x269",
+          "opcode": "ldc.i4.0",
+          "operand": "None"
+        },
+        {
+          "offset": "0x26a",
+          "opcode": "ldc.i4",
+          "operand": "268435714"
+        },
+        {
+          "offset": "0x26f",
+          "opcode": "newobj",
+          "operand": "com.canon.eos.EOSError..ctor"
+        },
+        {
+          "offset": "0x274",
+          "opcode": "call",
+          "operand": "com.canon.eos.EOSException.throwIf_"
+        }
+      ]
+    },
+    {
+      "token": "0x600019b",
+      "type": "com.canon.eos.EOSCore",
+      "method": "connectCamera",
+      "rva": "0x9270",
+      "instructions": [
+        {
+          "offset": "0xa9",
+          "opcode": "ldloc.2",
+          "operand": "None"
+        },
+        {
+          "offset": "0xaa",
+          "opcode": "ldarg.0",
+          "operand": "None"
+        },
+        {
+          "offset": "0xab",
+          "opcode": "ldfld",
+          "operand": "com.canon.eos.EOSCore.mMobileDevName"
+        },
+        {
+          "offset": "0xb0",
+          "opcode": "ldarg.0",
+          "operand": "None"
+        },
+        {
+          "offset": "0xb1",
+          "opcode": "ldfld",
+          "operand": "com.canon.eos.EOSCore.mInitiatorGUID"
+        },
+        {
+          "offset": "0xb6",
+          "opcode": "newobj",
+          "operand": "com.canon.eos.EOSConnectCameraCommand..ctor"
+        },
+        {
+          "offset": "0xbb",
+          "opcode": "stloc.3",
+          "operand": "None"
+        },
+        {
+          "offset": "0xbc",
+          "opcode": "ldloc.3",
+          "operand": "None"
+        },
+        {
+          "offset": "0xbd",
+          "opcode": "call",
+          "operand": "com.canon.eos.EOSCore.getWirelessConnect"
+        },
+        {
+          "offset": "0xc2",
+          "opcode": "callvirt",
+          "operand": "com.canon.eos.EOSConnectCameraCommand.set_WirelessConnects"
+        },
+        {
+          "offset": "0xc7",
+          "opcode": "ldloc.3",
+          "operand": "None"
+        },
+        {
+          "offset": "0xc8",
+          "opcode": "call",
+          "operand": "com.canon.eos.EOSCore.getIgnoreSupportCamera"
+        },
+        {
+          "offset": "0xcd",
+          "opcode": "callvirt",
+          "operand": "com.canon.eos.EOSConnectCameraCommand.set_IgnoreSupportCamera"
+        },
+        {
+          "offset": "0xd2",
+          "opcode": "ldloc.3",
+          "operand": "None"
+        },
+        {
+          "offset": "0xd3",
+          "opcode": "call",
+          "operand": "com.canon.eos.EOSCore.getDirectConnect"
+        },
+        {
+          "offset": "0xd8",
+          "opcode": "callvirt",
+          "operand": "com.canon.eos.EOSConnectCameraCommand.set_DirectConnect"
+        },
+        {
+          "offset": "0xdd",
+          "opcode": "ldloc.3",
+          "operand": "None"
+        }
+      ]
+    },
+    {
+      "token": "0x60001a9",
+      "type": "com.canon.eos.EOSCore",
+      "method": "setOption",
+      "rva": "0x982c",
+      "instructions": [
+        {
+          "offset": "0x20c",
+          "opcode": "ldarg.1",
+          "operand": "None"
+        },
+        {
+          "offset": "0x20d",
+          "opcode": "brfalse.s",
+          "operand": "635"
+        },
+        {
+          "offset": "0x20f",
+          "opcode": "ldarg.1",
+          "operand": "None"
+        },
+        {
+          "offset": "0x210",
+          "opcode": "unbox.any",
+          "operand": ".Int32"
+        },
+        {
+          "offset": "0x215",
+          "opcode": "call",
+          "operand": "com.canon.eos.EDSDK.EdsWirelessAdapterConnect"
+        },
+        {
+          "offset": "0x21a",
+          "opcode": "call",
+          "operand": "com.canon.eos.EOSException.throwIfSDKError_"
+        },
+        {
+          "offset": "0x21f",
+          "opcode": "ldarg.1",
+          "operand": "None"
+        },
+        {
+          "offset": "0x220",
+          "opcode": "unbox.any",
+          "operand": ".Int32"
+        },
+        {
+          "offset": "0x225",
+          "opcode": "stsfld",
+          "operand": "com.canon.eos.EOSCore.sWirelessConnect"
+        },
+        {
+          "offset": "0x22a",
+          "opcode": "br.s",
+          "operand": "635"
+        },
+        {
+          "offset": "0x22c",
+          "opcode": "ldarg.1",
+          "operand": "None"
+        },
+        {
+          "offset": "0x22d",
+          "opcode": "brfalse.s",
+          "operand": "635"
+        },
+        {
+          "offset": "0x22f",
+          "opcode": "ldc.i4.0",
+          "operand": "None"
+        },
+        {
+          "offset": "0x230",
+          "opcode": "ldarg.1",
+          "operand": "None"
+        },
+        {
+          "offset": "0x231",
+          "opcode": "unbox.any",
+          "operand": ".Int32"
+        },
+        {
+          "offset": "0x236",
+          "opcode": "ldnull",
+          "operand": "None"
+        },
+        {
+          "offset": "0x237",
+          "opcode": "call",
+          "operand": "com.canon.eos.EDSDK.EdsSetOption"
+        },
+        {
+          "offset": "0x23c",
+          "opcode": "call",
+          "operand": "com.canon.eos.EOSException.throwIfSDKError_"
+        },
+        {
+          "offset": "0x241",
+          "opcode": "ldarg.1",
+          "operand": "None"
+        },
+        {
+          "offset": "0x242",
+          "opcode": "unbox.any",
+          "operand": ".Int32"
+        },
+        {
+          "offset": "0x247",
+          "opcode": "stsfld",
+          "operand": "com.canon.eos.EOSCore.sIgnoreSupportCamera"
+        },
+        {
+          "offset": "0x24c",
+          "opcode": "br.s",
+          "operand": "635"
+        },
+        {
+          "offset": "0x24e",
+          "opcode": "ldarg.1",
+          "operand": "None"
+        },
+        {
+          "offset": "0x24f",
+          "opcode": "brfalse.s",
+          "operand": "635"
+        },
+        {
+          "offset": "0x251",
+          "opcode": "ldarg.1",
+          "operand": "None"
+        },
+        {
+          "offset": "0x252",
+          "opcode": "unbox.any",
+          "operand": ".Boolean"
+        },
+        {
+          "offset": "0x257",
+          "opcode": "stsfld",
+          "operand": "com.canon.eos.EOSCore.sIsDirectConnect"
+        },
+        {
+          "offset": "0x25c",
+          "opcode": "br.s",
+          "operand": "635"
+        },
+        {
+          "offset": "0x25e",
+          "opcode": "ldarg.1",
+          "operand": "None"
+        },
+        {
+          "offset": "0x25f",
+          "opcode": "brfalse.s",
+          "operand": "635"
+        },
+        {
+          "offset": "0x261",
+          "opcode": "ldc.i4.1",
+          "operand": "None"
+        },
+        {
+          "offset": "0x262",
+          "opcode": "ldarg.1",
+          "operand": "None"
+        },
+        {
+          "offset": "0x263",
+          "opcode": "unbox.any",
+          "operand": ".Int32"
+        },
+        {
+          "offset": "0x268",
+          "opcode": "ldnull",
+          "operand": "None"
+        },
+        {
+          "offset": "0x269",
+          "opcode": "call",
+          "operand": "com.canon.eos.EDSDK.EdsSetOption"
+        },
+        {
+          "offset": "0x26e",
+          "opcode": "call",
+          "operand": "com.canon.eos.EOSException.throwIfSDKError_"
+        },
+        {
+          "offset": "0x273",
+          "opcode": "br.s",
+          "operand": "635"
+        }
+      ]
+    },
+    {
+      "token": "0x60001aa",
+      "type": "com.canon.eos.EOSCore",
+      "method": "getConnectedCameraHistory",
+      "rva": "0x9b20",
+      "instructions": [
+        {
+          "offset": "0x1",
+          "opcode": "ldarg.0",
+          "operand": "None"
+        },
+        {
+          "offset": "0x2",
+          "opcode": "ldfld",
+          "operand": "com.canon.eos.EOSCore.mCameraHistoryList"
+        },
+        {
+          "offset": "0x7",
+          "opcode": "ret",
+          "operand": "None"
+        }
+      ]
+    },
+    {
+      "token": "0x60001ad",
+      "type": "com.canon.eos.EOSCore",
+      "method": "getWirelessConnect",
+      "rva": "0x9bfc",
+      "instructions": [
+        {
+          "offset": "0x1",
+          "opcode": "ldsfld",
+          "operand": "com.canon.eos.EOSCore.sWirelessConnect"
+        },
+        {
+          "offset": "0x6",
+          "opcode": "ret",
+          "operand": "None"
+        }
+      ]
+    },
+    {
+      "token": "0x60001af",
+      "type": "com.canon.eos.EOSCore",
+      "method": "getDirectConnect",
+      "rva": "0x9c0a",
+      "instructions": [
+        {
+          "offset": "0x1",
+          "opcode": "ldsfld",
+          "operand": "com.canon.eos.EOSCore.sIsDirectConnect"
+        },
+        {
+          "offset": "0x6",
+          "opcode": "ret",
+          "operand": "None"
+        }
+      ]
+    },
+    {
+      "token": "0x60001b0",
+      "type": "com.canon.eos.EOSCore",
+      "method": "loadCameraHistoryList",
+      "rva": "0x9c11",
+      "instructions": [
+        {
+          "offset": "0x1",
+          "opcode": "newobj",
+          "operand": "..ctor"
+        },
+        {
+          "offset": "0x6",
+          "opcode": "ret",
+          "operand": "None"
+        }
+      ]
+    },
+    {
+      "token": "0x60001b1",
+      "type": "com.canon.eos.EOSCore",
+      "method": "saveCameraHistoryList",
+      "rva": "0x9c18",
+      "instructions": [
+        {
+          "offset": "0x1",
+          "opcode": "ret",
+          "operand": "None"
+        }
+      ]
+    },
+    {
+      "token": "0x60001b2",
+      "type": "com.canon.eos.EOSCore",
+      "method": "discoverCamera",
+      "rva": "0x9c1a",
+      "instructions": [
+        {
+          "offset": "0x1",
+          "opcode": "ldarg.0",
+          "operand": "None"
+        },
+        {
+          "offset": "0x2",
+          "opcode": "ldfld",
+          "operand": "com.canon.eos.EOSCore.mInitiatorGUID"
+        },
+        {
+          "offset": "0x7",
+          "opcode": "call",
+          "operand": "com.canon.eos.EDSDK.EdsDiscoverUPnPCamera"
+        },
+        {
+          "offset": "0xc",
+          "opcode": "pop",
+          "operand": "None"
+        },
+        {
+          "offset": "0xd",
+          "opcode": "ret",
+          "operand": "None"
+        }
+      ]
+    },
+    {
+      "token": "0x60001b3",
+      "type": "com.canon.eos.EOSCore",
+      "method": "wifiStatusChnaged",
+      "rva": "0x9c28",
+      "instructions": [
+        {
+          "offset": "0x1",
+          "opcode": "ret",
+          "operand": "None"
+        }
+      ]
+    }
+  ],
+  "offset_note": "dncil offset includes method header; REA offsets exclude header",
+  "rea_evidence_ids": [
+    "ev_1875695eeb183d242d1a067c89981b8947c8cd1ce842a30396397e02d1ca77b0",
+    "ev_78224b0e323cce0a7c4298b11469e7f0235b73627a90da9f3f99a5e71c25c9c4"
+  ]
+}

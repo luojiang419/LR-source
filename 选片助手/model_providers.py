@@ -6,20 +6,16 @@ import json
 import os
 from pathlib import Path
 import threading
+import time
 import uuid
 import urllib.request
 import urllib.error
 from urllib.parse import urlsplit
+from api_endpoints import validated_url, model_bases
+from provider_concurrency import ProviderConcurrency,concurrency_value,DEFAULT_API_CONCURRENCY,MAX_API_CONCURRENCY
 
 CATEGORIES={'multimodal','ocr','text'}
 PROTOCOLS={'responses','chat','ocr_json','paddleocr','local'}
-
-
-def validated_url(value):
-    url=str(value).strip().rstrip('/');parsed=urlsplit(url)
-    if parsed.scheme!='https' and not(parsed.scheme=='http' and parsed.hostname in ('localhost','127.0.0.1','::1')):raise ValueError('接口须用 HTTPS，本机服务可用 HTTP')
-    if not parsed.hostname or parsed.username or parsed.password or parsed.query or parsed.fragment:raise ValueError('接口地址不能包含认证信息、查询串或片段')
-    return url
 
 
 class NoModelRedirect(urllib.request.HTTPRedirectHandler):
@@ -42,12 +38,13 @@ def seal(value,decode=False):
     return result.decode('utf8') if decode else base64.b64encode(result).decode('ascii')
 
 
-class Providers:
+class Providers(ProviderConcurrency):
     @staticmethod
     def reserved(provider):return bool(provider and provider.get('protocol')=='local' and provider.get('category')=='multimodal')
 
     def __init__(self,data,legacy=None):
         self.path=Path(data)/'model-providers.json';self.lock=threading.RLock()
+        self._init_concurrency()
         self.data={'providers':[],'selected':{}}
         if self.path.is_file():self.data=json.loads(self.path.read_text(encoding='utf8'))
         elif legacy:
@@ -58,6 +55,7 @@ class Providers:
     def _persist(self):
         self.path.parent.mkdir(parents=True,exist_ok=True);temp=self.path.with_suffix('.tmp')
         temp.write_text(json.dumps(self.data,ensure_ascii=False,indent=2),encoding='utf8');temp.replace(self.path)
+        with self.capacity_changed:self.capacity_changed.notify_all()
 
     def public(self):
         with self.lock:
@@ -66,7 +64,7 @@ class Providers:
             if self.data.get('builtin_enabled',False):
                 selected={category:p['id'] for category in ('ocr','multimodal') if (p:=self._builtin(category))}
                 bindings={}
-            return {'providers':[{k:v for k,v in p.items() if k!='secret'}|{'key_set':bool(p.get('secret')),'reserved':self.reserved(p)} for p in self.data['providers']],
+            return {'providers':[{k:v for k,v in p.items() if k!='secret'}|{'key_set':bool(p.get('secret')),'reserved':self.reserved(p),'concurrency':concurrency_value(p)} for p in self.data['providers']],
                     'selected':selected,'bindings':bindings,'builtin_enabled':self.data.get('builtin_enabled',False)}
 
     def _editable(self):
@@ -102,12 +100,15 @@ class Providers:
                 from local_inference import MODEL_IDS
                 if MODEL_IDS.get(model)!=category:raise ValueError('请选择对应类别的内置模型：qwen2.5-vl-7b-q4 / glm-ocr-local')
             if old and old['category']!=category:raise ValueError('已有卡片不能更换分类，请新建配置')
+            concurrency=body.get('concurrency',1 if protocol=='local' else old.get('concurrency',DEFAULT_API_CONCURRENCY))
+            if type(concurrency) is not int or not 1<=concurrency<=MAX_API_CONCURRENCY:raise ValueError('最大并发数须为 1–64 的整数')
+            if protocol=='local' and concurrency!=1:raise ValueError('内置模型并发固定为 1')
             key=str(body.get('key','')).strip();secret='' if protocol=='local' else (seal(key) if key else old.get('secret',''))
             item={'id':pid,'name':name,'category':category,'protocol':protocol,'url':url,'model':model,'secret':secret,
                   'timeout':max(10,min(300,int(body.get('timeout',old.get('timeout',90))))),
                   'max_tokens':max(128,min(8192,int(body.get('max_tokens',old.get('max_tokens',2000))))),
                   'image_size':max(480,min(2400,int(body.get('image_size',old.get('image_size',1600))))),
-                  'json_mode':bool(body.get('json_mode',old.get('json_mode',True)))}
+                  'json_mode':bool(body.get('json_mode',old.get('json_mode',True))),'concurrency':concurrency}
             if body.get('select') is True and self.reserved(item):raise ValueError('内置多模态作为后续开发预留，当前未启用')
             self.data['providers']=[p for p in self.data['providers'] if p['id']!=pid]+[item]
             if body.get('select') is True:self.data['selected'][category]=pid
@@ -123,30 +124,45 @@ class Providers:
             from local_inference import MODEL_IDS
             return {'models':[model for model,category in MODEL_IDS.items() if category=='ocr'],'message':'当前启用内置 OCR，多模态作为后续开发预留'}
         if protocol not in ('chat','responses'):raise ValueError('该协议未提供统一模型列表，请手动填写模型标识')
-        url=validated_url(body.get('url',old.get('url','') if old else ''))
-        for suffix in ('/chat/completions','/responses'):
-            if url.endswith(suffix):url=url[:-len(suffix)]
-        if not url.endswith('/v1'):url+='/v1'
+        groups=model_bases(body.get('url',old.get('url','') if old else ''))
         key=str(body.get('key','')).strip() or (old.get('key','') if old else '')
         if '\r' in key or '\n' in key:raise ValueError('API 密钥不能包含换行，请重新输入')
         headers={'Accept':'application/json'}
         if key:headers['Authorization']='Bearer '+key
-        try:
-            request=urllib.request.Request(url+'/models',headers=headers)
-            with urllib.request.build_opener(NoModelRedirect()).open(request,timeout=10) as response:
-                raw=response.read(2_000_001)
-            if len(raw)>2_000_000:raise ValueError('模型列表响应过大，请手动填写模型标识')
-            data=json.loads(raw)
-        except urllib.error.HTTPError as exc:
-            exc.close()
-            if exc.code in (401,403):raise ValueError(f'获取模型列表 HTTP {exc.code}，请检查 API 密钥及模型列表权限') from None
-            if exc.code in (404,405):raise ValueError('服务未提供模型列表接口，请检查地址或手动填写模型标识') from None
-            raise ValueError(f'获取模型列表 HTTP {exc.code}，请检查服务地址；也可手动填写模型标识') from None
-        except (OSError,UnicodeError,json.JSONDecodeError):raise ValueError('获取模型列表连接超时或响应无效，请检查服务，也可手动填写模型标识') from None
-        rows=data.get('data') if isinstance(data,dict) else None
-        if not isinstance(rows,list):raise ValueError('模型列表格式无效，请手动填写模型标识')
-        models=sorted({r['id'].strip() for r in rows if isinstance(r,dict) and isinstance(r.get('id'),str) and r['id'].strip() and len(r['id'].strip())<=200})
-        return {'models':models,'message':f'获取到 {len(models)} 个模型' if models else '服务返回空模型列表，可手动填写模型标识'}
+        deadline=time.monotonic()+15;error='获取模型列表连接超时或响应无效，请检查服务，也可手动填写模型标识'
+        opener=urllib.request.build_opener(NoModelRedirect())
+        for bases in groups:
+            for base in bases:
+                remaining=deadline-time.monotonic()
+                if remaining<=0:raise ValueError(error)
+                try:
+                    request=urllib.request.Request(base+'/models',headers=headers)
+                    with opener.open(request,timeout=min(4,remaining)) as response:raw=response.read(2_000_001)
+                    if len(raw)>2_000_000:raise ValueError('模型列表响应过大，请手动填写模型标识')
+                    data=json.loads(raw);rows=data.get('data',data.get('models')) if isinstance(data,dict) else data
+                    if not isinstance(rows,list):
+                        error='模型列表格式无效，请检查地址或手动填写模型标识';continue
+                    models=set()
+                    for row in rows:
+                        model=row.get('id',row.get('name',row.get('model'))) if isinstance(row,dict) else row
+                        if isinstance(model,str) and model.strip() and len(model.strip())<=200:models.add(model.strip())
+                    if rows and not models:
+                        error='模型列表格式无效，请检查地址或手动填写模型标识';continue
+                    # 根路径的兼容服务必须保存完整请求地址，避免推理时再次添加 /v1。
+                    resolved=base if urlsplit(base).path else base+('/responses' if protocol=='responses' else '/chat/completions')
+                    return {'url':resolved,'models':sorted(models),'message':f'已连接 {resolved}，获取到 {len(models)} 个模型' if models else f'已连接 {resolved}，服务返回空模型列表，可手动填写模型标识'}
+                except urllib.error.HTTPError as exc:
+                    code=exc.code;exc.close()
+                    if code in (401,403):raise ValueError(f'获取模型列表 HTTP {code}，请检查 API 密钥及模型列表权限') from None
+                    if code not in (404,405):raise ValueError(f'获取模型列表 HTTP {code}，请检查服务地址；也可手动填写模型标识') from None
+                    error='服务未提供模型列表接口，请检查地址或手动填写模型标识'
+                except (UnicodeError,json.JSONDecodeError):
+                    error='获取模型列表响应无效，请检查地址或手动填写模型标识'
+                except OSError:
+                    error='获取模型列表连接超时或响应无效，请检查服务，也可手动填写模型标识'
+                    # 同一协议无法连接时，不重复测试它的其他路径。
+                    break
+        raise ValueError(error)
 
     def select(self,pid):
         with self.lock:
@@ -173,12 +189,14 @@ class Providers:
             p=next((dict(p) for p in self.data['providers'] if p['id']==pid),None)
             if self.reserved(p):return None
             if p:p['key']=seal(p['secret'],True) if p.get('secret') else '';p.pop('secret',None)
+            if p:p['concurrency']=concurrency_value(p)
             return p
 
     def by_id(self,pid):
         with self.lock:
             p=next((dict(p) for p in self.data['providers'] if p['id']==pid),None)
             if p:p['key']=seal(p.pop('secret'),True) if p.get('secret') else '';p.pop('secret',None)
+            if p:p['concurrency']=concurrency_value(p)
             return p
 
     def bind(self,purpose,pid):

@@ -1,0 +1,140 @@
+{
+  "observed_at": "2026-10-22T04:50:50.222780+00:00",
+  "sdk_sha256": "1c23a9984bd671c4bab8470430e1ab9269de00f3e3405cc9213249e3f7fb454e",
+  "scope": "host-local SDK registration when requested; identity and private network reads; no camera property writes/WFT Set/Change/Delete/capture/firmware calls",
+  "set_number": 0,
+  "calls": [
+    {
+      "api": "EdsInitializeSDK",
+      "code": "0x00000000"
+    },
+    {
+      "api": "EdsGetCameraList",
+      "code": "0x00000000"
+    },
+    {
+      "api": "EdsGetChildCount",
+      "code": "0x00000000"
+    },
+    {
+      "api": "EdsGetChildAtIndex",
+      "code": "0x00000000"
+    },
+    {
+      "api": "EdsOpenSession",
+      "code": "0x00000000"
+    },
+    {
+      "api": "EdsGetPropertySize",
+      "code": "0x00000000"
+    },
+    {
+      "api": "EdsGetPropertyData",
+      "code": "0x00000000"
+    },
+    {
+      "api": "EdsGetPropertySize",
+      "code": "0x00000000"
+    },
+    {
+      "api": "EdsGetPropertyData",
+      "code": "0x00000000"
+    },
+    {
+      "api": "EdsSetPropertyData",
+      "code": "0x00000000"
+    },
+    {
+      "api": "EdsGetPropertySize",
+      "code": "0x00000000"
+    },
+    {
+      "api": "EdsGetPropertyData",
+      "code": "0x00000000"
+    },
+    {
+      "api": "EdsGetPropertySize",
+      "code": "0x00000007"
+    },
+    {
+      "api": "EdsGetPropertySize",
+      "code": "0x00000000"
+    },
+    {
+      "api": "EdsGetPropertyData",
+      "code": "0x00000000"
+    },
+    {
+      "api": "EdsGetPropertySize",
+      "code": "0x00000000"
+    },
+    {
+      "api": "EdsGetPropertyData",
+      "code": "0x00000000"
+    },
+    {
+      "api": "EdsGetWftData",
+      "code": "0x00000000"
+    },
+    {
+      "api": "EdsCloseSession",
+      "code": "0x00000000"
+    },
+    {
+      "api": "EdsRelease",
+      "code": "0x00000000"
+    },
+    {
+      "api": "EdsRelease",
+      "code": "0x00000000"
+    },
+    {
+      "api": "EdsTerminateSDK",
+      "code": "0x00000000"
+    }
+  ],
+  "raw_saved": true,
+  "raw_saved_scope": "EdsGetWftData response only; separate private property snapshots may be saved",
+  "camera_count": 1,
+  "product": "Canon EOS R6m2",
+  "firmware": "1.7.0",
+  "local_sdk_registration": {
+    "code": "0x00000000",
+    "effect": "process-local SDK camera object access flag; destroyed with SDK instance"
+  },
+  "private_properties": {
+    "communication_mode": {
+      "sdk_property": "0x01000023",
+      "size_query_code": "0x00000000",
+      "bytes": 4,
+      "data_type": 9,
+      "read_code": "0x00000000",
+      "raw_sha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119",
+      "raw_uint32": 0
+    },
+    "network_set_info": {
+      "sdk_property": "0x0100005A",
+      "size_query_code": "0x00000007"
+    },
+    "network_info": {
+      "sdk_property": "0x0100005B",
+      "size_query_code": "0x00000000",
+      "bytes": 808,
+      "data_type": 14,
+      "read_code": "0x00000000",
+      "raw_sha256": "5e0a7df7167ef0f386f32d11e07b66d3c59d4762f736a3cf83c469c49c998a8d"
+    },
+    "action_info": {
+      "sdk_property": "0x0100005C",
+      "size_query_code": "0x00000000",
+      "bytes": 408,
+      "data_type": 14,
+      "read_code": "0x00000000",
+      "raw_sha256": "38018655fc8fdeb4eac6f925033d2ea3ef1b98c25fa3466b14d95e9d6b316a40"
+    }
+  },
+  "reported_size": 1336,
+  "guard_intact": true,
+  "raw_bytes": 1336,
+  "raw_sha256": "60224a81eb378750b858d18cbaa2e25b75450f9bd4f95e9c2c1b95b52e2e12d6"
+}

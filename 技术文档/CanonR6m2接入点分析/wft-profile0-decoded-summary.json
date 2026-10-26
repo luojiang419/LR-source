@@ -1,0 +1,70 @@
+{
+  "input_sha256": "60224a81eb378750b858d18cbaa2e25b75450f9bd4f95e9c2c1b95b52e2e12d6",
+  "input_size": 1336,
+  "known_capture": true,
+  "set_number": 0,
+  "obfuscation_enabled": true,
+  "DATA_header_offset": 132,
+  "DATA_payload_offset": 144,
+  "DATA_size": 1192,
+  "roundtrip_identical": true,
+  "roundtrip_sha256": "60224a81eb378750b858d18cbaa2e25b75450f9bd4f95e9c2c1b95b52e2e12d6",
+  "confirmed_fields": [
+    {
+      "tag": "smtd",
+      "header_offset": 200,
+      "value_offset": 212,
+      "uint32": 2,
+      "enum": "InWireless",
+      "meaning": "NSET 传输方法"
+    },
+    {
+      "tag": "nwnm",
+      "header_offset": 216,
+      "value_offset": 228,
+      "uint32": 1,
+      "enum": null,
+      "meaning": "内嵌 NWST 数量"
+    },
+    {
+      "tag": "acnm",
+      "header_offset": 232,
+      "value_offset": 244,
+      "uint32": 1,
+      "enum": null,
+      "meaning": "内嵌 ACTS 数量"
+    },
+    {
+      "tag": "nmtd",
+      "header_offset": 304,
+      "value_offset": 316,
+      "uint32": 2,
+      "enum": "InWireless",
+      "meaning": "NWST 传输方法"
+    },
+    {
+      "tag": "ctyp",
+      "header_offset": 348,
+      "value_offset": 360,
+      "uint32": 2,
+      "enum": "MICRO_AP_AUTO",
+      "meaning": "相机自动接入点"
+    },
+    {
+      "tag": "mode",
+      "header_offset": 1124,
+      "value_offset": 1136,
+      "uint32": 1,
+      "enum": "PTP_PC",
+      "meaning": "EOS Utility 功能角色"
+    }
+  ],
+  "conclusion": "捕获的 SET0 已保存相机自动接入点及 EOS Utility；未证明控制新增设备的全局默认入口",
+  "limitations": [
+    "算法来自固定 SHA 的 EdsNIFParse.dll 静态汇编；未执行目标 DLL",
+    "XOR 可逆不等于 checksum 正确、机身允许写入或恢复成功；未重算 chsm",
+    "NWST/IPV4/IPV6 内层声明长度与实际边界有差异，不递归重建或重新序列化",
+    "明文仅在内存中，不输出字符串、地址、设备标识、密码、种子或 XOR key",
+    "未知哈希样本不复用固定字段偏移；未进行任何相机调用"
+  ]
+}

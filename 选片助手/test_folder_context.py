@@ -8,7 +8,7 @@ from unittest.mock import patch
 
 from PIL import Image
 from playwright.sync_api import sync_playwright
-from catalog_store import Store
+from catalog_store import Store,folder_name
 from folder_watch import FolderWatch
 from model_providers import Providers
 import media_engine as media
@@ -17,6 +17,13 @@ ROOT=Path(__file__).resolve().parents[1]
 
 
 class FolderContextTests(unittest.TestCase):
+    def test_root_drive_and_network_share_names_are_never_empty(self):
+        for value,expected in [('Z:\\','Z:'),(r'\\192.168.1.25\摄影共享',r'\\192.168.1.25\摄影共享'),(r'\\NAS\照片\2026-10-22','2026-10-22')]:
+            self.assertEqual(folder_name(value),expected)
+        with self.store.connect() as c:c.execute("UPDATE sessions SET root=?,name='' WHERE id=?",(r'\\192.168.1.25\摄影共享',self.ids[0]))
+        self.assertEqual(self.store.session(self.ids[0])['name'],r'\\192.168.1.25\摄影共享')
+        self.assertEqual(next(row['name'] for row in self.store.sessions() if row['id']==self.ids[0]),r'\\192.168.1.25\摄影共享')
+
     def setUp(self):
         self.temp=tempfile.TemporaryDirectory();self.base=Path(self.temp.name);self.store=Store(self.base/'data',ROOT)
         self.folders=[];self.ids=[]
@@ -91,9 +98,9 @@ class FolderContextTests(unittest.TestCase):
                         page.wait_for_function('(id)=>FRAMEKEEP_SESSION.id!==id',arg=sid)
                     self.assertIsNone(page.evaluate('()=>FRAMEKEEP_SESSION.id'));self.assertEqual(page.locator('#photo-grid [data-photo]').count(),0)
                     page.reload(wait_until='networkidle');self.assertEqual(page.locator('#folder-list .folder-row').count(),0)
-                    self.assertIn('添加文件夹',page.locator('#catalog-empty').inner_text())
-                    page.locator('#open-folder').click();page.locator('#folder-path').fill(str(self.folders[0]));page.locator('#scan-folder').click()
-                    row(self.ids[0]).wait_for();row(self.ids[0]).click();page.wait_for_function('(id)=>FRAMEKEEP_SESSION.id===id',arg=self.ids[0])
+                    self.assertTrue(page.locator('#catalog-empty').is_visible());self.assertTrue(page.locator('#canon-tether-open').is_enabled())
+                    page.locator('#folder-watch').click();page.locator('#watch-path').fill(str(self.folders[0]));page.locator('#watch-start').click()
+                    row(self.ids[0]).wait_for(state='attached');page.wait_for_function('(id)=>FRAMEKEEP_SESSION.id===id',arg=self.ids[0])
                     self.assertEqual(page.locator('#stars .on').count(),5)
                     self.assertEqual(self.files(),self.before);self.assertFalse(errors,errors)
                     page.screenshot(path=str(out/'readded-folder.png'))

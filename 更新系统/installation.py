@@ -13,6 +13,8 @@ import tempfile
 import uuid
 import base64
 import socket
+import sqlite3
+from contextlib import closing
 
 PRODUCT='framekeep'
 MARKER='.framekeep-install.json'
@@ -93,8 +95,7 @@ def data_directory(root,explicit=None,integration=None):
     if (root/MARKER).is_file():
         state=read_json(root/MARKER)
         if state.get('product')==PRODUCT and same_path(state.get('root',''),root) and state.get('dataPath'):return Path(state['dataPath']).absolute()
-    project=root.parent.parent
-    if (project/'启动末帧.ps1').is_file() and (project/'.framekeep/framekeep.sqlite3').is_file():return project/'.framekeep'
+    if (root/'data').is_dir() and any((root/'data').iterdir()):return root/'data'
     legacy=root/'.framekeep'
     if legacy.is_dir() and any(legacy.iterdir()):return legacy
     if integration:
@@ -104,7 +105,91 @@ def data_directory(root,explicit=None,integration=None):
         if previous_root and not same_path(previous_root,root):
             old=Path(previous_root);legacy=old/'.framekeep'
             if (old/MARKER).is_file() or (legacy.is_dir() and any(legacy.iterdir())):return data_directory(old)
-    return user_data()
+    return root/'data'
+
+
+def prepare_data_directory(root,source):
+    """停机后迁移到安装目录；SQLite backup 包含 WAL，源资料始终保留。"""
+    root=Path(root).absolute();source=Path(source).absolute();target=root/'data'
+    for path in (root,source,target):
+        if any(p.is_symlink() or p.is_junction() for p in (path,*path.parents)):
+            raise ValueError('资料目录不能包含链接，未迁移')
+    if same_path(source,target):
+        target.mkdir(parents=True,exist_ok=True);return target
+    if not source.exists():
+        raise ValueError('原资料目录不存在，未创建空库替代：'+str(source))
+    if source.is_relative_to(target) or target.is_relative_to(source):raise ValueError('新旧资料目录不能重叠')
+    def source_stamp():
+        return {p.relative_to(source).as_posix():[p.stat().st_size,p.stat().st_mtime_ns]
+                for p in source.rglob('*') if p.is_file() and not p.name.endswith('-shm')
+                and (not p.name.endswith('-wal') or p.stat().st_size>0)}
+    stamp=source_stamp()
+    if target.exists() and any(target.iterdir()):
+        receipt=target/'.framekeep-data.json'
+        if receipt.is_file():
+            saved=read_json(receipt)
+            if saved.get('schema')=='framekeep.data' and same_path(saved.get('source',''),source) and saved.get('sourceStamp')==stamp:
+                # 上次已复制成功但程序安装回滚：沿用新目录，不能重新覆盖其启动后数据。
+                return target
+        raise ValueError('安装目录 data 已有资料，未覆盖；请先核对两个资料目录')
+    total=sum(p.stat().st_size for p in source.rglob('*') if p.is_file())
+    if shutil.disk_usage(root).free<total+64*1024**2:raise OSError('安装磁盘空间不足以迁移资料，原目录保留')
+    stage=root/('.data-migration-'+uuid.uuid4().hex);stage.mkdir()
+    try:
+        compact={}
+        database=source/'asset_archive.sqlite3'
+        if database.is_file():
+            with closing(sqlite3.connect(database.as_uri()+'?mode=ro',uri=True)) as archive:
+                if archive.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='metadata_jobs'").fetchone():
+                    for identity,path,status,journal in archive.execute('SELECT id,path,status,journal FROM metadata_jobs'):
+                        value=json.loads(journal);backup=source/'metadata-backups'/(identity+'.bin')
+                        if not re.fullmatch('[0-9a-f]{32}',identity) or not backup.is_file():continue
+                        if not all(k in value for k in ('before','after','before_hash','after_hash')):continue
+                        if digest(backup)!=value['before_hash']:continue  # 不丢弃无法核实的恢复副本。
+                        value.pop('backup',None);value.pop('prepared',None)
+                        value['history']=str(target/'metadata-history'/(identity+'.json'))
+                        compact[identity]={'schema':'framekeep.metadata-history','version':1,'id':identity,
+                                           'source':path,'status':status,'journal':value}
+        for path in source.rglob('*'):
+            if path.is_symlink() or path.is_junction():raise ValueError('原资料包含链接，未迁移：'+str(path))
+            dest=stage/path.relative_to(source)
+            if path.is_dir():dest.mkdir(exist_ok=True);continue
+            if path.parent==source/'metadata-backups' and path.suffix=='.bin' and path.stem in compact:continue
+            if path.name.endswith(('-wal','-shm')) and path.with_name(path.name[:-4]).suffix in ('.sqlite3','.db'):continue
+            if path.suffix in ('.sqlite3','.db'):
+                with closing(sqlite3.connect(path.as_uri()+'?mode=ro',uri=True)) as old,closing(sqlite3.connect(dest)) as new:
+                    old.backup(new)
+                    if new.execute('PRAGMA quick_check').fetchone()[0]!='ok':raise ValueError('迁移数据库校验失败：'+path.name)
+            else:
+                shutil.copy2(path,dest)
+                if digest(path)!=digest(dest):raise ValueError('迁移文件校验失败：'+path.name)
+        for identity,record in compact.items():write_json(stage/'metadata-history'/(identity+'.json'),record)
+        if compact:
+            with closing(sqlite3.connect(stage/'asset_archive.sqlite3')) as archive,archive:
+                for identity,record in compact.items():archive.execute('UPDATE metadata_jobs SET journal=? WHERE id=?',(json.dumps(record['journal'],ensure_ascii=False),identity))
+        # 仅重定位程序配置内指向原 data 的路径；外置缓存/索引、原照片路径保持原值。
+        def relocate(value):
+            if isinstance(value,dict):return {k:relocate(v) for k,v in value.items()}
+            if isinstance(value,list):return [relocate(v) for v in value]
+            if isinstance(value,str):
+                p=Path(value)
+                if p.is_absolute() and (same_path(p,source) or p.is_relative_to(source)):
+                    return str(target/p.relative_to(source))
+            return value
+        for path in stage.rglob('*.json'):
+            try:value=read_json(path)
+            except (ValueError,UnicodeError):continue
+            updated=relocate(value)
+            if value!=updated:write_json(path,updated)
+        if source_stamp()!=stamp:raise ValueError('迁移期间原资料发生变化，未切换资料目录')
+        write_json(stage/'.framekeep-data.json',{'schema':'framekeep.data','version':1,'source':str(source),'path':str(target),'sourceStamp':stamp})
+        if target.exists():target.rmdir()  # 仅接受空目录，不合并或覆写其他资料。
+        stage.rename(target)
+        return target
+    except BaseException:
+        # 此目录只包含本次未发布的复制品；源目录及已有目标不动。
+        shutil.rmtree(stage)
+        raise
 
 
 class WindowsIntegration:
@@ -259,6 +344,9 @@ def refresh_registered_install(root,data):
     root=Path(root)
     if not (root/LAYOUT).is_file() or not registered_here(root):return
     if (root/'.update-state/pending.json').exists():return
+    # 自动刷新只维护安装身份，不能把 FRAMEKEEP_DATA 的隔离运行目录登记为用户资料。
+    # 资料迁移由安装/更新事务显式处理；正常启动也须沿用已有 marker 或注册项。
+    data=data_directory(root,integration=WindowsIntegration())
     layout=read_json(root/LAYOUT)
     if layout.get('product')!=PRODUCT:raise ValueError('安装身份无效')
     records=layout['files']+[{'path':LAYOUT,'size':(root/LAYOUT).stat().st_size,'sha256':digest(root/LAYOUT)}]

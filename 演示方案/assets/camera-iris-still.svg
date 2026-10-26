@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 220" fill="none" color="#83bda4" role="img" aria-label="相机等待下一次拍摄">
+  <circle cx="180" cy="111" r="82" fill="currentColor" opacity=".08"/>
+  <circle cx="180" cy="111" r="89" stroke="currentColor" stroke-opacity=".08"/>
+  <path d="M104 72h31l12-17h49l12 17h40a13 13 0 0 1 13 13v65a13 13 0 0 1-13 13H104a13 13 0 0 1-13-13V85a13 13 0 0 1 13-13Z" fill="currentColor" fill-opacity=".035" stroke="currentColor" stroke-opacity=".7" stroke-width="1.5"/>
+  <path d="M108 72v-7h20v7M99 90h28M239 97v45" stroke="currentColor" stroke-opacity=".3" stroke-width="2" stroke-linecap="round"/>
+  <rect x="218" y="83" width="15" height="7" rx="2" fill="currentColor" fill-opacity=".15"/>
+  <circle cx="246" cy="86" r="2.5" fill="currentColor" opacity=".45"/>
+  <circle cx="180" cy="111" r="43" stroke="currentColor" stroke-opacity=".2"/>
+  <circle cx="180" cy="111" r="35" stroke="currentColor" stroke-opacity=".75" stroke-width="1.5"/>
+  <g stroke="currentColor" stroke-opacity=".55" stroke-linejoin="round"><path d="m172 96 17 0 9 15-9 15h-17l-9-15Z" fill="currentColor" fill-opacity=".06"/><path d="m172 96 20-17m-3 17 25 10m-16 5 4 25m-13-10-20 17m3-17-25-10m16-5-4-25"/></g>
+  <path d="M63 95V80h15m204 15V80h-15M63 139v15h15m204-15v15h-15" stroke="currentColor" stroke-opacity=".2" stroke-width="1.5" stroke-linecap="round"/>
+  <path d="M143 188h74" stroke="currentColor" stroke-opacity=".12" stroke-linecap="round"/>
+</svg>

@@ -64,7 +64,10 @@ CREATE TABLE IF NOT EXISTS archive_sync_targets(id TEXT PRIMARY KEY,folder TEXT 
 CREATE INDEX IF NOT EXISTS raw_pairs_status ON raw_pairs(session,status,updated DESC);
 CREATE INDEX IF NOT EXISTS raw_pairs_updated ON raw_pairs(session,updated DESC);''')
             if 'discover' not in {r[1] for r in c.execute('PRAGMA table_info(raw_session_work)')}:c.execute('ALTER TABLE raw_session_work ADD COLUMN discover INTEGER DEFAULT 0')
+            if 'capture_ids' not in {r[1] for r in c.execute('PRAGMA table_info(raw_session_work)')}:c.execute('ALTER TABLE raw_session_work ADD COLUMN capture_ids TEXT')
             if 'verification' not in {r[1] for r in c.execute('PRAGMA table_info(archive_sync_targets)')}:c.execute("ALTER TABLE archive_sync_targets ADD COLUMN verification TEXT DEFAULT '{}'")
+            import task_history
+            task_history.initialize(c, 'archive_sync_targets')
             self.pending.update(r[0] for r in c.execute("SELECT session FROM raw_session_work WHERE status IN ('queued','running') OR discover=1"))
         archive.on_assignment=self.assignments_changed
         self.thread=threading.Thread(target=self._run,name='jpg-raw-reconcile',daemon=True)
@@ -139,7 +142,7 @@ CREATE INDEX IF NOT EXISTS raw_pairs_updated ON raw_pairs(session,updated DESC);
                 try:
                     if not path.is_file():raise ValueError('文件缺失')
                     if not pair or pair['status']!='applied' or not wanted:raise ValueError('未完成元数据写入')
-                    actual=self.archive.writer.read(path)
+                    actual=self.archive.writer.read_asset(path)
                     for key,value in wanted.items():
                         got=actual.get('XMP-xmp:Rating' if key=='Rating' else 'XMP-fk:'+key)
                         equal=got==value if key=='Rating' else str(got or '')==str(value or '')
@@ -152,12 +155,12 @@ CREATE INDEX IF NOT EXISTS raw_pairs_updated ON raw_pairs(session,updated DESC);
         report['source_assets']=len(expected);report['matched_assets']=len(matched);save(final=True)
     def is_target(self,sid):
         with self.archive.connect() as c:return c.execute('SELECT 1 FROM archive_sync_targets WHERE session=?',(sid,)).fetchone() is not None
-    def task_state(self):
+    def task_state(self, *, limit=20):
         """解析页的真实文件级进度；新一轮核对前不沿用旧轮的成功计数。"""
         batches=[]
         for target in self.targets():
-            if target['status']=='ready':continue
-            if len(batches)>=20:break
+            if target['status']=='ready' or target['task_hidden']:continue
+            if limit is not None and len(batches)>=limit:break
             batch={**target,'verification':json.loads(target['verification'] or '{}'),'counts':{},'total':0,'finished':0,'files':[]}
             scan=self.store.jobs.get(target['scan'])
             if target['status'] in ('indexing','failed'):
@@ -199,6 +202,14 @@ CREATE INDEX IF NOT EXISTS raw_pairs_updated ON raw_pairs(session,updated DESC);
             batch['files']=sorted(files,key=lambda f:(priority.get(f['status'],2),f['name']))[:100]
             batches.append(batch)
         return {'batches':batches}
+
+    def clear_completed_tasks(self):
+        import task_history
+        # 基于实时文件状态与校验结果清理，不能只凭目标目录旧状态判断成功。
+        with self.lock:
+            ids=[batch['id'] for batch in self.task_state(limit=None)['batches'] if batch['status']=='completed' and batch['verification'].get('status')=='completed']
+            with self.archive.connect() as c:
+                return sum(c.execute("UPDATE archive_sync_targets SET task_hidden=1 WHERE id=? AND status='completed' AND task_hidden=0", (target_id,)).rowcount for target_id in ids)
     def source_asset(self,source):
         # 使用永久记录，不要求现场 JPG 仍在线；未备案的纯评级照片也可恢复资产。
         with self.archive.lock,self.archive.connect() as c:
@@ -208,19 +219,31 @@ CREATE INDEX IF NOT EXISTS raw_pairs_updated ON raw_pairs(session,updated DESC);
             c.execute('INSERT INTO assets(id,created,captured,camera) VALUES (?,?,?,?)',(aid,time.time(),record.get('time'),record.get('cameraKey','')))
             c.execute('INSERT INTO catalog_links VALUES (?,?,?)',(source['session'],source['capture'],aid))
             return aid
-    def request(self,sid,discover=False):
+    def request(self,sid,discover=False,capture_ids=None):
         if not sid or not self.store.session(sid):return
         with self.store.connect() as c:
             if c.execute('SELECT 1 FROM settings WHERE key=?',('archive_disabled:'+sid,)).fetchone():return
-        with self.lock:self.pending.add(sid)
-        with self.archive.connect() as c:
-            c.execute("INSERT INTO raw_session_work(session,status,reason,updated,discover) VALUES (?,'queued','',?,?) ON CONFLICT(session) DO UPDATE SET status='queued',reason='',updated=excluded.updated,discover=MAX(raw_session_work.discover,excluded.discover)",(sid,time.time(),int(discover)))
+        if capture_ids is not None:
+            capture_ids=list(dict.fromkeys(capture_ids))
+            if not capture_ids:return
+            if len(capture_ids)>2000:capture_ids=None
+        if discover:capture_ids=None
+        with self.lock,self.archive.connect() as c:
+            previous=c.execute('SELECT status,capture_ids,discover FROM raw_session_work WHERE session=?',(sid,)).fetchone()
+            if previous and previous['status']=='queued':
+                if previous['capture_ids'] is None or capture_ids is None:capture_ids=None
+                else:capture_ids=list(dict.fromkeys(json.loads(previous['capture_ids'])+capture_ids))
+            if capture_ids is not None and len(capture_ids)>2000:capture_ids=None
+            c.execute("INSERT INTO raw_session_work(session,status,reason,updated,discover,capture_ids) VALUES (?,'queued','',?,?,?) ON CONFLICT(session) DO UPDATE SET status='queued',reason='',updated=excluded.updated,discover=MAX(raw_session_work.discover,excluded.discover),capture_ids=excluded.capture_ids",(sid,time.time(),int(discover),dumps(capture_ids) if capture_ids is not None else None))
             c.execute("UPDATE archive_sync_targets SET status='matching',verification='{}',updated=? WHERE session=? AND status IN ('completed','failed','verifying')",(time.time(),sid))
             if discover:c.execute("UPDATE raw_pairs SET status='retrying',signature='' WHERE session=? AND status='failed'",(sid,))
+            self.pending.add(sid)
     def assignments_changed(self,asset_ids):
         with self.archive.connect() as c:
-            sessions={r[0] for aid in asset_ids for r in c.execute('SELECT session FROM catalog_links WHERE asset=?',(aid,))}
-        for sid in sessions:self.request(sid)
+            rows=[r for aid in asset_ids for r in c.execute('SELECT session,capture FROM catalog_links WHERE asset=?',(aid,))]
+        sessions={}
+        for row in rows:sessions.setdefault(row['session'],[]).append(row['capture'])
+        for sid,capture_ids in sessions.items():self.request(sid,capture_ids=capture_ids)
     def enrich(self,sid,records):
         session=self.store.session(sid);missing=[]
         for r in records:
@@ -233,21 +256,26 @@ CREATE INDEX IF NOT EXISTS raw_pairs_updated ON raw_pairs(session,updated DESC);
                 r['captureIdentity']=media.capture_record(path.parent,path,None,m)['captureIdentity']
                 with self.store.connect() as c:c.execute('UPDATE captures SET data=? WHERE session=? AND id=?',(dumps(r),sid,r['id']))
         return records
-    def index_sources(self,sid):
+    def index_sources(self,sid,capture_ids=None):
         session=self.store.session(sid)
         if not session or self.is_target(sid):return False
-        self.archive.ratings.seed_session(sid)
+        if capture_ids is None:self.archive.ratings.seed_session(sid)
         with self.store.connect() as c:shooting=bool(c.execute('SELECT 1 FROM settings WHERE key=?',('shooting_session:'+sid,)).fetchone())
-        records=self.enrich(sid,[r for r in self.store.records(sid) if shooting or (r.get('jpg') and not r.get('raw'))])
+        batches=[self.store.records(sid,ids=capture_ids)] if capture_ids is not None else self.store.iter_records(sid)
         overrides=session['state'].get('overrides',{});changed=False
-        with self.archive.connect() as c:
-            for r in records:
-                rating=max(0,overrides[r['id']]) if r['id'] in overrides else (r.get('existingRating') if r.get('existingRating',0)>0 else None)
-                shared=self.archive.ratings.get(self.archive.ratings.paths(sid,r,session['root']),c)
-                if shared is not None:rating=max(0,shared)
-                old=c.execute('SELECT record,rating FROM raw_sources WHERE session=? AND capture=?',(sid,r['id'])).fetchone()
-                changed=changed or not old or old['record']!=dumps(r) or old['rating']!=rating
-                c.execute('INSERT INTO raw_sources VALUES (?,?,?,?,?) ON CONFLICT(session,capture) DO UPDATE SET record=excluded.record,rating=excluded.rating,updated=excluded.updated',(sid,r['id'],dumps(r),rating,time.time()))
+        for batch in batches:
+            if self.closed.is_set():raise media.ScanCancelled()
+            if capture_ids is not None:self.archive.ratings.seed_records(session,batch)
+            records=self.enrich(sid,[r for r in batch if shooting or (r.get('jpg') and not r.get('raw'))])
+            with self.archive.connect() as c:
+                for r in records:
+                    if self.closed.is_set():raise media.ScanCancelled()
+                    rating=max(0,overrides[r['id']]) if r['id'] in overrides else (r.get('existingRating') if r.get('existingRating',0)>0 else None)
+                    shared=self.archive.ratings.get(self.archive.ratings.paths(sid,r,session['root']),c)
+                    if shared is not None:rating=max(0,shared)
+                    old=c.execute('SELECT record,rating FROM raw_sources WHERE session=? AND capture=?',(sid,r['id'])).fetchone()
+                    changed=changed or not old or old['record']!=dumps(r) or old['rating']!=rating
+                    c.execute('INSERT INTO raw_sources VALUES (?,?,?,?,?) ON CONFLICT(session,capture) DO UPDATE SET record=excluded.record,rating=excluded.rating,updated=excluded.updated',(sid,r['id'],dumps(r),rating,time.time()))
         return changed
     def sources(self):
         with self.archive.connect() as c:return [dict(r) for r in c.execute('SELECT * FROM raw_sources')]
@@ -266,7 +294,7 @@ CREATE INDEX IF NOT EXISTS raw_pairs_updated ON raw_pairs(session,updated DESC);
     def _match_one(self,sid,raw,sources,chosen=None,overwrite=False):
         session=self.store.session(sid);cid=raw['id']
         target_path=media.resolved_file(session['root'],raw.get('raw') or raw['jpg'])
-        target_metadata=self.archive.writer.read(target_path)
+        target_metadata=self.archive.writer.read_asset(target_path)
         embedded_asset=str(target_metadata.get('XMP-fk:AssetId') or '').replace('-','')
         # 同名目录用于限定候选范围；文件身份与拍摄证据仍须独立验证。
         target_parts={part.casefold() for part in Path(raw.get('raw') or raw['jpg']).parent.parts}
@@ -317,8 +345,8 @@ CREATE INDEX IF NOT EXISTS raw_pairs_updated ON raw_pairs(session,updated DESC);
             self._save_pair(sid,cid,'waiting_source','现场照片已找到，等待保存评级或 SKU',source_session=source_sid,source_capture=source_cid,candidates=dumps(candidates[:12]));return
         signature=hashlib.sha256(dumps([source_sid,source_cid,aid,asset['revision'],asset['sku'],asset['scope'],rating]).encode()).hexdigest()
         path=paths[0]
-        if any(p.suffix.lower() not in EMBEDDED_RAW|{'.jpg','.jpeg'} for p in paths):
-            self._save_pair(sid,cid,'unsupported','此 RAW 格式尚未开放内嵌验证，未降级伴随文件',source_session=source_sid,source_capture=source_cid);return
+        if any(p.suffix.lower() not in media.RAW_EXTS|{'.jpg','.jpeg'} for p in paths):
+            self._save_pair(sid,cid,'unsupported','此格式尚未支持元数据写入',source_session=source_sid,source_capture=source_cid);return
         metadata=target_metadata;existing=metadata.get('XMP-xmp:Rating',raw.get('existingRating',0));manual=session['state'].get('overrides',{}).get(cid)
         expected_prior=prior['managed_rating'] if prior else None
         prior_fields={}
@@ -334,7 +362,7 @@ CREATE INDEX IF NOT EXISTS raw_pairs_updated ON raw_pairs(session,updated DESC);
         xmp=path.with_suffix('.xmp')
         if xmp.exists():
             side=self.archive.writer.read(xmp)
-            if (rating is not None and side.get('XMP-xmp:Rating') not in (None,rating)) or (side.get('XMP-fk:SKU') and side['XMP-fk:SKU']!=asset['sku']):
+            if not overwrite and ((rating is not None and side.get('XMP-xmp:Rating') not in (None,0,rating,expected_prior)) or (side.get('XMP-fk:SKU') and side['XMP-fk:SKU'] not in (asset['sku'],prior_fields.get('SKU')))):
                 self._save_pair(sid,cid,'review','同名 XMP 有不同评级/SKU，需先处理，未写 RAW',candidates=dumps(candidates[:12]));return
         if manual_conflict:
             self._save_pair(sid,cid,'review','归档目录有不同人工星级；请先核对并在工作台设为来源星级后重试',source_session=source_sid,source_capture=source_cid,candidates=dumps(candidates[:12]));return
@@ -342,7 +370,7 @@ CREATE INDEX IF NOT EXISTS raw_pairs_updated ON raw_pairs(session,updated DESC);
             self._save_pair(sid,cid,'review',f'归档文件已有 {existing or 0} 星 / {metadata.get("XMP-fk:SKU") or "未备案"}；JPG 为 {rating if rating is not None else "未标记"} 星 / {asset["sku"] or "未备案"}，需要明确确认覆盖',source_session=source_sid,source_capture=source_cid,candidates=dumps(candidates[:12]));return
         all_metadata={str(path):metadata}
         for companion in paths[1:]:
-            m=self.archive.writer.read(companion);all_metadata[str(companion)]=m
+            m=self.archive.writer.read_asset(companion);all_metadata[str(companion)]=m
             if not overwrite and ((rating is not None and m.get('XMP-xmp:Rating') not in (None,0,rating,expected_prior)) or (m.get('XMP-fk:SKU') and m['XMP-fk:SKU'] not in (asset['sku'],prior_fields.get('SKU')))):
                 self._save_pair(sid,cid,'review','归档 JPG 已有不同星级/SKU，请核对后确认覆盖',source_session=source_sid,source_capture=source_cid,candidates=dumps(candidates[:12]));return
         if prior and prior['signature']==signature and prior['operation']:
@@ -366,29 +394,41 @@ CREATE INDEX IF NOT EXISTS raw_pairs_updated ON raw_pairs(session,updated DESC);
                     fields={'AssetId':aid,'FileId':file['id'],'SKU':asset['sku'],'ShootType':asset['scope'],'ProjectId':asset['project'],'SegmentId':asset['segment'],'MetadataRevision':max(1,asset['revision'],int(metadata.get('XMP-fk:MetadataRevision') or 0)+1)}
                     if rating is not None:fields['Rating']=rating
                     c.execute("UPDATE metadata_jobs SET status='cancelled',reason='由归档星级/SKU 联合同步取代' WHERE file=? AND path=? AND status='queued'",(file['id'],str(path)))
-                    c.execute('INSERT INTO metadata_jobs(id,operation,file,asset,revision,path,expected_sha,mode,fields,status,created) VALUES (?,?,?,?,?,?,?,?,?,?,?)',(uid(),op,file['id'],aid,asset['revision'],str(path),sha(path),'embedded',dumps(fields),'queued',time.time()))
-            self._save_pair(sid,cid,'queued','已匹配现场记录，等待写入文件内部',source_session=source_sid,source_capture=source_cid,candidates=dumps(candidates[:12]),signature=signature,operation=op)
-    def process_session(self,sid):
-        records=self.store.records(sid);archive_folder=self.is_target(sid);raws=[r for r in records if r.get('raw') or (archive_folder and r.get('jpg'))]
+                    c.execute('INSERT INTO metadata_jobs(id,operation,file,asset,revision,path,expected_sha,mode,fields,status,created) VALUES (?,?,?,?,?,?,?,?,?,?,?)',(uid(),op,file['id'],aid,asset['revision'],str(path),sha(path),'sidecar',dumps(fields),'queued',time.time()))
+            self._save_pair(sid,cid,'queued','已匹配现场记录，RAW 使用 XMP，JPG 更新元数据',source_session=source_sid,source_capture=source_cid,candidates=dumps(candidates[:12]),signature=signature,operation=op)
+    def process_session(self,sid,capture_ids=None):
+        records=self.store.records(sid,ids=capture_ids);archive_folder=self.is_target(sid);raws=[r for r in records if r.get('raw') or (archive_folder and r.get('jpg'))]
         with self.store.connect() as c:
             if not archive_folder and c.execute('SELECT 1 FROM settings WHERE key=?',('shooting_session:'+sid,)).fetchone():raws=[]
             if c.execute('SELECT 1 FROM settings WHERE key=?',('archive_disabled:'+sid,)).fetchone():return
             exclusions=c.execute('SELECT value FROM settings WHERE key=?',('archive_excluded:'+sid,)).fetchone()
         excluded=json.loads(exclusions[0]) if exclusions else []
         raws=[r for r in raws if not any(str(Path(r.get('raw') or r.get('jpg')).parent).replace('\\','/')==folder or str(Path(r.get('raw') or r.get('jpg')).parent).replace('\\','/').startswith(folder+'/') for folder in excluded)]
-        changed=self.index_sources(sid)
+        changed=self.index_sources(sid,capture_ids)
         if not raws:
+            if capture_ids is not None:
+                with self.archive.connect() as c:pairs=c.execute('SELECT session,capture FROM raw_pairs WHERE source_session=? AND source_capture IN ('+','.join('?' for _ in capture_ids)+')',(sid,*capture_ids)).fetchall()
+                related={}
+                for pair in pairs:related.setdefault(pair['session'],[]).append(pair['capture'])
+                for related_sid,ids in related.items():self.request(related_sid,capture_ids=ids)
+                return
             with self.archive.connect() as c:related={r[0] for r in c.execute('SELECT DISTINCT session FROM raw_pairs WHERE source_session=?',(sid,))}
             if changed:
                 with self.store.connect() as c:managed={r[0].split(':',1)[1] for r in c.execute("SELECT key FROM settings WHERE key LIKE 'archive_session:%'")}
                 related.update(t['session'] for t in self.targets() if t['status']!='ready' or t['session'] in managed)
             for related_sid in related:self.request(related_sid,discover=True)
             return
-        with self.store.connect() as c:sessions=[dict(s) for s in c.execute('SELECT id FROM sessions')]
-        for s in sessions:
-            if s['id']!=sid:self.index_sources(s['id'])
+        if capture_ids is None:
+            with self.store.connect() as c:sessions=[dict(s) for s in c.execute('SELECT id FROM sessions')]
+            for s in sessions:
+                if s['id']!=sid:self.index_sources(s['id'])
         raws=self.enrich(sid,raws);buckets={};all_sources=[]
-        for source in self.sources():
+        sources=None
+        if capture_ids is not None:
+            with self.archive.connect() as c:
+                known=c.execute('SELECT DISTINCT s.*,p.capture AS target_capture FROM raw_sources s JOIN raw_pairs p ON p.source_session=s.session AND p.source_capture=s.capture WHERE p.session=? AND p.capture IN ('+','.join('?' for _ in capture_ids)+')',(sid,*capture_ids)).fetchall()
+            if len({row['target_capture'] for row in known})>=len(raws):sources=[dict(row) for row in known]
+        for source in sources if sources is not None else self.sources():
             source['parsed']=json.loads(source['record']);ident=identity(source['parsed']);source['parsed']['_identity']=ident
             buckets.setdefault((ident['model'],ident['time']),[]).append(source)
             all_sources.append(source)
@@ -428,15 +468,15 @@ CREATE INDEX IF NOT EXISTS raw_pairs_updated ON raw_pairs(session,updated DESC);
                         r=json.loads(record[0]);r['liveRating']=rating if rating is not None else r.get('existingRating',0)
                         if rating is not None:r['existingRating']=rating
                         c.execute('UPDATE captures SET data=? WHERE session=? AND id=?',(dumps(r),row['session'],row['capture']))
-                self._save_pair(row['session'],row['capture'],'applied','星级与 SKU 已写入归档文件内部' if rating is not None else 'SKU 已写入归档文件；现场无明确评级，原星级保持',managed_rating=rating)
-                self.request(row['session'])
+                self._save_pair(row['session'],row['capture'],'applied','星级与 SKU 已同步到归档元数据' if rating is not None else 'SKU 已同步；现场无明确评级，原星级保持',managed_rating=rating)
+                self.request(row['session'],capture_ids=[row['capture']])
             elif 'failed' in statuses:self._save_pair(row['session'],row['capture'],'failed','；'.join(j['reason'] for j in op['jobs'] if j['status']=='failed')[:350])
             elif statuses=={'cancelled'}:
-                self._save_pair(row['session'],row['capture'],'cancelled','来源已变更，旧任务已取消');self.request(row['session'])
+                self._save_pair(row['session'],row['capture'],'cancelled','来源已变更，旧任务已取消');self.request(row['session'],capture_ids=[row['capture']])
     def review(self,pair_id,source_session,source_capture,overwrite=False):
         with self.archive.connect() as c:pair=c.execute('SELECT * FROM raw_pairs WHERE id=?',(pair_id,)).fetchone()
         if not pair:raise ValueError('RAW 配对任务不存在')
-        raw=next(r for r in self.store.records(pair['session']) if r['id']==pair['capture'])
+        raw=self.store.records(pair['session'],ids=[pair['capture']])[0]
         self.match_one(pair['session'],raw,self.sources(),(source_session,source_capture),overwrite)
         return self.state(pair['session'])
     def retry(self,pair_id):
@@ -470,7 +510,7 @@ CREATE INDEX IF NOT EXISTS raw_pairs_updated ON raw_pairs(session,updated DESC);
                     if source:sources[key]=dict(source)
         catalog={}
         for row in rows:
-            if row['session'] not in catalog:catalog[row['session']]={r['id']:r for r in self.store.records(row['session'])}
+            if row['session'] not in catalog:catalog[row['session']]={r['id']:r for r in self.store.records(row['session'],ids=[p['capture'] for p in rows if p['session']==row['session']])}
             row['candidates']=json.loads(row['candidates']);record=catalog[row['session']].get(row['capture'],{});row['filename']=record.get('raw') or record.get('jpg') or row['capture']
             source=sources.get((row['source_session'],row['source_capture']))
             if source:
@@ -483,17 +523,21 @@ CREATE INDEX IF NOT EXISTS raw_pairs_updated ON raw_pairs(session,updated DESC);
     def tick(self):
         self.refresh_completed()
         self.refresh_targets()
-        with self.lock:sid=self.pending.pop() if self.pending else None
+        with self.lock:
+            sid=self.pending.pop() if self.pending else None
+            if sid:
+                with self.archive.connect() as c:
+                    work=c.execute('SELECT updated,discover,capture_ids FROM raw_session_work WHERE session=?',(sid,)).fetchone()
+                    if work is None:return
+                    stamp=work['updated']
+                    c.execute("UPDATE raw_session_work SET status='running',discover=0 WHERE session=?",(sid,))
         if sid:
-            with self.archive.connect() as c:
-                work=c.execute('SELECT updated,discover FROM raw_session_work WHERE session=?',(sid,)).fetchone();stamp=work['updated']
-                c.execute("UPDATE raw_session_work SET status='running',discover=0 WHERE session=?",(sid,))
             try:
                 if work['discover']:self.discover_raws(sid)
-                self.process_session(sid)
+                self.process_session(sid,json.loads(work['capture_ids']) if work['capture_ids'] is not None and not work['discover'] else None)
                 with self.archive.connect() as c:c.execute("UPDATE raw_session_work SET status='completed',reason='' WHERE session=? AND updated=?",(sid,stamp))
             except Exception as exc:
-                with self.archive.connect() as c:c.execute("UPDATE raw_session_work SET status='failed',reason=? WHERE session=? AND updated=?",(str(exc)[:300],sid,stamp))
+                with self.archive.connect() as c:c.execute('UPDATE raw_session_work SET status=?,reason=? WHERE session=? AND updated=?',('queued' if self.closed.is_set() else 'failed','应用退出，等待恢复' if self.closed.is_set() else str(exc)[:300],sid,stamp))
     def _run(self):
         while not self.closed.is_set():
             try:self.tick()

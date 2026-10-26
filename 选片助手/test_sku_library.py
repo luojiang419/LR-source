@@ -1,5 +1,6 @@
 """真实 OCR 来源、SKU 双视图、缩略图标注及非破坏归档移出。"""
 import json
+from datetime import datetime
 from pathlib import Path
 import tempfile
 import threading
@@ -21,6 +22,13 @@ ROOT=Path(__file__).resolve().parents[1]
 
 
 class SkuLibraryTests(unittest.TestCase):
+    def test_confirmed_onsite_assignment_is_visible_without_ocr_and_wins_over_old_reading(self):
+        self.sku.archive=self.archive
+        preview=self.archive.preview(self.sid,[self.ids[0]],'REAL-SKU-100','细节图')
+        self.archive.apply(preview['preview_id']);self.recognize(0,'OLD-WRONG-900',100)
+        self.assertEqual(labels(self.sku,self.sid)['labels'],{self.ids[0]:'REAL-SKU-100'})
+        result=browse(self.sku);self.assertEqual(result['total'],1);self.assertEqual(result['groups'][0]['sku'],'REAL-SKU-100')
+
     def setUp(self):
         self.temp=tempfile.TemporaryDirectory();self.base=Path(self.temp.name);self.photos=self.base/'photos'
         self.photos.mkdir()
@@ -48,6 +56,8 @@ class SkuLibraryTests(unittest.TestCase):
         self.assertEqual(browse(self.sku)['groups'],[])
         self.recognize(0,'A-100',10);self.recognize(1,'A-1001',20);self.recognize(2,['B-200','B-201'],30)
         listing=browse(self.sku)
+        self.assertEqual([r['created'] for r in listing['groups']],[10,20])
+        self.assertEqual([entry['created'] for root in listing['roots'] for folder in root['folders'] for entry in folder['skus']],[10,20])
         self.assertEqual([r['sku'] for r in listing['groups']],['A-100','A-1001'])
         self.assertEqual(labels(self.sku,self.sid)['labels'],{self.ids[0]:'A-100',self.ids[1]:'A-1001'})
         self.assertEqual(labels(self.sku,'another-session')['labels'],{})
@@ -74,7 +84,8 @@ class SkuLibraryTests(unittest.TestCase):
         self.assertEqual(self.catalog.item(item['id'])['sku'],'MANUAL-100')
 
     def test_browser_labels_tabs_tree_search_sort_and_archive_context_actions(self):
-        self.recognize(0,'A-100',10);self.recognize(1,'B-200',20)
+        stamp=datetime(2026,10,22,10).timestamp()
+        self.recognize(0,'A-100',stamp);self.recognize(1,'B-200',stamp+60)
         http=server.ThreadingHTTPServer(('127.0.0.1',0),server.Handler);http.daemon_threads=True
         values={'STORE':self.store,'DATA':self.store.data,'SKU':self.sku,'ARCHIVE':self.archive,'ANALYSIS':None,'MODELS':self.providers,'CATALOG':self.catalog,'WATCH':None,'MOUSE':None,'RAWLINK':None,'FILESEARCH':None,'UPDATES':None}
         patches=[patch.object(server,key,value) for key,value in values.items()]
@@ -92,6 +103,8 @@ class SkuLibraryTests(unittest.TestCase):
                     out=ROOT/'build/sku-library';out.mkdir(exist_ok=True,parents=True);page.screenshot(path=str(out/'selection.png'))
                     page.locator('#sku-database-open').click();page.wait_for_selector('#sku-database-list [data-db-sku]')
                     self.assertEqual(page.locator('#sku-database-list [data-db-sku]').count(),2)
+                    self.assertEqual(page.locator('#sku-database-list .sku-added-date').count(),2)
+                    self.assertEqual(page.locator('#sku-database-list .sku-added-date').first.inner_text(),'入库 2026-10-22')
                     self.assertEqual(page.locator('.sku-database-sidebar #sku-database-search').count(),1)
                     page.locator('#sku-database-sort').select_option('added')
                     page.wait_for_function('()=>document.querySelector("#sku-database-list button").textContent.includes("B-200")')
@@ -101,6 +114,7 @@ class SkuLibraryTests(unittest.TestCase):
                     page.screenshot(path=str(out/'flat.png'))
                     page.locator('#sku-view-tree').click();page.wait_for_selector('#sku-database-tree [data-db-root]')
                     self.assertEqual(page.locator('#sku-database-tree .catalog-root>summary>span').inner_text(),'photos')
+                    self.assertEqual(page.locator('#sku-database-tree .sku-added-date').count(),2)
                     page.locator('#sku-database-tree summary[data-db-folder="B"]').click()
                     page.wait_for_function('()=>document.getElementById("sku-database-title").textContent.startsWith("B ·")')
                     self.assertEqual(page.locator('#sku-database-grid .catalog-card').count(),1)

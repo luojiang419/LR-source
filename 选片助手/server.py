@@ -47,6 +47,7 @@ from http.server import SimpleHTTPRequestHandler,ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlsplit,parse_qs,unquote,quote
 import assistant_config
+import task_status
 import media_engine as media
 from mouse_remote import MouseRemote
 from folder_watch import FolderWatch
@@ -65,11 +66,19 @@ from archive_pipeline import ArchivePipeline
 from everything_search import EverythingSearch
 from file_reveal import reveal_capture,open_session_folder
 from update_client import UpdateClient
+from preview_cache import cache_for,PreviewWarmer
+from cache_storage import CacheStorage
+from canon_link import CanonLink
+from reference_library import ReferenceLibrary
+import reference_api
+import session_browser
+from preview_codec import image_mime
 
 ROOT=Path(os.environ['FRAMEKEEP_APP_ROOT']) if os.environ.get('FRAMEKEEP_APP_ROOT') else (Path(sys.executable).parent if getattr(sys,'frozen',False) else Path(__file__).resolve().parents[1])
 WEB=Path(getattr(sys,'_MEIPASS',ROOT))/'演示方案'
-DATA=Path(os.environ.get('FRAMEKEEP_DATA',str(ROOT/'.framekeep')))
-if not os.environ.get('FRAMEKEEP_DATA') and (ROOT/'.framekeep-install.json').is_file():
+DATA=Path(os.environ.get('FRAMEKEEP_DATA',str(ROOT/'data')))
+if not os.environ.get('FRAMEKEEP_DATA'):
+    if not getattr(sys,'frozen',False):sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'更新系统'))
     from installation import data_directory
     DATA=data_directory(ROOT)
 TOKEN=secrets.token_urlsafe(32)
@@ -92,6 +101,10 @@ UPDATES=None
 CATALOG=None
 COMPONENTS=None
 DRIVER=None
+PREVIEWS=None
+STORAGE=None
+CANON=None
+REFERENCES=None
 
 
 def preparation_groups(path, body):
@@ -104,18 +117,31 @@ def preparation_groups(path, body):
         if provider and provider.get('protocol')=='local':MODELS.check_inference(provider)
     return list(dict.fromkeys(p['model'] for p in providers if p and p.get('protocol')=='local'))
 
-def ui_photos(sid=None):
+def ui_photos(sid=None,records=None):
     session=STORE.session(sid)
     if not session:return []
     result=[]
-    for record in STORE.records(session['id']):
-        r=dict(record);r['preview']=f"/api/preview/{session['id']}/{r['id']}?size=480";r['previewLarge']=f"/api/preview/{session['id']}/{r['id']}?size=1800"
-        if r.get('raw'):r['previewRaw']=f"/api/preview/{session['id']}/{r['id']}?size=2400&decode=1"
-        if 'liveRating' in r:
-            for key in ('preview','previewLarge','previewRaw'):
-                if key in r:r[key]+='&v='+r['fingerprint']
+    bounded=records is not None
+    records=STORE.records(session['id']) if records is None else records
+    if PREVIEWS:
+        if bounded:PREVIEWS.enqueue(session['root'],records)
+        else:PREVIEWS.ensure_session(session,records)
+    for record in records:
+        r=dict(record);r['preview']=f"/api/preview/{session['id']}/{r['id']}?size=480";r['previewLarge']=f"/api/preview/{session['id']}/{r['id']}?size=2048"
+        if r.get('raw'):r['previewRaw']=r['previewLarge']
+        for key in ('preview','previewLarge','previewRaw'):
+            if key in r:r[key]+='&v='+quote(r['fingerprint'])
         result.append(r)
     return result
+
+
+def browse_state(sid=None,query=None):
+    session=STORE.session(sid)
+    if not session:return None,[]
+    if session_browser.count(STORE,session['id'])>session_browser.LARGE_SESSION:
+        session,records=session_browser.read(STORE,session['id'],query,ARCHIVE)
+        return session,ui_photos(session['id'],records=records)
+    return rated_session(session['id']),ui_photos(session['id'])
 
 def shooting_export_name(name):
     if __import__('re').fullmatch(r'\d{4}-\d{2}-\d{2}\.xlsx',str(name)):return Path(name).name
@@ -125,6 +151,27 @@ def shooting_export_name(name):
 def rated_session(sid=None):
     session=STORE.session(sid)
     return ARCHIVE.ratings.session(session,STORE.records(session['id'])) if ARCHIVE and session else session
+
+
+def save_session_state(body,partial=False):
+    # 会话版本更新与评级/SKU 回调保持同序，防止另一窗口的新评级被迟到回调覆盖。
+    with STORE.browser_lock:
+        sid=body['session_id']
+        if partial:
+            before,state,revision=session_browser.patch_state(STORE,sid,body['revision'],body['changes'])
+        else:
+            before=STORE.session(sid) if isinstance(body.get('rating_baseline'),dict) else rated_session(sid)
+            state=body['state'];revision=STORE.save(sid,body['revision'],state)
+        baseline={**before['state'].get('overrides',{}),**before.get('sharedRatings',{}),**(body.get('rating_baseline') or {})}
+        result={'revision':revision}
+        if ARCHIVE:ARCHIVE.ratings.saved(sid,before,state,baseline)
+        if SKU:
+            try:SKU.on_save(sid,{**before['state'],'overrides':baseline},state)
+            except Exception:result['sku_error']='星级已保存，但 SKU 识别未能排队，请在拍摄对账面板重试'
+        if RAWLINK:
+            changed=[cid for cid in baseline.keys()|state.get('overrides',{}).keys() if baseline.get(cid)!=state.get('overrides',{}).get(cid)]
+            if changed:RAWLINK.request(sid,capture_ids=changed)
+        return result
 
 
 def rated_manifest(selected_only=True,sid=None):
@@ -159,6 +206,12 @@ class Handler(SimpleHTTPRequestHandler):
         if not self.trusted():return self.reply({'error':'本机 Host 不匹配'},403)
         url=urlsplit(self.path);path=unquote(url.path)
         try:
+            if path.startswith('/api/reference/'):
+                query={key:values[0] for key,values in parse_qs(url.query,max_num_fields=16).items()}
+                result=reference_api.local_get(REFERENCES,path.removeprefix('/api/reference/'),query)
+                if path=='/api/reference/preferences':result={**result,'request_token':TOKEN}
+                if isinstance(result,bytes):self.preview_cache='private, max-age=30'
+                return self.reply(result,kind=image_mime(result) if isinstance(result,bytes) else 'application/json; charset=utf-8')
             if path=='/api/update':return self.reply(UPDATES.state() if UPDATES else {'status':'idle','available':False})
             if path=='/api/update/health':
                 busy=any(j['status'] in ('queued','running','cancelling') for j in STORE.folder_state()['scans'])
@@ -168,19 +221,32 @@ class Handler(SimpleHTTPRequestHandler):
                         with service.connect() as c:
                             for table in tables:
                                 busy=busy or bool(c.execute(f"SELECT 1 FROM {table} WHERE status IN ('queued','running') LIMIT 1").fetchone())
-                return self.reply({'busy':busy})
+                return self.reply({'busy':busy or bool(STORAGE and STORAGE.job.get('status')=='running') or bool(REFERENCES and REFERENCES.storage.job.get('status')=='running')})
             if path=='/assets/demo-data.js':
-                session=rated_session();data={'id':session['id'],'name':session['name'],'root':session['root'],'snapshot':session['snapshot'],'revision':session['revision'],'saved':session['state'],'sharedRatings':session.get('sharedRatings',{}),'demo':False} if session else {'id':None,'name':'未打开文件夹','root':'','snapshot':'','revision':0,'saved':{},'demo':False}
-                js='window.FRAMEKEEP_SESSION='+stable_json(data)+';window.DEMO_PHOTOS='+stable_json(ui_photos(data['id']))+';'
+                session,rows=browse_state();data={'id':session['id'],'name':session['name'],'root':session['root'],'snapshot':session['snapshot'],'revision':session['revision'],'saved':session['state'],'sharedRatings':session.get('sharedRatings',{}),'browser':session.get('browser'),'demo':False} if session else {'id':None,'name':'未打开文件夹','root':'','snapshot':'','revision':0,'saved':{},'demo':False}
+                js='window.FRAMEKEEP_SESSION='+stable_json(data)+';window.DEMO_PHOTOS='+stable_json(rows)+';'
                 return self.reply(js.encode(),kind='text/javascript; charset=utf-8')
             if path=='/api/state':
-                sid=parse_qs(url.query).get('session_id',[None])[0];session=rated_session(sid)
+                params={key:values[0] for key,values in parse_qs(url.query,keep_blank_values=True).items()};sid=params.get('session_id');session,rows=browse_state(sid,params)
                 if sid and not session:return self.reply({'error':'文件夹会话不存在'},404)
-                rows=ui_photos(session['id'] if session else None);catalog=[dict(r,captured_at_local=r['time']) for r in rows]
-                return self.reply({'demo':False,'database':'SQLite','session':session,**STORE.folder_state(),'catalog':catalog,'indexed_captures':len(rows),'indexed_files':sum(r['fileCount'] for r in rows),'snapshot_hash':session['snapshot'] if session else '', 'request_token':TOKEN,'bridge':{'last_seen':BRIDGE_LAST_SEEN,'latest_job':self.bridge_job()}})
+                catalog=[dict(r,captured_at_local=r.get('time')) for r in rows];browser=session.get('browser',{}) if session else {}
+                return self.reply({'demo':False,'database':'SQLite','session':session,**STORE.folder_state(),'catalog':catalog,'indexed_captures':browser.get('total',len(rows)),'indexed_files':browser.get('files',sum(r.get('fileCount',0) for r in rows)),'snapshot_hash':session['snapshot'] if session else '', 'request_token':TOKEN,'bridge':{'last_seen':BRIDGE_LAST_SEEN,'latest_job':self.bridge_job()}})
             if path=='/api/config':return self.reply(assistant_config.public_config())
+            if path=='/api/selection/tree':
+                from selection_folders import tree
+                return self.reply(tree(STORE))
+            if path=='/api/selection/group-tail':
+                params={k:v[0] for k,v in parse_qs(url.query).items()}
+                session,records=session_browser.read(STORE,params['session_id'],{**params,'tail_capture':params['capture_id'],'filter':'all','q':'','folder':'','limit':2,'offset':0},ARCHIVE)
+                return self.reply({'photos':ui_photos(session['id'],records)})
+            if path=='/api/selection/files':
+                from selection_folders import files
+                q=parse_qs(url.query)
+                return self.reply(files(STORE,q.get('session_id',[''])[0],q.get('folder',[''])[0],int(q.get('offset',['0'])[0])))
+            if path=='/api/ratings/sync':return self.reply(ARCHIVE.ratings.sync.state() if ARCHIVE else {'pending':0,'failed':0,'applied':0,'issues':[]})
             if path=='/api/providers':return self.reply(MODELS.public() if MODELS else {'providers':[],'selected':{}})
-            if path=='/api/sku/full-auto':return self.reply(SKU.full_auto_state() if SKU else {'enabled':False,'can_enable':False,'reason':'OCR 服务尚未启动'})
+            if path=='/api/providers/runtime':return self.reply(local_inference.snapshot())
+            if path=='/api/sku/full-auto':return self.reply(SKU.full_auto_state(parse_qs(url.query).get('session_id',[None])[0]) if SKU else {'enabled':False,'can_enable':False,'reason':'OCR 服务尚未启动'})
             if path=='/api/components':return self.reply(COMPONENTS.snapshot() if COMPONENTS else {'status':'ready','ready':[]})
             if path=='/api/mouse/driver':return self.reply(DRIVER.state() if DRIVER else {'status':'ready','installed':True})
             if path=='/api/search/status':return self.reply(FILESEARCH.status() if FILESEARCH else {'available':False,'message':'文件检索未启动'})
@@ -190,11 +256,25 @@ class Handler(SimpleHTTPRequestHandler):
             if path=='/api/assets/search':
                 q=parse_qs(url.query)
                 return self.reply(ARCHIVE.search(**{k:q.get(k,['prefix' if k=='mode' else ''])[0] for k in ('sku','scope','project','mode','cursor')}))
-            if path=='/api/catalog/state':return self.reply(CATALOG.state())
-            if path=='/api/catalog/tree':return self.reply(CATALOG.tree())
+            if path=='/api/video-preview':return self.reply(CATALOG.video.state() if CATALOG else {'frame_number':3,'ready':False,'message':'归档服务未启动'})
+            if path=='/api/gpu-media':
+                import gpu_media,gpu_video
+                return self.reply({'images':gpu_media.state(),'video':gpu_video.state()})
+            if path.startswith('/api/catalog/video/stream/'):
+                query=parse_qs(url.query)
+                return CATALOG.playback.stream(self,path.rsplit('/',1)[-1],query.get('session',[''])[0],query.get('start',[0])[0])
+            if path=='/api/catalog/video/state':
+                return self.reply(CATALOG.playback.state(parse_qs(url.query).get('session',[''])[0]))
+            if path=='/api/catalog/state':
+                state=CATALOG.state()
+                if PREVIEWS:state['previews']=PREVIEWS.archive_state(root['id'] for root in state['roots'])
+                return self.reply(state)
+            if path=='/api/catalog/tree':
+                q=parse_qs(url.query)
+                return self.reply(CATALOG.tree(q.get('q',[''])[0],q.get('media',[''])[0]))
             if path=='/api/catalog/items':
                 q=parse_qs(url.query)
-                data=CATALOG.items(q.get('root',[''])[0],q.get('folder',[''])[0],q.get('sku',[''])[0],q.get('offset',[0])[0],q.get('limit',[120])[0],q.get('cursor',[''])[0])
+                data=CATALOG.items(q.get('root',[''])[0],q.get('folder',[''])[0],q.get('sku',[''])[0],q.get('offset',[0])[0],q.get('limit',[120])[0],q.get('cursor',[''])[0],q.get('q',[''])[0],q.get('media',[''])[0])
                 if ARCHIVE:ARCHIVE.ratings.decorate(data['rows'])
                 return self.reply(data)
             if path=='/api/catalog/skus':
@@ -202,7 +282,22 @@ class Handler(SimpleHTTPRequestHandler):
                 return self.reply({'rows':browse(SKU,parse_qs(url.query).get('q',[''])[0])['groups']})
             if path.startswith('/api/catalog/preview/'):
                 self.preview_cache='private, max-age=31536000, immutable'
-                return self.reply(CATALOG.preview(path.rsplit('/',1)[-1],parse_qs(url.query).get('size',[420])[0]).read_bytes(),kind='image/jpeg')
+                params=parse_qs(url.query)
+                payload=CATALOG.preview(path.rsplit('/',1)[-1],params.get('size',[420])[0],read=True,frame=params.get('frame',[None])[0])
+                return self.reply(payload,kind=image_mime(payload))
+            if path.startswith('/api/catalog/details/'):
+                item_id=path.rsplit('/',1)[-1]
+                if parse_qs(url.query).get('refresh',['0'])[0]=='1':CATALOG.metadata.request(item_id,force=True)
+                data=CATALOG.details(item_id,ROOT)
+                if ARCHIVE:ARCHIVE.ratings.decorate([data['item']])
+                return self.reply(data)
+            if path.startswith('/api/catalog/metadata/'):
+                if ARCHIVE is None:raise ValueError('元数据服务未启动')
+                item_id=path.rsplit('/',1)[-1]
+                CATALOG._root(CATALOG.item(item_id)['root'])
+                CATALOG.metadata.request(item_id,force=parse_qs(url.query).get('refresh',['0'])[0]=='1')
+                cached=CATALOG.metadata.cached(item_id)
+                return self.reply({**cached['data'].get('description',{}),'metadata_status':cached['status'],'metadata_error':cached['error']})
             if path=='/api/assets':
                 q=parse_qs(url.query)
                 return self.reply(ARCHIVE.query(q.get('sku',[''])[0],q.get('scope',[''])[0],q.get('project',[''])[0],int(q.get('offset',['0'])[0])))
@@ -213,11 +308,15 @@ class Handler(SimpleHTTPRequestHandler):
             if path=='/api/parsing':return self.reply(parsing_state())
             if path=='/api/sku/library/labels':
                 from sku_library import labels
-                return self.reply(labels(SKU,parse_qs(url.query).get('session_id',[''])[0]))
+                params=parse_qs(url.query,keep_blank_values=True)
+                return self.reply(labels(SKU,params.get('session_id',[''])[0],[v for v in params['ids'][0].split(',') if v] if 'ids' in params else None))
+            if path=='/api/sku/rules':return self.reply(SKU.sku_rules())
+            if path=='/api/sku/ocr/details':
+                q=parse_qs(url.query);return self.reply(SKU.ocr_details(q.get('session_id',[''])[0],q.get('capture_id',[''])[0]))
             if path=='/api/sku/library':
                 from sku_library import browse
                 q=parse_qs(url.query)
-                data=browse(SKU,q.get('q',[''])[0],q.get('sort',['name'])[0],q.get('root',[''])[0],q.get('folder',[''])[0],q.get('sku',[''])[0],q.get('offset',[0])[0],q.get('limit',[120])[0])
+                data=browse(SKU,q.get('q',[''])[0],q.get('sort',['name'])[0],q.get('root',[''])[0],q.get('folder',[''])[0],q.get('sku',[''])[0],q.get('offset',[0])[0],q.get('limit',[120])[0],bin_id=q.get('bin_id',[''])[0])
                 if ARCHIVE:ARCHIVE.ratings.decorate(data['rows'])
                 return self.reply(data)
             if path=='/api/parsing/capture':
@@ -236,6 +335,11 @@ class Handler(SimpleHTTPRequestHandler):
                 return self.reply({'operations':rows})
             if path.startswith('/api/metadata/operations/'):return self.reply(ARCHIVE.operation(path.rsplit('/',1)[-1]))
             if path=='/api/sku':return self.reply(SKU.state() if SKU else {'project':None,'projects':[],'rows':[],'jobs':[]})
+            if path=='/api/sku/gallery':
+                if SKU is None:raise ValueError('SKU 服务未启动')
+                from sku_presentation import gallery
+                q=parse_qs(url.query)
+                return self.reply(gallery(SKU,q.get('project_id',[''])[0],q.get('sku',[''])[0],q.get('offset',[0])[0],q.get('limit',[60])[0]))
             if path=='/api/sku/image':
                 if SKU is None:raise ValueError('SKU 服务未启动')
                 params=parse_qs(url.query)
@@ -258,7 +362,12 @@ class Handler(SimpleHTTPRequestHandler):
                 return self.reply(WATCH.state())
             if path=='/api/health':
                 with STORE.connect() as c:pending=c.execute("SELECT COUNT(*) FROM bridge_jobs WHERE status='pending'").fetchone()[0]
-                return self.reply({'application':'framekeep','process_id':os.getpid(),'busy':any(j['status'] in ('queued','running','cancelling') for j in STORE.folder_state()['scans']) or bool(pending)})
+                return self.reply({'application':'framekeep','process_id':os.getpid(),'busy':any(j['status'] in ('queued','running','cancelling') for j in STORE.folder_state()['scans']) or bool(pending) or bool(STORAGE and STORAGE.job.get('status')=='running') or bool(REFERENCES and REFERENCES.storage.job.get('status')=='running')})
+            if path=='/api/task-status':return self.reply(task_status.snapshot(STORE,SKU,ARCHIVE,CATALOG,ANALYSIS,RAWLINK,COMPONENTS,UPDATES,STORAGE))
+            if path=='/api/preview-cache':return self.reply(STORAGE.state() if STORAGE else cache_for(DATA/'previews').state())
+            if path=='/api/sku/metadata/sync':
+                return self.reply({'sync':getattr(SKU,'metadata_sync',None).state() if getattr(SKU,'metadata_sync',None) else None})
+            if path=='/api/canon':return self.reply(CANON.state() if CANON else {'enabled':False,'message':'Canon 接入服务未启动'})
             if path.startswith('/api/scan/'):
                 job=STORE.jobs.get(path.rsplit('/',1)[-1]);return self.reply(job or {'error':'索引任务不存在'},200 if job else 404)
             if path.startswith('/api/runs/'):
@@ -269,9 +378,9 @@ class Handler(SimpleHTTPRequestHandler):
                 if not session or not row:return self.reply({'error':'照片不存在'},404)
                 try:
                     params=parse_qs(url.query);size=int(params.get('size',['480'])[0]);decode=params.get('decode',['0'])[0]=='1'
-                    record=json.loads(row[0]);p=media.preview(record,session['root'],DATA/'previews',media.find_exiftool(ROOT),size,decode)
+                    record=json.loads(row[0]);payload=media.preview_bytes(record,session['root'],DATA/'previews',lambda:media.find_exiftool(ROOT),size,decode)
                     if params.get('v',[''])[0]==record['fingerprint']:self.preview_cache='private, max-age=31536000, immutable'
-                    return self.reply(p.read_bytes(),kind='image/jpeg')
+                    return self.reply(payload,kind=image_mime(payload))
                 except Exception:
                     self.preview_cache='no-store';return self.reply(media.placeholder(),422,kind='image/jpeg')
             if path=='/bridge/hello':
@@ -288,7 +397,7 @@ class Handler(SimpleHTTPRequestHandler):
             if path.startswith('/api/') or path.startswith('/bridge/'):return self.reply({'error':'未知接口'},404)
             resolved=(WEB/path.lstrip('/')).resolve();resolved.relative_to(WEB.resolve())
             if resolved.is_dir() and resolved!=WEB.resolve():return self.reply({'error':'禁止目录列表'},403)
-            if resolved!=WEB.resolve() and resolved.suffix.lower() not in ('.js','.css','.html','.jpg','.png'):return self.reply({'error':'非公开文件'},403)
+            if resolved!=WEB.resolve() and resolved.suffix.lower() not in ('.js','.css','.html','.jpg','.png','.svg'):return self.reply({'error':'非公开文件'},403)
             return super().do_GET()
         except (BrokenPipeError,ConnectionResetError,ConnectionAbortedError):return
         except (ValueError,FileNotFoundError):return self.reply({'error':'请求或路径非法'},400)
@@ -307,13 +416,48 @@ class Handler(SimpleHTTPRequestHandler):
             for job in STORE.folder_state()['scans']:
                 if job['status'] in ('queued','running'):STORE.cancel_scan(job['id'])
             self.reply({'ok':True});threading.Thread(target=self.server.shutdown,daemon=True).start();return
+        if path=='/api/desktop/canon':
+            secret=os.environ.get('FRAMEKEEP_DESKTOP_TOKEN')
+            if not secret or not secrets.compare_digest(self.headers.get('X-Framekeep-Desktop',''),secret):return self.reply({'error':'桌面实例不匹配'},403)
+            try:
+                length=int(self.headers.get('Content-Length','0'))
+                if not 0<length<=65536:raise ValueError('无效的照片通知')
+                body=json.loads(self.rfile.read(length))
+                if CANON is None:raise ValueError('Canon 接入服务未启动')
+                return self.reply(CANON.receive(body.get('paths')))
+            except (ValueError,OSError) as exc:return self.reply({'error':str(exc)},400)
         if bridge:
             if self.headers.get('X-Framekeep-Bridge')!=BRIDGE_TOKEN:return self.reply({'error':'桥接令牌无效'},403)
         elif self.headers.get('X-Framekeep-Token')!=TOKEN or self.headers.get('Origin',f'http://127.0.0.1:{self.server.server_port}')!=f'http://127.0.0.1:{self.server.server_port}':return self.reply({'error':'请从本机工作台发起操作'},403)
         try:
             length=int(self.headers.get('Content-Length','0'))
-            if not 0<length<=(30_000_000 if path=='/api/sku/import' else 16_000_000):return self.reply({'error':'请求过大或为空'},400)
+            maximum=280_000_000 if path=='/api/sku/metadata/import' else 30_000_000 if path=='/api/sku/import' else 16_000_000
+            if not 0<length<=maximum:return self.reply({'error':'请求过大或为空'},400)
             body=json.loads(self.rfile.read(length))
+            if path=='/api/reference/task':
+                if REFERENCES is None:raise ValueError('参考资源服务未启动')
+                project=SKU.project() if SKU else None
+                return self.reply(REFERENCES.sync_task(STORE.active_id(),project.get('id') if project else None))
+            if path.startswith('/api/reference/'):
+                return self.reply(reference_api.local_post(REFERENCES,path.removeprefix('/api/reference/'),body))
+            if path=='/api/video-preview':
+                if CATALOG is None:raise ValueError('归档服务未启动')
+                result=CATALOG.video.configure(body.get('frame_number'))
+                if PREVIEWS:PREVIEWS.reconcile_archive(videos_only=True)
+                return self.reply(result)
+            if path=='/api/preview-cache':
+                if STORAGE:return self.reply(STORAGE.configure(body.get('limit_gb')))
+                result=cache_for(DATA/'previews').budget.configure(body.get('limit_gb'))
+                return self.reply(STORAGE.state() if STORAGE else result)
+            if path=='/api/preview-cache/manage':
+                if STORAGE is None:raise ValueError('缓存管理服务未启动')
+                return self.reply(STORAGE.start(body.get('action'),body.get('path','')))
+            if path=='/api/canon':
+                if CANON is None:raise ValueError('Canon 接入服务未启动')
+                return self.reply(CANON.configure(body.get('enabled'),body.get('follow_eos',False)))
+            if path=='/api/canon/destination':
+                if CANON is None:raise ValueError('Canon 接入服务未启动')
+                return self.reply(CANON.configure_destination(body.get('folder')))
             if path=='/api/components/prepare':
                 groups=body['groups'] if 'groups' in body else preparation_groups(body.get('path',''),body.get('body',{}))
                 return self.reply({**(COMPONENTS.start(groups) if COMPONENTS and groups else {'status':'ready','ready':[]}), 'groups':groups if COMPONENTS else []})
@@ -325,9 +469,22 @@ class Handler(SimpleHTTPRequestHandler):
             if path=='/api/update/open':return self.reply(UPDATES.open())
             if path=='/api/update/cancel':return self.reply(UPDATES.cancel())
             if path=='/api/folders/open':return self.reply(open_session_folder(STORE,body['session_id']))
-            if path=='/api/catalog/add':return self.reply(CATALOG.add_root(body['folder']))
-            if path=='/api/catalog/scan':return self.reply(CATALOG.scan(body['root_id']))
-            if path=='/api/catalog/assign':return self.reply(CATALOG.assign(body['item_id'],body['sku']))
+            if path=='/api/catalog/add':return self.reply(REFERENCES.add_root(body['folder']) if REFERENCES else CATALOG.add_root(body['folder']))
+            if path=='/api/catalog/video/stop':
+                CATALOG.playback.stop(body.get('session',''));return self.reply({'ok':True})
+            if path=='/api/catalog/scan':return self.reply(REFERENCES.rescan(body['root_id']) if REFERENCES else CATALOG.scan(body['root_id']))
+            if path=='/api/catalog/metadata':
+                if ARCHIVE is None:raise ValueError('元数据服务未启动')
+                from photo_metadata import save
+                return self.reply(save(ARCHIVE,CATALOG,body['item_id'],body.get('metadata'),body.get('token')))
+            if path=='/api/catalog/assign':
+                operation=None
+                if ARCHIVE and CATALOG.item(body['item_id'])['media_type']=='image':
+                    from photo_metadata import assign_sku
+                    operation=assign_sku(ARCHIVE,CATALOG,body['item_id'],body['sku'])
+                item=CATALOG.assign(body['item_id'],body['sku'])
+                if operation:item['metadata_operation']=operation['operation']['id']
+                return self.reply(item)
             if path=='/api/catalog/rating':
                 item=CATALOG.item(body['item_id']);rating=body.get('rating')
                 if type(rating) is not int or rating not in range(6):raise ValueError('星级必须为 0–5 的整数')
@@ -338,7 +495,10 @@ class Handler(SimpleHTTPRequestHandler):
                     for sid in sessions:RAWLINK.request(sid)
                 return self.reply({'item_id':item['id'],'rating':rating})
             if path=='/api/catalog/open':return self.reply(CATALOG.open_folder(body['root_id'],body.get('folder','')))
-            if path=='/api/catalog/remove':return self.reply(CATALOG.remove(body['root_id'],body.get('folder','')))
+            if path=='/api/catalog/remove':
+                if REFERENCES and body.get('folder','') in ('','/'):
+                    return self.reply(REFERENCES.remove_root(body['root_id']))
+                return self.reply(CATALOG.remove(body['root_id'],body.get('folder','')))
             if path=='/api/folders/remove':
                 sid=body['session_id']
                 if not STORE.session(sid):raise ValueError('文件夹不存在')
@@ -355,7 +515,14 @@ class Handler(SimpleHTTPRequestHandler):
                 if path=='/api/raw-sync/review':return self.reply(RAWLINK.review(body['pair_id'],body['source_session'],body['source_capture'],body.get('overwrite',False)))
             if path.startswith('/api/parsing/'):
                 channel=body.get('channel')
-                if path=='/api/parsing/ocr':
+                if path=='/api/parsing/clear-completed':
+                    for service in (SKU, ANALYSIS, RAWLINK):
+                        if service:service.clear_completed_tasks()
+                elif path=='/api/parsing/clear-list':
+                    if channel!='ocr':raise ValueError('解析任务类型无效')
+                    if SKU is None:raise ValueError('OCR 服务尚未启动')
+                    SKU.clear_task_list()
+                elif path=='/api/parsing/ocr':
                     if SKU is None:raise ValueError('OCR 服务尚未启动')
                     SKU.enqueue_parses(body['session_id'],body['capture_ids'])
                 elif path=='/api/parsing/configure':
@@ -385,18 +552,27 @@ class Handler(SimpleHTTPRequestHandler):
             if path=='/api/archive/start':
                 p=SKU.project()
                 if not p or not p['scope'] or p['session_id']!=body.get('session_id'):raise ValueError('请先选择并绑定对账工作表')
-                return self.reply(ARCHIVE.start_stream(p['session_id'],p['id'],p['scope'],mode='embedded',start_capture=body.get('start_capture')))
-            if path=='/api/archive/configure':return self.reply(ARCHIVE.configure_stream(body['stream_id'],True,'embedded'))
+                return self.reply(ARCHIVE.start_stream(p['session_id'],p['id'],p['scope'],mode='sidecar',start_capture=body.get('start_capture')))
+            if path=='/api/archive/configure':return self.reply(ARCHIVE.configure_stream(body['stream_id'],True,'sidecar'))
             if path=='/api/archive/close':return self.reply(ARCHIVE.close_stream(body['stream_id'],body['sku']))
             if path=='/api/archive/segment-apply':return self.reply(ARCHIVE.apply_segment(body['segment_id']))
             if path=='/api/assets/relocate':return self.reply(ARCHIVE.relocate(body['folder']))
-            if path=='/api/metadata/preview':return self.reply(ARCHIVE.preview(body['session_id'],body['capture_ids'],body['sku'],body['scope'],body.get('project',''),'embedded',body.get('overwrite',False)))
+            if path=='/api/metadata/group/preview':
+                from metadata_group import preview_group
+                return self.reply(preview_group(ARCHIVE,SKU,body['session_id'],body['capture_id'],body.get('capture_ids'),body['sku'],body['scope'],body.get('project','')))
+            if path=='/api/metadata/group/apply':
+                from metadata_group import apply_group
+                return self.reply(apply_group(ARCHIVE,SKU,body['preview_id'],body['sku']))
+            if path=='/api/metadata/preview':return self.reply(ARCHIVE.preview(body['session_id'],body['capture_ids'],body['sku'],body['scope'],body.get('project',''),'sidecar',body.get('overwrite',False)))
             if path=='/api/metadata/apply':return self.reply(ARCHIVE.apply(body['preview_id']))
             if path=='/api/metadata/retry':return self.reply(ARCHIVE.retry(body['operation_id']))
             if path=='/api/metadata/revert':return self.reply(ARCHIVE.revert(body['operation_id']))
             if path.startswith('/api/providers/'):
                 if MODELS is None:raise ValueError('模型配置服务未启动')
-                if path=='/api/providers/builtin':return self.reply(MODELS.set_builtin(body['enabled']))
+                if path=='/api/providers/builtin':
+                    state=MODELS.set_builtin(body['enabled'])
+                    state['runtime']=local_inference.preload(MODELS.selected('ocr') if state['builtin_enabled'] else None)
+                    return self.reply(state)
                 if path=='/api/providers/save':return self.reply(MODELS.save(body))
                 if path=='/api/providers/models':return self.reply(MODELS.models(body))
                 if path=='/api/providers/select':return self.reply(MODELS.select(body['id']))
@@ -408,11 +584,32 @@ class Handler(SimpleHTTPRequestHandler):
                     return self.reply(MODELS.save({'id':'legacy-config','name':'原 AI 助手','category':'multimodal','protocol':'responses','url':c['url'],'model':c['model'],'key':c['key']}))
             if path.startswith('/api/sku/'):
                 if SKU is None:raise ValueError('SKU 对账服务未启动')
+                if path=='/api/sku/header':
+                    from sku_presentation import rename_header
+                    return self.reply(rename_header(SKU,body.get('project_id'),body.get('key'),body.get('title')))
+                if path=='/api/sku/cover':
+                    from sku_presentation import select_images
+                    return self.reply(select_images(SKU,body.get('project_id'),body.get('choices')))
+                if path=='/api/sku/metadata/export':
+                    from sku_metadata_backup import export_metadata
+                    return self.reply(export_metadata(SKU))
+                if path=='/api/sku/metadata/import':
+                    from sku_metadata_backup import import_metadata
+                    from sku_metadata_sync import attach
+                    try:content=base64.b64decode(body['content_base64'],validate=True)
+                    except Exception:raise ValueError('元数据文件内容无效') from None
+                    imported=import_metadata(SKU,content,sync=attach(SKU,CATALOG,RAWLINK))
+                    return self.reply(imported)
+                if path=='/api/sku/library/manage':
+                    from sku_library_management import manage
+                    return self.reply(manage(SKU,ARCHIVE,body))
                 if path=='/api/sku/parse':return self.reply(SKU.parse_capture(body['session_id'],body['capture_id']))
+                if path=='/api/sku/rules':return self.reply(SKU.set_sku_rules(body.get('rules'),body.get('length_filter')))
+                if path=='/api/sku/ocr/choose':return self.reply(SKU.choose_ocr_sku(body['session_id'],body['capture_id'],body['sku'],body['reading_key'],body['image_key'],body.get('scope','')))
                 if path=='/api/sku/import':
                     try:content=base64.b64decode(body['content_base64'],validate=True)
                     except Exception:raise ValueError('Excel 文件内容无效') from None
-                    return self.reply(SKU.import_file(body['name'],content,body.get('session_id')))
+                    return self.reply(SKU.import_file(body['name'],content,body.get('session_id'),body.get('preferred_scope')))
                 if path=='/api/sku/configure':return self.reply(SKU.configure(body['project_id'],body.get('session_id'),body['scope'],body.get('enabled',True)))
                 if path=='/api/sku/activate':return self.reply(SKU.activate(body['project_id']))
                 if path=='/api/sku/recognize':return self.reply(SKU.enqueue(body['session_id'],body['capture_id']))
@@ -423,9 +620,11 @@ class Handler(SimpleHTTPRequestHandler):
                     return self.reply({'path':str(SKU.export(p['id'])),'project_id':p['id'],'name':shooting_export_name(p['name'])})
             if path=='/api/watch/start':
                 if WATCH is None:raise ValueError('监控服务未启动')
+                if CANON:CANON.pause()
                 result=WATCH.start(body['folder'],body.get('recursive',True));STORE.activate(result['session_id']);return self.reply(result)
             if path=='/api/watch/stop':
                 if WATCH is None:raise ValueError('监控服务未启动')
+                if CANON:CANON.pause()
                 return self.reply(WATCH.stop())
             if path in ('/api/open','/api/folders') and WATCH and WATCH.state()['enabled']:
                 watched=WATCH.state()['folder'].casefold()
@@ -458,19 +657,15 @@ class Handler(SimpleHTTPRequestHandler):
             if path=='/api/bridge/install':
                 from install_bridge import install
                 return self.reply({'path':str(install(ROOT))})
+            if path=='/api/ratings/retry':return self.reply(ARCHIVE.ratings.sync.retry())
             if path=='/api/open':return self.reply({'scan_id':STORE.scan(body['folder'],body.get('recursive',True))},202)
             if path=='/api/folders':return self.reply({'scan_ids':STORE.scan_many(body['folders'],body.get('recursive',True))},202)
             if path=='/api/scan/cancel':return self.reply(STORE.cancel_scan(body['scan_id']))
             if path=='/api/activate':STORE.activate(body['session_id']);return self.reply({'ok':True})
             if path=='/api/session':
-                before=rated_session(body['session_id']);revision=STORE.save(body['session_id'],body['revision'],body['state']);result={'revision':revision}
-                if ARCHIVE:ARCHIVE.ratings.saved(body['session_id'],before,body['state'],body.get('rating_baseline'))
-                if SKU:
-                    previous={**before['state'],'overrides':body.get('rating_baseline',{**before['state'].get('overrides',{}),**before.get('sharedRatings',{})})}
-                    try:SKU.on_save(body['session_id'],previous,body['state'])
-                    except Exception:result['sku_error']='星级已保存，但 SKU 识别未能排队，请在拍摄对账面板重试'
-                if RAWLINK:RAWLINK.request(body['session_id'])
-                return self.reply(result)
+                return self.reply(save_session_state(body))
+            if path=='/api/session/patch':
+                return self.reply(save_session_state(body,partial=True))
             if path in ('/api/analyze','/api/reviews'):return self.reply({'error':'AI 选片已移除。'},410)
             if path=='/api/export':return self.reply(rated_manifest(body.get('selected_only',True),body.get('session_id')))
             if path=='/api/bridge':
@@ -510,7 +705,7 @@ def watch_desktop_parent(http):
     threading.Thread(target=watch,daemon=True).start()
 
 def main():
-    global STORE,MOUSE,WATCH,MODELS,SKU,ARCHIVE,ANALYSIS,RAWLINK,FILESEARCH,UPDATES,CATALOG,COMPONENTS,DRIVER
+    global STORE,MOUSE,WATCH,MODELS,SKU,ARCHIVE,ANALYSIS,RAWLINK,FILESEARCH,UPDATES,CATALOG,COMPONENTS,DRIVER,PREVIEWS,CANON,STORAGE,REFERENCES
     parser=argparse.ArgumentParser();parser.add_argument('--port',type=int,default=8769);parser.add_argument('--folder');parser.add_argument('--browser',action='store_true');parser.add_argument('--no-browser',action='store_true');parser.add_argument('--install-bridge',action='store_true');args=parser.parse_args()
     if args.install_bridge:
         from install_bridge import install
@@ -524,19 +719,35 @@ def main():
             webbrowser.open(f'http://127.0.0.1:{args.port}/')
         return
     server.daemon_threads=True
+    import gpu_media,gpu_video
+    from video_preview import find_tool
+    gpu_media.warmup()
+    if find_tool('ffmpeg'):gpu_video.warmup(find_tool('ffmpeg'))
     STORE=Store(DATA,ROOT)
+    CATALOG=AssetCatalog(DATA)
+    STORAGE=CacheStorage(DATA,STORE,CATALOG)
+    PREVIEWS=PreviewWarmer(cache_for(DATA/'previews'),lambda:media.find_exiftool(ROOT),catalog=CATALOG,autostart=False)
+    STORE.on_previews=PREVIEWS.enqueue
+    CATALOG.on_previews=PREVIEWS.enqueue
     MOUSE=MouseRemote(settings_path=DATA/'mouse-remote.json')
     WATCH=FolderWatch(STORE)
     MODELS=Providers(DATA,legacy=assistant_config.load_config)
     COMPONENTS=ComponentManager(DATA,seeds=[ROOT/'runtime/components',ROOT/'.runtime/component-seed',ROOT/'.runtime',ROOT.parent.parent/'.runtime'])
     DRIVER=DriverSetup(COMPONENTS,DATA,activator=MOUSE.activate_driver)
     local_inference.configure(ROOT,DATA,COMPONENTS)
+    if MODELS.public().get('builtin_enabled'):local_inference.preload(MODELS.selected('ocr'))
     scheduler=VisionScheduler()
     ARCHIVE=AssetArchive(STORE,autostart=False)
-    CATALOG=AssetCatalog(DATA)
+    CATALOG.metadata.start()
+    # 后台归档可能长时间持锁读取照片，须先完成共享评级初始化。
+    for session in STORE.sessions():ARCHIVE.ratings.seed_session(session['id'])
     FILESEARCH=EverythingSearch(ARCHIVE)
-    SKU=SkuService(STORE,MODELS,archive=ARCHIVE,scheduler=scheduler)
-    ARCHIVE.sku=SKU;ARCHIVE.thread.start()
+    STORE.discovery=FILESEARCH
+    CATALOG.discovery=FILESEARCH
+    REFERENCES=ReferenceLibrary(DATA,FILESEARCH,PREVIEWS,catalog=CATALOG)
+    PREVIEWS.reconcile_archive()
+    SKU=SkuService(STORE,MODELS,archive=ARCHIVE,scheduler=scheduler,require_sku_choice=True)
+    ARCHIVE.sku=SKU
     ANALYSIS=AssetAnalysis(ARCHIVE,MODELS,scheduler)
     RAWLINK=RawReconcile(ARCHIVE)
     UPDATES=UpdateClient(ROOT,DATA,args.port)
@@ -544,11 +755,19 @@ def main():
         ARCHIVE.ratings.seed_session(sid)
         RAWLINK.request(sid,discover=True);ANALYSIS.request_auto(sid);PIPELINE.changed(sid)
     PIPELINE=ArchivePipeline(CATALOG,ARCHIVE,SKU,RAWLINK,autostart=False)
+    from sku_metadata_sync import attach
+    attach(SKU,CATALOG,RAWLINK)
     STORE.on_catalog=catalog_changed
-    for session in STORE.sessions():ARCHIVE.ratings.seed_session(session['id'])
+    STORE.on_external_metadata=ARCHIVE.ratings.observe_sidecars
+    ARCHIVE.thread.start()
+    ARCHIVE.ratings.sync.thread.start()
     PIPELINE.thread.start()
+    CANON=CanonLink(STORE,WATCH,os.environ.get('FRAMEKEEP_DESKTOP_EXE',str(ROOT/'末帧选片.exe')),
+                    allow_registration=bool(os.environ.get('FRAMEKEEP_DESKTOP_PID')) and os.environ.get('FRAMEKEEP_CANON_REGISTRATION','1')!='0')
     watch_desktop_parent(server)
     if args.folder:STORE.scan(args.folder)
+    # 完成评级恢复等初始化后再全速预热，避免 28 路缓存写入争抢启动磁盘。
+    PREVIEWS.start()
     url=f'http://127.0.0.1:{args.port}/';print('末帧工作台：'+url,flush=True)
     if not args.no_browser and (args.browser or getattr(sys,'frozen',False)):
         import webbrowser
@@ -556,6 +775,9 @@ def main():
     try:server.serve_forever()
     except KeyboardInterrupt:pass
     finally:
+        REFERENCES.close()
+        if getattr(SKU,'metadata_sync',None):SKU.metadata_sync.close()
+        CANON.close()
         PIPELINE.close()
         RAWLINK.close()
         ANALYSIS.close()
@@ -564,6 +786,9 @@ def main():
         COMPONENTS.close()
         ARCHIVE.close()
         WATCH.close()
+        STORAGE.close()
+        PREVIEWS.close()
+        CATALOG.close()
         MOUSE.close()
         server.server_close()
         for job in STORE.folder_state()['scans']:

@@ -1,0 +1,75 @@
+{
+  "kind": "ordinary offline FIR structure and public-key verification; not REA decompilation",
+  "model_id": "0x80000481",
+  "version": "1.7.0",
+  "bytes": 76866784,
+  "sha256": "764cb4734ef204d8a6578a7351909263f322d0641acd8fe6bb9960b2016fc0d7",
+  "checksum_valid": true,
+  "signature_algorithm": "ECDSA / secp256r1 / SHA-256",
+  "signature_valid": {
+    "header_and_updater": true,
+    "firmware_payload": true
+  },
+  "signed_regions": [
+    {
+      "offset": 0,
+      "length": 32
+    },
+    {
+      "offset": 36,
+      "length": 68
+    },
+    {
+      "offset": 256,
+      "length": 5091472
+    },
+    {
+      "offset": 5091728,
+      "length": 71775056
+    }
+  ],
+  "encrypted_regions": {
+    "updater": {
+      "offset": 288,
+      "length": 5091440,
+      "iv": "9909576c3c6a064d7a2824c232b18af6"
+    },
+    "firmware": {
+      "offset": 5091776,
+      "length": 71775008,
+      "iv": "7a2824c232b18af61090063e18d717f1"
+    }
+  },
+  "limitations": [
+    "Not decrypted; no menu or configuration symbols recovered.",
+    "Public-key verification does not generate replacement signatures or observe the camera loader."
+  ],
+  "negative_controls": {
+    "header_bit_flip_with_repaired_checksum": {
+      "checksum_valid": true,
+      "signature_valid": {
+        "header_and_updater": false,
+        "firmware_payload": true
+      }
+    },
+    "payload_bit_flip_with_repaired_checksum": {
+      "checksum_valid": true,
+      "signature_valid": {
+        "header_and_updater": true,
+        "firmware_payload": false
+      }
+    },
+    "bad_region_count": {
+      "rejected": true,
+      "reason": "invalid declared size or region count"
+    },
+    "out_of_bounds_region": {
+      "rejected": true,
+      "reason": "invalid, overlapping or out-of-bounds signed region"
+    },
+    "bad_signature_length": {
+      "rejected": true,
+      "reason": "invalid ECDSA scalar length"
+    }
+  }
+}

@@ -51,6 +51,76 @@ class FullAutoWorkflowTests(unittest.TestCase):
     def tick(self,n=1):
         for _ in range(n):self.clock[0]+=2;self.sku.tick()
     def jobs(self):return self.sku.state()['jobs']
+
+    def test_rating_xmp_sync_does_not_repeat_completed_ocr(self):
+        self.sku.set_full_auto(True,self.sid);self.tick(3)
+        self.assertEqual(len(self.calls),3)
+        self.archive.ratings.seed_session(self.sid)
+        self.archive.ratings.set([self.photos/'0.JPG'],4)
+        for _ in range(20):
+            if not self.archive.ratings.sync.process_one():break
+        self.tick(3)
+        self.assertEqual(len(self.calls),3)
+        self.assertEqual(len(self.jobs()),3)
+
+    def test_two_star_label_precedes_existing_background_scan_and_keeps_single_job(self):
+        self.sku.set_full_auto(True);self.sku._queue_full_auto()
+        before=self.store.session(self.sid)['state'];after=copy.deepcopy(before);after['overrides'][self.cids[-1]]=2
+        session=self.store.session(self.sid);self.store.save(self.sid,session['revision'],after);self.sku.on_save(self.sid,before,after)
+        seen=[]
+        original=self.sku._valid
+        def valid(job):seen.append(job['capture_id']);return original(job)
+        self.sku._valid=valid;self.sku.recognizer=lambda *_:reading(CODE,confidence=0)
+        self.tick();self.assertEqual(seen[0],self.cids[-1]);self.assertEqual(len(self.jobs()),3)
+        self.assertEqual(next(j for j in self.jobs() if j['capture_id']==self.cids[-1])['status'],'matched')
+
+    def test_two_star_observed_suffix_archives_whole_first_interval_without_changing_plan(self):
+        from sku_library import labels,browse
+        self.sku.set_full_auto(True);self.sku._queue_full_auto()
+        record=self.store.records(self.sid)[-1];state=copy.deepcopy(self.store.session(self.sid)['state']);state['overrides'][record['id']]=2
+        session=self.store.session(self.sid);self.store.save(self.sid,session['revision'],state)
+        actual='LC7877496-P904';self.sku.recognizer=lambda *_:reading(actual,confidence=0)|{'unscored':True}
+        # 老手动 OCR 比队列创建晚，但比本次完成早，不能遮住新完成的真实款号。
+        with self.sku.connect() as c:c.execute('INSERT INTO parse_jobs(id,session_id,capture_id,status,created,result) VALUES (?,?,?,?,?,?)',('old-manual',self.sid,record['id'],'completed',101,json.dumps({'codes':[actual,'261009 G82']})))
+        self.tick()
+        job=next(j for j in self.jobs() if j['capture_id']==record['id']);self.assertEqual(job['status'],'matched');self.assertTrue(job['result']['starred_label'])
+        self.assertEqual(self.archive.query(actual)['total'],3)
+        self.assertEqual(self.sku.rows(self.pid,'模特图')[0]['status'],'未拍摄')
+        added=[r for r in self.sku.rows(self.pid) if r['sku']==actual];self.assertEqual(len(added),1);self.assertEqual(added[0]['sheet'],'临时插拍')
+        self.assertEqual(labels(self.sku,self.sid)['labels'],{cid:actual for cid in self.cids});self.assertEqual(browse(self.sku)['total'],3)
+        from capture_parsing import capture_status
+        self.assertEqual(capture_status(self.store,self.sku,self.archive,None,self.sid,record['id'])['ocr']['codes'],[actual])
+        self.assertEqual(self.archive.query(CODE)['total'],0)
+        for _ in range(4):self.archive.process_one()
+        self.assertEqual(self.sku._rating(self.sid,self.store.records(self.sid)[-1]),2)
+
+    def test_unread_two_star_label_blocks_next_interval_from_crossing_it(self):
+        from sku_library import labels
+        session=self.store.session(self.sid);state=copy.deepcopy(session['state']);state['overrides'].update({self.cids[1]:2,self.cids[2]:2});self.store.save(self.sid,session['revision'],state)
+        self.sku.set_full_auto(True);calls=[]
+        def read(*_):
+            calls.append(1)
+            return {'codes':[],'text':'','unscored':True,'confidence':0} if len(calls)==1 else reading(CODE,confidence=0)
+        self.sku.recognizer=read;self.tick(2)
+        self.assertEqual(labels(self.sku,self.sid)['labels'],{self.cids[2]:CODE})
+        self.assertEqual(self.archive.query(CODE)['total'],1)
+
+    def test_removing_two_star_marker_stops_extending_its_full_auto_result(self):
+        from sku_library import labels
+        session=self.store.session(self.sid);state=copy.deepcopy(session['state']);state['overrides'][self.cids[-1]]=2;self.store.save(self.sid,session['revision'],state)
+        self.sku.recognizer=lambda *_:reading(CODE,confidence=0);self.sku.set_full_auto(True);self.tick()
+        self.assertEqual(len(labels(self.sku,self.sid)['labels']),3)
+        session=self.store.session(self.sid);state=copy.deepcopy(session['state']);state['overrides'][self.cids[-1]]=1;self.store.save(self.sid,session['revision'],state)
+        self.sku.on_save(self.sid,session['state'],state);self.sku.deliver_events(self.archive)
+        self.assertEqual(labels(self.sku,self.sid)['labels'],{self.cids[-1]:CODE})
+
+    def test_two_star_retry_of_prior_review_happens_once(self):
+        self.sku.set_full_auto(True);self.sku.recognizer=lambda *_:reading('UNKNOWN9999',confidence=0);self.tick(3)
+        record=self.store.records(self.sid)[-1];before=self.store.session(self.sid)['state'];after=copy.deepcopy(before);after['overrides'][record['id']]=2
+        session=self.store.session(self.sid);self.store.save(self.sid,session['revision'],after);self.sku.on_save(self.sid,before,after)
+        self.sku.recognizer=lambda *_:reading(CODE,confidence=0);self.tick()
+        job=next(j for j in self.jobs() if j['capture_id']==record['id']);self.assertEqual(job['status'],'matched')
+        with self.sku.connect() as c:self.assertEqual(c.execute('SELECT count(*) FROM jobs WHERE capture_id=?',(record['id'],)).fetchone()[0],1)
     def test_all_ratings_scan_fuzzy_enters_library_and_records_survive_metadata(self):
         self.sku.set_full_auto(True,self.sid);self.tick(3)
         self.assertEqual(len(self.calls),3);self.assertEqual(sorted(j['status'] for j in self.jobs()),['matched','matched','review'])
@@ -65,13 +135,20 @@ class FullAutoWorkflowTests(unittest.TestCase):
         finally:reopened.close()
         # 后续新增图片也扫描，不需要标二星。
         p=self.photos/'new.JPG';Image.new('RGB',(100,80),'red').save(p);self.store.append_live(self.sid,[media.capture_record(self.photos,p,None,{})]);self.tick();self.assertEqual(len(self.calls),4)
-    def test_only_imported_bound_document_can_enable(self):
+    def test_bound_document_and_internal_records_can_enable(self):
         with self.assertRaises(ValueError):self.sku.set_full_auto(True,'another-session')
         self.sku.configure(self.pid,self.sid,'模特图',False);self.assertTrue(self.sku.set_full_auto(True)['enabled'])
         self.sku.set_full_auto(False)
         self.sku._automatic_project(self.sid)
         with self.sku.connect() as c:c.execute('UPDATE projects SET metadata=? WHERE id=?',(json.dumps({'automatic_day':'2026-10-21','sheets':[]}),self.pid))
-        with self.assertRaisesRegex(ValueError,'导入'):self.sku.set_full_auto(True)
+        self.assertTrue(self.sku.set_full_auto(True)['enabled'])
+
+    def test_enabled_queue_explains_missing_model_without_changing_user_selection(self):
+        self.sku.set_full_auto(True)
+        self.providers.delete(self.providers.selected('ocr')['id'])
+        state=self.sku.full_auto_state()
+        self.assertTrue(state['enabled']);self.assertFalse(state['model_ready']);self.assertIn('使用内置模型',state['model_message'])
+        self.tick();self.assertEqual(self.jobs()[0]['status'],'waiting_model');self.assertEqual(self.calls,[])
     def test_stale_document_or_scope_request_cannot_enable_new_context(self):
         state=self.sku.full_auto_state();self.assertEqual(state['project_id'],self.pid)
         self.sku.configure(self.pid,self.sid,'细节图')

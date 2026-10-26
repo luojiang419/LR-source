@@ -1,0 +1,22 @@
+{
+  "date": "2026-10-22",
+  "source": "Windows Computer Use accessibility observations",
+  "path": "G:\\app\\LR\\tools\\canon-ccapi\\activation-win-v1.3.0e\\CCAPI Activation Tool.exe",
+  "user_authorization": "运行并检查界面",
+  "startup": "succeeded; FormMain exposes End and Execute Activation",
+  "action": "Pressed Return on focused Execute Activation to inspect the pre-activation notice",
+  "current_window": "FormEULA",
+  "controls": {
+    "checkbox": "I accept. (not selected by the agent)",
+    "next": "disabled",
+    "cancel": "available"
+  },
+  "notice_summary": "Canon collects some or all of camera model name, model ID, serial number and device ID depending on camera model, for product/service improvement; may share with Canon group companies and use a licensed research company in China.",
+  "activation_submitted": false,
+  "activation_success_observed": false,
+  "camera_identified_by_this_tool": false,
+  "limits": [
+    "Successful startup and display of the notice do not establish R6 Mark II compatibility or camera recognition.",
+    "No consent checkbox or Next action was automated. The notice remains open for the user."
+  ]
+}

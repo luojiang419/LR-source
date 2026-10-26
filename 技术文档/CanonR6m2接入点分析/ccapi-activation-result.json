@@ -1,0 +1,33 @@
+{
+  "date": "2026-10-22",
+  "failure_report": "User screenshot: Activation failed. Please check the number of cameras connected to the computer. Activation is possible only when one camera is connected to the computer.",
+  "live_diagnosis": {
+    "after_failure_new_sdk_x64_count": 0,
+    "after_user_reconnect_new_sdk_x64_count": 1,
+    "after_user_reconnect_new_sdk_session_opened": true,
+    "product": "Canon EOS R6m2",
+    "firmware": "1.7.0",
+    "after_user_reconnect_original_tool_sdk_x86_count": 1,
+    "after_user_reconnect_new_sdk_x86_count": 1
+  },
+  "limits": [
+    "Post-failure snapshots do not establish the camera count at the precise time of the user's earlier failure screenshot.",
+    "REA count guard accepts exactly one; both zero and multiple camera counts can produce the same message."
+  ],
+  "rea_count_guard_evidence": "ev_03f39f8b9a39e93d6b6b1c03e972506ef657ab6b5958d7daa55a8dc4160270e9",
+  "original_bundle_modified": false,
+  "success_observation": {
+    "source": "Windows Computer Use accessibility tree",
+    "app": "G:\\app\\LR\\tools\\canon-ccapi\\activation-win-v1.3.0e\\CCAPI Activation Tool.exe",
+    "window_id": 3412624,
+    "dialog_text": "Activation completed. Quit the CCAPI Activation Tool.",
+    "agent_automated_privacy_consent": false,
+    "scope": "Success dialog observed; intermediate user actions were not observed or automated. No custom activation commands executed."
+  },
+  "exit_observation": "A later window inventory returned no CCAPI window and process inventory found no CCAPI process. An attempted Return acknowledgement failed with foreground window did not report a process id; no retry was needed after exit was confirmed.",
+  "pending": [
+    "Camera power cycle and CCAPI menu confirmation",
+    "Actual API Table and supported network configuration readback",
+    "Original EOS Utility default access point behavior change and verification"
+  ]
+}

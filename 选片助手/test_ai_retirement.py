@@ -99,11 +99,13 @@ class AssistantConfigTests(unittest.TestCase):
                 self.assertEqual(assistant_config.load_config()['url'],'https://example.invalid/v1/responses')
                 info=assistant_config.public_config();self.assertTrue(info['configured']);self.assertEqual(info['path'],str(path))
                 self.assertNotIn('sk-test-secret',json.dumps(info))
+            path.write_text('http://remote.example:8000/custom/v2\nsk-test-secret\ngpt-test',encoding='utf8')
+            self.assertEqual(assistant_config.load_config(path)['url'],'http://remote.example:8000/custom/v2/responses')
 
     def test_invalid_endpoint_and_missing_config_have_no_secret_in_errors(self):
         with tempfile.TemporaryDirectory() as folder:
             path=Path(folder)/'配置.md'
-            for endpoint in ['http://example.invalid','https://user:password@example.invalid','https://example.invalid?key=secret']:
+            for endpoint in ['ftp://example.invalid','https://user:password@example.invalid','https://example.invalid?key=secret']:
                 path.write_text(endpoint+'\nsk-test-secret\ngpt-test',encoding='utf8')
                 with patch.dict('os.environ',{'FRAMEKEEP_CONFIG':str(path)}):
                     info=assistant_config.public_config();self.assertFalse(info['configured']);self.assertNotIn('sk-test-secret',json.dumps(info))

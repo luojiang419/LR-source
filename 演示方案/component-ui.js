@@ -51,7 +51,8 @@
     try{
       const state=await api('/api/components');
       if(requests||driverBusy)return;
-      if(['working','error'].includes(state.status)&&!dismissed){
+      const silentPreload=window.FramekeepOcrRuntime?.preloading;
+      if(['working','error'].includes(state.status)&&!dismissed&&!silentPreload){
         if(state.status==='error'&&state.groups?.length)retry=state.groups.includes('driver')?driver:()=>models('',{},state.groups);
         paint(state);
       }

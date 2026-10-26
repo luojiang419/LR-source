@@ -263,7 +263,7 @@ class FormalHttpTests(unittest.TestCase):
         self.post('/bridge/diagnostics',diagnostic,bridge=True);self.assertEqual(self.get('/api/bridge/status')['diagnostic'],diagnostic)
     def test_preview_photo_route_and_no_raw_button_for_jpeg(self):
         state=self.get('/api/state');photo=state['catalog'][0];self.assertNotIn('previewRaw',photo)
-        with urllib.request.urlopen(self.url+photo['preview']) as r:self.assertTrue(r.read().startswith(b'\xff\xd8'))
+        with urllib.request.urlopen(self.url+photo['preview']) as r:self.assertEqual(r.headers.get_content_type(),'image/webp');self.assertTrue(r.read().startswith(b'RIFF'))
     def test_batch_folder_api_cancel_and_scoped_export(self):
         first=self.store.session();other=self.base/'second';other.mkdir();Image.new('RGB',(100,80)).save(other/'test.JPG')
         with patch.object(self.store,'scan_worker_running',True):

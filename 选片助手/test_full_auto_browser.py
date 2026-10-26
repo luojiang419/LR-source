@@ -58,6 +58,8 @@ class FullAutoBrowserTests(unittest.TestCase):
                         page.wait_for_function('()=>document.querySelectorAll("#sku-current-table [data-common-sheet]").length===4')
                         self.assertEqual(page.locator('#sku-current-table tbody tr').count(),2);self.assertNotIn('ONLY-LOCAL',page.locator('#sku-current-table').inner_text())
                         first=page.locator('#sku-current-table tbody tr').first
+                        # 入库计数与表格由不同轮询更新，等待表格本身刷新后再核对公共状态。
+                        page.wait_for_function('()=>document.querySelector("#sku-current-table tbody tr .sku-state")?.textContent==="已拍摄"')
                         self.assertIn(CODE,first.inner_text());self.assertEqual(first.locator('.sku-state').all_text_contents(),['已拍摄','未拍摄'])
                         self.assertEqual(page.evaluate('FramekeepSku.context().scope'),'模特图');self.assertTrue(self.sku.full_auto_state()['enabled'])
                         page.locator('#sku-open').click();self.assertEqual(page.locator('#sku-common-tab').get_attribute('aria-selected'),'true')
@@ -83,12 +85,12 @@ class FullAutoBrowserTests(unittest.TestCase):
                         page.locator('#current-shooting-tab').click();page.locator('#shooting-common-view').click();page.locator('#sku-current-table [data-common-sheet="细节图"]').first.click()
                         page.wait_for_function('()=>document.getElementById("sku-live-scope").value==="细节图"&&!document.getElementById("shooting-full-auto").checked')
                         self.assertEqual(page.locator('#shooting-scope-view').get_attribute('aria-selected'),'true')
-                        self.assertEqual(page.locator('#sku-current-table tbody td:last-child').all_text_contents(),['未拍摄','未拍摄'])
+                        self.assertEqual(page.locator('#sku-current-table tbody .sku-state').all_text_contents(),['未拍摄','未拍摄'])
                         self.assertEqual(self.archive.query(CODE)['total'],2);self.assertEqual(self.store.session(self.sid)['state']['overrides'],self.ratings);self.assertFalse(errors,errors)
                     finally:browser.close()
             finally:http.shutdown();http.server_close()
 
-    def test_import_gate_toggle_automatic_library_and_all_themes(self):
+    def test_without_document_toggle_automatic_library_and_all_themes(self):
         import server
         with ExitStack() as stack:
             for key,value in dict(STORE=self.store,DATA=self.store.data,SKU=self.sku,MODELS=self.providers,ARCHIVE=self.archive,MOUSE=None,WATCH=None,ANALYSIS=None,RAWLINK=None,FILESEARCH=None,COMPONENTS=None,DRIVER=None).items():stack.enter_context(patch.object(server,key,value))
@@ -101,11 +103,19 @@ class FullAutoBrowserTests(unittest.TestCase):
                         page=browser.new_page(viewport={'width':1680,'height':1050});errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
                         page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='domcontentloaded');page.locator('#app-settings-open').click()
                         toggle=page.get_by_role('switch',name='全自动 OCR 模式');page.wait_for_function('()=>document.getElementById("full-auto-ocr-help").textContent.includes("导入")')
-                        self.assertTrue(toggle.is_disabled())
-                        denied=page.evaluate('async()=>{try{await FramekeepIO.api("/api/sku/full-auto",{enabled:true});return "unexpected"}catch(e){return e.message}}');self.assertIn('导入',denied)
-                        self.sku.activate(self.pid);page.wait_for_function('()=>!document.getElementById("full-auto-ocr").disabled')
+                        self.assertFalse(toggle.is_disabled())
+                        toggle.check();page.wait_for_function('()=>document.getElementById("full-auto-ocr-status").textContent.includes("全自动已开启")')
+                        self.assertTrue(self.sku.project()['metadata']['automatic_day'])
+                        toggle.uncheck();page.wait_for_function('()=>!FramekeepAutomation.isSaving()&&!document.getElementById("full-auto-ocr").checked')
+                        self.sku.activate(self.pid);page.wait_for_function('()=>!document.getElementById("full-auto-ocr").disabled&&document.getElementById("full-auto-ocr-help").textContent.includes("plan.xlsx")')
                         toggle.check();page.wait_for_function('()=>document.getElementById("full-auto-ocr-status").textContent.includes("全自动已开启")')
                         self.tick(3);page.wait_for_function('()=>document.getElementById("full-auto-ocr-status").textContent.includes("已入库 2")')
+                        selected=self.providers.selected('ocr')['id']
+                        self.providers.data['selected'].pop('ocr');self.providers._persist()
+                        page.wait_for_function('()=>document.getElementById("full-auto-ocr-status").textContent.includes("等待选用模型")')
+                        self.assertIn('使用内置模型',page.locator('#full-auto-ocr-help').inner_text())
+                        self.providers.select(selected)
+                        page.wait_for_function('()=>document.getElementById("full-auto-ocr-status").textContent.includes("全自动已开启")')
                         out=ROOT/'build/complete-install';out.mkdir(exist_ok=True,parents=True)
                         for theme in ('dark','light','pure-white','hardcore'):
                             page.evaluate('(t)=>FramekeepTheme.set(t)',theme)

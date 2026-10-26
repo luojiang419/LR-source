@@ -1,0 +1,871 @@
+{
+  "evidence_id": "ev_03f39f8b9a39e93d6b6b1c03e972506ef657ab6b5958d7daa55a8dc4160270e9",
+  "artifact": {
+    "path": "G:\\app\\LR\\tools\\canon-ccapi\\activation-win-v1.3.0e\\CCAPI Activation Tool.exe",
+    "sha256": "4bb8a57e0c55ecc8f75f906162df1034b9b5e99039bd786fe8e29940b393a64d",
+    "byte_length": 55296,
+    "format": "pe"
+  },
+  "module": {
+    "name": "CCAPI Activation Tool.exe",
+    "generation": 0,
+    "mvid": "6791f53b-de99-48a9-9a64-8f2c5a57ef62",
+    "enc_id": null,
+    "enc_base_id": null,
+    "token": "0x00000001",
+    "row_offset": 7120
+  },
+  "method": {
+    "token": "0x06000024",
+    "row_offset": 13208,
+    "declaring_type_token": "0x02000008",
+    "declaring_type": "CCAPIActivationTool.CameraOperate",
+    "name": "initializeDevice",
+    "rva": 11992,
+    "impl_flags": 0,
+    "flags": 150,
+    "signature": {
+      "raw_length": 3,
+      "raw_sha256": "1f8f12d1330e093575089e333067208dbad87f15c75f2cfd0ff62219bdd33448",
+      "resolved_sha256": "1f8f12d1330e093575089e333067208dbad87f15c75f2cfd0ff62219bdd33448",
+      "kind": "method",
+      "parse_status": "decoded",
+      "calling_convention": "default",
+      "generic_parameter_count": null,
+      "parameter_count": 0,
+      "return_type": "u4",
+      "parameter_types": [],
+      "field_type": null,
+      "issue": null
+    },
+    "body": {
+      "status": "present",
+      "header_format": "fat",
+      "rva": 11992,
+      "file_offset": 4312,
+      "max_stack": 5,
+      "init_locals": true,
+      "local_var_sig_token": "0x1100000e",
+      "il_size": 412,
+      "il_sha256": "363167e583ad928cce60a338c77f841888e067c0f968e1072f5731f54aa52c40",
+      "normalized_il_sha256": "e1e3d4896a2f42ee809de8ff988587530752cca103293e6de639601016dbd320",
+      "instruction_count": 159,
+      "decoded_instruction_count": 159,
+      "truncated_instructions": 0,
+      "opcode_counts": {
+        "ldc.i4.0": 12,
+        "stloc.0": 10,
+        "stloc.1": 1,
+        "ldsfld": 8,
+        "stloc.2": 2,
+        "call": 26,
+        "ldloc.0": 17,
+        "brfalse.s": 8,
+        "stloc.3": 11,
+        "leave": 10,
+        "ldc.i4.1": 5,
+        "pop": 9,
+        "stsfld": 2,
+        "ldloca.s": 2,
+        "ldloc.2": 4,
+        "ldloc.1": 2,
+        "beq.s": 2,
+        "ldc.i4": 7,
+        "ldsflda": 1,
+        "ldc.i4.4": 1,
+        "box": 1,
+        "ldnull": 1,
+        "ldftn": 1,
+        "newobj": 1,
+        "ldc.i4.s": 7,
+        "leave.s": 1,
+        "brtrue.s": 1,
+        "br.s": 2,
+        "bne.un.s": 1,
+        "endfinally": 1,
+        "ldloc.3": 1,
+        "ret": 1
+      },
+      "anchors": [
+        {
+          "il_offset": 4,
+          "opcode": "ldsfld",
+          "operand_kind": "field",
+          "operand": "0x0a000057"
+        },
+        {
+          "il_offset": 10,
+          "opcode": "call",
+          "operand_kind": "method",
+          "operand": "0x06000062"
+        },
+        {
+          "il_offset": 17,
+          "opcode": "brfalse.s",
+          "operand_kind": "branch",
+          "operand": "26"
+        },
+        {
+          "il_offset": 21,
+          "opcode": "leave",
+          "operand_kind": "branch",
+          "operand": "410"
+        },
+        {
+          "il_offset": 29,
+          "opcode": "call",
+          "operand_kind": "method",
+          "operand": "0x06000074"
+        },
+        {
+          "il_offset": 36,
+          "opcode": "stsfld",
+          "operand_kind": "field",
+          "operand": "0x0400000f"
+        },
+        {
+          "il_offset": 41,
+          "opcode": "ldloca.s",
+          "operand_kind": "variable",
+          "operand": "2"
+        },
+        {
+          "il_offset": 43,
+          "opcode": "call",
+          "operand_kind": "method",
+          "operand": "0x06000078"
+        },
+        {
+          "il_offset": 50,
+          "opcode": "brfalse.s",
+          "operand_kind": "branch",
+          "operand": "59"
+        },
+        {
+          "il_offset": 54,
+          "opcode": "leave",
+          "operand_kind": "branch",
+          "operand": "410"
+        },
+        {
+          "il_offset": 60,
+          "opcode": "ldloca.s",
+          "operand_kind": "variable",
+          "operand": "1"
+        },
+        {
+          "il_offset": 62,
+          "opcode": "call",
+          "operand_kind": "method",
+          "operand": "0x06000066"
+        },
+        {
+          "il_offset": 69,
+          "opcode": "brfalse.s",
+          "operand_kind": "branch",
+          "operand": "78"
+        },
+        {
+          "il_offset": 73,
+          "opcode": "leave",
+          "operand_kind": "branch",
+          "operand": "410"
+        },
+        {
+          "il_offset": 80,
+          "opcode": "beq.s",
+          "operand_kind": "branch",
+          "operand": "93"
+        },
+        {
+          "il_offset": 82,
+          "opcode": "ldc.i4",
+          "operand_kind": "constant",
+          "operand": "128"
+        },
+        {
+          "il_offset": 88,
+          "opcode": "leave",
+          "operand_kind": "branch",
+          "operand": "410"
+        },
+        {
+          "il_offset": 95,
+          "opcode": "ldsflda",
+          "operand_kind": "field",
+          "operand": "0x0400000e"
+        },
+        {
+          "il_offset": 100,
+          "opcode": "call",
+          "operand_kind": "method",
+          "operand": "0x06000067"
+        },
+        {
+          "il_offset": 107,
+          "opcode": "brfalse.s",
+          "operand_kind": "branch",
+          "operand": "116"
+        },
+        {
+          "il_offset": 111,
+          "opcode": "leave",
+          "operand_kind": "branch",
+          "operand": "410"
+        },
+        {
+          "il_offset": 116,
+          "opcode": "ldsfld",
+          "operand_kind": "field",
+          "operand": "0x0400000e"
+        },
+        {
+          "il_offset": 121,
+          "opcode": "ldc.i4",
+          "operand_kind": "constant",
+          "operand": "16777216"
+        },
+        {
+          "il_offset": 126,
+          "opcode": "ldc.i4",
+          "operand_kind": "constant",
+          "operand": "1387934046"
+        },
+        {
+          "il_offset": 132,
+          "opcode": "ldc.i4",
+          "operand_kind": "constant",
+          "operand": "16777217"
+        },
+        {
+          "il_offset": 137,
+          "opcode": "box",
+          "operand_kind": "type",
+          "operand": "0x0100005c"
+        },
+        {
+          "il_offset": 142,
+          "opcode": "call",
+          "operand_kind": "method",
+          "operand": "0x06000073"
+        },
+        {
+          "il_offset": 149,
+          "opcode": "brfalse.s",
+          "operand_kind": "branch",
+          "operand": "158"
+        },
+        {
+          "il_offset": 153,
+          "opcode": "leave",
+          "operand_kind": "branch",
+          "operand": "410"
+        },
+        {
+          "il_offset": 158,
+          "opcode": "ldsfld",
+          "operand_kind": "field",
+          "operand": "0x0400000e"
+        },
+        {
+          "il_offset": 163,
+          "opcode": "call",
+          "operand_kind": "method",
+          "operand": "0x0600007a"
+        },
+        {
+          "il_offset": 170,
+          "opcode": "brfalse.s",
+          "operand_kind": "branch",
+          "operand": "179"
+        },
+        {
+          "il_offset": 174,
+          "opcode": "leave",
+          "operand_kind": "branch",
+          "operand": "410"
+        },
+        {
+          "il_offset": 179,
+          "opcode": "ldsfld",
+          "operand_kind": "field",
+          "operand": "0x0400000e"
+        },
+        {
+          "il_offset": 186,
+          "opcode": "call",
+          "operand_kind": "method",
+          "operand": "0x0600007d"
+        },
+        {
+          "il_offset": 193,
+          "opcode": "brfalse.s",
+          "operand_kind": "branch",
+          "operand": "208"
+        },
+        {
+          "il_offset": 195,
+          "opcode": "ldc.i4",
+          "operand_kind": "constant",
+          "operand": "208"
+        },
+        {
+          "il_offset": 203,
+          "opcode": "leave",
+          "operand_kind": "branch",
+          "operand": "410"
+        },
+        {
+          "il_offset": 209,
+          "opcode": "stsfld",
+          "operand_kind": "field",
+          "operand": "0x04000010"
+        },
+        {
+          "il_offset": 214,
+          "opcode": "ldsfld",
+          "operand_kind": "field",
+          "operand": "0x0400000e"
+        },
+        {
+          "il_offset": 219,
+          "opcode": "ldc.i4",
+          "operand_kind": "constant",
+          "operand": "768"
+        },
+        {
+          "il_offset": 225,
+          "opcode": "ldftn",
+          "operand_kind": "method",
+          "operand": "0x06000010"
+        },
+        {
+          "il_offset": 231,
+          "opcode": "newobj",
+          "operand_kind": "method",
+          "operand": "0x060000b1"
+        },
+        {
+          "il_offset": 236,
+          "opcode": "ldsfld",
+          "operand_kind": "field",
+          "operand": "0x0a000057"
+        },
+        {
+          "il_offset": 241,
+          "opcode": "call",
+          "operand_kind": "method",
+          "operand": "0x0600009b"
+        },
+        {
+          "il_offset": 249,
+          "opcode": "leave",
+          "operand_kind": "branch",
+          "operand": "410"
+        },
+        {
+          "il_offset": 255,
+          "opcode": "call",
+          "operand_kind": "method",
+          "operand": "0x0600005d"
+        },
+        {
+          "il_offset": 260,
+          "opcode": "call",
+          "operand_kind": "method",
+          "operand": "0x0600005e"
+        },
+        {
+          "il_offset": 266,
+          "opcode": "ldc.i4.s",
+          "operand_kind": "constant",
+          "operand": "16"
+        },
+        {
+          "il_offset": 268,
+          "opcode": "call",
+          "operand_kind": "method",
+          "operand": "0x0a00004f"
+        },
+        {
+          "il_offset": 274,
+          "opcode": "ldc.i4.s",
+          "operand_kind": "constant",
+          "operand": "32"
+        },
+        {
+          "il_offset": 277,
+          "opcode": "leave",
+          "operand_kind": "branch",
+          "operand": "410"
+        },
+        {
+          "il_offset": 283,
+          "opcode": "call",
+          "operand_kind": "method",
+          "operand": "0x06000059"
+        },
+        {
+          "il_offset": 288,
+          "opcode": "call",
+          "operand_kind": "method",
+          "operand": "0x0600005e"
+        },
+        {
+          "il_offset": 294,
+          "opcode": "ldc.i4.s",
+          "operand_kind": "constant",
+          "operand": "16"
+        },
+        {
+          "il_offset": 296,
+          "opcode": "call",
+          "operand_kind": "method",
+          "operand": "0x0a00004f"
+        },
+        {
+          "il_offset": 302,
+          "opcode": "ldc.i4.s",
+          "operand_kind": "constant",
+          "operand": "32"
+        },
+        {
+          "il_offset": 305,
+          "opcode": "leave.s",
+          "operand_kind": "branch",
+          "operand": "410"
+        },
+        {
+          "il_offset": 307,
+          "opcode": "ldsfld",
+          "operand_kind": "field",
+          "operand": "0x0a000057"
+        },
+        {
+          "il_offset": 313,
+          "opcode": "call",
+          "operand_kind": "method",
+          "operand": "0x0a00005a"
+        },
+        {
+          "il_offset": 318,
+          "opcode": "brfalse.s",
+          "operand_kind": "branch",
+          "operand": "333"
+        },
+        {
+          "il_offset": 321,
+          "opcode": "call",
+          "operand_kind": "method",
+          "operand": "0x06000065"
+        },
+        {
+          "il_offset": 327,
+          "opcode": "ldsfld",
+          "operand_kind": "field",
+          "operand": "0x0a000057"
+        },
+        {
+          "il_offset": 334,
+          "opcode": "brtrue.s",
+          "operand_kind": "branch",
+          "operand": "361"
+        },
+        {
+          "il_offset": 338,
+          "opcode": "beq.s",
+          "operand_kind": "branch",
+          "operand": "409"
+        },
+        {
+          "il_offset": 340,
+          "opcode": "call",
+          "operand_kind": "method",
+          "operand": "0x06000055"
+        },
+        {
+          "il_offset": 345,
+          "opcode": "call",
+          "operand_kind": "method",
+          "operand": "0x0600005e"
+        },
+        {
+          "il_offset": 351,
+          "opcode": "ldc.i4.s",
+          "operand_kind": "constant",
+          "operand": "16"
+        },
+        {
+          "il_offset": 353,
+          "opcode": "call",
+          "operand_kind": "method",
+          "operand": "0x0a00004f"
+        },
+        {
+          "il_offset": 359,
+          "opcode": "br.s",
+          "operand_kind": "branch",
+          "operand": "409"
+        },
+        {
+          "il_offset": 361,
+          "opcode": "ldc.i4",
+          "operand_kind": "constant",
+          "operand": "208"
+        },
+        {
+          "il_offset": 367,
+          "opcode": "bne.un.s",
+          "operand_kind": "branch",
+          "operand": "390"
+        },
+        {
+          "il_offset": 369,
+          "opcode": "call",
+          "operand_kind": "method",
+          "operand": "0x0600005b"
+        },
+        {
+          "il_offset": 374,
+          "opcode": "call",
+          "operand_kind": "method",
+          "operand": "0x0600005e"
+        },
+        {
+          "il_offset": 380,
+          "opcode": "ldc.i4.s",
+          "operand_kind": "constant",
+          "operand": "16"
+        },
+        {
+          "il_offset": 382,
+          "opcode": "call",
+          "operand_kind": "method",
+          "operand": "0x0a00004f"
+        },
+        {
+          "il_offset": 388,
+          "opcode": "br.s",
+          "operand_kind": "branch",
+          "operand": "409"
+        },
+        {
+          "il_offset": 390,
+          "opcode": "call",
+          "operand_kind": "method",
+          "operand": "0x06000059"
+        },
+        {
+          "il_offset": 395,
+          "opcode": "call",
+          "operand_kind": "method",
+          "operand": "0x0600005e"
+        },
+        {
+          "il_offset": 401,
+          "opcode": "ldc.i4.s",
+          "operand_kind": "constant",
+          "operand": "16"
+        },
+        {
+          "il_offset": 403,
+          "opcode": "call",
+          "operand_kind": "method",
+          "operand": "0x0a00004f"
+        }
+      ],
+      "exception_regions": [
+        {
+          "flags": 0,
+          "try_offset": 10,
+          "try_length": 244,
+          "handler_offset": 254,
+          "handler_length": 28,
+          "class_token": "0x01000027",
+          "filter_offset": null
+        },
+        {
+          "flags": 0,
+          "try_offset": 10,
+          "try_length": 244,
+          "handler_offset": 282,
+          "handler_length": 25,
+          "class_token": "0x01000033",
+          "filter_offset": null
+        },
+        {
+          "flags": 2,
+          "try_offset": 10,
+          "try_length": 297,
+          "handler_offset": 307,
+          "handler_length": 103,
+          "class_token": null,
+          "filter_offset": null
+        }
+      ],
+      "issue": null
+    }
+  },
+  "call_edges": [
+    {
+      "caller_token": "0x06000024",
+      "caller": "CCAPIActivationTool.CameraOperate.initializeDevice",
+      "opcode": "call",
+      "target_token": "0x06000062",
+      "target_kind": "method-def",
+      "target_name": "EdsInitializeSDK",
+      "target_declaring_type": "EDSDKLib.EDSDK"
+    },
+    {
+      "caller_token": "0x06000024",
+      "caller": "CCAPIActivationTool.CameraOperate.initializeDevice",
+      "opcode": "call",
+      "target_token": "0x06000074",
+      "target_kind": "method-def",
+      "target_name": "EdsSetOption",
+      "target_declaring_type": "EDSDKLib.EDSDK"
+    },
+    {
+      "caller_token": "0x06000024",
+      "caller": "CCAPIActivationTool.CameraOperate.initializeDevice",
+      "opcode": "call",
+      "target_token": "0x06000078",
+      "target_kind": "method-def",
+      "target_name": "EdsGetCameraList",
+      "target_declaring_type": "EDSDKLib.EDSDK"
+    },
+    {
+      "caller_token": "0x06000024",
+      "caller": "CCAPIActivationTool.CameraOperate.initializeDevice",
+      "opcode": "call",
+      "target_token": "0x06000066",
+      "target_kind": "method-def",
+      "target_name": "EdsGetChildCount",
+      "target_declaring_type": "EDSDKLib.EDSDK"
+    },
+    {
+      "caller_token": "0x06000024",
+      "caller": "CCAPIActivationTool.CameraOperate.initializeDevice",
+      "opcode": "call",
+      "target_token": "0x06000067",
+      "target_kind": "method-def",
+      "target_name": "EdsGetChildAtIndex",
+      "target_declaring_type": "EDSDKLib.EDSDK"
+    },
+    {
+      "caller_token": "0x06000024",
+      "caller": "CCAPIActivationTool.CameraOperate.initializeDevice",
+      "opcode": "call",
+      "target_token": "0x06000073",
+      "target_kind": "method-def",
+      "target_name": "EdsSetPropertyData",
+      "target_declaring_type": "EDSDKLib.EDSDK"
+    },
+    {
+      "caller_token": "0x06000024",
+      "caller": "CCAPIActivationTool.CameraOperate.initializeDevice",
+      "opcode": "call",
+      "target_token": "0x0600007a",
+      "target_kind": "method-def",
+      "target_name": "EdsOpenSession",
+      "target_declaring_type": "EDSDKLib.EDSDK"
+    },
+    {
+      "caller_token": "0x06000024",
+      "caller": "CCAPIActivationTool.CameraOperate.initializeDevice",
+      "opcode": "call",
+      "target_token": "0x0600007d",
+      "target_kind": "method-def",
+      "target_name": "EdsSendStatusCommand",
+      "target_declaring_type": "EDSDKLib.EDSDK"
+    },
+    {
+      "caller_token": "0x06000024",
+      "caller": "CCAPIActivationTool.CameraOperate.initializeDevice",
+      "opcode": "ldftn",
+      "target_token": "0x06000010",
+      "target_kind": "method-def",
+      "target_name": "HandleStateEvent",
+      "target_declaring_type": "CCAPIActivationTool.FormMain"
+    },
+    {
+      "caller_token": "0x06000024",
+      "caller": "CCAPIActivationTool.CameraOperate.initializeDevice",
+      "opcode": "newobj",
+      "target_token": "0x060000b1",
+      "target_kind": "method-def",
+      "target_name": ".ctor",
+      "target_declaring_type": "EdsStateEventHandler"
+    },
+    {
+      "caller_token": "0x06000024",
+      "caller": "CCAPIActivationTool.CameraOperate.initializeDevice",
+      "opcode": "call",
+      "target_token": "0x0600009b",
+      "target_kind": "method-def",
+      "target_name": "EdsSetCameraStateEventHandler",
+      "target_declaring_type": "EDSDKLib.EDSDK"
+    },
+    {
+      "caller_token": "0x06000024",
+      "caller": "CCAPIActivationTool.CameraOperate.initializeDevice",
+      "opcode": "call",
+      "target_token": "0x0600005d",
+      "target_kind": "method-def",
+      "target_name": "get_SCR_13_MSG",
+      "target_declaring_type": "CCAPIActivationTool.Properties.Resources"
+    },
+    {
+      "caller_token": "0x06000024",
+      "caller": "CCAPIActivationTool.CameraOperate.initializeDevice",
+      "opcode": "call",
+      "target_token": "0x0600005e",
+      "target_kind": "method-def",
+      "target_name": "get_TOOLNAME",
+      "target_declaring_type": "CCAPIActivationTool.Properties.Resources"
+    },
+    {
+      "caller_token": "0x06000024",
+      "caller": "CCAPIActivationTool.CameraOperate.initializeDevice",
+      "opcode": "call",
+      "target_token": "0x0a00004f",
+      "target_kind": "member-ref",
+      "target_name": "Show",
+      "target_declaring_type": "System.Windows.Forms.MessageBox"
+    },
+    {
+      "caller_token": "0x06000024",
+      "caller": "CCAPIActivationTool.CameraOperate.initializeDevice",
+      "opcode": "call",
+      "target_token": "0x06000059",
+      "target_kind": "method-def",
+      "target_name": "get_SCR_09_MSG",
+      "target_declaring_type": "CCAPIActivationTool.Properties.Resources"
+    },
+    {
+      "caller_token": "0x06000024",
+      "caller": "CCAPIActivationTool.CameraOperate.initializeDevice",
+      "opcode": "call",
+      "target_token": "0x0600005e",
+      "target_kind": "method-def",
+      "target_name": "get_TOOLNAME",
+      "target_declaring_type": "CCAPIActivationTool.Properties.Resources"
+    },
+    {
+      "caller_token": "0x06000024",
+      "caller": "CCAPIActivationTool.CameraOperate.initializeDevice",
+      "opcode": "call",
+      "target_token": "0x0a00004f",
+      "target_kind": "member-ref",
+      "target_name": "Show",
+      "target_declaring_type": "System.Windows.Forms.MessageBox"
+    },
+    {
+      "caller_token": "0x06000024",
+      "caller": "CCAPIActivationTool.CameraOperate.initializeDevice",
+      "opcode": "call",
+      "target_token": "0x0a00005a",
+      "target_kind": "member-ref",
+      "target_name": "op_Inequality",
+      "target_declaring_type": "System.IntPtr"
+    },
+    {
+      "caller_token": "0x06000024",
+      "caller": "CCAPIActivationTool.CameraOperate.initializeDevice",
+      "opcode": "call",
+      "target_token": "0x06000065",
+      "target_kind": "method-def",
+      "target_name": "EdsRelease",
+      "target_declaring_type": "EDSDKLib.EDSDK"
+    },
+    {
+      "caller_token": "0x06000024",
+      "caller": "CCAPIActivationTool.CameraOperate.initializeDevice",
+      "opcode": "call",
+      "target_token": "0x06000055",
+      "target_kind": "method-def",
+      "target_name": "get_SCR_05_MSG",
+      "target_declaring_type": "CCAPIActivationTool.Properties.Resources"
+    },
+    {
+      "caller_token": "0x06000024",
+      "caller": "CCAPIActivationTool.CameraOperate.initializeDevice",
+      "opcode": "call",
+      "target_token": "0x0600005e",
+      "target_kind": "method-def",
+      "target_name": "get_TOOLNAME",
+      "target_declaring_type": "CCAPIActivationTool.Properties.Resources"
+    },
+    {
+      "caller_token": "0x06000024",
+      "caller": "CCAPIActivationTool.CameraOperate.initializeDevice",
+      "opcode": "call",
+      "target_token": "0x0a00004f",
+      "target_kind": "member-ref",
+      "target_name": "Show",
+      "target_declaring_type": "System.Windows.Forms.MessageBox"
+    },
+    {
+      "caller_token": "0x06000024",
+      "caller": "CCAPIActivationTool.CameraOperate.initializeDevice",
+      "opcode": "call",
+      "target_token": "0x0600005b",
+      "target_kind": "method-def",
+      "target_name": "get_SCR_11_MSG",
+      "target_declaring_type": "CCAPIActivationTool.Properties.Resources"
+    },
+    {
+      "caller_token": "0x06000024",
+      "caller": "CCAPIActivationTool.CameraOperate.initializeDevice",
+      "opcode": "call",
+      "target_token": "0x0600005e",
+      "target_kind": "method-def",
+      "target_name": "get_TOOLNAME",
+      "target_declaring_type": "CCAPIActivationTool.Properties.Resources"
+    },
+    {
+      "caller_token": "0x06000024",
+      "caller": "CCAPIActivationTool.CameraOperate.initializeDevice",
+      "opcode": "call",
+      "target_token": "0x0a00004f",
+      "target_kind": "member-ref",
+      "target_name": "Show",
+      "target_declaring_type": "System.Windows.Forms.MessageBox"
+    },
+    {
+      "caller_token": "0x06000024",
+      "caller": "CCAPIActivationTool.CameraOperate.initializeDevice",
+      "opcode": "call",
+      "target_token": "0x06000059",
+      "target_kind": "method-def",
+      "target_name": "get_SCR_09_MSG",
+      "target_declaring_type": "CCAPIActivationTool.Properties.Resources"
+    },
+    {
+      "caller_token": "0x06000024",
+      "caller": "CCAPIActivationTool.CameraOperate.initializeDevice",
+      "opcode": "call",
+      "target_token": "0x0600005e",
+      "target_kind": "method-def",
+      "target_name": "get_TOOLNAME",
+      "target_declaring_type": "CCAPIActivationTool.Properties.Resources"
+    },
+    {
+      "caller_token": "0x06000024",
+      "caller": "CCAPIActivationTool.CameraOperate.initializeDevice",
+      "opcode": "call",
+      "target_token": "0x0a00004f",
+      "target_kind": "member-ref",
+      "target_name": "Show",
+      "target_declaring_type": "System.Windows.Forms.MessageBox"
+    }
+  ],
+  "limitations": [
+    "Metadata tokens are build-local coordinates and are only meaningful with the reported artifact SHA-256 and MVID.",
+    "CIL instruction anchors are decoded from file-backed method bodies only; no target assembly is loaded or executed.",
+    "Exported types are reported from ExportedType rows as declared; forwarded types are not resolved in their implementing assemblies.",
+    "User strings are the #US literals loaded by ldstr in the inspected method bodies, with their own coverage; instruction anchors and normalized CIL digests keep their build-local tokens.",
+    "Member signatures decode ECMA-335 primitive, class, valuetype, generic instantiation, generic variable, pointer, byref, single-dimension and general array, function pointer, custom modifier, and typed reference forms; class and valuetype operands keep their encoded TypeDefOrRefOrSpec values, and unsupported forms such as vararg sentinels retain raw signature hashes.",
+    "Types, fields, methods, call edges, field accesses, and user strings cover only the selected declaring types; coverage describes that selection. Edge targets outside it keep their names but are not described."
+  ]
+}

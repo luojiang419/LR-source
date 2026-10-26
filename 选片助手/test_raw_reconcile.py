@@ -56,12 +56,12 @@ class RawWorkflowTests(unittest.TestCase):
         self.link.process_session(sid)
         for _ in range(5):self.archive.process_one();self.link.refresh_completed()
         return self.link.state(sid)['pairs'][0]
-    def test_cross_folder_scan_embeds_rating_sku_and_preserves_raw_payload(self):
-        original=raw_integrity(self.target);original_sample=sha(SAMPLE);rawsid=self.scan(self.raw)
+    def test_cross_folder_scan_uses_xmp_and_preserves_complete_raw(self):
+        original=raw_integrity(self.target);original_sha=sha(self.target);original_sample=sha(SAMPLE);rawsid=self.scan(self.raw)
         self.assertIn(rawsid,self.link.pending)
         pair=self.finish(rawsid);self.assertEqual(pair['status'],'applied',pair)
-        fields=self.archive.writer.read(self.target);self.assertEqual(fields['XMP-xmp:Rating'],4);self.assertEqual(fields['XMP-fk:SKU'],'SKU-远程123');self.assertEqual(fields['XMP-fk:ShootType'],'细节图')
-        self.assertEqual(raw_integrity(self.target),original);self.assertEqual(sha(SAMPLE),original_sample);self.assertFalse(self.target.with_suffix('.xmp').exists())
+        fields=self.archive.writer.read_asset(self.target);self.assertEqual(fields['XMP-xmp:Rating'],4);self.assertEqual(fields['XMP-fk:SKU'],'SKU-远程123');self.assertEqual(fields['XMP-fk:ShootType'],'细节图')
+        self.assertEqual(raw_integrity(self.target),original);self.assertEqual(sha(SAMPLE),original_sample);self.assertEqual(sha(self.target),original_sha);self.assertTrue(self.target.with_suffix('.xmp').exists());self.assertLess(self.target.with_suffix('.xmp').stat().st_size,10000)
         self.assertEqual(self.store.records(rawsid)[0]['liveRating'],4)
         aid_jpg=self.archive.ensure(self.sid,self.cid);aid_raw=self.archive.ensure(rawsid,self.store.records(rawsid)[0]['id']);self.assertEqual(aid_jpg,aid_raw)
         count=len(self.archive.asset(aid_raw)['jobs']);self.link.process_session(rawsid);self.assertEqual(len(self.archive.asset(aid_raw)['jobs']),count)
@@ -77,7 +77,7 @@ class RawWorkflowTests(unittest.TestCase):
         self.assertEqual(self.link.state(rawsid)['pairs'][0]['status'],'applied')
     def test_zero_rating_and_reject_are_explicit_not_tail_rule(self):
         session=self.store.session(self.sid);state=copy.deepcopy(session['state']);state['overrides'][self.cid]=0;self.store.save(self.sid,session['revision'],state)
-        sid=self.scan(self.raw);pair=self.finish(sid);self.assertEqual(pair['status'],'applied',pair);self.assertEqual(self.archive.writer.read(self.target)['XMP-xmp:Rating'],0)
+        sid=self.scan(self.raw);pair=self.finish(sid);self.assertEqual(pair['status'],'applied',pair);self.assertEqual(self.archive.writer.read_asset(self.target)['XMP-xmp:Rating'],0)
     def test_final_archive_paired_raw_jpg_syncs_after_source_deletion(self):
         companion=self.raw/'IMG_0346.JPG';shutil.copy2(self.jpg/'IMG_0346.JPG',companion);(self.jpg/'IMG_0346.JPG').unlink()
         target_id=self.link.add_target(str(self.raw))['target_id'];self.link.sync_target(target_id)
@@ -92,7 +92,7 @@ class RawWorkflowTests(unittest.TestCase):
         self.assertTrue(all(f['source_name']=='IMG_0346.JPG' and str(self.jpg) in f['source_path'] for f in files),files)
         self.assertEqual(len(self.archive.operation(pair['operation'])['jobs']),2)
         for path in (self.target,companion):
-            fields=self.archive.writer.read(path);self.assertEqual(fields['XMP-xmp:Rating'],4);self.assertEqual(fields['XMP-fk:SKU'],'SKU-远程123')
+            fields=self.archive.writer.read_asset(path);self.assertEqual(fields['XMP-xmp:Rating'],4);self.assertEqual(fields['XMP-fk:SKU'],'SKU-远程123')
         before=[sha(p) for p in (self.target,companion)];self.link.process_session(target['session']);self.assertEqual([sha(p) for p in (self.target,companion)],before)
     def test_existing_raw_rating_conflict_requires_explicit_overwrite(self):
         # 只制造星级冲突，不引入另一永久资产身份（身份冲突不能被星级覆盖授权绕过）。
@@ -101,12 +101,27 @@ class RawWorkflowTests(unittest.TestCase):
         self.link.review(pair['id'],self.sid,self.cid,overwrite=True)
         for _ in range(4):self.archive.process_one();self.link.refresh_completed()
         self.assertEqual(self.link.state(sid)['pairs'][0]['status'],'applied',self.link.state(sid))
-        self.assertEqual(self.archive.writer.read(self.target)['XMP-xmp:Rating'],4)
+        self.assertEqual(self.archive.writer.read_asset(self.target)['XMP-xmp:Rating'],4)
     def test_later_jpg_rating_change_is_written_without_replacing_sku(self):
         sid=self.scan(self.raw);self.assertEqual(self.finish(sid)['status'],'applied')
         session=self.store.session(self.sid);state=copy.deepcopy(session['state']);state['overrides'][self.cid]=5;self.store.save(self.sid,session['revision'],state)
         self.link.process_session(self.sid);pair=self.finish(sid);self.assertEqual(pair['status'],'applied',pair)
-        fields=self.archive.writer.read(self.target);self.assertEqual(fields['XMP-xmp:Rating'],5);self.assertEqual(fields['XMP-fk:SKU'],'SKU-远程123')
+        fields=self.archive.writer.read_asset(self.target);self.assertEqual(fields['XMP-xmp:Rating'],5);self.assertEqual(fields['XMP-fk:SKU'],'SKU-远程123')
+
+    def test_scoped_rating_work_updates_related_raw_without_whole_source_read(self):
+        sid=self.scan(self.raw);self.assertEqual(self.finish(sid)['status'],'applied')
+        self.link.pending.clear()
+        with self.archive.connect() as db:db.execute("UPDATE raw_session_work SET status='completed',discover=0")
+        session=self.store.session(self.sid);state=copy.deepcopy(session['state']);state['overrides'][self.cid]=5
+        self.store.save(self.sid,session['revision'],state)
+        self.link.request(self.sid,capture_ids=[self.cid])
+        original=self.store.records
+        def bounded(session_id=None,ids=None):
+            self.assertIsNotNone(ids,'局部评级同步不能重新读取整个会话');return original(session_id,ids)
+        with patch.object(self.store,'records',side_effect=bounded):
+            for _ in range(8):self.link.tick();self.archive.process_one();self.link.refresh_completed()
+        fields=self.archive.writer.read_asset(self.target)
+        self.assertEqual(fields['XMP-xmp:Rating'],5);self.assertEqual(fields['XMP-fk:SKU'],'SKU-远程123')
     def test_failed_raw_validation_does_not_touch_file_and_retry_replans(self):
         sid=self.scan(self.raw);self.link.process_session(sid);before=sha(self.target)
         with patch.object(self.archive.writer,'write',side_effect=ValueError('RAW 校验失败')):self.archive.process_one()
@@ -118,6 +133,6 @@ class RawWorkflowTests(unittest.TestCase):
         (self.raw/'.framekeep-legacy.CR3').write_bytes(b'internal temporary')
         _,shots=media.discover(self.raw);self.assertEqual(len(shots),1)
         self.target.unlink();shutil.copy2(SAMPLE,self.target)
-        self.link.discover_raws(sid);pair=self.finish(sid);self.assertEqual(pair['status'],'applied',pair);self.assertEqual(self.archive.writer.read(self.target)['XMP-xmp:Rating'],4)
+        self.link.discover_raws(sid);pair=self.finish(sid);self.assertEqual(pair['status'],'applied',pair);self.assertEqual(self.archive.writer.read_asset(self.target)['XMP-xmp:Rating'],4)
 
 if __name__=='__main__':unittest.main()

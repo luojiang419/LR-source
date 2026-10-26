@@ -1,7 +1,8 @@
 /* 四种风格共用：主页面入口在底部，选片工具并入顶栏。 */
 /* 文件夹和监控入口固定在左栏底部，不随文件夹/照片列表滚动。 */
-.folder-sidebar-footer {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));flex:none;gap:6px;padding:8px;border-top:1px solid var(--theme-border);background:var(--theme-panel);}
-html[data-hardcore-layout] .folder-sidebar-footer>:is(#open-folder,#folder-watch) {min-width:0;min-height:34px;padding:7px 4px;font-size:11px;line-height:1.5;white-space:normal;overflow-wrap:anywhere;}
+.folder-sidebar-footer {display:grid;grid-template-columns:minmax(0,1fr);flex:none;gap:6px;padding:8px;border-top:1px solid var(--theme-border);background:var(--theme-panel);}
+html[data-hardcore-layout] .folder-sidebar-footer>:is(#open-folder,#folder-watch,#canon-tether-open) {min-width:0;min-height:34px;padding:7px 4px;font-size:11px;line-height:1.5;white-space:normal;overflow-wrap:anywhere;}
+html[data-hardcore-layout] .folder-sidebar-footer>:is(#folder-watch,#canon-tether-open) {width:100%;min-height:40px;padding:9px 12px;border-radius:8px;font-size:12px;font-weight:500;white-space:nowrap;}
 .left-collapsed .folder-sidebar-footer {display:none;}
 html[data-hardcore-layout] .workbench.workspace-with-bottom-tabs {height:100dvh;min-height:0;overflow:hidden;}
 .workspace-with-bottom-tabs>.workspace-bottom-bar {order:3;flex:none;min-width:0;width:100%;border-top:1px solid var(--theme-border);background:var(--glass-panel,var(--theme-panel));}
@@ -17,12 +18,30 @@ html[data-hardcore-layout] .workspace-bottom-bar .workspace-tabs>[role=tab] {
 }
 .workspace-bottom-bar [role=tab] svg {width:16px;height:16px;flex:none;}
 .workspace-tab-label {min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+/* 任务灯贴合主题材质，使用低亮度慢呼吸，与菜单图标保持小间距。 */
+.workspace-bottom-bar {--task-light-color:color-mix(in srgb,var(--theme-success) 42%,var(--theme-emphasis));}
+.workspace-task-light {
+  position:relative;flex:0 0 6px;align-self:center;width:6px;height:6px;border-radius:50%;
+  pointer-events:none;background:var(--theme-muted);opacity:.26;
+}
+.workspace-task-light[data-state=busy] {background:var(--task-light-color);animation:workspace-task-breathe 3.6s ease-in-out infinite;}
+.workspace-task-light:is([data-state=waiting],[data-state=paused]) {background:var(--theme-emphasis);opacity:.43;}
+.workspace-task-light[data-state=unknown] {opacity:.16;}
+.workspace-task-description {position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0;}
+@keyframes workspace-task-breathe {
+  0%,100% {opacity:.4;box-shadow:0 0 0 0 color-mix(in srgb,var(--task-light-color) 0%,transparent);}
+  50% {opacity:.76;box-shadow:0 0 0 3px color-mix(in srgb,var(--task-light-color) 12%,transparent);}
+}
+@media(prefers-reduced-motion:reduce) {
+  .workspace-task-light[data-state=busy] {animation:none;opacity:.68;box-shadow:0 0 0 2px color-mix(in srgb,var(--task-light-color) 8%,transparent);}
+}
 html[data-hardcore-layout] .workspace-bottom-bar .workspace-tabs>[role=tab]:hover {color:var(--theme-text);background:var(--theme-hover);}
 html[data-hardcore-layout] .workspace-bottom-bar .workspace-tabs>[aria-selected=true] {color:var(--theme-text);background:color-mix(in srgb,var(--theme-emphasis) 8%,transparent);}
 .workspace-bottom-bar [aria-selected=true]::before {content:'';position:absolute;top:-1px;left:16px;right:16px;height:2px;background:var(--theme-emphasis);}
 html[data-hardcore-layout] .workspace-bottom-bar [role=tab]:focus-visible {outline:2px solid var(--theme-emphasis);outline-offset:-4px;}
 html[data-hardcore-layout] .workspace-with-bottom-tabs>.statusbar {order:2;flex:none;}
 @media(max-width:760px) {
+  .workspace-task-light {position:absolute;left:calc(50% - 20px);top:10px;}
   html[data-hardcore-layout] .workspace-bottom-bar>.workspace-tabs {height:calc(56px + env(safe-area-inset-bottom,0px));padding-inline:0;}
   html[data-hardcore-layout] .workspace-bottom-bar .workspace-tabs>[role=tab] {flex:1 1 0;flex-direction:column;gap:4px;padding:5px 2px;font-size:10px;}
   .workspace-bottom-bar [aria-selected=true]::before {left:8px;right:8px;}
@@ -77,6 +96,21 @@ html[data-hardcore-layout] .loupe-caption.preview-toolbar {display:flex;align-it
 
 /* 图片大小调节悬浮于照片区域，移入预览或用键盘聚焦时显示。 */
 .preview-surface {position:relative;display:flex;flex-direction:column;flex:1;min-width:0;min-height:0;isolation:isolate;overflow:hidden;}
+.preview-surface>.preview-rating {position:absolute;left:12px;bottom:12px;z-index:4;display:flex;gap:2px;margin:0;padding:5px 8px;border:1px solid var(--theme-border);border-radius:10px;background:color-mix(in srgb,var(--theme-panel) 86%,transparent);box-shadow:0 4px 18px var(--theme-shadow);backdrop-filter:blur(14px);}
+.preview-surface>.preview-rating:empty {display:none;}
+.preview-surface>.preview-rating {opacity:var(--preview-rating-opacity,1);}
+.preview-surface[data-rating-transparency="100"]>.preview-rating,
+.preview-surface[data-zoom-transparency="100"]>.thumbnail-control {visibility:hidden;}
+.preview-transparency-control {display:flex;align-items:center;gap:12px;min-width:0;}
+.preview-transparency-control input {flex:1;min-width:0;width:100%;margin:8px 0;}
+.preview-transparency-control output {min-width:4ch;text-align:right;font-variant-numeric:tabular-nums;}
+.preview-surface>.preview-rating button {width:28px;height:30px;padding:0;font-size:22px;line-height:1;}
+.preview-surface {--preview-rating-inset:12px;}
+.preview-surface[data-rating-position=hidden]>.preview-rating {display:none;}
+.preview-surface[data-rating-position=top-left]>.preview-rating {left:12px;right:auto;top:var(--preview-rating-inset);bottom:auto;}
+.preview-surface[data-rating-position=top-right]>.preview-rating {left:auto;right:12px;top:var(--preview-rating-inset);bottom:auto;}
+.preview-surface[data-rating-position=bottom-left]>.preview-rating {left:12px;right:auto;top:auto;bottom:var(--preview-rating-inset);}
+.preview-surface[data-rating-position=bottom-right]>.preview-rating {left:auto;right:12px;top:auto;bottom:var(--preview-rating-inset);}
 .preview-surface>.thumbnail-control {
   position:absolute;right:12px;bottom:12px;z-index:4;display:flex;gap:7px;max-width:calc(100% - 24px);
   margin:0;padding:9px 12px;border:1px solid var(--theme-border);border-radius:12px;
@@ -88,10 +122,14 @@ html[data-hardcore-layout] .loupe-caption.preview-toolbar {display:flex;align-it
 .preview-surface>.thumbnail-control input {width:90px;min-width:40px;flex-shrink:1;}
 .preview-surface>.thumbnail-control button {padding:2px 5px;}
 .preview-surface>.thumbnail-control output {min-width:38px;}
+.preview-surface[data-zoom-position=hidden]>.thumbnail-control {display:none;}
+.preview-surface[data-zoom-position=top-left]>.thumbnail-control {left:12px;right:auto;top:12px;bottom:auto;}
+.preview-surface[data-zoom-position=top-right]>.thumbnail-control {top:12px;bottom:auto;}
+.preview-surface[data-zoom-position=bottom-left]>.thumbnail-control {left:12px;right:auto;}
 .preview-surface:hover>.thumbnail-control,
 .preview-surface>.thumbnail-control:has(:focus-visible),
-.preview-surface>.thumbnail-control:has(input:active) {opacity:1;pointer-events:auto;transform:none;}
-@media(hover:none) {.preview-surface>.thumbnail-control {opacity:1;pointer-events:auto;transform:none;}}
+.preview-surface>.thumbnail-control:has(input:active) {opacity:var(--preview-zoom-opacity,1);pointer-events:auto;transform:none;}
+@media(hover:none) {.preview-surface>.thumbnail-control {opacity:var(--preview-zoom-opacity,1);pointer-events:auto;transform:none;}}
 @media(prefers-reduced-motion:reduce) {.preview-surface>.thumbnail-control {transition:none;}}
 
 /* 选片右侧独立页面：照片操作与当前拍摄清单。 */
@@ -114,6 +152,9 @@ html[data-hardcore-layout] .loupe-caption.preview-toolbar {display:flex;align-it
 .sku-current-table td {padding:9px 6px;border-bottom:1px solid var(--theme-border);color:var(--theme-text);overflow-wrap:anywhere;vertical-align:middle;}
 .sku-current-table tbody tr:hover {background:var(--theme-hover);}
 .sku-current-table .sku-state {font-size:9px;white-space:normal;}
+.sku-current-table th:nth-child(3) {width:64px;}
+.sku-current-table .sku-product-images {min-width:0;}
+.sku-current-table .sku-product-image img {width:46px;height:56px;}
 .sku-current-table .current-shooting-empty {padding:18px 10px;color:var(--theme-muted);line-height:1.7;}
 .shooting-manual-field {display:flex;flex-direction:column;gap:8px;padding:12px 10px;font-size:11px;color:var(--theme-text-soft);}
 .shooting-manual-field[hidden] {display:none;}
@@ -139,3 +180,26 @@ html[data-hardcore-layout] .loupe-caption.preview-toolbar {display:flex;align-it
 .sku-current-table.is-common th:last-child {width:47%;}
 #current-shooting-panel .sku-common-memberships {align-items:stretch;}
 #current-shooting-panel .sku-common-memberships button {flex-direction:column;align-items:flex-start;gap:4px;min-height:0;padding:5px;font-size:9px;}
+
+/* 固定宽度的主题滚动条，避免系统自动隐藏导致无法手动拖拽。 */
+.watch-scroll-area {display:flex;flex:1;min-height:0;overflow:hidden;}
+#selection-page .left-panel #watch-thumbnails {min-width:0;overflow-y:auto;scrollbar-width:none;scrollbar-gutter:auto;}
+#selection-page .left-panel #watch-thumbnails::-webkit-scrollbar {display:none;width:0;}
+.watch-scrollbar {position:relative;flex:0 0 14px;background:var(--theme-panel);touch-action:none;cursor:pointer;user-select:none;border-radius:7px;}
+.watch-scroll-thumb {position:absolute;top:0;left:3px;right:3px;min-height:32px;background:var(--theme-emphasis);border-radius:5px;opacity:.65;cursor:grab;}
+.watch-scrollbar:is(:hover,:focus-visible,.dragging) .watch-scroll-thumb {opacity:1;}
+.watch-scrollbar.dragging .watch-scroll-thumb {cursor:grabbing;}
+.watch-scrollbar:focus-visible {outline:1px solid var(--theme-emphasis);outline-offset:-1px;}
+.watch-scrollbar[aria-disabled=true] {opacity:.25;pointer-events:none;}
+#selection-page .left-panel .folder-list {
+  overflow-y:scroll;
+  scrollbar-width:auto;
+  scrollbar-gutter:stable;
+  scrollbar-color:var(--theme-emphasis) var(--theme-panel);
+}
+#selection-page .left-panel .folder-list::-webkit-scrollbar {display:block;width:12px;height:12px;}
+#selection-page .left-panel .folder-list::-webkit-scrollbar-track {background:var(--theme-panel);}
+#selection-page .left-panel .folder-list::-webkit-scrollbar-thumb {
+  background:var(--theme-emphasis);border:3px solid var(--theme-panel);border-radius:8px;min-height:32px;
+}
+#selection-page .left-panel .folder-list::-webkit-scrollbar-thumb:hover {background:var(--theme-selected-edge);}

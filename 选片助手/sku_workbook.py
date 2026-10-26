@@ -104,7 +104,9 @@ def cell_value(cell,strings):
 def inspect_workbook(path,allow_empty=False):
     result=[]
     with ZipFile(path) as z:
+        from sku_workbook_presentation import read_layout,canonical_values
         if sum(i.file_size for i in z.infolist())>150_000_000:raise ValueError('表格解压内容超过 150MB，请拆分后导入')
+        layouts=read_layout(z)
         strings=[]
         if 'xl/sharedStrings.xml' in z.namelist():strings=[''.join(s.itertext()) for s in E.fromstring(z.read('xl/sharedStrings.xml')).findall('m:si',N)]
         catalog=_cell_image_catalog(z)
@@ -112,8 +114,11 @@ def inspect_workbook(path,allow_empty=False):
         for sheet in E.fromstring(z.read('xl/workbook.xml')).findall('m:sheets/m:sheet',N):
             target=rels[sheet.get(RID)];target=target.lstrip('/') if target.startswith('/') else posixpath.normpath('xl/'+target)
             if not target.startswith('xl/') or '..' in target.split('/'):raise ValueError('工作表引用路径无效')
+            layout=layouts.get(target)
+            if layout is not None and layout.get('summary')=='1':continue
             doc=E.fromstring(z.read(target));cells={c.get('r'):c for c in doc.findall('m:sheetData/m:row/m:c',N)}
             values={ref:cell_value(c,strings) for ref,c in cells.items()}
+            header_aliases=canonical_values(values,layout)
             headers=[ref for ref,v in values.items() if v.strip() in HEADERS and int(re.sub('[A-Z]','',ref))<=50]
             if not headers:
                 result.append({'name':sheet.get('name'),'path':target,'skipped':'未找到款号列','rows':[]});continue
@@ -123,12 +128,14 @@ def inspect_workbook(path,allow_empty=False):
             statuses=[ref for ref,v in values.items() if v.strip()=='拍摄状态' and int(re.sub('[A-Z]','',ref))==header_row]
             if len(statuses)>1:raise ValueError(f'{sheet.get("name")} 有多个拍摄状态列，请先整理')
             status_col=col_number(statuses[0]) if statuses else active+1
-            time_col=status_col+1
+            pictures=[ref for ref,v in values.items() if statuses and v.strip()=='款号图片' and int(re.sub('[A-Z]','',ref))==header_row and col_number(ref)==status_col+1]
+            image_col=status_col+1 if pictures else None
+            time_col=status_col+(2 if image_col else 1)
             if time_col>16384:raise ValueError('工作表没有可追加状态和完成时间的空列')
             times=[ref for ref,v in values.items() if v.strip()=='拍摄完成时间' and int(re.sub('[A-Z]','',ref))==header_row]
             if len(times)>1 or (times and col_number(times[0])!=time_col):raise ValueError(f'{sheet.get("name")} 的拍摄完成时间须紧邻拍摄状态右侧，请先整理该列')
             if not times and any(col_number(ref)==time_col and (values[ref]!='' or cell.find('m:f',N) is not None) for ref,cell in cells.items()):raise ValueError(f'{sheet.get("name")} 的拍摄状态右侧已有内容，请先插入空列，避免覆盖原数据')
-            columns=[{'index':i,'letter':col_name(i),'title':values.get(f'{col_name(i)}{header_row}','').strip() or col_name(i)} for i in range(1,active+1) if i not in (status_col,time_col)]
+            columns=[{'index':i,'letter':col_name(i),'title':values.get(f'{col_name(i)}{header_row}','').strip() or col_name(i)} for i in range(1,active+1) if i not in (status_col,time_col,image_col)]
             rows=[]
             for ref,value in values.items():
                 row=int(re.sub('[A-Z]','',ref))
@@ -140,8 +147,8 @@ def inspect_workbook(path,allow_empty=False):
                 rows.append({'excel_row':row,'sku':value,'normalized':key,'baseline':status,'baseline_completed_at':values.get(f'{col_name(time_col)}{row}','').strip(),
                              'cells':{col['letter']:values.get(f"{col['letter']}{row}",'') for col in columns}})
             result.append({'name':sheet.get('name'),'path':target,'header_row':header_row,'sku_col':sku_col,'status_col':status_col,
-                           'status_letter':col_name(status_col),'new_status':not bool(statuses),'time_col':time_col,'time_letter':col_name(time_col),'columns':columns,'rows':rows,
-                           'images':_sheet_images(z,target,doc,cells,strings,catalog)})
+                           'status_letter':col_name(status_col),'new_status':not bool(statuses),'time_col':time_col,'time_letter':col_name(time_col),'image_col':image_col,'columns':columns,'rows':rows,
+                           'images':_sheet_images(z,target,doc,cells,strings,catalog),'header_aliases':header_aliases})
     if not allow_empty and not any(s['rows'] for s in result):raise ValueError('表格中未找到有效款号行')
     return result
 
@@ -173,7 +180,7 @@ def _column_width(xml,prefix,column,width=16):
     return re.sub(r'(<(?:\w+:)?sheetData\b)',lambda m:cols+m.group(1),xml,count=1)
 
 
-def export_workbook(source,output,sheets,statuses,completed_times=None):
+def export_workbook(source,output,sheets,statuses,completed_times=None,*,capture_images=None):
     output=Path(output);output.parent.mkdir(parents=True,exist_ok=True);temp=output.with_suffix('.tmp.xlsx')
     # 旧任务布局迁移失败或源表变化时也不能绕过相邻列冲突检查。
     current={s['path']:s for s in inspect_workbook(source,allow_empty=True) if not s.get('skipped')}
@@ -222,4 +229,7 @@ def export_workbook(source,output,sheets,statuses,completed_times=None):
                 xml=re.sub(r'<(?:\w+:)?dimension\b[^>]*\bref="([A-Z0-9:]+)"[^>]*/>',dimension,xml,count=1)
                 content=xml.encode('utf8');E.fromstring(content)
             dest.writestr(info,content)
+    if capture_images is not None:
+        from sku_workbook_pictures import add_pictures
+        add_pictures(temp,sheets,capture_images)
     temp.replace(output);return output

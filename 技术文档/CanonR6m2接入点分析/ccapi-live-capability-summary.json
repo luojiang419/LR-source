@@ -1,0 +1,75 @@
+{
+  "date": "2026-10-22",
+  "endpoint": "https://192.168.1.2:443/ccapi",
+  "camera": {
+    "model": "Canon EOS R6m2",
+    "firmware": "1.7.0"
+  },
+  "photo": {
+    "path": "C:\\Users\\jiang\\AppData\\Local\\Temp\\codex-clipboard-980743e5-593c-4ac8-a6e7-ae326b503a8c.jpg",
+    "sha256": "5d6bd8dab8e971042acf271095af48b2b4bbcdb5e9f1ca9e9973f90d4e78042c"
+  },
+  "api_table_counts": {
+    "ver100": 83,
+    "ver110": 28,
+    "ver120": 1
+  },
+  "total_api_entries": 112,
+  "successful_get_paths": [
+    "/ccapi/ver100/deviceinformation",
+    "/ccapi/ver110/functions/wifisetting",
+    "/ccapi/ver110/functions/wifisetting/set1",
+    "/ccapi/ver110/functions/wifisetting/set2",
+    "/ccapi/ver110/functions/wifisetting/set3"
+  ],
+  "network_related_entries": [
+    {
+      "path": "/ccapi/ver100/functions/wificonnection",
+      "get": false,
+      "post": true,
+      "put": false,
+      "delete": false
+    },
+    {
+      "path": "/ccapi/ver110/functions/wifisetting",
+      "get": true,
+      "post": false,
+      "put": false,
+      "delete": false
+    },
+    {
+      "path": "/ccapi/ver110/functions/wifisetting/set1",
+      "get": true,
+      "post": false,
+      "put": true,
+      "delete": true
+    },
+    {
+      "path": "/ccapi/ver110/functions/wifisetting/set2",
+      "get": true,
+      "post": false,
+      "put": true,
+      "delete": true
+    },
+    {
+      "path": "/ccapi/ver110/functions/wifisetting/set3",
+      "get": true,
+      "post": false,
+      "put": true,
+      "delete": true
+    }
+  ],
+  "not_advertised_expected_paths": [
+    "/ccapi/ver100/functions/networkfunctionmode",
+    "/ccapi/ver100/functions/networksetting/currentconnectionsetting"
+  ],
+  "tls": {
+    "trust": "explicit single camera certificate; process-local",
+    "certificate_sha256": "f6c8cfdd4006c0029f33e01f7b95c3c8216d61a87ad854c8c0f703d4e06b0b4c",
+    "hostname_verification": true
+  },
+  "tls_identity_limit": "Process-local trust of certificate obtained from user-specified endpoint on the camera hotspot; not independent Canon manufacturer certificate authentication. No system trust-store or camera HTTPS setting changes.",
+  "operation": "GET only; no PUT/POST/DELETE; credentials, serial number, GUID and MAC address redacted",
+  "result": "Public API table supplies Wi-Fi slots and a disconnect API; no advertised interface for EOS Utility default mode or INFO-key behavior. No settings modified.",
+  "limit": "An absent advertised API does not rule out undocumented firmware/private commands; empty returned Wi-Fi slots do not prove how GUI connection records are stored."
+}

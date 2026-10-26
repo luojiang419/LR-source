@@ -1,0 +1,34 @@
+{
+  "purpose": "Certificate handshake inspection only; no HTTP request",
+  "subject": "CN=192.168.1.2,O=Canon Inc\\,,ST=Tokyo,C=JP",
+  "issuer": "CN=Canon Digital Camera,O=Canon Inc\\,,L=Shimomaruko,ST=Tokyo,C=JP",
+  "sha256": "f6c8cfdd4006c0029f33e01f7b95c3c8216d61a87ad854c8c0f703d4e06b0b4c",
+  "not_before": "2026-10-22T04:25:21+00:00",
+  "not_after": "2027-10-22T04:25:21+00:00",
+  "extensions": [
+    {
+      "name": "basicConstraints",
+      "value": "<BasicConstraints(ca=False, path_length=None)>"
+    },
+    {
+      "name": "Unknown OID",
+      "value": "<UnrecognizedExtension(oid=<ObjectIdentifier(oid=2.16.840.1.113730.1.1, name=Unknown OID)>, value=b'\\x03\\x02\\x06@')>"
+    },
+    {
+      "name": "Unknown OID",
+      "value": "<UnrecognizedExtension(oid=<ObjectIdentifier(oid=2.16.840.1.113730.1.13, name=Unknown OID)>, value=b'\\x16\\x1dOpenSSL Generated Certificate')>"
+    },
+    {
+      "name": "subjectKeyIdentifier",
+      "value": "<SubjectKeyIdentifier(digest=b\"\\xbb\\xda\\xb5e\\xbf\\x8e\\x15\\x05\\x95\\xc7s\\x11'\\xce\\x89\\xc6\\x8d\\xff\\xd5\\xfb\")>"
+    },
+    {
+      "name": "authorityKeyIdentifier",
+      "value": "<AuthorityKeyIdentifier(key_identifier=b'=\\xa4\\xeb\\xf8\\x8b\\x04%\\xd5\\x832\\xe183b\\xc4<\\xb0\\xaf\\x8f\\x94', authority_cert_issuer=None, authority_cert_serial_number=None)>"
+    },
+    {
+      "name": "subjectAltName",
+      "value": "<SubjectAlternativeName(<GeneralNames([<DNSName(value='localhost')>, <IPAddress(value=127.0.0.1)>, <IPAddress(value=192.168.1.2)>])>)>"
+    }
+  ]
+}

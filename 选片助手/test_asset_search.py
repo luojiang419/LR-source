@@ -71,5 +71,11 @@ class SearchTests(unittest.TestCase):
             with self.assertRaises(ValueError):literal_query(text)
         with self.assertRaises(ValueError):EverythingSearch(self.archive).search('IMG',offset=10001)
 
+    def test_disabled_everything_never_starts_a_worker_and_reports_native_fallback(self):
+        with patch.dict('everything_search.os.environ',{'FRAMEKEEP_DISABLE_EVERYTHING':'1'}),patch('everything_search.subprocess.run',side_effect=AssertionError('不应启动 Everything worker')):
+            service=EverythingSearch(self.archive);status=service.status();result=service.search('IMG001')
+        self.assertFalse(status['available']);self.assertIn('本机快速索引',status['message'])
+        self.assertEqual(result['source'],'archive');self.assertEqual(result['rows'][0]['asset']['id'],'a144')
+
 
 if __name__=='__main__':unittest.main()

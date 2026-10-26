@@ -1,0 +1,70 @@
+{
+  "date": "2026-10-22",
+  "upstream_commit": "a98533090e1ef16a8f56193dbb5dd410222a71aa",
+  "sources": [
+    {
+      "local_path": "G:\\app\\LR\\.runtime\\canon-r6m2-analysis\\research\\d8_oracle\\d810_verif.py",
+      "source_url": "https://github.com/lclevy/d8_oracle/blob/a98533090e1ef16a8f56193dbb5dd410222a71aa/d810_verif.py",
+      "sha256": "52f6d9ebe4399f760a44d0fc7fd01d8232d288c88cb53a1df00e865021d551e1",
+      "relevant_pdf_pages": []
+    },
+    {
+      "local_path": "G:\\app\\LR\\.runtime\\canon-r6m2-analysis\\research\\d8_oracle\\ml_scripts\\fir_tool2.py",
+      "source_url": "https://github.com/lclevy/d8_oracle/blob/a98533090e1ef16a8f56193dbb5dd410222a71aa/ml_scripts/fir_tool2.py",
+      "sha256": "6437603ca58ca10c7a4bc5be3b7c19a7889c34a797367f1165601fe68811ff4c",
+      "relevant_pdf_pages": []
+    },
+    {
+      "local_path": "G:\\app\\LR\\.runtime\\canon-r6m2-analysis\\research\\d8_oracle\\hacklu2025_slides\\d8_oracle_hacklu_final.pdf",
+      "source_url": "https://pretalx.com/media/hack-lu-2025/submissions/3UEDY8/resources/d8_oracle_hac_VY8EEEp.pdf",
+      "sha256": "599934db8e8b2a8722717d9312faf97fe95c6e08027b9f1d8786a2554c970be6",
+      "relevant_pdf_pages": [
+        4,
+        7,
+        14,
+        29
+      ]
+    },
+    {
+      "local_path": "G:\\app\\LR\\.runtime\\canon-r6m2-analysis\\CameraControlAPI_Reference_v110b_EN.pdf",
+      "source_url": "https://github.com/bitfocus/companion-module-requests/files/5495836/CameraControlAPI_Reference_v110b_EN.pdf",
+      "sha256": "78c1574606b77367d2b183de1bfcc75bd21b4e67b50cd98cee32749e94bcb4f9",
+      "relevant_pdf_pages": [
+        84,
+        107,
+        114,
+        115,
+        118,
+        119
+      ]
+    },
+    {
+      "local_path": "G:\\app\\LR\\.runtime\\canon-r6m2-analysis\\CCAPI_OperationGuide_EN.pdf",
+      "source_url": "https://downloads.canon.com/sdk/CameraControlAPI_OperationGuide_EN.pdf",
+      "sha256": "7843818f8f05dcf2b4d12d27c97991a049ff72a2599c0201b315dae59b1c465d",
+      "relevant_pdf_pages": [
+        4,
+        5,
+        22
+      ]
+    },
+    {
+      "local_path": "G:\\app\\LR\\.runtime\\canon-r6m2-analysis\\CCAPIStandard.pdf",
+      "source_url": "https://www.canon.com.cn/supports/sdk/icp/template/CCAPIStandard.pdf",
+      "sha256": "18fb0ecb83c18f11554870229dfbbaf7966fb43e53ad0a23b90830110a84353a",
+      "relevant_pdf_pages": [
+        1
+      ],
+      "limitation": "Official standard package diagram or generic capability summary; not an R6m2 API table."
+    },
+    {
+      "local_path": "G:\\app\\LR\\.runtime\\canon-r6m2-analysis\\CCAPIdetail.pdf",
+      "source_url": "https://www.canon.com.cn/supports/sdk/icp/template/CCAPIdetail.pdf",
+      "sha256": "6e4b1573e187cea650c283b46e74876e3988e9064df3486e46c93acca7fa6409",
+      "relevant_pdf_pages": [],
+      "limitation": "Official standard package diagram or generic capability summary; not an R6m2 API table."
+    }
+  ],
+  "scope": "source/tool/document provenance; not camera execution",
+  "latest_ccapi_gap": "Reference is Ver.1.1.0 Rev.1.3, not R6m2 actual API Table; do not infer current model support."
+}

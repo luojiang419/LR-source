@@ -1,0 +1,876 @@
+{
+  "scope": "仅整理已保存的静态证据和脱敏profile报告；此次不扫描目标DLL、不读相机、不执行DLL、不写相机。",
+  "offset_note": "下列 dncil 指令 offset 含方法头；REA IL offsets 不含方法头。token/RVA绑定各自SHA和MVID。",
+  "artifacts": [
+    {
+      "key": "main",
+      "filename": "EOS Network Setting Tool.dll",
+      "sha256": "c52f24bae6d57ad6e898225240a505950a440024716a85e59deb71242feb3ba3",
+      "mvid": "6d3b4535-46ca-44f7-99b3-1cf1c84f7bd9",
+      "rea_evidence_ids": [
+        "ev_238a3150896b2643f2bde83983c7c3a9d81a86bea1f9184985e305d48236a6a0",
+        "ev_3894ca1be914a139280a0d8885ec9d392baa52d35a31418a86400a0d8d07f6e0"
+      ],
+      "mvid_note": null,
+      "rea_note": "静态托管元数据与 CIL"
+    },
+    {
+      "key": "sdk",
+      "filename": "NESDK_MAUI.dll",
+      "sha256": "56562566f47819ae6a855b74473695da40296e6476bdab364c30e521d75de385",
+      "mvid": "429572e9-f955-4247-abc7-3bfb47d0ae90",
+      "rea_evidence_ids": [
+        "ev_993574851f51c3c4019bebbdc2907dc1ba740f149b7a0701e1753e24080413a9",
+        "ev_f4a1a8f800c164f84bcf17ccd38f5be70f49ec3d78c55f6643afea052c39484f",
+        "ev_b35f864df35ace6f4e14fa81b7ffe53f123b1440bb74f7aea7bb8e986bfde4a3"
+      ],
+      "mvid_note": null,
+      "rea_note": "静态托管元数据与 CIL"
+    },
+    {
+      "key": "managed_nif",
+      "filename": "EdsNIFParseMAUI.dll",
+      "sha256": "736281b641d65e4fe6e9cb8f4e246f87e4893ad2c96966161ab0e3a66f11e450",
+      "mvid": "c59089cd-b7de-43ff-9f76-2ad47759cb86",
+      "rea_evidence_ids": [
+        "ev_fd47eb3a09b402c5cf08977a8599647beec9aaf128e0a9afd76ab959a572e171",
+        "ev_45df68cea3c639713f7de9a70a8043ef69d1297ae2f0c4e34134eda1f24164b6"
+      ],
+      "mvid_note": null,
+      "rea_note": "静态托管元数据与 CIL"
+    },
+    {
+      "key": "native_nif",
+      "filename": "runtimes/windows/native/EdsNIFParse.dll",
+      "sha256": "6d0ab49b647e661ca887e0c41c40ea2b03cc0e8243387d9913c82d65babf4ea0",
+      "mvid": null,
+      "rea_evidence_ids": [],
+      "mvid_note": "native PE 非托管程序集，无托管 MVID",
+      "rea_note": "REA layout provider 对 PE 返回 capability_unavailable；已保留错误。本项依据原文件 SHA 与 Capstone 静态汇编。"
+    }
+  ],
+  "methods": [
+    {
+      "token": "0x6000131",
+      "declaring_type": "com.canon.eos.EOSCamera",
+      "method": "connect",
+      "rva": "0x5f58",
+      "artifact_key": "sdk",
+      "purpose": "本地SDK注册参数；是否发PTP由父任务native链独立证实，托管代码自身只证明调用参数",
+      "il": [
+        {
+          "offset": "0x10e",
+          "opcode": "ldarg.0",
+          "operand": "None"
+        },
+        {
+          "offset": "0x10f",
+          "opcode": "ldloc.1",
+          "operand": "None"
+        },
+        {
+          "offset": "0x110",
+          "opcode": "stfld",
+          "operand": ".mCameraRef"
+        },
+        {
+          "offset": "0x115",
+          "opcode": "ldloc.1",
+          "operand": "None"
+        },
+        {
+          "offset": "0x116",
+          "opcode": "ldc.i4",
+          "operand": "16777216"
+        },
+        {
+          "offset": "0x11b",
+          "opcode": "ldc.i4.s",
+          "operand": "9"
+        },
+        {
+          "offset": "0x11d",
+          "opcode": "ldc.i4",
+          "operand": "8929"
+        },
+        {
+          "offset": "0x122",
+          "opcode": "ldc.i4",
+          "operand": "3155"
+        },
+        {
+          "offset": "0x127",
+          "opcode": "box",
+          "operand": ".Int32"
+        },
+        {
+          "offset": "0x12c",
+          "opcode": "call",
+          "operand": "com.canon.eos.EDSDK.EdsSetPropertyData"
+        },
+        {
+          "offset": "0x131",
+          "opcode": "call",
+          "operand": "com.canon.eos.EOSException.throwIfSDKError_"
+        }
+      ]
+    },
+    {
+      "token": "0x600014a",
+      "declaring_type": "com.canon.eos.EOSCamera",
+      "method": "getWftData",
+      "rva": "0x7964",
+      "artifact_key": "sdk",
+      "purpose": "setNumber原样交给GetWftDataCommand",
+      "il": [
+        {
+          "offset": "0x34",
+          "opcode": "ldarg.0",
+          "operand": "None"
+        },
+        {
+          "offset": "0x35",
+          "opcode": "ldarg.1",
+          "operand": "None"
+        },
+        {
+          "offset": "0x36",
+          "opcode": "newobj",
+          "operand": "com.canon.eos.EOSGetWftDataCommand..ctor"
+        },
+        {
+          "offset": "0x3b",
+          "opcode": "stloc.2",
+          "operand": "None"
+        }
+      ]
+    },
+    {
+      "token": "0x6000249",
+      "declaring_type": "com.canon.eos.EOSGetWftDataCommand",
+      "method": ".ctor",
+      "rva": "0xd286",
+      "artifact_key": "sdk",
+      "purpose": "setNumber原样保存mNumber",
+      "il": [
+        {
+          "offset": "0x1",
+          "opcode": "ldarg.0",
+          "operand": "None"
+        },
+        {
+          "offset": "0x2",
+          "opcode": "ldarg.1",
+          "operand": "None"
+        },
+        {
+          "offset": "0x3",
+          "opcode": "call",
+          "operand": "com.canon.eos.EOSCameraCommand..ctor"
+        },
+        {
+          "offset": "0x8",
+          "opcode": "ldarg.0",
+          "operand": "None"
+        },
+        {
+          "offset": "0x9",
+          "opcode": "ldarg.2",
+          "operand": "None"
+        },
+        {
+          "offset": "0xa",
+          "opcode": "stfld",
+          "operand": ".mNumber"
+        },
+        {
+          "offset": "0xf",
+          "opcode": "ret",
+          "operand": "None"
+        }
+      ]
+    },
+    {
+      "token": "0x600024b",
+      "declaring_type": "com.canon.eos.EOSGetWftDataCommand",
+      "method": "executeCommand",
+      "rva": "0xd2a0",
+      "artifact_key": "sdk",
+      "purpose": "native GetWftData实际4参数",
+      "il": [
+        {
+          "offset": "0x1e",
+          "opcode": "ldarg.0",
+          "operand": "None"
+        },
+        {
+          "offset": "0x1f",
+          "opcode": "ldfld",
+          "operand": ".mCamera"
+        },
+        {
+          "offset": "0x24",
+          "opcode": "callvirt",
+          "operand": "com.canon.eos.EOSCamera.getCameraRef"
+        },
+        {
+          "offset": "0x29",
+          "opcode": "ldarg.0",
+          "operand": "None"
+        },
+        {
+          "offset": "0x2a",
+          "opcode": "ldfld",
+          "operand": ".mNumber"
+        },
+        {
+          "offset": "0x2f",
+          "opcode": "ldloc.1",
+          "operand": "None"
+        },
+        {
+          "offset": "0x30",
+          "opcode": "ldloc.0",
+          "operand": "None"
+        },
+        {
+          "offset": "0x31",
+          "opcode": "call",
+          "operand": "com.canon.eos.EDSDK.EdsGetWftData"
+        },
+        {
+          "offset": "0x36",
+          "opcode": "call",
+          "operand": "com.canon.eos.EOSException.throwIfSDKError_"
+        }
+      ]
+    },
+    {
+      "token": "0x60004ce",
+      "declaring_type": "ENST.CameraWftDatasViewModel",
+      "method": "Read",
+      "rva": "0x2afac",
+      "artifact_key": "main",
+      "purpose": "Read参数原样传给getWftData",
+      "il": [
+        {
+          "offset": "0x29",
+          "opcode": "ldloc.1",
+          "operand": "None"
+        },
+        {
+          "offset": "0x2a",
+          "opcode": "ldarg.1",
+          "operand": "None"
+        },
+        {
+          "offset": "0x2b",
+          "opcode": "ldc.i4.1",
+          "operand": "None"
+        },
+        {
+          "offset": "0x2c",
+          "opcode": "ldloc.0",
+          "operand": "None"
+        },
+        {
+          "offset": "0x2d",
+          "opcode": "ldftn",
+          "operand": ".<>c__DisplayClass25_0.<Read>b__0"
+        },
+        {
+          "offset": "0x33",
+          "opcode": "newobj",
+          "operand": "..ctor"
+        },
+        {
+          "offset": "0x38",
+          "opcode": "callvirt",
+          "operand": ".getWftData"
+        },
+        {
+          "offset": "0x3d",
+          "opcode": "pop",
+          "operand": "None"
+        }
+      ]
+    },
+    {
+      "token": "0x60004d9",
+      "declaring_type": ".<Action>d__21",
+      "method": "MoveNext",
+      "rva": "0x2b118",
+      "artifact_key": "main",
+      "purpose": "Read(Index - 1)，显示SET1对应setNumber=0",
+      "il": [
+        {
+          "offset": "0xc0",
+          "opcode": "ldloc.1",
+          "operand": "None"
+        },
+        {
+          "offset": "0xc1",
+          "opcode": "ldfld",
+          "operand": "._SelectedItem"
+        },
+        {
+          "offset": "0xc6",
+          "opcode": "callvirt",
+          "operand": "ENST.WftDispData.get_IsValid"
+        },
+        {
+          "offset": "0xcb",
+          "opcode": "brfalse.s",
+          "operand": "218"
+        },
+        {
+          "offset": "0xcd",
+          "opcode": "ldloc.1",
+          "operand": "None"
+        },
+        {
+          "offset": "0xce",
+          "opcode": "ldloc.s",
+          "operand": "local(0x0004)"
+        },
+        {
+          "offset": "0xd0",
+          "opcode": "ldc.i4.1",
+          "operand": "None"
+        },
+        {
+          "offset": "0xd1",
+          "opcode": "sub",
+          "operand": "None"
+        },
+        {
+          "offset": "0xd2",
+          "opcode": "call",
+          "operand": "ENST.CameraWftDatasViewModel.Read"
+        },
+        {
+          "offset": "0xd7",
+          "opcode": "stloc.3",
+          "operand": "None"
+        }
+      ]
+    },
+    {
+      "token": "0x600029f",
+      "declaring_type": "ENST.NetworkInterface",
+      "method": "NetworkIFString",
+      "rva": "0x25a14",
+      "artifact_key": "main",
+      "purpose": "NetworkInterface: switch case 2 -> InWireless，而非AP/STA",
+      "il": [
+        {
+          "offset": "0xc",
+          "opcode": "ldnull",
+          "operand": "None"
+        },
+        {
+          "offset": "0xd",
+          "opcode": "stloc.0",
+          "operand": "None"
+        },
+        {
+          "offset": "0xe",
+          "opcode": "ldarg.0",
+          "operand": "None"
+        },
+        {
+          "offset": "0xf",
+          "opcode": "switch",
+          "operand": "[42, 50, 58, 74, 66]"
+        },
+        {
+          "offset": "0x28",
+          "opcode": "br.s",
+          "operand": "74"
+        },
+        {
+          "offset": "0x2a",
+          "opcode": "call",
+          "operand": "ENST.Resources.get_COMMON_Picker_Choise_Invalid"
+        },
+        {
+          "offset": "0x2f",
+          "opcode": "stloc.0",
+          "operand": "None"
+        },
+        {
+          "offset": "0x30",
+          "opcode": "br.s",
+          "operand": "98"
+        },
+        {
+          "offset": "0x32",
+          "opcode": "call",
+          "operand": "ENST.Resources.get_NwstSetting_Picker_Choise_NWInterface_Ether"
+        },
+        {
+          "offset": "0x37",
+          "opcode": "stloc.0",
+          "operand": "None"
+        },
+        {
+          "offset": "0x38",
+          "opcode": "br.s",
+          "operand": "98"
+        },
+        {
+          "offset": "0x3a",
+          "opcode": "call",
+          "operand": "ENST.Resources.get_NwstSetting_Picker_Choise_NWInterface_InWireless"
+        },
+        {
+          "offset": "0x3f",
+          "opcode": "stloc.0",
+          "operand": "None"
+        },
+        {
+          "offset": "0x40",
+          "opcode": "br.s",
+          "operand": "98"
+        },
+        {
+          "offset": "0x42",
+          "opcode": "call",
+          "operand": "ENST.Resources.get_NwstSetting_Picker_Choise_NWInterface_WFTWireless"
+        },
+        {
+          "offset": "0x47",
+          "opcode": "stloc.0",
+          "operand": "None"
+        },
+        {
+          "offset": "0x48",
+          "opcode": "br.s",
+          "operand": "98"
+        },
+        {
+          "offset": "0x4a",
+          "opcode": "ldstr",
+          "operand": "'unknown:'"
+        },
+        {
+          "offset": "0x4f",
+          "opcode": "ldarga.s",
+          "operand": "argument(0x0000)"
+        },
+        {
+          "offset": "0x51",
+          "opcode": "constrained.",
+          "operand": ".NETWORK_AVAILABLE_TRANS_METHOD_N"
+        },
+        {
+          "offset": "0x57",
+          "opcode": "callvirt",
+          "operand": ".ToString"
+        },
+        {
+          "offset": "0x5c",
+          "opcode": "call",
+          "operand": ".Concat"
+        },
+        {
+          "offset": "0x61",
+          "opcode": "stloc.0",
+          "operand": "None"
+        },
+        {
+          "offset": "0x62",
+          "opcode": "ldloc.0",
+          "operand": "None"
+        },
+        {
+          "offset": "0x63",
+          "opcode": "ret",
+          "operand": "None"
+        }
+      ]
+    },
+    {
+      "token": "0x600061f",
+      "declaring_type": "ENST.Top.TopCameraViewModel",
+      "method": "getActInfoStr",
+      "rva": "0x35230",
+      "artifact_key": "main",
+      "purpose": "ActionInfo.mode -> NetworkCommunication.ModeString",
+      "il": [
+        {
+          "offset": "0x1f",
+          "opcode": "ldarg.2",
+          "operand": "None"
+        },
+        {
+          "offset": "0x20",
+          "opcode": "ldfld",
+          "operand": ".arrayNetActInfo"
+        },
+        {
+          "offset": "0x25",
+          "opcode": "ldarg.1",
+          "operand": "None"
+        },
+        {
+          "offset": "0x26",
+          "opcode": "ldc.i4.1",
+          "operand": "None"
+        },
+        {
+          "offset": "0x27",
+          "opcode": "sub",
+          "operand": "None"
+        },
+        {
+          "offset": "0x28",
+          "opcode": "ldelema",
+          "operand": ".EdsNetActInfo"
+        },
+        {
+          "offset": "0x2d",
+          "opcode": "ldfld",
+          "operand": ".mode"
+        },
+        {
+          "offset": "0x32",
+          "opcode": "call",
+          "operand": "ENST.NetworkCommunication.ModeString"
+        },
+        {
+          "offset": "0x37",
+          "opcode": "stloc.0",
+          "operand": "None"
+        }
+      ]
+    },
+    {
+      "token": "0x6000620",
+      "declaring_type": "ENST.Top.TopCameraViewModel",
+      "method": "getNetInfoStr",
+      "rva": "0x3526c",
+      "artifact_key": "main",
+      "purpose": "NetworkInfo.mode -> NetworkInterface.NetworkIFString",
+      "il": [
+        {
+          "offset": "0x1f",
+          "opcode": "ldarg.2",
+          "operand": "None"
+        },
+        {
+          "offset": "0x20",
+          "opcode": "ldfld",
+          "operand": ".arrayNetActInfo"
+        },
+        {
+          "offset": "0x25",
+          "opcode": "ldarg.1",
+          "operand": "None"
+        },
+        {
+          "offset": "0x26",
+          "opcode": "ldc.i4.1",
+          "operand": "None"
+        },
+        {
+          "offset": "0x27",
+          "opcode": "sub",
+          "operand": "None"
+        },
+        {
+          "offset": "0x28",
+          "opcode": "ldelema",
+          "operand": ".EdsNetActInfo"
+        },
+        {
+          "offset": "0x2d",
+          "opcode": "ldfld",
+          "operand": ".mode"
+        },
+        {
+          "offset": "0x32",
+          "opcode": "call",
+          "operand": "ENST.NetworkInterface.NetworkIFString"
+        },
+        {
+          "offset": "0x37",
+          "opcode": "stloc.0",
+          "operand": "None"
+        }
+      ]
+    },
+    {
+      "token": "0x600012d",
+      "declaring_type": "ENST.NsetBox",
+      "method": "GetNwstNum",
+      "rva": "0x203f4",
+      "artifact_key": "main",
+      "purpose": "nwnm逻辑对应NWST列表Count",
+      "il": [
+        {
+          "offset": "0xc",
+          "opcode": "ldc.i4.0",
+          "operand": "None"
+        },
+        {
+          "offset": "0xd",
+          "opcode": "stloc.0",
+          "operand": "None"
+        },
+        {
+          "offset": "0xe",
+          "opcode": "ldarg.0",
+          "operand": "None"
+        },
+        {
+          "offset": "0xf",
+          "opcode": "ldc.i4.4",
+          "operand": "None"
+        },
+        {
+          "offset": "0x10",
+          "opcode": "ldtoken",
+          "operand": "0x1b000021"
+        },
+        {
+          "offset": "0x15",
+          "opcode": "call",
+          "operand": ".GetTypeFromHandle"
+        },
+        {
+          "offset": "0x1a",
+          "opcode": "call",
+          "operand": "ENST.AbsBox.GetDeserializedData"
+        },
+        {
+          "offset": "0x1f",
+          "opcode": "castclass",
+          "operand": "0x1b000021"
+        },
+        {
+          "offset": "0x24",
+          "opcode": "stloc.1",
+          "operand": "None"
+        },
+        {
+          "offset": "0x25",
+          "opcode": "ldloc.1",
+          "operand": "None"
+        },
+        {
+          "offset": "0x26",
+          "opcode": "brfalse.s",
+          "operand": "47"
+        },
+        {
+          "offset": "0x28",
+          "opcode": "ldloc.1",
+          "operand": "None"
+        },
+        {
+          "offset": "0x29",
+          "opcode": "callvirt",
+          "operand": ".get_Count"
+        },
+        {
+          "offset": "0x2e",
+          "opcode": "stloc.0",
+          "operand": "None"
+        },
+        {
+          "offset": "0x2f",
+          "opcode": "ldloc.0",
+          "operand": "None"
+        },
+        {
+          "offset": "0x30",
+          "opcode": "ret",
+          "operand": "None"
+        }
+      ]
+    },
+    {
+      "token": "0x600012e",
+      "declaring_type": "ENST.NsetBox",
+      "method": "GetAcnmNum",
+      "rva": "0x20428",
+      "artifact_key": "main",
+      "purpose": "acnm逻辑对应ACTS列表Count",
+      "il": [
+        {
+          "offset": "0xc",
+          "opcode": "ldc.i4.0",
+          "operand": "None"
+        },
+        {
+          "offset": "0xd",
+          "opcode": "stloc.0",
+          "operand": "None"
+        },
+        {
+          "offset": "0xe",
+          "opcode": "ldarg.0",
+          "operand": "None"
+        },
+        {
+          "offset": "0xf",
+          "opcode": "ldc.i4.s",
+          "operand": "9"
+        },
+        {
+          "offset": "0x11",
+          "opcode": "ldtoken",
+          "operand": "0x1b000022"
+        },
+        {
+          "offset": "0x16",
+          "opcode": "call",
+          "operand": ".GetTypeFromHandle"
+        },
+        {
+          "offset": "0x1b",
+          "opcode": "call",
+          "operand": "ENST.AbsBox.GetDeserializedData"
+        },
+        {
+          "offset": "0x20",
+          "opcode": "castclass",
+          "operand": "0x1b000022"
+        },
+        {
+          "offset": "0x25",
+          "opcode": "stloc.1",
+          "operand": "None"
+        },
+        {
+          "offset": "0x26",
+          "opcode": "ldloc.1",
+          "operand": "None"
+        },
+        {
+          "offset": "0x27",
+          "opcode": "brfalse.s",
+          "operand": "48"
+        },
+        {
+          "offset": "0x29",
+          "opcode": "ldloc.1",
+          "operand": "None"
+        },
+        {
+          "offset": "0x2a",
+          "opcode": "callvirt",
+          "operand": ".get_Count"
+        },
+        {
+          "offset": "0x2f",
+          "opcode": "stloc.0",
+          "operand": "None"
+        },
+        {
+          "offset": "0x30",
+          "opcode": "ldloc.0",
+          "operand": "None"
+        },
+        {
+          "offset": "0x31",
+          "opcode": "ret",
+          "operand": "None"
+        }
+      ]
+    }
+  ],
+  "enum_field_definitions": [
+    {
+      "artifact_key": "managed_nif",
+      "type": "NETWORK_WIRELESS_CONNECTION_N",
+      "type_token": "0x0200000D",
+      "field_token": "0x040000CC",
+      "field": "NETWORK_WIRELESS_CONNECTION_MICRO_AP_AUTO",
+      "constant_u32": 2
+    },
+    {
+      "artifact_key": "managed_nif",
+      "type": "NETWORK_COMMUNICATION_MODE_N",
+      "type_token": "0x0200000C",
+      "field_token": "0x040000C5",
+      "field": "NETWORK_COMMUNICATION_MODE_PTP_PC",
+      "constant_u32": 1
+    },
+    {
+      "artifact_key": "managed_nif",
+      "type": "NETWORK_AVAILABLE_TRANS_METHOD_N",
+      "type_token": "0x02000011",
+      "field_token": "0x040000EF",
+      "field": "NETWORK_AVAILABLE_TRANS_METHOD_BUILT_IN_WIRELESS",
+      "constant_i32": 2
+    }
+  ],
+  "enum_provenance": "字段token与类型来自此前REA全部fields页；数值来自此前dnfile Constant表只读静态解析，未重新扫描。",
+  "profile0": {
+    "sha256": "60224a81eb378750b858d18cbaa2e25b75450f9bd4f95e9c2c1b95b52e2e12d6",
+    "size": 1336,
+    "roundtrip_identical": true,
+    "classification": "EdsGetWftData(setNumber=0)返回的NSET；并非已证实的全局默认向导设置",
+    "root_tag_original_offset": "0x90",
+    "DATA_payload_original_offset": "0x90",
+    "fields": [
+      {
+        "tag": "nwnm",
+        "header_offset_original": "0xd8",
+        "value_offset_original": "0xe4",
+        "size": 4,
+        "value_u32": 1
+      },
+      {
+        "tag": "acnm",
+        "header_offset_original": "0xe8",
+        "value_offset_original": "0xf4",
+        "size": 4,
+        "value_u32": 1
+      },
+      {
+        "tag": "nmtd",
+        "header_offset_original": "0x130",
+        "value_offset_original": "0x13c",
+        "size": 4,
+        "value_u32": 2
+      },
+      {
+        "tag": "ctyp",
+        "header_offset_original": "0x15c",
+        "value_offset_original": "0x168",
+        "size": 4,
+        "value_u32": 2
+      },
+      {
+        "tag": "mode",
+        "header_offset_original": "0x464",
+        "value_offset_original": "0x470",
+        "size": 4,
+        "value_u32": 1
+      }
+    ],
+    "nwnm_acnm_note": "均为内嵌列表数量，不是全局记录编号；不是默认网络优先级",
+    "ctyp_note": "ctyp header 0x15C/value 0x168是整个原始blob偏移；相对解码DATA payload为0xCC/0xD8"
+  },
+  "native_nif_xor": {
+    "artifact_key": "native_nif",
+    "header_reader_va": "0x180008400",
+    "xor_function_va": "0x180008240",
+    "HEAD_ofcn_id": "0x1B",
+    "HEAD_ofcy_id": "0x1C",
+    "ofcn_value_original_offset": "0x2C",
+    "ofcy_value_original_offset": "0x3C",
+    "algorithm": "ofcn非零时，跳过DATA12字节header后，每8字节小端word ^= ofcy ^ 0xADB6B4B0CFCDCFCC；尾部使用相同key低位字节",
+    "excerpt_file": "native-xor-static-capstone.json",
+    "private_values_omitted": true
+  },
+  "limitations": [
+    "私有属性注册native调用完全本地且不发PTP的结论来自父任务另行保留的SDK原生链，本文件仅保留托管原始调用参数。",
+    "部分nested declared_size与实际tag边界不一致，未声称通用NIF重新序列化兼容。",
+    "此文件不含SSID、密码、IP、设备名称、UUID、MAC、ofcy或派生XOR key。",
+    "不把NetworkInfo.mode=2（内置无线）与WSET.ctyp=2（相机AP自动）混为同一枚举。"
+  ]
+}

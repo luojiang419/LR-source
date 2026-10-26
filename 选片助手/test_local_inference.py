@@ -11,6 +11,21 @@ from model_providers import Providers
 
 
 class LocalIntegrationTests(unittest.TestCase):
+    def test_cpu_image_budget_and_legacy_timeout_allow_real_photo_recognition(self):
+        from unittest.mock import patch,MagicMock
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder)
+            for name in ('server.exe','model.gguf','mmproj.gguf'):(root/name).touch()
+            config=root/'config.json';config.write_text(json.dumps({'executable':str(root/'server.exe'),'models':{'glm-ocr-local':{'model':str(root/'model.gguf'),'mmproj':str(root/'mmproj.gguf')}}}),'utf8')
+            runtime=LocalInference(config,root/'logs');process=MagicMock();process.poll.return_value=None
+            with patch('local_inference.subprocess.check_output',side_effect=FileNotFoundError),patch('local_inference.subprocess.Popen',return_value=process) as start,patch('local_inference.own_process',return_value=lambda:None),patch('local_inference.urllib.request.urlopen') as health:
+                health.return_value.__enter__.return_value.status=200
+                with runtime.resolve({'model':'glm-ocr-local','timeout':90}) as provider:
+                    self.assertEqual(provider['timeout'],300);self.assertEqual(provider['gpu_layers'],0)
+                command=start.call_args.args[0]
+                self.assertEqual(command[command.index('--image-max-tokens')+1],'1024');self.assertIn('--no-mmproj-offload',command)
+                runtime.close();process.terminate.assert_called_once()
+
     def test_builtin_switch_locks_cards_routes_locally_and_restores_external_after_restart(self):
         with tempfile.TemporaryDirectory() as folder:
             p=Providers(folder)

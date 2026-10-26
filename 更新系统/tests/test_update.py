@@ -8,6 +8,7 @@ import unittest
 from unittest.mock import patch
 import zipfile
 import threading
+import os
 from http.server import BaseHTTPRequestHandler,ThreadingHTTPServer
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
@@ -153,6 +154,109 @@ class UpdateTests(unittest.TestCase):
         u.recover_pending(self.root)
         self.assertEqual((self.root/'末帧选片.exe').read_bytes(),b'old')
         self.assertFalse((self.root/'.update-state/pending.json').exists())
+
+    def test_recovery_recreates_removed_parent_directories(self):
+        self.fixture();manifest=u.validate(self.session,self.settings)
+        previous=self.root/'engine/framekeep-engine.exe';previous.parent.mkdir();previous.write_bytes(b'old engine')
+        u.install(self.root,self.session,manifest)
+        previous.unlink();previous.parent.rmdir()
+        u.write_json(self.session/'session.json',{'root':str(self.root)})
+        u.write_json(self.root/'.update-state/pending.json',{'session':str(self.session),'pid':0})
+        u.recover_pending(self.root)
+        self.assertEqual(previous.read_bytes(),b'old engine')
+        self.assertEqual(u.read_json(self.session/'journal.json')['status'],'rolled-back')
+
+    def test_locked_unchanged_file_does_not_break_rollback(self):
+        name='runtime/exiftool/package/bin/exiftool.exe'
+        self.fixture({name:b'new helper'});manifest=u.validate(self.session,self.settings)
+        target=self.root/name;target.parent.mkdir(parents=True);target.write_bytes(b'old helper')
+        original_replace=u.os.replace;attempts=[]
+        def locked(source,destination):
+            if Path(destination)==target:
+                attempts.append(Path(source).name)
+                if str(source).endswith('.framekeep-rollback'):raise AssertionError('未改变的文件不应再次替换')
+                raise PermissionError('测试注入文件占用')
+            return original_replace(source,destination)
+        with patch.object(u.os,'replace',side_effect=locked),patch.object(u.time,'sleep'):
+            with self.assertRaisesRegex(PermissionError,'程序文件被占用'):u.install(self.root,self.session,manifest)
+        self.assertEqual(len(attempts),30)
+        self.assertEqual(target.read_bytes(),b'old helper')
+        self.assertEqual(u.read_json(self.session/'journal.json')['status'],'rolled-back')
+        self.assertFalse((self.root/'末帧选片.exe').exists())
+
+    def test_transient_program_file_lock_is_retried(self):
+        source=self.base/'replacement';source.write_bytes(b'new')
+        target=self.root/'末帧选片.exe';target.write_bytes(b'old')
+        original=u.os.replace;calls=[]
+        def transient(a,b):
+            calls.append(1)
+            if len(calls)<3:raise PermissionError('短暂占用')
+            original(a,b)
+        with patch.object(u.os,'replace',side_effect=transient),patch.object(u.time,'sleep'):
+            u.replace_program_file(source,target)
+        self.assertEqual(target.read_bytes(),b'new');self.assertEqual(len(calls),3)
+
+    @unittest.skipUnless(os.name=='nt','需要 Windows 文件共享锁')
+    def test_real_windows_locked_helper_rolls_back_other_files(self):
+        import ctypes
+        from ctypes import wintypes
+        name='runtime/exiftool/package/bin/exiftool.exe'
+        self.fixture({name:b'new helper'});manifest=u.validate(self.session,self.settings)
+        target=self.root/name;target.parent.mkdir(parents=True);target.write_bytes(b'old helper')
+        kernel=ctypes.WinDLL('kernel32',use_last_error=True)
+        kernel.CreateFileW.argtypes=[wintypes.LPCWSTR,wintypes.DWORD,wintypes.DWORD,ctypes.c_void_p,wintypes.DWORD,wintypes.DWORD,wintypes.HANDLE]
+        kernel.CreateFileW.restype=wintypes.HANDLE
+        kernel.CloseHandle.argtypes=[wintypes.HANDLE];kernel.CloseHandle.restype=wintypes.BOOL
+        handle=kernel.CreateFileW(str(target),0x80000000,1,None,3,0x80,None)
+        self.assertNotEqual(handle,wintypes.HANDLE(-1).value)
+        try:
+            with patch.object(u.time,'sleep'),self.assertRaisesRegex(PermissionError,'程序文件被占用'):
+                u.install(self.root,self.session,manifest)
+            self.assertEqual(target.read_bytes(),b'old helper')
+            self.assertEqual(u.read_json(self.session/'journal.json')['status'],'rolled-back')
+            self.assertFalse((self.root/'末帧选片.exe').exists())
+        finally:kernel.CloseHandle(handle)
+
+    def uninstall_receipt(self,root=None,status='complete',older=False):
+        home=self.base/'uninstall';folder=home/'receipt';folder.mkdir(parents=True,exist_ok=True)
+        u.write_json(folder/'session.json',{'mode':'uninstall','root':str(root or self.root)})
+        u.write_json(folder/'status.json',{'status':status})
+        if older:os.utime(folder/'status.json',(1,1))
+        return home,folder/'status.json'
+
+    def test_legacy_successful_uninstall_retires_pending_without_resurrecting_old_app(self):
+        u.write_json(self.session/'session.json',{'root':str(self.root)})
+        u.write_json(self.session/'journal.json',{'status':'installing','changes':[{'path':'engine/framekeep-engine.exe','existed':True}]})
+        pending=self.root/'.update-state/pending.json';u.write_json(pending,{'session':str(self.session),'pid':0})
+        backup=self.session/'backup/engine/framekeep-engine.exe';backup.parent.mkdir(parents=True);backup.write_bytes(b'old')
+        home,receipt=self.uninstall_receipt()
+        with patch.object(u.installation,'user_data',return_value=home.parent/'data'),patch.object(u,'rollback',side_effect=AssertionError('成功卸载后不能恢复旧程序')):
+            u.recover_pending(self.root)
+        self.assertFalse(pending.exists());self.assertTrue(list(pending.parent.glob('pending.uninstalled-*.json')))
+        self.assertFalse((self.root/'末帧选片.exe').exists());self.assertEqual(backup.read_bytes(),b'old')
+
+    def test_unrelated_old_failed_receipts_cannot_disable_recovery(self):
+        pending=self.root/'.update-state/pending.json';u.write_json(pending,{'session':str(self.session),'pid':0})
+        for kwargs in ({'root':self.base/'other'},{'status':'error'},{'older':True}):
+            home,_=self.uninstall_receipt(**kwargs)
+            self.assertIsNone(u.completed_uninstall_receipt(self.root,pending,home))
+        home,_=self.uninstall_receipt()
+        (self.root/'末帧选片.exe').write_bytes(b'installed')
+        self.assertIsNone(u.completed_uninstall_receipt(self.root,pending,home))
+
+    def test_successful_uninstall_archives_pending_and_keeps_backups(self):
+        pending=self.root/'.update-state/pending.json';u.write_json(pending,{'session':str(self.session),'pid':0})
+        uninstall=self.base/'uninstall-session';uninstall.mkdir()
+        with patch.object(u.installation,'uninstall',return_value={'status':'complete','dataPath':str(self.base/'data')}):
+            u.run_uninstall(uninstall,{'root':str(self.root)})
+        self.assertFalse(pending.exists());self.assertTrue(list(pending.parent.glob('pending.uninstalled-*.json')))
+        self.assertEqual(u.read_json(uninstall/'status.json')['status'],'complete')
+
+    def test_failed_uninstall_does_not_archive_pending(self):
+        pending=self.root/'.update-state/pending.json';u.write_json(pending,{'session':str(self.session),'pid':0})
+        with patch.object(u.installation,'uninstall',side_effect=RuntimeError('测试卸载失败')):
+            with self.assertRaisesRegex(RuntimeError,'测试卸载失败'):u.run_uninstall(self.session,{'root':str(self.root)})
+        self.assertTrue(pending.is_file())
 
     def test_recovery_restores_previous_user_data_marker(self):
         self.fixture();manifest=u.validate(self.session,self.settings)

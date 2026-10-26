@@ -5,48 +5,69 @@
   if(!session||session.demo){for(const id of ['open-folder','add-folder','add-folder-row','send-lr'])$(id).disabled=true;return}
   function canonical(value){if(Array.isArray(value))return'['+value.map(canonical).join(',')+']';if(value&&typeof value==='object')return'{'+Object.keys(value).sort().map(k=>JSON.stringify(k)+':'+canonical(value[k])).join(',')+'}';return JSON.stringify(value)}
   const sharedState=(saved,shared)=>({...saved,overrides:{...saved?.overrides,...shared}});
+  function changes(next,previous){
+    const result={};
+    for(const [key,value] of Object.entries(next)){
+      if(['overrides','rejectedPrevious','skuMarkers'].includes(key)){
+        const delta={};for(const id of new Set([...Object.keys(previous[key]||{}),...Object.keys(value||{})]))if(canonical(value?.[id])!==canonical(previous[key]?.[id]))delta[id]=Object.hasOwn(value||{},id)?value[id]:null;
+        if(!next.protectManual&&(next.keep!==previous.keep||next.threshold!==previous.threshold)&&['overrides','rejectedPrevious'].includes(key))for(const id of Object.keys(delta))if(delta[id]===null)delete delta[id];
+        if(Object.keys(delta).length)result[key]=delta;
+      }else if(canonical(value)!==canonical(previous[key]))result[key]=value;
+    }
+    return result;
+  }
   let token=null,revision=session.revision,timer=null,conflicted=false,lastSaved=canonical(sharedState(session.saved,session.sharedRatings)),saving=Promise.resolve(),bridgeTimer=null;
   async function api(path,body,timeout=20000,signal=null){
+    const finish=window.FramekeepTaskStatus?.begin(path,body);
+    try{
     if(body!==undefined)await window.FramekeepComponents?.before(path,body);
     if(body!==undefined)body={session_id:session.id,...body};
-    if(!token){const response=await fetch('/api/state');const state=await response.json();token=state.request_token}
+    if(body!==undefined&&!token){const response=await fetch('/api/state',{signal:AbortSignal.timeout(timeout)});if(!response.ok)throw new Error('无法获取写入凭证，请稍后重试');const state=await response.json();token=state.request_token}
     const response=await fetch(path,{...(body===undefined?{}:{method:'POST',headers:{'Content-Type':'application/json','X-Framekeep-Token':token},body:JSON.stringify(body)}),signal:signal?AbortSignal.any([signal,AbortSignal.timeout(timeout)]):AbortSignal.timeout(timeout)});const data=await response.json();if(!response.ok){if(response.status===409)conflicted=true;throw new Error(data.error||`请求失败 ${response.status}`)}return data;
+    }finally{finish?.()}
   }
   function stash(){if(!session.id)return;try{localStorage.setItem('framekeep:'+session.id,JSON.stringify({snapshot:session.snapshot,revision,state:Framekeep.persistedState()}))}catch{}}
+  function partialBody(state){const previous=JSON.parse(lastSaved),delta=changes(state,previous),baseline={};for(const id of Object.keys(delta.overrides||{}))if(Object.hasOwn(previous.overrides||{},id))baseline[id]=previous.overrides[id];return {session_id:session.id,revision,changes:delta,rating_baseline:baseline}}
   async function flush(){
     clearTimeout(timer);if(!session.id)return;
-    saving=saving.catch(()=>{}).then(async()=>{if(conflicted)throw new Error('其他窗口修改了会话，请刷新后操作。');const state=Framekeep.persistedState(),serialized=canonical(state);if(serialized===lastSaved)return;$('save-status').textContent='保存中…';const result=await api('/api/session',{session_id:session.id,revision,state,rating_baseline:JSON.parse(lastSaved).overrides||{}});revision=result.revision;lastSaved=serialized;stash();$('save-status').textContent='已保存';if(result.sku_error)Framekeep.notify(result.sku_error)});
+    // 入队时冻结本次操作，避免保存中的快速 2→0→2 被合并为重复二星。
+    const serialized=canonical(Framekeep.persistedState()),state=JSON.parse(serialized);
+    saving=saving.catch(()=>{}).then(async()=>{if(conflicted)throw new Error('其他窗口修改了会话，请刷新后操作。');if(serialized===lastSaved)return;$('save-status').textContent='保存中…';const paged=!!session.browser?.paged,result=await api(paged?'/api/session/patch':'/api/session',paged?partialBody(state):{session_id:session.id,revision,state,rating_baseline:JSON.parse(lastSaved).overrides||{}});revision=result.revision;const previous=JSON.parse(lastSaved);lastSaved=serialized;stash();$('save-status').textContent='已保存';window.FramekeepPaging?.saved(previous,state);if(canonical(previous.overrides||{})!==canonical(state.overrides||{}))document.dispatchEvent(new CustomEvent('framekeep:ratings-saved',{detail:{session_id:session.id}}));if(result.sku_error)Framekeep.notify(result.sku_error)});
     return saving;
   }
-  function schedule(){if(switching)return;stash();clearTimeout(timer);timer=setTimeout(()=>flush().catch(e=>{$('save-status').textContent=e.message}),450)}
+  function schedule(){if(switching||window.FramekeepPaging?.busy)return;stash();clearTimeout(timer);const save=()=>flush().catch(e=>{$('save-status').textContent=e.message});if(canonical(Framekeep.persistedState().overrides||{})!==canonical(JSON.parse(lastSaved).overrides||{}))save();else timer=setTimeout(save,450)}
   document.addEventListener('framekeep:selection',schedule);$('thumb-size').addEventListener('input',schedule);$('thumb-smaller').addEventListener('click',schedule);$('thumb-larger').addEventListener('click',schedule);$('catalog-view').addEventListener('wheel',e=>{if(e.ctrlKey)schedule()},{passive:true});
-  window.addEventListener('pagehide',()=>{stash();if(token&&session.id&&!conflicted&&canonical(Framekeep.persistedState())!==lastSaved)fetch('/api/session',{method:'POST',headers:{'Content-Type':'application/json','X-Framekeep-Token':token},body:JSON.stringify({session_id:session.id,revision,state:Framekeep.persistedState(),rating_baseline:JSON.parse(lastSaved).overrides||{}}),keepalive:true}).catch(()=>{})});
+  window.addEventListener('pagehide',()=>{stash();const state=Framekeep.persistedState();if(token&&session.id&&!conflicted&&canonical(state)!==lastSaved)fetch(session.browser?.paged?'/api/session/patch':'/api/session',{method:'POST',headers:{'Content-Type':'application/json','X-Framekeep-Token':token},body:JSON.stringify(session.browser?.paged?partialBody(state):{session_id:session.id,revision,state,rating_baseline:JSON.parse(lastSaved).overrides||{}}),keepalive:true}).catch(()=>{})});
   async function reloadRatings(){
+    await window.FramekeepPaging?.whenIdle();
     if(!session.id||switching)return;
     await flush();
-    const next=await api('/api/state?session_id='+encodeURIComponent(session.id));
+    const next=await api('/api/state?'+(session.browser?.paged?FramekeepPaging.query({around:Framekeep.remoteTarget().photoId||''}):'session_id='+encodeURIComponent(session.id)));
     if(next.session?.id!==session.id)return;
     revision=next.session.revision;conflicted=false;
-    Framekeep.syncSharedRatings(next.session.sharedRatings||{});
+    if(next.session.browser?.paged)Framekeep.loadPage(next.session,next.catalog,Framekeep.remoteTarget().photoId);
+    else Framekeep.syncSharedRatings(next.session.sharedRatings||{});
     lastSaved=canonical(Framekeep.persistedState());stash();sessionDetails();
   }
-  window.FramekeepIO={flush,api,openSession,refreshFolders,refreshLive,reloadRatings,manifest:async selected=>{await flush();return api('/api/export',{selected_only:selected})}};
-  let count=window.DEMO_PHOTOS.length;
+  window.FramekeepIO={flush,api,openSession,refreshFolders,refreshLive,reloadRatings,
+    adoptPage(next){revision=next.revision;conflicted=false;lastSaved=canonical({...Framekeep.persistedState(),...next.browser?.storedOptions,selectedId:next.state.selectedId??null});stash();sessionDetails()},
+    manifest:async selected=>{await flush();return api('/api/export',{selected_only:selected})}};
+  let count=session.browser?.total??window.DEMO_PHOTOS.length;
   document.querySelector('.session-title').textContent=session.name+' · '+count+' 张';
   document.querySelector('.source-caption').textContent='RAW / JPG 配对 · 支持备案补写';$('source-status').textContent=`${count} 个拍摄编号 · RAW 内嵌预览 / 配对 JPG`;
   $('folder-path').value='';
   const summary=document.querySelector('.summary-line').firstElementChild;
   function sessionDetails(){
-    count=window.DEMO_PHOTOS.length;document.querySelector('.session-title').textContent=session.name+' · '+count+' 张';
+    count=session.browser?.total??window.DEMO_PHOTOS.length;document.querySelector('.session-title').textContent=session.name+' · '+count+' 张';window.FramekeepPaging?.paint();
     $('source-status').textContent=`${count} 个拍摄编号 · RAW 内嵌预览 / 配对 JPG`;summary.innerHTML=`已选 <strong id="selected-count">${$('selected-count').textContent}</strong> / ${count}`;
     $('send-lr').disabled=!count;
-    $('catalog-empty').firstChild.textContent=count?'没有符合条件的照片。':'点击“现场监控”选择照片传入目录，开始现场拍摄。';$('clear-filters').classList.toggle('hidden',!count);
   }
   async function refreshLive(sid,followId=null,enter=false){
+    await window.FramekeepPaging?.whenIdle();
     if(switching)return false;
     if(session.id!==sid){if(!enter)return false;await openSession(sid)}
     if(session.id!==sid||switching)return false;
-    const next=await api('/api/state?session_id='+encodeURIComponent(sid));
+    const next=await api('/api/state?'+(session.browser?.paged?FramekeepPaging.query({around:followId||Framekeep.remoteTarget().photoId||''}):'session_id='+encodeURIComponent(sid)));
     if(session.id!==sid||switching)return false;
     // 保留本地人工覆盖、保存队列及鼠标会话；新增目录不替换会话 revision。
     if(!Framekeep.updateLiveCatalog(next.session,next.catalog,followId,enter))return false;
@@ -60,7 +81,7 @@
   let folderState={sessions:[],scans:[]},folderTimer=null,folderSignature='',switching=false,folderRequest=0;
   const busy=job=>['queued','running','cancelling'].includes(job.status);
   const pathKey=path=>path.replaceAll('\\','/').replace(/\/$/,'').toLowerCase();
-  const labels={queued:'等待索引',discovering:'正在查找照片',metadata:'正在读取拍摄时间',saving:'正在保存索引',cancelled:'已停止',cancelling:'正在停止',failed:'索引失败'};
+  const labels={queued:'等待索引',discovering:'正在查找照片',indexed_previews:'正在加载索引照片预览',metadata:'正在读取拍摄时间',saving:'正在保存索引',cancelled:'已停止',cancelling:'正在停止',failed:'索引失败'};
   function folderSelection(){
     for(const button of $('folder-list').querySelectorAll('[data-session]')){
       const selected=button.dataset.session===session.id;button.classList.toggle('active',selected);button.classList.toggle('loading',switching&&button.dataset.session===pendingSession);
@@ -71,6 +92,7 @@
   let pendingSession=null;
   async function openSession(id){
     if(switching)return;
+    await window.FramekeepPaging?.whenIdle();if(switching)return;
     if(id===session.id){await flush();await api('/api/activate',{session_id:id});Framekeep.showAll();return}
     switching=true;pendingSession=id;Framekeep.setSessionLoading(true);document.querySelector('.header-actions').inert=true;folderSelection();
     $('folder-activity').classList.remove('hidden');$('folder-activity').textContent='正在加载文件夹…';
@@ -137,7 +159,7 @@
       const entry=document.createElement('div');entry.className='folder-entry';const name=document.createElement('div');name.className='folder-pending-name';name.textContent='▸ '+job.name;name.title=job.folder;entry.append(name,progress(job));entries.push(entry);
     }
     if(!entries.length){const empty=document.createElement('p');empty.className='folder-empty';empty.textContent='添加文件夹，开始标星选片';entries.push(empty)}
-    reconcile(list,entries);reconcile($('session-history'),shortcuts);folderSelection();folderActivity();
+    reconcile(list,entries);reconcile($('session-history'),shortcuts);folderSelection();folderActivity();document.dispatchEvent(new CustomEvent('framekeep:folders'));
   }
   async function refreshFolders(){
     clearTimeout(folderTimer);const request=++folderRequest;

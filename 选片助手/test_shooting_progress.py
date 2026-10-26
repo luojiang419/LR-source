@@ -40,7 +40,7 @@ class ProgressTests(unittest.TestCase):
         progress=self.sku.state()['progress'];self.assertEqual(next(s for s in progress if s['sheet']=='模特图')['shot'],1);self.assertEqual(next(s for s in progress if s['sheet']=='细节图')['shot'],0)
         with ZipFile(self.sku.export(self.pid)) as z:
             cells={c.get('r'):''.join(c.itertext()) for c in E.fromstring(z.read('xl/worksheets/sheet1.xml')).findall('m:sheetData/m:row/m:c',N)}
-        self.assertEqual(cells['E1'],'拍摄完成时间');self.assertEqual(cells['E2'],row['completed_at']);self.assertEqual(cells['D2'],'已拍摄')
+        self.assertEqual(cells['D1'],'款号图片');self.assertEqual(cells['E1'],'拍摄完成时间');self.assertEqual(cells['E2'],row['completed_at']);self.assertEqual(cells['C2'],'已拍摄');self.assertEqual(cells['F1'],'备注')
     def test_latest_valid_capture_and_revoke_falls_back_other_evidence(self):
         self.stamp(0,'2026:10:20 15:00:00+08:00');self.stamp(1,'2026:10:20 09:00:00Z')
         self.rate(2);self.tick();self.rate(2,self.cids[1]);self.tick();self.assertEqual(self.own()['completed_at'],'2026-10-20T09:00:00Z')

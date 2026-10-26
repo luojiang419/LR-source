@@ -11,6 +11,7 @@ import uuid
 import media_engine as media
 import asset_search
 from metadata_writer import MetadataWriter,sha
+from metadata_history import save_record
 from sku_match import normalize
 from sku_intervals import partition
 
@@ -20,7 +21,7 @@ def dumps(v):return json.dumps(v,ensure_ascii=False,sort_keys=True)
 class AssetArchive:
     def __init__(self,store,*,autostart=True):
         self.store=store;self.db=store.data/'asset_archive.sqlite3';self.writer=MetadataWriter(store.root,store.data)
-        self.lock=threading.RLock();self.closed=threading.Event();self.sku=None;self.on_assignment=None
+        self.lock=threading.RLock();self.closed=threading.Event();self.sku=None;self.on_assignment=None;self.autostart=autostart
         with self.connect() as c:
             c.executescript('''PRAGMA journal_mode=WAL;
 CREATE TABLE IF NOT EXISTS assets(id TEXT PRIMARY KEY,created REAL,captured TEXT,camera TEXT,role TEXT DEFAULT 'product',sku TEXT DEFAULT '',normalized TEXT DEFAULT '',project TEXT DEFAULT '',scope TEXT DEFAULT '',segment TEXT DEFAULT '',source TEXT DEFAULT '',locked INTEGER DEFAULT 0,revision INTEGER DEFAULT 0);
@@ -47,9 +48,10 @@ PRAGMA user_version=1;''')
             asset_search.install(c)
             # 兼容旧拍摄段：SKU 确认后统一自动写入，不再依赖界面开关。
             c.execute('UPDATE streams SET auto_write=1 WHERE auto_write IS NOT 1')
-            # 新的 SKU 区间统一写入 RAW/JPG 内部；历史批次保留原策略以便撤销。
-            c.execute("UPDATE streams SET mode='embedded' WHERE state='active' AND mode!='embedded'")
+            # 新区间 RAW 默认使用小型 XMP；历史已提交批次保留策略用于字段撤销。
+            c.execute("UPDATE streams SET mode='sidecar' WHERE state='active' AND mode!='sidecar'")
             c.execute("UPDATE metadata_jobs SET status='queued' WHERE status='running'")
+            c.execute("UPDATE metadata_jobs SET mode='sidecar' WHERE status='queued' AND journal='{}'")
         self.thread=threading.Thread(target=self._run,daemon=True,name='asset-archive')
         if autostart:self.thread.start()
     @contextmanager
@@ -60,6 +62,8 @@ PRAGMA user_version=1;''')
         finally:c.close()
     @property
     def ratings(self):
+        # SQLite 写事务内的评级读取不能再等归档写锁，否则与后台写入形成锁顺序倒置。
+        if hasattr(self,'_ratings'):return self._ratings
         with self.lock:
             if not hasattr(self, '_ratings'):
                 from shared_ratings import SharedRatings
@@ -70,7 +74,7 @@ PRAGMA user_version=1;''')
         with self.lock:
             session=self.store.session(sid)
             if not session:raise ValueError('照片目录不存在')
-            record=next((r for r in self.store.records(sid) if r['id']==cid),None)
+            record=next(iter(self.store.records(sid,ids=[cid])),None)
             if not record:raise ValueError('照片不存在')
             with self.store.connect() as c:final=bool(c.execute('SELECT 1 FROM settings WHERE key=?',('archive_session:'+sid,)).fetchone())
             with self.connect() as c:
@@ -85,8 +89,7 @@ PRAGMA user_version=1;''')
                     known=c.execute('SELECT f.* FROM locations l JOIN files f ON f.id=l.file WHERE l.path=?',(str(path),)).fetchone()
                     if known:
                         components.append((kind,path,dict(known),None,None));continue
-                    digest=sha(path);metadata=self.writer.read(path)
-                    if kind=='raw' and not metadata.get('XMP-fk:AssetId') and path.with_suffix('.xmp').exists():metadata=self.writer.read(path.with_suffix('.xmp'))
+                    digest=sha(path);metadata=self.writer.read_asset(path)
                     identity=metadata.get('XMP-fk:FileId')
                     try:identity=uuid.UUID(str(identity)).hex
                     except ValueError:identity=None
@@ -114,6 +117,8 @@ PRAGMA user_version=1;''')
                         aid=aid or proposed or uid();fid=uid()
                         try:fid=uuid.UUID(str(metadata.get('XMP-fk:FileId'))).hex
                         except ValueError:pass
+                        sibling=c.execute('SELECT component FROM files WHERE id=?',(fid,)).fetchone()
+                        if sibling and sibling['component']!=kind:fid=uid()
                         c.execute('INSERT OR IGNORE INTO assets(id,created,captured,camera) VALUES (?,?,?,?)',(aid,time.time(),record.get('time'),record.get('cameraKey','')))
                         c.execute('INSERT INTO files(id,asset,component,sha) VALUES (?,?,?,?)',(fid,aid,kind,digest))
                         sku=metadata.get('XMP-fk:SKU','');scope=str(metadata.get('XMP-fk:ShootType',''))
@@ -174,23 +179,24 @@ PRAGMA user_version=1;''')
             asset_search.hydrate(c,rows)
         return {'rows':rows,'total':total,'offset':offset}
     def search(self,**kwargs):return asset_search.search(self,**kwargs)
-    def preview(self,sid,cids,sku,scope,project='',mode='embedded',overwrite=False,asset_ids=None,source='manual',segment=''):
+    def preview(self,sid,cids,sku,scope,project='',mode='sidecar',overwrite=False,asset_ids=None,source='manual',segment=''):
         if not isinstance(sku,str) or not normalize(sku) or len(sku)>80 or any(ord(ch)<32 for ch in sku):raise ValueError('请填写有效 SKU（不超过 80 字符）')
         if not isinstance(scope,str) or not scope.strip() or len(scope)>100:raise ValueError('请填写拍摄类型/工作表')
         if mode not in ('embedded','sidecar'):raise ValueError('请选择正确写入策略')
-        if source!='manual':mode='embedded' # 旧段的迟到识别/补交也不能新建仅伴随文件任务。
+        if source!='manual':mode='sidecar'
         if asset_ids is None:
             if not isinstance(cids,list) or not 1<=len(cids)<=2000:raise ValueError('请选择 1–2000 张照片')
             asset_ids=list(dict.fromkeys(self.ensure(sid,cid) for cid in cids))
         targets=[]
         for aid in dict.fromkeys(asset_ids):
             a=self.asset(aid);conflict=bool(a['sku'] and (a['sku']!=sku or a['scope']!=scope))
+            if source=='segment' and segment and a['source']=='segment' and a['segment']==segment and not a['locked']:conflict=False
             if source!='manual' and a['locked']:conflict=True
             files=[]
             for f in a['files']:
                 online=Path(f['path']).is_file()
                 files.append({'id':f['id'],'path':f['path'],'sha':sha(f['path']) if online else f['sha'],'capability':self.writer.capability(f['path'],mode),'online':online})
-            targets.append({'id':aid,'revision':a['revision'],'before':{k:a[k] for k in ('sku','normalized','scope','project','segment','source','locked')},'conflict':conflict,'apply':not conflict or (overwrite and source=='manual'),'files':files})
+            targets.append({'id':aid,'revision':a['revision'],'before':{k:a[k] for k in ('sku','normalized','scope','project','segment','source','locked')},'conflict':conflict,'apply':not conflict or (overwrite and source in ('manual','segment')),'files':files})
         data={'targets':targets,'sku':sku,'scope':scope,'project':project,'mode':mode,'source':source,'segment':segment}
         pid=uid()
         with self.connect() as c:c.execute('INSERT INTO previews(id,data,created) VALUES (?,?,?)',(pid,dumps(data),time.time()))
@@ -199,7 +205,9 @@ PRAGMA user_version=1;''')
         with self.lock,self.connect() as c:
             row=c.execute('SELECT * FROM previews WHERE id=?',(pid,)).fetchone()
             if not row or row['used'] or time.time()-row['created']>900:raise ValueError('预览已失效，请重新预览')
-            data=json.loads(row['data']);targets=[t for t in data['targets'] if t['apply']]
+            data=json.loads(row['data'])
+            if data.get('group'):raise ValueError('请使用整款编辑提交更新')
+            targets=[t for t in data['targets'] if t['apply']]
             if not targets:raise ValueError('没有可应用的目标，请先处理归属冲突')
             for t in targets:
                 current=c.execute('SELECT revision FROM assets WHERE id=?',(t['id'],)).fetchone()
@@ -232,7 +240,7 @@ PRAGMA user_version=1;''')
         for link in links:
             session=self.store.session(link['session'])
             if not session:continue
-            record=next((r for r in self.store.records(link['session']) if r['id']==link['capture']),None)
+            record=next(iter(self.store.records(link['session'],ids=[link['capture']])),None)
             if not record:continue
             try:
                 paths=[media.resolved_file(session['root'],record[k]) for k in ('raw','jpg') if record.get(k)]
@@ -249,37 +257,52 @@ PRAGMA user_version=1;''')
                 row=c.execute("SELECT * FROM metadata_jobs WHERE status='queued' ORDER BY created LIMIT 1").fetchone()
                 if not row:return
                 job=dict(row);current=c.execute('SELECT revision FROM assets WHERE id=?',(job['asset'],)).fetchone()
-                if not current or current[0]!=job['revision']:
+                descriptive=json.loads(job['fields']).get('_descriptive')
+                if not current or current[0]!=job['revision'] and not descriptive:
                     c.execute("UPDATE metadata_jobs SET status='cancelled',reason='归属版本已更新' WHERE id=?",(job['id'],));return
                 c.execute("UPDATE metadata_jobs SET status='running' WHERE id=?",(job['id'],))
             temp=None
             try:
                 fields=json.loads(job['fields']);journal=json.loads(job['journal'])
+                if 'Rating' in fields and not journal.get('restore'):
+                    latest=self.ratings.get([job['path']],explicit_only=True)
+                    if latest is not None:fields['Rating']=max(0,latest)
                 # 提交后崩溃：读回已持久化的 journal，补记数据库而非再写一遍。
                 committed=journal.get('target') and Path(journal['target']).exists() and sha(journal['target'])==journal.get('after_hash')
                 if not committed:
+                    self.writer.discard_sidecars(journal)
+                    if descriptive:
+                        from photo_metadata import sidecar_hashes
+                        if sidecar_hashes(job['path'])!=fields.pop('_sidecar_hashes',{}):raise ValueError('XMP 已被其他程序修改，请重新打开图片再编辑')
+                        fields.pop('_descriptive',None)
+                        current_fields=self.writer.owned(self.writer.read_asset(job['path']))
+                        fields={**current_fields,**fields,'AssetId':job['asset'],'FileId':job['file']}
                     with self.writer.exclusive(job['path']):
-                        temp,target,journal=self.writer.write(job['path'],fields,job['expected_sha'],mode=job['mode'],restore=journal.get('restore'),applied=journal.get('applied'))
-                        if target.exists():
-                            import shutil
-                            backup=self.store.data/'metadata-backups';backup.mkdir(exist_ok=True)
-                            backup=backup/(job['id']+'.bin');shutil.copy2(target,backup);journal['backup']=str(backup)
+                        temp,target,journal=self.writer.write(job['path'],fields,job['expected_sha'],mode=job['mode'],restore=journal.get('restore'),applied=journal.get('applied'),sidecars_restore=journal.get('sidecars_restore'))
+                        journal['history']=str(save_record(self.store.data,job['id'],journal,source=job['path']))
                         with self.connect() as c:c.execute('UPDATE metadata_jobs SET journal=? WHERE id=?',(dumps(journal),job['id']))
                         if sha(job['path'])!=job['expected_sha'] or (sha(target) if target.exists() else None)!=journal['before_hash']:raise ValueError('替换前文件已变化，未覆盖')
                     # Windows MoveFileEx 无法替换仍由本进程读句柄持有的目标；
-                    # 结束保护句柄后立即复核并执行同卷替换，备份/journal 已落盘。
+                    # 结束保护句柄后立即复核并执行同卷替换；不创建源文件备份。
                     if sha(job['path'])!=job['expected_sha'] or (sha(target) if target.exists() else None)!=journal['before_hash']:raise ValueError('提交前检测到外部修改')
-                    os.replace(temp,target);temp.parent.rmdir();temp=None
+                    self.writer.check_sidecars(journal)
+                    from file_safety import replace_verified
+                    replace_verified(temp,target,journal['before_hash'])
+                    self.writer.discard_prepared(temp);temp=None
                 if sha(journal['target'])!=journal['after_hash']:raise ValueError('提交后检测到外部修改，请核对文件')
+                self.writer.commit_sidecars(journal)
                 digest=sha(job['path'])
                 with self.connect() as c:
                     c.execute('UPDATE files SET sha=? WHERE id=?',(digest,job['file']));c.execute('INSERT OR IGNORE INTO versions VALUES (?,?,?)',(job['file'],digest,time.time()))
+                    c.execute("UPDATE metadata_jobs SET expected_sha=? WHERE path=? AND status='queued'",(digest,job['path']))
+                    from photo_metadata import sidecar_hashes
+                    c.execute("UPDATE metadata_jobs SET fields=json_set(fields,'$._sidecar_hashes',json(?)) WHERE path=? AND status='queued' AND json_extract(fields,'$._descriptive')=1",(dumps(sidecar_hashes(job['path'])),job['path']))
                     c.execute("UPDATE metadata_jobs SET status='applied',reason='' WHERE id=?",(job['id'],))
+                save_record(self.store.data,job['id'],journal,source=job['path'],status='applied')
                 self._refresh_catalog(job['asset'])
             except Exception as exc:
                 if temp:
-                    temp.unlink(missing_ok=True)
-                    try:temp.parent.rmdir()
+                    try:self.writer.discard_prepared(temp)
                     except OSError:pass
                 with self.connect() as c:c.execute("UPDATE metadata_jobs SET status='failed',reason=? WHERE id=?",(str(exc)[:350],job['id']))
             with self.connect() as c:
@@ -290,6 +313,14 @@ PRAGMA user_version=1;''')
             jobs=c.execute('SELECT * FROM metadata_jobs WHERE operation=?',(oid,)).fetchall()
             c.execute("UPDATE metadata_jobs SET status='cancelled' WHERE operation=? AND status IN ('queued','running','failed')",(oid,))
             rid=uid();c.execute('INSERT INTO operations(id,created,kind,source) VALUES (?,?,?,?)',(rid,time.time(),'revert',oid))
+            for j in jobs:
+                fields=json.loads(j['fields'])
+                if j['status']!='applied' or not fields.get('_descriptive'):continue
+                from photo_metadata import sidecar_hashes
+                fields['_sidecar_hashes']=sidecar_hashes(j['path'])
+                journal=json.loads(j['journal']);restore=dict(journal['before'],AssetId=j['asset'],FileId=j['file'])
+                c.execute('INSERT INTO metadata_jobs(id,operation,file,asset,revision,path,expected_sha,mode,fields,status,journal,created) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',
+                          (uid(),rid,j['file'],j['asset'],j['revision'],j['path'],sha(j['path']),j['mode'],dumps(fields),'queued',dumps({'restore':restore,'applied':journal['after'],'sidecars_restore':journal.get('sidecars',[])}),time.time()))
             for aid in {j['asset'] for j in jobs}:
                 assignment=c.execute('SELECT * FROM assignments WHERE asset=? AND json_extract(data,\'$.operation\')=?',(aid,oid)).fetchone()
                 a=c.execute('SELECT * FROM assets WHERE id=?',(aid,)).fetchone()
@@ -299,7 +330,7 @@ PRAGMA user_version=1;''')
                 for j in jobs:
                     if j['asset']!=aid or j['status']!='applied':continue
                     journal=json.loads(j['journal']);fields=json.loads(j['fields']);restore=dict(journal['before'],AssetId=fields['AssetId'],FileId=fields['FileId'],MetadataRevision=rev)
-                    c.execute('INSERT INTO metadata_jobs(id,operation,file,asset,revision,path,expected_sha,mode,fields,status,journal,created) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',(uid(),rid,j['file'],aid,rev,j['path'],sha(j['path']),j['mode'],dumps(fields),'queued',dumps({'restore':restore,'applied':journal['after']}),time.time()))
+                    c.execute('INSERT INTO metadata_jobs(id,operation,file,asset,revision,path,expected_sha,mode,fields,status,journal,created) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',(uid(),rid,j['file'],aid,rev,j['path'],sha(j['path']),j['mode'],dumps(fields),'queued',dumps({'restore':restore,'applied':journal['after'],'sidecars_restore':journal.get('sidecars',[])}),time.time()))
                 c.execute('INSERT INTO assignments VALUES (?,?,?,?)',(aid,rev,dumps({'before':dict(a),'after':before,'operation':rid}),time.time()))
         if self.on_assignment:self.on_assignment(list({j['asset'] for j in jobs}))
         return self.operation(rid)
@@ -307,7 +338,7 @@ PRAGMA user_version=1;''')
         self.sync_stream()
         records=self.store.records(sid)
         auto_write=True # 保留旧调用参数兼容性，不再允许旧客户端关闭自动备案。
-        if mode is None:mode='embedded'
+        if mode is None:mode='sidecar'
         if mode not in ('embedded','sidecar'):raise ValueError('写入策略无效')
         if not scope:raise ValueError('请先选择拍摄工作表')
         with self.lock,self.connect() as c:
@@ -369,10 +400,19 @@ PRAGMA user_version=1;''')
                 if cid in boundaries:superseded.append(boundaries[cid])
                 boundaries[cid]=segment
             records=[r for r in self.store.records(stream['session']) if r['id'] in by_capture]
+            known_boundaries=set(boundaries)
+            session=self.store.session(stream['session'])
+            overrides=session['state'].get('overrides',{})
+            # 尚未识别的款末标签也隔断，不能把未知的前款并入后款。
+            for record in records:
+                if overrides.get(record['id'],record.get('existingRating',0))==2:
+                    boundaries.setdefault(record['id'],None)
             intervals=partition(records,boundaries)
             changes=[]
             for interval in intervals:
-                segment=interval['boundary'];members=list(dict.fromkeys(by_capture[cid]['asset'] for cid in interval['members']))
+                segment=interval['boundary']
+                if segment is None:continue
+                members=list(dict.fromkeys(by_capture[cid]['asset'] for cid in interval['members']))
                 if set(members)!=set(json.loads(segment['members'])) or any(old['label']==segment['label'] for old in superseded):
                     changes.append((segment,members))
             # 先通过既有补偿链路退回旧自动操作；人工锁定的新版本由 revert 自身保护。
@@ -388,7 +428,7 @@ PRAGMA user_version=1;''')
                 sealed={cid for interval in intervals for cid in interval['members']}
                 for binding in bindings:
                     c.execute('UPDATE bindings SET state=? WHERE stream=? AND asset=?',('sealed' if binding['capture'] in sealed else 'pending',stream_id,binding['asset']))
-                latest=max((by_capture[cid]['order_key'] for cid in boundaries),default='')
+                latest=max((by_capture[cid]['order_key'] for cid in known_boundaries),default='')
                 c.execute('UPDATE streams SET last_boundary=? WHERE id=?',(latest,stream_id))
                 c.execute("UPDATE assets SET role='product' WHERE id IN (SELECT label FROM segments WHERE stream=? AND status='cancelled') AND NOT EXISTS (SELECT 1 FROM segments g WHERE g.label=assets.id AND g.status NOT IN ('cancelled','superseded'))",(stream_id,))
                 ready=[r[0] for r in c.execute("SELECT id FROM segments WHERE stream=? AND status='ready'",(stream_id,))]
@@ -410,7 +450,7 @@ PRAGMA user_version=1;''')
                 with self.connect() as c:
                     bindings={r['capture']:dict(r) for r in c.execute('SELECT * FROM bindings WHERE stream=?',(stream['id'],))}
                     segments=[dict(r) for r in c.execute('SELECT * FROM segments WHERE stream=? ORDER BY created,id',(stream['id'],))]
-                markers={r['capture_id']:r for r in recognized_rows(self.sku,sid)}
+                markers={r['capture_id']:r for r in recognized_rows(self.sku,sid) if r.get('boundary',True)}
                 if cid not in markers:
                     with self.connect() as c:c.execute('INSERT OR IGNORE INTO event_receipts VALUES (?)',(event_id,))
                     return
@@ -435,13 +475,39 @@ PRAGMA user_version=1;''')
                             c.execute("UPDATE assets SET role='sku_label' WHERE id=?",(binding['asset'],))
                 self._rebuild_segments(stream['id'])
             with self.connect() as c:c.execute('INSERT OR IGNORE INTO event_receipts VALUES (?)',(event_id,))
+    def clear_ocr_intervals(self,event_id,sid,cid):
+        """清零覆盖自动识别、人工确认和补识别的同一标签段。"""
+        with self.lock:
+            with self.connect() as c:
+                if c.execute('SELECT 1 FROM event_receipts WHERE id=?',(event_id,)).fetchone():return
+                segments=[dict(r) for r in c.execute("SELECT DISTINCT g.* FROM segments g JOIN bindings b ON b.stream=g.stream AND b.asset=g.label JOIN streams s ON s.id=g.stream WHERE s.session=? AND b.capture=? AND g.status NOT IN ('cancelled','superseded')",(sid,cid))]
+            for segment in segments:
+                self.handle_event(event_id+':'+segment['id'],{'id':segment['job'],'status':'cancelled'})
+            with self.connect() as c:c.execute('INSERT OR IGNORE INTO event_receipts VALUES (?)',(event_id,))
+
+    def confirm_ocr_interval(self,event_id,job,sku):
+        """二星确认与全自动共用款末归档；事件可重放，不把入库缩成标签单张。"""
+        with self.lock:
+            with self.connect() as c:
+                if c.execute('SELECT 1 FROM event_receipts WHERE id=?',(event_id,)).fetchone():return
+                stream=c.execute('SELECT s.id FROM streams s JOIN bindings b ON b.stream=s.id WHERE s.session=? AND s.project=? AND s.scope=? AND b.capture=? ORDER BY s.created DESC LIMIT 1',
+                    (job['session_id'],job['project'],job['scope'],job['capture_id'])).fetchone()
+            if not stream:
+                # 换入文档后，旧段可能已占用当前照片；明确确认须接续当前款的完整区间。
+                from metadata_group import group_context
+                group=group_context(self,self.sku,job['session_id'],job['capture_id'],[job['capture_id']])
+                self.start_stream(job['session_id'],job['project'],job['scope'],start_capture=group['capture_ids'][0])
+            self.reserve(job)
+            self.handle_event(event_id,job,sku)
     def reserve(self,job):
         with self.lock:
             with self.connect() as c:
                 existing=c.execute('SELECT * FROM segments WHERE job=?',(job['id'],)).fetchone()
+                if existing and existing['status'] in ('cancelled','superseded') and job['status'] not in ('cancelled','ignored'):
+                    # 同一标签重标后可能复用任务或 choice ID；历史段不能吞掉本次确认。
+                    c.execute('UPDATE segments SET job=? WHERE id=?',(job['id']+':retired:'+existing['id'],existing['id']))
+                    existing=None
                 if existing:
-                    if existing['status']=='cancelled' and job['status'] not in ('cancelled','ignored'):
-                        c.execute("UPDATE segments SET status='waiting_sku',sku='',operation='' WHERE id=?",(existing['id'],))
                     stream_id=existing['stream']
                 else:stream_id=None
             if stream_id:
@@ -538,8 +604,12 @@ PRAGMA user_version=1;''')
         while not self.closed.is_set():
             try:self.tick()
             except Exception as exc:
-                with self.connect() as c:c.execute('INSERT INTO audit VALUES (?,?,?,?)',(uid(),'worker_error',dumps({'error':str(exc)[:250]}),time.time()))
+                self.worker_error=str(exc)[:250]
+                try:
+                    with self.connect() as c:c.execute('INSERT INTO audit VALUES (?,?,?,?)',(uid(),'worker_error',dumps({'error':self.worker_error}),time.time()))
+                except sqlite3.Error:pass # 同一次占用也可能阻止记录日志；保留任务并继续下一轮。
             self.closed.wait(.4)
     def close(self):
         self.closed.set()
+        if hasattr(self,'_ratings'):self._ratings.sync.close()
         if self.thread.is_alive():self.thread.join(timeout=3)

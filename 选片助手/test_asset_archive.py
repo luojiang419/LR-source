@@ -10,7 +10,7 @@ from unittest.mock import patch
 from PIL import Image
 from catalog_store import Store
 import media_engine as media
-from asset_archive import AssetArchive
+from asset_archive import AssetArchive,uid
 from metadata_writer import sha
 from model_providers import Providers
 from sku_service import SkuService
@@ -19,6 +19,34 @@ from test_sku_workflow import fixture_book,CODE,reading
 ROOT=Path(__file__).resolve().parents[1]
 
 class AssetTests(unittest.TestCase):
+    def test_initialized_ratings_does_not_take_archive_lock_inside_sqlite_transaction(self):
+        import threading
+        ratings=self.archive.ratings;finished=threading.Event();failures=[]
+        def read():
+            try:
+                with self.archive.connect() as c:
+                    c.execute('INSERT INTO audit VALUES (?,?,?,?)',('rating-lock-test','test','{}',0))
+                    self.assertIs(self.archive.ratings,ratings)
+                finished.set()
+            except Exception as exc:failures.append(exc)
+        worker=threading.Thread(target=read)
+        try:
+            with self.archive.lock:
+                worker.start();self.assertTrue(finished.wait(2),'评级读取在 SQLite 事务内等待归档锁')
+        finally:worker.join(3)
+        self.assertFalse(failures)
+
+    def test_worker_survives_busy_database_even_when_audit_write_is_also_busy(self):
+        import sqlite3
+        calls=[]
+        def tick():
+            calls.append(1)
+            if len(calls)==1:raise sqlite3.OperationalError('database is locked')
+            self.archive.closed.set()
+        with patch.object(self.archive,'tick',side_effect=tick),patch.object(self.archive,'connect',side_effect=sqlite3.OperationalError('database is locked')):
+            self.archive._run()
+        self.assertEqual(len(calls),2);self.assertEqual(self.archive.worker_error,'database is locked')
+
     def setUp(self):
         self.temp=tempfile.TemporaryDirectory();self.base=Path(self.temp.name);self.photos=self.base/'photos';self.photos.mkdir()
         self.store=Store(self.base/'data',ROOT);self.sid=self.store.ensure_live_session(self.photos);self.store.activate(self.sid)
@@ -227,15 +255,43 @@ class AssetTests(unittest.TestCase):
         result=self.process(op);self.assertEqual(len(result['jobs']),2);self.assertTrue(all(j['status']=='applied' for j in result['jobs']),result)
         self.assertEqual(original_read(raw.with_suffix('.xmp'))['XMP-fk:SKU'],CODE);self.assertEqual(self.archive.query(CODE)['total'],1)
         revert=self.archive.revert(op)['operation']['id'];self.process(revert);self.assertFalse(original_read(raw.with_suffix('.xmp')).get('XMP-fk:SKU'))
-    def test_resuming_legacy_stream_embeds_new_work_and_keeps_history(self):
+    def test_resuming_legacy_stream_uses_sidecar_for_new_work_and_keeps_history(self):
         cid=self.add('legacy.JPG');state=self.archive.start_stream(self.sid,'p','细节图',mode='sidecar');stream=state['streams'][0]['id']
-        p=self.archive.preview(self.sid,[cid],CODE,'细节图',mode='sidecar');op=self.archive.apply(p['preview_id'])['operation']['id']
+        p=self.archive.preview(self.sid,[cid],CODE,'细节图',mode='embedded');op=self.archive.apply(p['preview_id'])['operation']['id'];self.process(op)
         state=self.archive.start_stream(self.sid,'p','细节图')
-        self.assertEqual(state['streams'][0]['id'],stream);self.assertEqual(state['streams'][0]['mode'],'embedded')
+        self.assertEqual(state['streams'][0]['id'],stream);self.assertEqual(state['streams'][0]['mode'],'sidecar')
         self.archive.configure_stream(stream,True,'sidecar');self.archive.close();self.archive=AssetArchive(self.store,autostart=False)
-        self.assertEqual(self.archive.stream_state()['streams'][0]['mode'],'embedded')
-        self.assertTrue(all(j['mode']=='sidecar' for j in self.archive.operation(op)['jobs']))
+        self.assertEqual(self.archive.stream_state()['streams'][0]['mode'],'sidecar')
+        self.assertTrue(all(j['mode']=='embedded' for j in self.archive.operation(op)['jobs']))
         automatic=self.archive.preview(None,None,CODE,'细节图',mode='sidecar',asset_ids=[self.archive.ensure(self.sid,cid)],source='segment')
-        self.assertEqual(automatic['mode'],'embedded')
+        self.assertEqual(automatic['mode'],'sidecar')
+
+    def test_compact_history_undo_preserves_pixels_and_does_not_accumulate_images(self):
+        cid=self.add('compact.JPG');photo=self.photos/'compact.JPG';pixels=Image.open(photo).convert('RGB').tobytes()
+        preview=self.archive.preview(self.sid,[cid],CODE,'细节图')
+        op=self.archive.apply(preview['preview_id'])['operation']['id'];result=self.process(op)
+        self.assertTrue(all(j['status']=='applied' for j in result['jobs']),result)
+        self.assertFalse((self.store.data/'metadata-backups').exists())
+        self.assertFalse(list(self.photos.glob('.framekeep-recovery-*')))
+        records=list((self.store.data/'metadata-history').glob('*.json'));self.assertEqual(len(records),1)
+        saved=json.loads(records[0].read_text('utf8'));self.assertEqual(saved['journal']['after']['SKU'],CODE)
+        self.assertLess(records[0].stat().st_size,8000)
+        undo=self.archive.revert(op)['operation']['id'];result=self.process(undo)
+        self.assertTrue(all(j['status']=='applied' for j in result['jobs']),result)
+        self.assertFalse(self.archive.writer.read(photo).get('XMP-fk:SKU'))
+        self.assertEqual(Image.open(photo).convert('RGB').tobytes(),pixels)
+        self.assertFalse(list(self.photos.glob('.framekeep-recovery-*')))
+
+    def test_default_raw_sidecar_leaves_raw_bytes_unchanged(self):
+        raw=self.photos/'compact.ARW';raw.write_bytes(b'RAW payload must stay untouched'*10000);before=sha(raw)
+        fields={'SKU':CODE,'AssetId':uid(),'FileId':uid(),'ShootType':'细节图'}
+        temp,target,journal=self.archive.writer.write(raw,fields,before)
+        self.assertFalse([p for p in self.photos.iterdir() if p.is_dir()])
+        self.assertEqual(temp.parent,self.photos)
+        self.assertEqual(target,raw.with_suffix('.xmp'));self.assertEqual(journal['mode'],'sidecar')
+        from file_safety import replace_verified
+        replace_verified(temp,target,None);self.archive.writer.discard_prepared(temp)
+        self.assertEqual(sha(raw),before);self.assertLess(target.stat().st_size,8000)
+        self.assertEqual(self.archive.writer.read(target)['XMP-fk:SKU'],CODE)
 
 if __name__=='__main__':unittest.main()

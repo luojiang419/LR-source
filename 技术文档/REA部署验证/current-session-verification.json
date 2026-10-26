@@ -1,0 +1,348 @@
+{
+  "observed_at": "2026-10-22T01:31:12.084Z",
+  "connection": "current Codex chat; direct MCP tool calls",
+  "session": {
+    "server_identity": {
+      "package": {
+        "name": "rea-agents",
+        "version": "6.7.0",
+        "root_path": "C:\\Users\\jiang\\AppData\\Roaming\\npm\\node_modules\\rea-agents",
+        "build_commit": null
+      },
+      "server": {
+        "name": "rea",
+        "version": "6.7.0",
+        "started_at": "2026-10-22T01:30:27.098Z",
+        "command_path": "C:\\Users\\jiang\\AppData\\Roaming\\npm\\node_modules\\rea-agents\\scripts\\rea.mjs"
+      },
+      "sdk": {
+        "server": "2.3.1",
+        "client_test": "2.3.1",
+        "core": "2.3.1"
+      },
+      "negotiated_protocol_version": "2025-06-18",
+      "client": {
+        "name": "codex-mcp-client",
+        "version": "0.163.0-alpha.11"
+      },
+      "skill": {
+        "name": "reverse-engineer-anything",
+        "expected_version": "42"
+      },
+      "catalog": {
+        "counts": {
+          "cli_commands": 153,
+          "mcp_tools": 207,
+          "mcp_prompts": 6
+        },
+        "digests": {
+          "tools_sha256": "af39310c9591bb981893ec0d2188b1bcf6e9cc8ba3ac513d5bbefc8ddcb85639",
+          "prompts_sha256": "7152916ab48bd2a9677a5ad9cdbde0a51dc53c113934952ad096e93f5f18aa7e",
+          "combined_sha256": "96d8f6e6ea1b1ba13557216624a3461c738729d53c79b4b0100d1f3a3a32441c"
+        }
+      },
+      "protocol_features": {
+        "progress": true,
+        "cancellation": true,
+        "elicitation": false
+      },
+      "alignment": {
+        "state": "unknown",
+        "reasons": [],
+        "remediation": "Supply expected package, catalog, or registration identity to compare the live server."
+      }
+    },
+    "open": false,
+    "cleanup_pending": false
+  },
+  "pe_evidence": {
+    "evidence_id": "ev_a60ee915c999fcc808cd907ddebcdca4282391c6bd1a81562bb5a417178f7eda",
+    "subject": {
+      "name": "EDSDK.dll",
+      "digest": {
+        "sha256": "1c23a9984bd671c4bab8470430e1ab9269de00f3e3405cc9213249e3f7fb454e"
+      },
+      "local_path": "G:\\app\\LR\\EDSDK132011CD(13.20.11)\\Windows\\EDSDK_64\\Dll\\EDSDK.dll",
+      "format": "pe",
+      "architecture": "x86_64"
+    },
+    "provider": {
+      "id": "rea-pe-resources",
+      "name": "REA PE resource parser",
+      "version": "1"
+    },
+    "analysis_profile": null,
+    "predicate_type": "rea.analysis",
+    "operation": "inspect_pe_resources",
+    "parameters": {
+      "path": "G:\\app\\LR\\EDSDK132011CD(13.20.11)\\Windows\\EDSDK_64\\Dll\\EDSDK.dll",
+      "max_file_bytes": 67108864,
+      "max_entries": 16384
+    },
+    "raw_result": null,
+    "normalized_result": {
+      "artifact": {
+        "path": "G:\\app\\LR\\EDSDK132011CD(13.20.11)\\Windows\\EDSDK_64\\Dll\\EDSDK.dll",
+        "sha256": "1c23a9984bd671c4bab8470430e1ab9269de00f3e3405cc9213249e3f7fb454e",
+        "bytes": 1574400
+      },
+      "format": "pe32-plus",
+      "machine": 34404,
+      "directory": {
+        "rva": 1576960,
+        "location": {
+          "offset": 1556480,
+          "bytes": 1320
+        },
+        "data_directory_location": {
+          "offset": 448,
+          "bytes": 8
+        }
+      },
+      "directories": [
+        {
+          "location": {
+            "offset": 1556480,
+            "bytes": 40
+          },
+          "characteristics": 0,
+          "timestamp": 0,
+          "major_version": 0,
+          "minor_version": 0,
+          "named_entries": 0,
+          "id_entries": 3
+        },
+        {
+          "location": {
+            "offset": 1556520,
+            "bytes": 24
+          },
+          "characteristics": 0,
+          "timestamp": 0,
+          "major_version": 0,
+          "minor_version": 0,
+          "named_entries": 0,
+          "id_entries": 1
+        },
+        {
+          "location": {
+            "offset": 1556592,
+            "bytes": 24
+          },
+          "characteristics": 0,
+          "timestamp": 0,
+          "major_version": 0,
+          "minor_version": 0,
+          "named_entries": 0,
+          "id_entries": 1
+        },
+        {
+          "location": {
+            "offset": 1556544,
+            "bytes": 24
+          },
+          "characteristics": 0,
+          "timestamp": 0,
+          "major_version": 0,
+          "minor_version": 0,
+          "named_entries": 0,
+          "id_entries": 1
+        },
+        {
+          "location": {
+            "offset": 1556616,
+            "bytes": 24
+          },
+          "characteristics": 0,
+          "timestamp": 0,
+          "major_version": 0,
+          "minor_version": 0,
+          "named_entries": 0,
+          "id_entries": 1
+        },
+        {
+          "location": {
+            "offset": 1556568,
+            "bytes": 24
+          },
+          "characteristics": 0,
+          "timestamp": 0,
+          "major_version": 0,
+          "minor_version": 0,
+          "named_entries": 0,
+          "id_entries": 1
+        },
+        {
+          "location": {
+            "offset": 1556640,
+            "bytes": 24
+          },
+          "characteristics": 0,
+          "timestamp": 0,
+          "major_version": 0,
+          "minor_version": 0,
+          "named_entries": 0,
+          "id_entries": 1
+        }
+      ],
+      "resources": [
+        {
+          "index": 0,
+          "type": {
+            "kind": "id",
+            "id": 5
+          },
+          "name": {
+            "kind": "id",
+            "id": 101
+          },
+          "language": {
+            "kind": "id",
+            "id": 1041
+          },
+          "entry_locations": [
+            {
+              "offset": 1556496,
+              "bytes": 8
+            },
+            {
+              "offset": 1556536,
+              "bytes": 8
+            },
+            {
+              "offset": 1556608,
+              "bytes": 8
+            }
+          ],
+          "data_entry_location": {
+            "offset": 1556664,
+            "bytes": 16
+          },
+          "code_page": 0,
+          "reserved": 0,
+          "payload": {
+            "rva": 1577200,
+            "location": {
+              "offset": 1556720,
+              "bytes": 44
+            },
+            "sha256": "5f996eb173693f51dcf1502705f2059bdc2e2bb4e1bbb93ee022b9961e46b1ee"
+          }
+        },
+        {
+          "index": 1,
+          "type": {
+            "kind": "id",
+            "id": 16
+          },
+          "name": {
+            "kind": "id",
+            "id": 1
+          },
+          "language": {
+            "kind": "id",
+            "id": 1041
+          },
+          "entry_locations": [
+            {
+              "offset": 1556504,
+              "bytes": 8
+            },
+            {
+              "offset": 1556560,
+              "bytes": 8
+            },
+            {
+              "offset": 1556632,
+              "bytes": 8
+            }
+          ],
+          "data_entry_location": {
+            "offset": 1556680,
+            "bytes": 16
+          },
+          "code_page": 0,
+          "reserved": 0,
+          "payload": {
+            "rva": 1577248,
+            "location": {
+              "offset": 1556768,
+              "bytes": 644
+            },
+            "sha256": "595d16dc1a2822e24705bd67e52a6f396bf87baeb919879aa691eeb9d0addd88"
+          }
+        },
+        {
+          "index": 2,
+          "type": {
+            "kind": "id",
+            "id": 24
+          },
+          "name": {
+            "kind": "id",
+            "id": 2
+          },
+          "language": {
+            "kind": "id",
+            "id": 1033
+          },
+          "entry_locations": [
+            {
+              "offset": 1556512,
+              "bytes": 8
+            },
+            {
+              "offset": 1556584,
+              "bytes": 8
+            },
+            {
+              "offset": 1556656,
+              "bytes": 8
+            }
+          ],
+          "data_entry_location": {
+            "offset": 1556696,
+            "bytes": 16
+          },
+          "code_page": 0,
+          "reserved": 0,
+          "payload": {
+            "rva": 1577896,
+            "location": {
+              "offset": 1557416,
+              "bytes": 381
+            },
+            "sha256": "4bb79dcea0a901f7d9eac5aa05728ae92acb42e0cb22e5dd14134f4421a3d8df"
+          }
+        }
+      ],
+      "icon_groups": [],
+      "coverage": {
+        "status": "complete",
+        "examined_entries": 9,
+        "resources": 3
+      },
+      "limitations": [
+        "Static PE32/PE32+ type/name/language resource inventory; payloads other than RT_GROUP_ICON remain opaque.",
+        "Icon candidates are resource-table relationships. Language fallback, image decoding and actual shell/window loading are not observed.",
+        "Exact shared byte ranges are retained; non-identical overlapping resource structures or payloads are rejected."
+      ]
+    },
+    "confidence": "observed",
+    "authority": "shipped-artifact",
+    "environment": null,
+    "limitations": [
+      "Static PE32/PE32+ type/name/language resource inventory; payloads other than RT_GROUP_ICON remain opaque.",
+      "Icon candidates are resource-table relationships. Language fallback, image decoding and actual shell/window loading are not observed.",
+      "Exact shared byte ranges are retained; non-identical overlapping resource structures or payloads are rejected."
+    ],
+    "relationship_coverage": null,
+    "locations": [
+      {
+        "kind": "artifact-path",
+        "path": "G:\\app\\LR\\EDSDK132011CD(13.20.11)\\Windows\\EDSDK_64\\Dll\\EDSDK.dll"
+      }
+    ],
+    "evidence_links": []
+  }
+}

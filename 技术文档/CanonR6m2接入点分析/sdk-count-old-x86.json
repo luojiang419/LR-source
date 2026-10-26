@@ -1,0 +1,30 @@
+{
+    "observed_at":  "2026-10-22T04:18:42.5572619Z",
+    "process_bits":  32,
+    "dll":  "G:\\app\\LR\\tools\\canon-ccapi\\activation-win-v1.3.0e\\EDSDK.dll",
+    "sdk_sha256":  "dc72b8b0641d87982d01ac4a0476ed2a9aebf1a62acb831bbf5f772aeaa08fdb",
+    "scope":  "Read-only enumeration; no camera session, property write, activation or telemetry",
+    "calls":  [
+                  {
+                      "code":  "0x00000000",
+                      "api":  "EdsInitializeSDK"
+                  },
+                  {
+                      "code":  "0x00000000",
+                      "api":  "EdsGetCameraList"
+                  },
+                  {
+                      "code":  "0x00000000",
+                      "api":  "EdsGetChildCount"
+                  },
+                  {
+                      "code":  "0x00000000",
+                      "api":  "EdsRelease"
+                  },
+                  {
+                      "code":  "0x00000000",
+                      "api":  "EdsTerminateSDK"
+                  }
+              ],
+    "camera_count":  1
+}

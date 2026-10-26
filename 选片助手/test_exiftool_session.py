@@ -6,6 +6,7 @@ import tempfile
 import threading
 import time
 import unittest
+import io
 
 from PIL import Image
 import media_engine as media
@@ -70,6 +71,21 @@ class ExifToolSessionTests(unittest.TestCase):
             results=list(workers.map(lambda _:self.read(),range(8)))
         self.assertEqual(results,[expected]*8);self.assertIs(self.session._process,process)
         self.assertEqual(self.session._sequence,9)
+
+    def test_binary_thumbnail_and_combined_orientation_preserve_jpeg_bytes(self):
+        thumbnail=self.root/'缩略图.jpg';Image.new('RGB',(80,50),'teal').save(thumbnail)
+        args=['-charset','filename=UTF8','-overwrite_original','-ThumbnailImage<='+str(thumbnail),str(self.photo)]
+        subprocess.run([str(self.exiftool),'-@','-'],input=('\n'.join(args)+'\n').encode('utf8'),check=True,capture_output=True,
+                       creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
+        payload=self.session.execute(['-charset','filename=UTF8','-b','-ThumbnailImage',str(self.photo)])
+        self.assertEqual(payload,thumbnail.read_bytes())
+        self.assertEqual(self.read()[0]['Orientation'],6)
+        try:
+            for _ in range(2):
+                orientation,payload=media.raw_thumbnail_metadata(self.photo,self.exiftool)
+                self.assertEqual(orientation,6);self.assertEqual(payload,thumbnail.read_bytes())
+                with Image.open(io.BytesIO(payload)) as image:self.assertEqual(image.size,(80,50))
+        finally:media.close_preview_sessions()
 
     def test_cancellation_stops_inflight_process_and_next_read_recovers(self):
         self.read();cancel=threading.Event()

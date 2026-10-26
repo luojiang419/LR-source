@@ -19,6 +19,52 @@ import media_engine as media
 ROOT=Path(__file__).resolve().parents[1]
 
 class AssetBrowserTests(unittest.TestCase):
+    def test_metadata_review_cancel_and_confirm_write(self):
+        import server
+        from metadata_writer import sha
+        with tempfile.TemporaryDirectory() as folder:
+            base=Path(folder);photos=base/'photos';photos.mkdir();store=Store(base/'data',ROOT)
+            sid=store.ensure_live_session(photos);store.activate(sid)
+            for i in range(3):
+                path=photos/f'{i:03d}.JPG';Image.new('RGB',(200,140),(50+i*20,100,140)).save(path)
+                store.append_live(sid,[media.capture_record(photos,path,None,{})])
+            archive=AssetArchive(store)
+            patches=[patch.object(server,k,v) for k,v in [('STORE',store),('DATA',store.data),('MODELS',None),('ARCHIVE',archive),('CATALOG',None),('ANALYSIS',None),('SKU',None),('WATCH',None),('MOUSE',None),('CANON',None),('RAWLINK',None),('FILESEARCH',None)]]
+            for p in patches:p.start()
+            http=ThreadingHTTPServer(('127.0.0.1',0),server.Handler);http.daemon_threads=True
+            threading.Thread(target=http.serve_forever,daemon=True).start()
+            try:
+                with sync_playwright() as pw:
+                    browser=pw.chromium.launch(executable_path='C:/Program Files/Google/Chrome/Application/chrome.exe',headless=True)
+                    try:
+                        page=browser.new_page(viewport={'width':1680,'height':1050});errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
+                        page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='networkidle')
+                        page.locator('#photo-grid [data-focus]').nth(0).click()
+                        page.locator('#photo-grid [data-focus]').nth(1).click(modifiers=['Shift'])
+                        page.locator('#asset-sku').fill('REVIEW-123')
+                        page.locator('#current-shooting-tab').click();page.locator('#shooting-manual-type').fill('细节图');page.locator('#photo-settings-tab').click()
+                        before=[sha(photos/f'{i:03d}.JPG') for i in range(3)]
+                        self.assertEqual(page.locator('#asset-preview').inner_text(),'写入 SKU 元数据')
+                        self.assertIn('更新整款',page.locator('#asset-write-help').inner_text())
+                        for close in ['#asset-preview-dialog [data-close]:last-child', 'Escape']:
+                            page.locator('#asset-preview').click();page.wait_for_selector('#asset-preview-dialog[open]')
+                            self.assertIn('无需再次确认',page.locator('#asset-preview-dialog').inner_text())
+                            self.assertEqual(before,[sha(photos/f'{i:03d}.JPG') for i in range(3)])
+                            self.assertFalse(page.evaluate('async()=>await (await fetch("/api/metadata/operations")).json()')['operations'])
+                            if close=='Escape':page.keyboard.press('Escape')
+                            else:page.locator('#asset-preview-dialog [data-close]').last.click()
+                            page.wait_for_function('()=>!document.getElementById("asset-preview-dialog").open')
+                            self.assertEqual(before,[sha(photos/f'{i:03d}.JPG') for i in range(3)])
+                        page.locator('#asset-preview').click();page.wait_for_selector('#asset-preview-dialog[open]')
+                        out=ROOT/'build/preview-empty-acceptance';out.mkdir(parents=True,exist_ok=True);page.screenshot(path=str(out/'metadata-review.png'))
+                        page.locator('#asset-apply').click();page.wait_for_function('()=>document.getElementById("asset-message").textContent.includes("已内嵌 2")')
+                        for i in range(2):self.assertEqual(archive.writer.read(photos/f'{i:03d}.JPG')['XMP-fk:SKU'],'REVIEW-123')
+                        self.assertEqual(before[2],sha(photos/'002.JPG'));self.assertFalse(errors,errors)
+                    finally:browser.close()
+            finally:
+                archive.close();http.shutdown();http.server_close()
+                for p in reversed(patches):p.stop()
+
     def test_confirmed_sku_autofills_selection_and_manual_batch_remains_editable(self):
         import server
         from test_sku_workflow import CODE
@@ -63,7 +109,7 @@ class AssetBrowserTests(unittest.TestCase):
                         page.wait_for_selector('#asset-preview-dialog[open]');page.locator('#asset-apply').click()
                         page.wait_for_function('()=>!document.getElementById("asset-preview-dialog").open')
                         for cid in ids:
-                            asset=archive.asset(archive.ensure(sid,cid));self.assertEqual(asset['sku'],'MANUAL123');self.assertTrue(asset['locked'])
+                            asset=archive.asset(archive.ensure(sid,cid));self.assertEqual(asset['sku'],'MANUAL123');self.assertFalse(asset['locked']);self.assertTrue(asset['segment'])
                         covers.nth(0).click();page.wait_for_function('()=>document.getElementById("asset-sku").value==="MANUAL123"')
                         # 模拟另一个资产的不同款号，多选应显示混合值，不能沿用第一张。
                         preview=archive.preview(sid,[ids[-1]],'OTHER123','模特图',overwrite=True);archive.apply(preview['preview_id'])
@@ -109,14 +155,14 @@ class AssetBrowserTests(unittest.TestCase):
                         page.locator('#catalog-grid .catalog-card').first.click();page.wait_for_function('()=>!document.getElementById("catalog-inspector-form").hidden')
                         page.locator('#catalog-selected-sku').fill('SKU-中文123');page.locator('#catalog-save-sku').click();page.wait_for_function('()=>document.getElementById("catalog-scan-status").textContent.includes("SKU-中文123")')
                         page.locator('#selection-tab').click()
-                        page.locator('#app-settings-open').click();page.locator('#assistant-settings').click();page.locator('#model-lm-preset').click();self.assertEqual(page.locator('#model-url').input_value(),'http://127.0.0.1:1234/v1')
+                        page.locator('#app-settings-open').click();page.locator('#assistant-settings').click();page.locator('#model-add').click();page.locator('#model-name').fill('LM Studio 视觉');page.locator('#model-concurrency').fill('2')
                         page.locator('#model-url').fill(f'http://127.0.0.1:{upstream.server_port}/v1');page.locator('#model-id').fill('qwen-local-test');page.locator('#model-save').click();page.wait_for_function('()=>document.querySelectorAll("[data-model-card]").length===1')
                         self.assertFalse(providers.public()['selected']);pid=providers.public()['providers'][0]['id']
                         page.wait_for_function('()=>document.querySelectorAll("#analysis-provider option").length===2');page.locator('#analysis-provider').select_option(pid);page.locator('#analysis-bind-provider').click();page.wait_for_function('()=>document.getElementById("analysis-provider-message").textContent.includes("选用已保存")');page.locator('#analysis-test-provider').click();page.wait_for_function('()=>document.getElementById("analysis-provider-message").textContent.includes("图片请求通过")')
                         page.screenshot(path=str(out/'local-model-browser.png'));page.locator('#models-close').click();page.locator('#app-settings-close').click()
                         page.locator('#asset-analysis-open').click();page.locator('#analysis-new-schema').click();page.locator('#analysis-schema-name').fill('颜色测试');page.locator('#analysis-prompt').fill('只输出 color 字段。');page.locator('#analysis-json-schema').fill(json.dumps({'type':'object','properties':{'color':{'type':'string'}},'required':['color']}));page.locator('#analysis-save-schema').click();page.wait_for_function('()=>document.getElementById("analysis-schema").value.includes(":1")')
                         page.locator('#analysis-pause').click();page.wait_for_function('()=>document.getElementById("analysis-queue-state").textContent==="已暂停"')
-                        page.locator('#analysis-concurrency').select_option('1');page.wait_for_function('()=>document.getElementById("analysis-stats").textContent.includes("0/1")')
+                        page.locator('#analysis-concurrency').select_option('1');page.wait_for_function('()=>document.getElementById("analysis-stats").textContent.includes("本机并发上限 1")')
                         page.locator('#analysis-concurrency').select_option('2');page.locator('#analysis-resume').click();page.wait_for_function('()=>document.getElementById("analysis-queue-state").textContent==="运行中"')
                         page.locator('#analysis-run').click();page.wait_for_function('()=>document.getElementById("analysis-stats").textContent.includes("已完成 3")');self.assertEqual(LocalVision.peak,2)
                         page.screenshot(path=str(out/'analysis-browser.png'))
@@ -148,7 +194,7 @@ class AssetBrowserTests(unittest.TestCase):
                         page.locator('#selection-tab').press('End');self.assertTrue(page.locator('#app-settings-page').is_visible());page.locator('#app-settings-open').press('ArrowLeft');self.assertTrue(page.locator('#analysis-dialog').is_visible())
                         # 其他工作页按数字键或方向键不改变照片评级和选片上下文。
                         prior=page.evaluate('()=>Framekeep.remoteTarget()')
-                        page.locator('#analysis-dialog h2').click();page.keyboard.press('5');page.keyboard.press('ArrowRight')
+                        page.locator('#analysis-dialog').click(position={'x':4,'y':4});page.keyboard.press('5');page.keyboard.press('ArrowRight')
                         self.assertEqual(page.evaluate('()=>Framekeep.remoteTarget()'),prior)
                         self.assertEqual(store.session(sid)['state'].get('overrides',{}),{})
                         self.assertFalse(errors,errors)

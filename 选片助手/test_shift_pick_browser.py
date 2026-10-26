@@ -9,6 +9,7 @@ from unittest.mock import patch
 from PIL import Image
 from playwright.sync_api import sync_playwright
 from catalog_store import Store
+from asset_catalog import AssetCatalog
 from model_providers import Providers
 import media_engine as media
 
@@ -25,7 +26,7 @@ class ShiftPickTests(unittest.TestCase):
                 path=photos/f'{i:03}.JPG';Image.new('RGB',(300,200),(70+i*4,120,160)).save(path)
                 record=media.capture_record(photos,path,None,{});store.append_live(sid,[record]);ids.append(record['id'])
             store.activate(sid);store.save(sid,0,{'overrides':{ids[1]:4,ids[3]:2},'skuMarkers':{ids[3]:{'ignore':True}}})
-            patches=[patch.object(server,k,v) for k,v in [('STORE',store),('DATA',store.data),('MODELS',Providers(store.data)),('WATCH',None),('MOUSE',None),('SKU',None),('ARCHIVE',None),('ANALYSIS',None),('RAWLINK',None),('FILESEARCH',None)]]
+            patches=[patch.object(server,k,v) for k,v in [('STORE',store),('DATA',store.data),('MODELS',Providers(store.data)),('WATCH',None),('MOUSE',None),('SKU',None),('ARCHIVE',None),('CATALOG',AssetCatalog(store.data)),('ANALYSIS',None),('RAWLINK',None),('FILESEARCH',None)]]
             for p in patches:p.start()
             http=ThreadingHTTPServer(('127.0.0.1',0),server.Handler);http.daemon_threads=True
             threading.Thread(target=http.serve_forever,daemon=True).start()

@@ -185,13 +185,14 @@ class PipelineTests(unittest.TestCase):
             self.assertEqual(old.read('xl/worksheets/sheet1.xml').count(b'DISPIMG'),new.read('xl/worksheets/sheet1.xml').count(b'DISPIMG'))
         self.assertEqual(next(s for s in sheets if s['name']=='模特图')['rows'][0]['baseline'],'未拍摄')
 
-    def test_near_plan_new_sku_is_recorded_for_review_and_can_be_confirmed(self):
+    def test_two_star_near_plan_sku_is_added_as_observed_without_marking_original(self):
         self.sku.import_file('导入计划.xlsx',fixture_book(),self.sid);pid=self.sku.project()['id'];self.sku.configure(pid,self.sid,'模特图')
         self.sku.recognizer=lambda provider,image:reading('LC7877496-P906')
-        self.identify();state=self.sku.state();self.assertEqual(state['jobs'][0]['status'],'review')
+        self.identify();state=self.sku.state();self.assertEqual(state['jobs'][0]['status'],'matched')
         extra=next(row for row in state['rows'] if row['sheet']=='临时插拍')
-        self.assertEqual(extra['sku'],'LC7877496-P906');self.assertEqual(extra['status'],'待核对')
-        self.sku.review(state['jobs'][0]['id'],'confirm',extra['id']);self.drain()
+        self.assertEqual(extra['sku'],'LC7877496-P906');self.assertEqual(extra['status'],'已拍摄')
+        self.assertEqual(next(row for row in state['rows'] if row['sku']=='LC7877496-P905' and row['sheet']=='模特图')['status'],'未拍摄')
+        self.drain();self.assertEqual(self.archive.query('LC7877496-P906')['total'],2)
         output=self.sku.export(pid);sheet=next(s for s in inspect_workbook(output) if s['name']=='临时插拍')
         self.assertEqual(sheet['rows'][0]['baseline'],'已拍摄')
 

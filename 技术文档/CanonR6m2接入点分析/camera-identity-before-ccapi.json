@@ -1,0 +1,29 @@
+{
+  "observed_at": "2026-10-22T03:55:51.560079+00:00",
+  "sdk_sha256": "1c23a9984bd671c4bab8470430e1ab9269de00f3e3405cc9213249e3f7fb454e",
+  "scope": "identity only; no property writes, capture, or firmware update",
+  "calls": [
+    {
+      "api": "EdsInitializeSDK",
+      "code": "0x00000000"
+    },
+    {
+      "api": "EdsGetCameraList",
+      "code": "0x00000000"
+    },
+    {
+      "api": "EdsGetChildCount",
+      "code": "0x00000000"
+    },
+    {
+      "api": "EdsRelease",
+      "code": "0x00000000"
+    },
+    {
+      "api": "EdsTerminateSDK",
+      "code": "0x00000000"
+    }
+  ],
+  "cameras": [],
+  "camera_count": 0
+}

@@ -1,0 +1,251 @@
+{
+  "kind": "ordinary local static inspection; not REA Evidence",
+  "pdf_sha256": "71c3686452af13e66ffe7bc95e40f84264d7a368288d5231ccd6999fe27bdc2b",
+  "pdf_pages": 258,
+  "pdf_search": [
+    {
+      "term": "wireless",
+      "hits": [],
+      "total_pages_with_term": 0
+    },
+    {
+      "term": "Wi-Fi",
+      "hits": [],
+      "total_pages_with_term": 0
+    },
+    {
+      "term": "FirmwareVersion",
+      "hits": [
+        {
+          "page": 8,
+          "excerpt": "............................................................................ 109 \n5.2.11 kEdsPropID_FirmwareVersion .................................................................................................................... 110 \n5.2.12 kEdsPropID_BatteryLevel ........................................................................................................................... 110 \n5.2.13 kEdsPropID_BatteryQuality ...................................................................................."
+        },
+        {
+          "page": 52,
+          "excerpt": "D_BodyIDEx \n0 \nkEdsPropID_OwnerName \n0 \nkEdsPropID_MakerName \n0 \nkEdsPropID_DateTime \n0 \nkEdsPropID_FirmwareVersion \n0 \nkEdsPropID_BatteryLevel \n0 \nkEdsPropID_BatteryQuality \n0 \nkEdsPropID_SaveTo \n0 \nkEdsPropID_CurrentStorage \n0 \nkEdsPropID_CurrentFolder \n0 \nkEdsPropID_LensStatus \n0 \nkEdsPropID_Artist \n0 \nkEdsPropID_Copyright \n0 \n \n■ Properties regarding images \nInPropertyID \ninParam setting value \nkEdsPropID_ImageQuality \n0 \nkEdsPropID_Orientation \n0 \nkEdsPropID_ICCProfile \n0 \nkEdsPropID_FocusInfo \n0 \nkEdsPro"
+        },
+        {
+          "page": 101,
+          "excerpt": "opID_DateTime \nFor cameras, the system time; for images, the \nshooting time \n0x00000007 \nkEdsPropID_FirmwareVersion \nFirmware version \n0x00000008 \nkEdsPropID_BatteryLevel \nBattery state: 0–100% or \"AC\" \n0x0000000b \nkEdsPropID_SaveTo \nDestination where image was saved \n0x0000000c \nkEdsPropID_CurrentStorage \nCurrent Storage \n0x0000000d \nkEdsPropID_CurrentFolder  \nCurrent Folder \n0x00000015 \nkEdsPropID_BodyIDEx \nExtension Body ID \n \n■ Image Properties \nValue \nDefine \nDescription \n0x00000100 \nkEdsPropID_ImageQuali"
+        },
+        {
+          "page": 110,
+          "excerpt": " \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \nCopyright © 2018-2026 Canon Inc. \n5.2.11 kEdsPropID_FirmwareVersion \nDescription \nIndicates the camera's firmware version.  \n \nData Type \nData type number  \nData type  \nkEdsDataType_String \nEdsChar[] \n \nTarget Object \nTarget object  \nAccess type \nEdsCameraRef \nRead \nEdsImageRef \nRead \n \nValue \nASCII text strings up to 32 characters, including null-terminated strings.  \n \n \n \n5.2.12 kEdsPropID_BatteryLevel \nDescription \nIndicates the camera battery level.  \nWhen t"
+        }
+      ],
+      "total_pages_with_term": 4
+    },
+    {
+      "term": "EdsOpenSession",
+      "hits": [
+        {
+          "page": 6,
+          "excerpt": "........................................................................................ 45 \n3.1.12 EdsOpenSession ............................................................................................................................................. 46 \n3.1.13 EdsCloseSession ............................................................................................................................................ 46 \n"
+        },
+        {
+          "page": 32,
+          "excerpt": "d get \nassociated properties and events. To open a session, specify the camera in question and call EdsOpenSession. Open \nsessions must be closed using EdsCloseSession when communications are finished. \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \nFigure 2-10  Camera Access \nApplication \nEDSDK \nGet camera list \nEdsGetCameraList() \nGet no. of cameras (child objects in camera list) \nEdsGetChildCount() \nGet camera objects \nEdsGetChildAtIndex(cameraList, i, aCameraRef) \nOpen session with camera \n"
+        },
+        {
+          "page": 46,
+          "excerpt": "rks \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \nCopyright © 2018-2026 Canon Inc. \n \n \n3.1.12 EdsOpenSession \nDescription \n \nEstablishes a logical connection with a remote camera.  \nUse this API after getting the camera's EdsCamera object.  \n \nSyntax \nEdsError  EdsOpenSession( EdsCameraRef  inCameraRef ); \n \nParameters \ninCameraRef \n \nDesignate the camera object of the camera to connect to.  \n \nReturn Values \nReturns EDS_ERR_OK if successful. In other cases, see the EDS Error Lists.  \n \nNote \n \nUse the "
+        },
+        {
+          "page": 194,
+          "excerpt": " \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \nCopyright © 2018-2026 Canon Inc. \nif(err == EDS_ERR_OK) \n{ \nerr = EdsOpenSession(camera); \n} \n \n \n///// \n \n  // do something \n \n  //// \n \n// Close session with camera \nif(err == EDS_ERR_OK) \n{ \nerr = EdsCloseSession(camera); \n} \n \n// Release camera \nif(camera != NULL) \n{ \n \nEdsRelease(camera); \n} \n \n// Terminate SDK \nif(isSDKLoaded) \n{ \n \nEdsTerminateSDK(); \n} \n} \n \n \nEdsError EDSCALLBACK handleObjectEvent( EdsObjectEvent event, \nEdsBaseRef  object, \nEdsVoid * context) \n{ \n \n"
+        }
+      ],
+      "total_pages_with_term": 5
+    },
+    {
+      "term": "EdsSendCommand",
+      "hits": [
+        {
+          "page": 7,
+          "excerpt": "Remarks \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \nCopyright © 2018-2026 Canon Inc. \n3.1.14 EdsSendCommand ......................................................................................................................................... 47 \n3.1.15 EdsSendStatusCommand ............................................................................................................................... 49 \n3.1.16 EdsSetCapacity ..........................................................................."
+        },
+        {
+          "page": 33,
+          "excerpt": "sCameraRef camera = (EdsCameraRef)lParam; \n \nCoInitializeEx( NULL, COINIT_APARTMENTTHREADED ); \n \n \nEdsSendCommand(camera, kEdsCameraCommand_PressShutterButton, \n kEdsCameraCommand_ShutterButton_Completely); \n \nEdsSendCommand(camera, kEdsCameraCommand_PressShutterButton, \n kEdsCameraCommand_ShutterButton_OFF); \n \n \nCoUninitialize(); \n \n \n_endthread(); \n} \n \nNotes on Developing Macintosh Applications \n \nmacOS 13(Ventura) or later, the number of cameras may be returned as 0 when getting the camera list. \nIn suc"
+        },
+        {
+          "page": 47,
+          "excerpt": "marks \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \nCopyright © 2018-2026 Canon Inc. \n \n3.1.14 EdsSendCommand  \nDescription \nSends a command such as \"Shoot\" to a remote camera.  \n \nSyntax \nEdsError EdsSendCommand( EdsCameraRef  inCameraRef,  \nEdsUInt32  inCommand,  EdsUInt32  inParam )  \n \nParameters \ninCameraRef \n \nOnly a camera object can be designated.  \ninCommand \n \nThe command ID to send to the object.  \nIn EDSDKTypes.h, you can designate commands defined by enum EdsCameraCommand.  \n \n \ninCommand \ni"
+        },
+        {
+          "page": 49,
+          "excerpt": " of EdsDrivePowerZoom when kEdsCameraCommand_DrivePowerZoom is specified in \nInParam. \n \n \nExample: EdsSendCommand(cameraRef, kEdsCameraCommand_DrivePowerZoom,  \n \nkEdsDrivePowerZoom_LimitOff_Wide); \n \n \nEnum EdsDrivePowerZoom <defined location>EDSDKTypes.h \n値 \n意味 \nkEdsDrivePowerZoom_Stop \nStop zoom dirve \nkEdsDrivePowerZoom_LimitOff_Wide \nSpeed change switch is at FAST position, \nZoom starts to Wide direction \nkEdsDrivePowerZoom_LimitOff_Tele \nSpeed change switch is at FAST position, \nZoom starts to Tele dir"
+        }
+      ],
+      "total_pages_with_term": 16
+    }
+  ],
+  "dll_exports": {
+    "exports_count": 135,
+    "exports": [
+      "?EdsDisconnectPTPIPDevice@@YAKXZ",
+      "EdsCacheImage",
+      "EdsChangeWftSettingNumber",
+      "EdsCloseSession",
+      "EdsCompleteAutoSendImages",
+      "EdsCopyData",
+      "EdsCreateCtgInfoRef",
+      "EdsCreateDirectoryItemRef",
+      "EdsCreateEvfImageRef",
+      "EdsCreateFileStream",
+      "EdsCreateFileStreamEx",
+      "EdsCreateFlashSettingRef",
+      "EdsCreateFolder",
+      "EdsCreateImageRef",
+      "EdsCreateImageTypeRef",
+      "EdsCreateMemoryStream",
+      "EdsCreateMemoryStreamFromPointer",
+      "EdsCreatePsfRef",
+      "EdsCreatePsfRefWithStream",
+      "EdsCreateStream",
+      "EdsDeleteDirectoryItem",
+      "EdsDeletePrivateKeyData",
+      "EdsDeleteWftSettingNumber",
+      "EdsDisconnectPTPIPDevice",
+      "EdsDownload",
+      "EdsDownloadCAssistPresetThumb",
+      "EdsDownloadCancel",
+      "EdsDownloadComplete",
+      "EdsDownloadCtgInfo",
+      "EdsDownloadDebugLog",
+      "EdsDownloadDebugLogEx",
+      "EdsDownloadEvfImage",
+      "EdsDownloadMPF",
+      "EdsDownloadTemplateXml",
+      "EdsDownloadThumbnail",
+      "EdsFormatVolume",
+      "EdsGetAttribute",
+      "EdsGetB2BFuncType",
+      "EdsGetCCAPIMode",
+      "EdsGetCameraList",
+      "EdsGetCameraSupport",
+      "EdsGetChildAtIndex",
+      "EdsGetChildCount",
+      "EdsGetConnectType",
+      "EdsGetCsdFileData",
+      "EdsGetCtgPropertyData",
+      "EdsGetCtgPropertySize",
+      "EdsGetCurrentFocusPosition",
+      "EdsGetDeviceInfo",
+      "EdsGetDeviceModelID",
+      "EdsGetDeviceUsbProductID",
+      "EdsGetDirectoryItemInfo",
+      "EdsGetDispInfoData",
+      "EdsGetDispInfoSize",
+      "EdsGetEvent",
+      "EdsGetGpsLogCurrentHandle",
+      "EdsGetImage",
+      "EdsGetImageInfo",
+      "EdsGetImportInfo",
+      "EdsGetImportItemRef",
+      "EdsGetInnerDevelopParamData",
+      "EdsGetInnerDevelopParamSize",
+      "EdsGetLength",
+      "EdsGetMagicWindowPoints",
+      "EdsGetMovieSpeedInfo",
+      "EdsGetMusicInfo",
+      "EdsGetObjectUrl",
+      "EdsGetParent",
+      "EdsGetPointer",
+      "EdsGetPosition",
+      "EdsGetPropertyData",
+      "EdsGetPropertyDesc",
+      "EdsGetPropertyDescEx",
+      "EdsGetPropertySize",
+      "EdsGetTranslatedPoint",
+      "EdsGetVolumeInfo",
+      "EdsGetWavInfo",
+      "EdsGetWftData",
+      "EdsInitializeSDK",
+      "EdsIsSupportCamera",
+      "EdsNotifyEstimateNumberOfImport",
+      "EdsNotifyFinish",
+      "EdsNotifyNumberOfImported",
+      "EdsNotifySaveComplete",
+      "EdsNotifySizeOfPartialDataTransfer",
+      "EdsOpenSession",
+      "EdsOutputAppLog",
+      "EdsOverWriteContentsXml",
+      "EdsPairingPTPIPDevice",
+      "EdsRead",
+      "EdsReflectImageProperty",
+      "EdsRelease",
+      "EdsRequestInnerDevelopArtFilterStart",
+      "EdsRequestInnerDevelopEnd",
+      "EdsRequestInnerDevelopParamChange",
+      "EdsRequestInnerDevelopRawStart",
+      "EdsRequestInnerDevelopResizeStart",
+      "EdsRetain",
+      "EdsSaveImage",
+      "EdsSavePsfRef",
+      "EdsSeek",
+      "EdsSendCommand",
+      "EdsSendCommandEx",
+      "EdsSendStatusCommand",
+      "EdsSendTemplateXml",
+      "EdsSendWifiSetting",
+      "EdsSetAttribute",
+      "EdsSetB2BFuncType",
+      "EdsSetCAssistMode",
+      "EdsSetCCAPIMode",
+      "EdsSetCameraAddedHandler",
+      "EdsSetCameraRemovedHandler",
+      "EdsSetCameraStateEventHandler",
+      "EdsSetCapacity",
+      "EdsSetCsdFileData",
+      "EdsSetCtgPropertyData",
+      "EdsSetFramePoint",
+      "EdsSetInnerDevelopParamData",
+      "EdsSetLvPcFlavoreditMode",
+      "EdsSetLvPcFlavoreditParam",
+      "EdsSetMetaImage",
+      "EdsSetObjectEventHandler",
+      "EdsSetOption",
+      "EdsSetPrivateKeyData",
+      "EdsSetProgressCallback",
+      "EdsSetPropertyData",
+      "EdsSetPropertyEventHandler",
+      "EdsSetRating",
+      "EdsSetWftData",
+      "EdsTerminateSDK",
+      "EdsTvExToString",
+      "EdsUpload",
+      "EdsWrite",
+      "GetRemoteErrLogMode",
+      "SetRemoteErrLogMode"
+    ],
+    "network_or_firmware_exports": [
+      "EdsCreateCtgInfoRef",
+      "EdsDownloadCtgInfo",
+      "EdsGetCtgPropertyData",
+      "EdsGetCtgPropertySize",
+      "EdsGetDeviceInfo",
+      "EdsGetDirectoryItemInfo",
+      "EdsGetDispInfoData",
+      "EdsGetDispInfoSize",
+      "EdsGetImageInfo",
+      "EdsGetImportInfo",
+      "EdsGetMovieSpeedInfo",
+      "EdsGetMusicInfo",
+      "EdsGetPropertyData",
+      "EdsGetPropertyDesc",
+      "EdsGetPropertyDescEx",
+      "EdsGetPropertySize",
+      "EdsGetVolumeInfo",
+      "EdsGetWavInfo",
+      "EdsReflectImageProperty",
+      "EdsSendCommand",
+      "EdsSendCommandEx",
+      "EdsSendStatusCommand",
+      "EdsSendWifiSetting",
+      "EdsSetCtgPropertyData",
+      "EdsSetPropertyData",
+      "EdsSetPropertyEventHandler"
+    ]
+  }
+}

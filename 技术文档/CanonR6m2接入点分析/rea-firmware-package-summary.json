@@ -1,0 +1,157 @@
+{
+  "summary": {
+    "evidence_id": "ev_9aa920e9cc15b8652b29d75ae2ee25b3a000ea2429eebb03763c7f4deb1cd468",
+    "subject": {
+      "name": "eosr62-v170-win.zip",
+      "digest": {
+        "sha256": "948a67521a7f62a9df1725f347a91385e9028d7743a80c8a4b6f33c38051986e"
+      },
+      "local_path": "G:\\app\\LR\\.runtime\\canon-r6m2-analysis\\eosr62-v170-win.zip",
+      "format": "zip",
+      "architecture": null
+    },
+    "provider": {
+      "id": "rea-analysis-view",
+      "name": "REA analysis view projection",
+      "version": "1"
+    },
+    "analysis_profile": null,
+    "predicate_type": "rea.analysis-view",
+    "operation": "inspect_analysis_view",
+    "parameters": {
+      "parent_evidence_id": "ev_b8c7f1b4b58118c097f4f55bb61da4914c5ecd6b2678c16edcb9cd4e641f9f64",
+      "view": {
+        "kind": "summary"
+      }
+    },
+    "raw_result": null,
+    "normalized_result": {
+      "kind": "summary",
+      "view": {
+        "kind": "summary"
+      },
+      "parent_evidence_id": "ev_b8c7f1b4b58118c097f4f55bb61da4914c5ecd6b2678c16edcb9cd4e641f9f64",
+      "parent_operation": "inspect_artifact",
+      "parent_digest": "b8c7f1b4b58118c097f4f55bb61da4914c5ecd6b2678c16edcb9cd4e641f9f64",
+      "view_digest": "db2e5302ac281e9aa50fa769b848a0ed7b838f6826599c8771815fb6cb48f1db",
+      "artifact": {
+        "path": "G:\\app\\LR\\.runtime\\canon-r6m2-analysis\\eosr62-v170-win.zip",
+        "sha256": "948a67521a7f62a9df1725f347a91385e9028d7743a80c8a4b6f33c38051986e"
+      },
+      "coverage": {
+        "status": "complete-within-view",
+        "examined": 23,
+        "total": 23,
+        "next_offset": null,
+        "exhausted": true
+      },
+      "limitations": [
+        "Inspection derives bounded static hypotheses and next probes; it does not execute the artifact or claim format-specific semantics.",
+        "ZIP inventory lists central-directory entries only. Non-entry bytes, including an APK Signing Block before the central directory or a ZIP comment after it, are not occurrences."
+      ],
+      "unknowns": [
+        "Inventory does not establish application runtime behavior or complete format-specific analysis."
+      ],
+      "summary": {
+        "manifest": {
+          "manifest_id": "agm_b562e4fa2b9bc3fa8de12292ddd16010d8ffebba99714c25f1855e58841eac4a",
+          "root_artifact_id": "art_7613fdf69ec452e0920f6d7ef765cb33934ed4034c209529165a2558621c21e0",
+          "root_sha256": "948a67521a7f62a9df1725f347a91385e9028d7743a80c8a4b6f33c38051986e",
+          "root_format": "zip",
+          "graph_sha256": "79d8380e25a905e0dabbac1350958481746863dd8404427dead825cf1a784cdd",
+          "node_count": 8,
+          "occurrence_count": 8,
+          "edge_count": 7
+        },
+        "available_counts": {
+          "nodes": 8,
+          "occurrences": 8,
+          "edges": 7,
+          "integrity_contradictions": 0
+        },
+        "observed_entry_kind_counts": {
+          "file": 7,
+          "directory": 1,
+          "symlink": 0,
+          "slice": 0
+        },
+        "source_complete": true,
+        "inventory_evidence_ids": [
+          "ev_dc0d093371da067664b4fca298881e78b2540d8313227ec51c6bc68bad9488ed"
+        ],
+        "inspection": {
+          "coverage": {
+            "status": "complete-within-substeps",
+            "substeps_completed": 1,
+            "observations_retained": 1,
+            "observations_omitted": 0,
+            "hypotheses_retained": 0,
+            "hypotheses_omitted": 0,
+            "unexplored_branches_retained": 0,
+            "unexplored_branches_omitted": 0,
+            "next_probes_retained": 0,
+            "next_probes_omitted": 0
+          },
+          "unexplored_branches": []
+        },
+        "limitation_count": 2
+      }
+    },
+    "confidence": "derived",
+    "authority": "shipped-artifact",
+    "environment": null,
+    "limitations": [
+      "Inspection derives bounded static hypotheses and next probes; it does not execute the artifact or claim format-specific semantics.",
+      "ZIP inventory lists central-directory entries only. Non-entry bytes, including an APK Signing Block before the central directory or a ZIP comment after it, are not occurrences."
+    ],
+    "relationship_coverage": null,
+    "locations": [
+      {
+        "kind": "artifact-path",
+        "path": "G:\\app\\LR\\.runtime\\canon-r6m2-analysis\\eosr62-v170-win.zip"
+      }
+    ],
+    "evidence_links": [
+      "ev_b8c7f1b4b58118c097f4f55bb61da4914c5ecd6b2678c16edcb9cd4e641f9f64"
+    ]
+  },
+  "firmware_tools": [
+    {
+      "names": [
+        "extract_firmware"
+      ],
+      "surface": "firmware-provider",
+      "effects": [
+        "mutatesSession",
+        "writesFilesystem",
+        "launchesProcess"
+      ],
+      "annotations": [
+        "open_world"
+      ],
+      "available": false,
+      "reason": "provider_missing",
+      "remediation": "On Linux, provide an absolute REA_BINWALK_COMMAND (Binwalk 3.1.x, verified with 3.1.0) or REA_UNBLOB_COMMAND (Unblob 26.6.x, verified with 26.6.4) path and util-linux prlimit. Extraction also requires the selected format’s external extractor."
+    },
+    {
+      "names": [
+        "inspect_firmware_regions"
+      ],
+      "surface": "firmware-provider",
+      "effects": [
+        "mutatesSession",
+        "writesFilesystem",
+        "launchesProcess",
+        "idempotent"
+      ],
+      "annotations": [
+        "idempotent",
+        "open_world"
+      ],
+      "available": false,
+      "reason": "provider_missing",
+      "remediation": "On Linux, provide an absolute REA_BINWALK_COMMAND (Binwalk 3.1.x, verified with 3.1.0) or REA_UNBLOB_COMMAND (Unblob 26.6.x, verified with 26.6.4) path and util-linux prlimit. Extraction also requires the selected format’s external extractor."
+    }
+  ],
+  "scope": "Archive inventory only; FIR payload not decoded or decompiled."
+}

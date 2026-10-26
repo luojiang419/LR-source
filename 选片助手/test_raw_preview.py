@@ -40,17 +40,18 @@ class RawPreviewTests(unittest.TestCase):
     def preview(self,**kwargs):
         return media.preview(self.record,self.root,self.cache,Path('exiftool'),**kwargs)
 
-    def test_small_embedded_thumbnail_wins_over_companion_and_large_preview(self):
+    def test_missing_companion_uses_small_embedded_before_large_preview(self):
         self.record['jpg']='missing.JPG'
         with self.extract({'-ThumbnailImage':jpeg()}),patch('rawpy.RawPy',side_effect=AssertionError('不应打开 LibRaw')):
             path=self.preview()
         self.assertEqual(self.tags,['-ThumbnailImage'])
         with Image.open(path) as image:self.assertEqual(image.size,(160,120))
 
-    def test_missing_thumbnail_uses_companion_before_large_embedded_image(self):
+    def test_companion_jpeg_is_used_before_reading_raw_or_exiftool(self):
         self.record['jpg']='photo.JPG';(self.root/'photo.JPG').write_bytes(jpeg((1600,1200)))
-        with self.extract({}):path=self.preview()
-        self.assertEqual(self.tags,['-ThumbnailImage'])
+        with patch.object(media,'_embedded_preview',side_effect=AssertionError('配对 JPG 不读取 RAW')):
+            path=self.preview()
+        self.assertEqual(self.tags,[])
         with Image.open(path) as image:self.assertEqual(image.size,(480,360))
 
     def test_unicode_raw_path_is_passed_as_utf8_argument_stream(self):
@@ -124,7 +125,7 @@ class RawPreviewTests(unittest.TestCase):
         source.extract_thumb.side_effect=rawpy.LibRawNoThumbnailError()
         with self.extract({}),patch('rawpy.RawPy',return_value=source),self.assertRaises(rawpy.LibRawNoThumbnailError):
             self.preview()
-        source.postprocess.assert_not_called();self.assertFalse(list(self.cache.glob('*.jpg')))
+        source.postprocess.assert_not_called();self.assertFalse(list(self.cache.glob('*.webp')))
 
 
 if __name__=='__main__':unittest.main()

@@ -49,6 +49,25 @@ class FolderWatchTests(unittest.TestCase):
         # 源文件被移走不删除现场记录和评级。
         (self.photos/'a.JPG').unlink();self.watch.tick();self.assertEqual(len(self.store.records(self.sid)),2)
 
+    def test_internal_cache_cannot_be_selected_or_restored_as_photo_folder(self):
+        cache=self.store.data/'previews';cache.mkdir();path=cache/'customer.JPG'
+        Image.new('RGB',(80,60)).save(path);before=path.read_bytes()
+        for folder in (self.store.data,cache):
+            with self.assertRaisesRegex(ValueError,'缓存目录'):self.watch.start(str(folder))
+        self.assertEqual(self.watch.state()['folder'],str(self.photos));self.assertEqual(path.read_bytes(),before)
+        saved={'enabled':True,'source':'manual','folder':str(cache),'session_id':self.sid}
+        self.watch.config.write_text(json.dumps(saved),encoding='utf8')
+        restarted=FolderWatch(self.store,autostart=False)
+        try:self.assertFalse(restarted.state()['enabled']);self.assertTrue(restarted.state()['error'])
+        finally:restarted.close()
+
+    def test_recursive_parent_excludes_software_data_and_preserves_fixed_temp(self):
+        cache=self.store.data/'previews';cache.mkdir();Image.new('RGB',(80,60)).save(cache/'cache.JPG')
+        self.image();temporary=self.watch.config.with_suffix('.tmp');temporary.write_bytes(b'user data')
+        sid=self.watch.start(str(self.base))['session_id'];self.settle()
+        self.assertEqual(len(self.store.records(sid)),1)
+        self.assertEqual(temporary.read_bytes(),b'user data')
+
     def test_partial_and_open_writer_wait_then_import(self):
         output=io.BytesIO();Image.new('RGB',(160,100)).save(output,format='JPEG');payload=output.getvalue();path=self.photos/'copy.JPG'
         with path.open('wb') as writer:
@@ -165,7 +184,7 @@ class LiveBrowserTests(unittest.TestCase):
                             page.goto(url,wait_until='networkidle');page.evaluate('() => window.__samePage=true')
                             page.locator('#folder-watch').click();page.locator('#watch-path').fill(str(photos));page.locator('#watch-start').click()
                             page.wait_for_function('() => !document.getElementById("watch-dialog").open && FRAMEKEEP_SESSION.id!==null')
-                            page.locator('#app-settings-open').click();page.locator('#mouse-remote').click();page.locator('#mouse-start').click()
+                            page.locator('#app-settings-open').click();page.locator('[data-settings-section=remote]').click();page.locator('#mouse-remote').click();page.locator('#mouse-start').click()
                             page.wait_for_function('() => !document.getElementById("mouse-dialog").open')
                             def wait_photo(name):
                                 page.wait_for_function('(name) => document.getElementById("filename").textContent===name',arg=name)

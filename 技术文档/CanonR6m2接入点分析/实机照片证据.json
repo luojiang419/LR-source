@@ -1,0 +1,25 @@
+{
+  "date": "2026-10-22",
+  "photos": [
+    {
+      "path": "D:\\下载\\IMG_4076.JPG",
+      "sha256": "cc0e3473cbcf54bc8ebe07646b9971a24d7ada40cce80e634b1d90df93149f5d",
+      "observation": "连接至 EOS Utility 页面，添加要连接的设备高亮，下方有两台已保存的电脑。",
+      "evidence_type": "user-provided photo; visual inspection, not REA execution"
+    },
+    {
+      "path": "D:\\下载\\IMG_4078.JPG",
+      "sha256": "6d6063957dc48c51c60254a0b030429f9b8a17531db7c5394687b8d1628c6729",
+      "observation": "连接中，接入点 J LBS_5G，INFO 切换网络。",
+      "evidence_type": "user-provided photo; visual inspection, not REA execution"
+    },
+    {
+      "path": "D:\\下载\\IMG_4081.JPG",
+      "sha256": "3700e84b33120d6c64406c24b77c5ffc4d3145bb754e2b25842c62c590e1d539",
+      "observation": "选择网络页面含相机接入点模式；当前高亮以 WPS 连接。",
+      "evidence_type": "user-provided photo; visual inspection, not REA execution"
+    }
+  ],
+  "user_confirmation": "已经完整保存相机接入点配对，之后仍强制优先外部 Wi-Fi。",
+  "remaining_unknown": "是否存在可调优先级、模式记忆范围和固件初始化分支。"
+}

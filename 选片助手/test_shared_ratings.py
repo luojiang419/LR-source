@@ -10,6 +10,7 @@ from PIL import Image
 from playwright.sync_api import sync_playwright
 
 import server
+import media_engine as media
 from asset_archive import AssetArchive
 import test_archive_pipeline as pipeline_tests
 from test_archive_pipeline import ROOT
@@ -32,6 +33,30 @@ class SharedRatingTests(unittest.TestCase):
         self.catalog.add_root(str(self.final));self.pipeline.tick();self.now+=1;self.pipeline.tick();self.drain()
         return destination
 
+    def test_pending_sku_write_uses_latest_rating_after_sidecar_sync(self):
+        self.identify()
+        with self.archive.connect() as c:
+            job=dict(c.execute("SELECT * FROM metadata_jobs WHERE status='applied' LIMIT 1").fetchone())
+            fields=json.loads(job['fields']);fields['Rating']=1
+            from metadata_writer import sha
+            c.execute("UPDATE metadata_jobs SET fields=?,status='queued',journal='{}',expected_sha=? WHERE id=?",(json.dumps(fields),sha(job['path']),job['id']))
+        self.archive.ratings.set([job['path']],0)
+        for _ in range(20):
+            if not self.archive.ratings.sync.process_one():break
+        self.archive.process_one()
+        with self.archive.connect() as c:self.assertEqual(c.execute('SELECT status FROM metadata_jobs WHERE id=?',(job['id'],)).fetchone()[0],'applied')
+        self.assertEqual(self.archive.writer.read(job['path'])['XMP-xmp:Rating'],0)
+        # 普通星级写入后也维护 OCR 元数据版本链及照片指纹。
+        cid=self.ids[0];path=self.paths[0]
+        before=self.store.records(self.sid)[0]['fingerprint']
+        self.archive.ratings.set([path],5)
+        for _ in range(20):
+            if not self.archive.ratings.sync.process_one():break
+        record=next(r for r in self.store.records(self.sid) if r['id']==cid)
+        self.assertEqual(record['fingerprint'],media.fingerprint([path]))
+        if before!=record['fingerprint']:
+            with self.sku.connect() as c:self.assertTrue(c.execute('SELECT 1 FROM metadata_versions WHERE session=? AND capture=? AND before=? AND after=?',(self.sid,cid,before,record['fingerprint'])).fetchone())
+
     def test_live_to_archive_manual_change_clear_and_restart(self):
         self.identify()
         self.archive.ratings.set([self.paths[0]],4)
@@ -51,6 +76,13 @@ class SharedRatingTests(unittest.TestCase):
         reopened=AssetArchive(self.store,autostart=False)
         try:self.assertEqual(reopened.ratings.get([self.paths[0]]),0)
         finally:reopened.close()
+
+    def test_catalog_page_decorates_ratings_without_per_row_queries(self):
+        self.add('IMG_0001.JPG');self.archive.ratings.set([self.paths[0]],4)
+        rows=[{'path':str(self.paths[0])} for _ in range(120)]
+        with patch.object(self.archive.ratings,'get',side_effect=AssertionError('分页装饰不应逐项调用 get')):
+            decorated=self.archive.ratings.decorate(rows)
+        self.assertEqual({row['rating'] for row in decorated},{4})
 
     def test_pair_sharing_without_same_name_cross_directory_and_read_only(self):
         self.add('IMG_0001.JPG')
@@ -163,12 +195,12 @@ class RawCaptureRatingTests(unittest.TestCase):
         sources=self.link.sources();self.assertTrue(any(json.loads(s['record']).get('raw') for s in sources))
         self.assertEqual(self.link.state(self.sid)['pairs'],[])
         target_sid=self.scan(self.raw);self.assertEqual(self.finish(target_sid)['status'],'applied')
-        self.assertEqual(self.archive.writer.read(self.target)['XMP-xmp:Rating'],4)
+        self.assertEqual(self.archive.writer.read_asset(self.target)['XMP-xmp:Rating'],4)
         (self.jpg/'IMG_0346.JPG').unlink();self.store.append_live(self.sid,[media.capture_record(self.jpg,self.jpg/self.target.name,None,self.meta)]);self.link.process_session(self.sid)
         self.archive.ratings.set([self.target],5);self.link.process_session(self.sid)
         self.assertEqual(self.finish(target_sid)['status'],'applied')
         self.assertEqual(self.link.state(target_sid)['pairs'][0]['source_filename'],'IMG_0346.CR3')
-        self.assertEqual(self.archive.writer.read(self.target)['XMP-xmp:Rating'],5)
+        self.assertEqual(self.archive.writer.read_asset(self.target)['XMP-xmp:Rating'],5)
         self.assertEqual(self.archive.ratings.get([self.jpg/self.target.name]),5)
 
 

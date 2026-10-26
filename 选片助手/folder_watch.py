@@ -10,10 +10,12 @@ import uuid
 
 from PIL import Image
 import media_engine as media
+from file_safety import atomic_write,photo_directory
 
 
 def signature(paths):
-    return tuple((str(p),p.stat().st_size,p.stat().st_mtime_ns) for p in paths)
+    from rating_xmp import sidecar_signature
+    return tuple((str(p),p.stat().st_size,p.stat().st_mtime_ns) for p in paths)+sidecar_signature(paths)
 
 
 def files_ready(paths):
@@ -77,12 +79,15 @@ class FolderWatch:
         self.closed=threading.Event();self.cancel=threading.Event();self.observed={};self.accepted={};self.retry_after={}
         self.config=store.data/'folder-watch.json'
         self.info={'enabled':False,'folder':'','recursive':True,'session_id':None,'generation':uuid.uuid4().hex,
-                   'version':0,'event_id':0,'arrivals':0,'last_photo_id':None,'pending':0,'error':'','message':'未开启现场监控'}
+                   'version':0,'event_id':0,'arrivals':0,'last_photo_id':None,'pending':0,'initializing':False,'error':'','message':'未开启现场监控','source':'manual'}
         if self.config.is_file():
             try:
                 saved=json.loads(self.config.read_text(encoding='utf8'))
-                if saved.get('enabled'):
-                    self.info.update(enabled=True,folder=saved['folder'],recursive=bool(saved.get('recursive',True)),session_id=saved['session_id'],message='正在恢复现场监控')
+                if saved.get('enabled') and saved.get('source')=='canon':
+                    self.info.update(folder=saved['folder'],recursive=bool(saved.get('recursive',True)),session_id=saved['session_id'],source='canon',message='联机监控等待手动开启')
+                elif saved.get('enabled'):
+                    photo_directory(saved['folder'],self.store.data)
+                    self.info.update(enabled=True,folder=saved['folder'],recursive=bool(saved.get('recursive',True)),session_id=saved['session_id'],source=saved.get('source','manual'),initializing=True,message='正在恢复现场监控并读取已有照片')
             except (OSError,ValueError,KeyError):self.info['error']='监控配置读取失败，请重新选择文件夹'
         if self.info['enabled'] and self.info['session_id']:
             with self.store.connect() as c:c.execute('INSERT OR REPLACE INTO settings VALUES (?,?)',('shooting_session:'+self.info['session_id'],self.info['folder']))
@@ -103,12 +108,16 @@ class FolderWatch:
             self.info.update(values);self.info['event_id']+=1;self.condition.notify_all()
 
     def _persist(self):
-        payload={k:self.info[k] for k in ('enabled','folder','recursive','session_id')}
-        temp=self.config.with_suffix('.tmp');temp.write_text(json.dumps(payload,ensure_ascii=False),encoding='utf8');temp.replace(self.config)
+        payload={k:self.info[k] for k in ('enabled','folder','recursive','session_id','source')}
+        atomic_write(self.config,json.dumps(payload,ensure_ascii=False).encode('utf8'))
 
-    def start(self,folder,recursive=True):
+    def set_source(self,source):
+        with self.lock:self._update(source=source);self._persist();return self.state()
+
+    def start(self,folder,recursive=True,*,source='manual'):
         if not isinstance(folder,str) or not folder.strip():raise ValueError('请选择照片传入文件夹。')
         root=Path(folder.strip().strip('"')).resolve(strict=True)
+        photo_directory(root,self.store.data)
         for job in self.store.folder_state()['scans']:
             if job['status'] in ('queued','running','cancelling') and str(root).casefold()==str(Path(job['folder'])).casefold():
                 raise ValueError('此文件夹正在索引，请等待索引结束后开启现场监控。')
@@ -116,14 +125,14 @@ class FolderWatch:
         with self.store.connect() as c:c.execute("INSERT OR REPLACE INTO settings VALUES (?,?)",('shooting_session:'+sid,str(root)))
         with self.lock:
             self.cancel.set();self.cancel=threading.Event();self.observed={};self.accepted={};self.retry_after={};self.existing=None
-            self._update(enabled=True,folder=str(root),recursive=bool(recursive),session_id=sid,
-                             generation=uuid.uuid4().hex,version=0,arrivals=0,last_photo_id=None,pending=0,error='',message='正在等待新照片写入')
+            self._update(enabled=True,folder=str(root),recursive=bool(recursive),session_id=sid,source=source,
+                             generation=uuid.uuid4().hex,version=0,arrivals=0,last_photo_id=None,pending=0,initializing=True,error='',message='正在读取已有照片，原文件保留')
             self._persist();self.wake.set()
             return self.state()
 
     def stop(self):
         with self.lock:
-            self.cancel.set();self._update(enabled=False,pending=0,message='已停止监控，已入库照片和评级保留')
+            self.cancel.set();self._update(enabled=False,pending=0,initializing=False,message='已停止监控，原文件、已入库照片和评级保留')
             self._persist();self.wake.set();return self.state()
 
     def tick(self):
@@ -133,7 +142,8 @@ class FolderWatch:
                 if not self.info['enabled']:return
                 info=dict(self.info);cancel=self.cancel;observed=self.observed;accepted=self.accepted;retry_after=self.retry_after
             try:
-                root,shots=media.discover(info['folder'],info['recursive'],cancel=cancel)
+                photo_directory(info['folder'],self.store.data)
+                root,shots=media.discover(info['folder'],info['recursive'],cancel=cancel,exclude=(self.store.data,))
                 if not self.store.session(info['session_id']):self.store.ensure_live_session(root)
                 if self.existing is None:
                     self.existing={path.casefold():r for r in self.store.records(info['session_id']) for path in (r.get('raw'),r.get('jpg')) if path}
@@ -148,7 +158,8 @@ class FolderWatch:
                     if accepted.get(key)==sig:continue
                     if self.clock()<retry_after.get(key,0):pending+=1;continue
                     rel=primary.relative_to(root).as_posix().casefold();old=existing.get(rel)
-                    if old and old['fingerprint']==media.fingerprint(paths):accepted[key]=sig;continue
+                    from rating_xmp import sidecar_fingerprint
+                    if old and old['fingerprint']==media.fingerprint(paths) and old.get('sidecarFingerprint')==sidecar_fingerprint(paths):accepted[key]=sig;continue
                     previous=observed.get(key)
                     if previous is None or previous[0]!=sig:
                         observed[key]=(sig,self.clock());pending+=1;continue
@@ -184,7 +195,9 @@ class FolderWatch:
                         if result['added']:
                             values.update(arrivals=self.info['arrivals']+len(result['added']),last_photo_id=result['added'][-1])
                         self._update(**values)
-                    self._update(pending=pending,error='；'.join(errors[:2]),message=f'正在监控 · 本次接收 {self.info["arrivals"]} 张'+(f' · 等待写完 {pending} 张' if pending else ''))
+                    initializing=self.info['initializing'] and pending>0
+                    message=(f'正在读取已有照片 · 待处理 {pending} 张' if initializing else f'正在监控 · 本次载入 {self.info["arrivals"]} 张'+(f' · 等待写完 {pending} 张' if pending else ''))
+                    self._update(pending=pending,initializing=initializing,error='；'.join(errors[:2]),message=message)
             except media.ScanCancelled:pass
             except Exception as exc:
                 with self.lock:

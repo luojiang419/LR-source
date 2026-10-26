@@ -36,11 +36,13 @@ html[data-hardcore-layout] .has-sidebar-photos .left-panel .folders:not([open]) 
 #watch-thumbnails .watch-thumb.asset-selected {outline:none!important;}
 #watch-thumbnails .watch-thumb.asset-selected img {outline-color:var(--theme-selected-edge);}
 /* 监控列表只在照片周围提示选中，细边框搭配轻微光，行背景保持干净。 */
-html[data-hardcore-layout] .left-panel :is(.sidebar-body,.watch-thumbnails,.folder-list){scrollbar-width:none;scrollbar-gutter:auto}
-html[data-hardcore-layout] .left-panel :is(.sidebar-body,.watch-thumbnails,.folder-list)::-webkit-scrollbar{display:none;width:0;height:0}
+html[data-hardcore-layout] .left-panel>.sidebar-body{scrollbar-width:none;scrollbar-gutter:auto}
+html[data-hardcore-layout] .left-panel>.sidebar-body::-webkit-scrollbar{display:none;width:0;height:0}
 #watch-thumbnails .watch-thumb,
 #watch-thumbnails .watch-thumb:is(.active,:hover,:active,:focus-visible){display:flex;align-items:center;justify-content:center;padding:8px 10px;border:0;background:transparent;border-color:transparent;border-radius:0;box-shadow:none;outline:none}
 #watch-thumbnails .watch-thumb img{width:100%;height:100%;max-width:none;background:transparent;object-fit:contain;border-radius:5px;outline:1px solid transparent;outline-offset:2px;filter:none;transition:filter var(--motion-normal) var(--motion-ease),outline-color var(--motion-normal) var(--motion-ease)}
+#watch-thumbnails .watch-thumb-rating{position:absolute;right:14px;bottom:12px;z-index:1;padding:3px 5px;border-radius:4px;background:rgba(0,0,0,.48);color:rgba(255,235,186,.92);font-size:12px;line-height:1.2;letter-spacing:1px;white-space:nowrap;text-shadow:0 1px 2px rgba(0,0,0,.6);pointer-events:none}
+#watch-thumbnails .watch-thumb:has(.watch-thumb-rating) .watch-sku-label{right:14px;bottom:36px;max-width:calc(100% - 28px)}
 #watch-thumbnails .watch-thumb.active img{outline-color:color-mix(in srgb,var(--theme-emphasis),transparent 32%);filter:drop-shadow(0 3px 5px var(--theme-shadow)) drop-shadow(0 0 3px color-mix(in srgb,var(--theme-emphasis),transparent 60%));animation:watch-photo-glow 2400ms ease-in-out infinite alternate}
 #watch-thumbnails .watch-thumb:focus-visible img{outline-color:var(--theme-emphasis);filter:drop-shadow(0 3px 5px var(--theme-shadow)) drop-shadow(0 0 5px color-mix(in srgb,var(--theme-emphasis),transparent 35%))}
 @keyframes watch-photo-glow{

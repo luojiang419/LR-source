@@ -4,18 +4,22 @@ from pathlib import Path
 import threading
 import time
 
-from folder_watch import DirectorySignal,files_ready
+from folder_watch import DirectorySignal,files_ready,signature as metadata_signature
+from rating_xmp import sidecar_fingerprint
 import media_engine as media
 
 
 class ArchivePipeline:
     INTERVAL=2.0
     STABLE_SECONDS=.5
-    FALLBACK_SECONDS=15.0
+    FALLBACK_SECONDS=21600.0
+    POLL_SECONDS=300.0
+    RETRY_SECONDS=30.0
 
     def __init__(self,catalog,archive,sku,rawlink,*,autostart=True,clock=time.monotonic):
         self.catalog=catalog;self.archive=archive;self.store=archive.store;self.sku=sku;self.rawlink=rawlink
         self.clock=clock;self.closed=threading.Event();self.signals={};self.last_scan={};self.observed={};self.accepted={};self.pending=set()
+        self.watch_attempts={};self.retry_at={};self.epochs={}
         with self.store.connect() as c:
             sessions=[r[0].split(':',1)[1] for r in c.execute("SELECT key FROM settings WHERE key LIKE 'shooting_session:%'")]
         for sid in sessions:
@@ -37,17 +41,33 @@ class ArchivePipeline:
             tracked=[(r['key'].split(':',1)[1],r['value']) for r in c.execute("SELECT key,value FROM settings WHERE key LIKE 'archive_root:%'")]
             for rid,sid in tracked:
                 if rid not in active:c.execute('INSERT OR REPLACE INTO settings VALUES (?,?)',('archive_disabled:'+sid,'1'))
-        for rid in set(self.signals)-active:self.signals.pop(rid).close()
+        for rid in (set(self.signals)|set(self.watch_attempts))-active:
+            signal=self.signals.pop(rid,None)
+            if signal:signal.close()
+            for values in (self.watch_attempts,self.last_scan,self.epochs,self.retry_at):values.pop(rid,None)
+            self.pending.discard(rid)
+            for values in (self.accepted,self.observed):
+                for key in [key for key in values if key[0]==rid]:values.pop(key,None)
         for root in roots:
             rid=root['id'];base=Path(root['path']);now=self.clock()
             signal=self.signals.get(rid)
-            if not signal:
-                if not base.is_dir():continue
-                signal=self.signals[rid]=DirectorySignal(base,True)
-            if rid not in self.pending and rid in self.last_scan and not signal.changed() and now-self.last_scan[rid]<self.FALLBACK_SECONDS:continue
+            if (signal is None or signal.handle is None) and now-self.watch_attempts.get(rid,float('-inf'))>=60:
+                self.watch_attempts[rid]=now
+                if base.is_dir():
+                    if signal:signal.close()
+                    signal=self.signals[rid]=DirectorySignal(base,True)
+            if signal is None:continue
+            notified=signal.changed()
+            interval=self.FALLBACK_SECONDS if signal.handle is not None else self.POLL_SECONDS
+            reindexed=root['status']=='ready' and root.get('scan_epoch')!=self.epochs.get(rid)
+            retry=rid in self.retry_at and now>=self.retry_at[rid]
+            if rid not in self.pending and rid in self.last_scan and not notified and not reindexed and not retry and now-self.last_scan[rid]<interval:continue
             self.last_scan[rid]=now
-            try:self._scan(root)
+            try:
+                self._scan(root);self.retry_at.pop(rid,None)
+                self.epochs[rid]=self.catalog._root(rid).get('scan_epoch')
             except (OSError,ValueError,RuntimeError) as exc:
+                self.pending.discard(rid);self.retry_at[rid]=now+self.RETRY_SECONDS
                 with self.catalog.connect() as c:c.execute("UPDATE roots SET status='offline' WHERE id=?",(rid,))
                 with self.archive.connect() as c:
                     from asset_archive import uid,dumps
@@ -75,13 +95,14 @@ class ArchivePipeline:
             rel=primary.relative_to(base).as_posix();folder=primary.parent.relative_to(base).as_posix()
             if any(folder==skip or folder.startswith(skip+'/') for skip in excluded):continue
             paths=[primary]+([companion] if companion else []);key=(rid,rel);present.add(key)
-            signature=tuple((str(p),p.stat().st_size,p.stat().st_mtime_ns) for p in paths)
+            signature=metadata_signature(paths)
             if self.accepted.get(key)==signature:continue
+            previous=existing.get(rel.casefold())
+            same_photo=previous and previous['fingerprint']==media.fingerprint(paths)
+            if same_photo and previous.get('sidecarFingerprint')==sidecar_fingerprint(paths):self.accepted[key]=signature;continue
             old=self.observed.get(key)
             if not old or old[0]!=signature:self.observed[key]=(signature,self.clock());pending=True;continue
-            if self.clock()-old[1]<self.STABLE_SECONDS or not files_ready(paths):pending=True;continue
-            previous=existing.get(rel.casefold())
-            if previous and previous['fingerprint']==media.fingerprint(paths):self.accepted[key]=signature;continue
+            if self.clock()-old[1]<self.STABLE_SECONDS or not same_photo and not files_ready(paths):pending=True;continue
             ready.append((primary,companion,key,signature))
         if ready:
             exif=media.find_exiftool(self.store.root);records=[];embedded={}
@@ -89,7 +110,7 @@ class ArchivePipeline:
                 batch=ready[start:start+24];metadata=media.read_metadata([r[0] for r in batch],exif,cancel=self.closed)
                 for (primary,companion,key,signature),info in zip(batch,metadata):
                     paths=[primary]+([companion] if companion else [])
-                    current=tuple((str(p),p.stat().st_size,p.stat().st_mtime_ns) for p in paths)
+                    current=metadata_signature(paths)
                     if info.get('Error') or current!=signature:pending=True;continue
                     hints=self._index_embedded(paths)
                     if len(hints)==1:embedded[primary.relative_to(base).as_posix().casefold()]=next(iter(hints))
@@ -119,7 +140,7 @@ class ArchivePipeline:
         from asset_archive import dumps,uid
         assets=set()
         for path in paths:
-            metadata=self.archive.writer.read(path);aid=str(metadata.get('XMP-fk:AssetId') or '').replace('-','');fid=str(metadata.get('XMP-fk:FileId') or '').replace('-','')
+            metadata=self.archive.writer.read_asset(path);aid=str(metadata.get('XMP-fk:AssetId') or '').replace('-','');fid=str(metadata.get('XMP-fk:FileId') or '').replace('-','')
             if not aid or not fid:continue
             with self.archive.connect() as c:
                 file=c.execute('SELECT * FROM files WHERE id=? AND asset=?',(fid,aid)).fetchone()

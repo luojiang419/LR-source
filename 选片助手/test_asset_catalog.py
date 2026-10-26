@@ -4,7 +4,7 @@ from pathlib import Path
 import os
 from unittest.mock import patch
 
-from PIL import Image
+from PIL import Image,ImageOps
 
 from asset_catalog import AssetCatalog,archive_path
 
@@ -12,16 +12,18 @@ from asset_catalog import AssetCatalog,archive_path
 class AssetCatalogTests(unittest.TestCase):
     def test_raw_direction_is_read_once_per_file_version_for_both_preview_sizes(self):
         import io
-        from types import SimpleNamespace
+        import media_engine as media
         with tempfile.TemporaryDirectory() as folder:
             base=Path(folder); photos=base/'photos'; photos.mkdir()
             raw=photos/'portrait.CR3'; raw.write_bytes(b'raw-one')
             catalog=AssetCatalog(base/'data'); root=catalog.add_root(str(photos))['root_id']
             item=catalog.items()['rows'][0]; old_url=item['preview']
             payload=io.BytesIO(); Image.new('RGB',(300,200),'teal').save(payload,format='JPEG')
-            with patch('media_engine.find_exiftool',return_value=Path('exiftool')),patch('media_engine.read_metadata',return_value=[{'Orientation':6}]) as metadata,patch('media_engine.subprocess.run',return_value=SimpleNamespace(stdout=payload.getvalue())):
+            def embedded(path,tool,tags,size,orientation,**kwargs):
+                return media._read_preview(io.BytesIO(payload.getvalue()),size,orientation)
+            with patch('media_engine.find_exiftool',return_value=Path('exiftool')),patch('media_engine.raw_embedded_metadata',return_value=(6,payload.getvalue())) as metadata:
                 for size in (420,900):
-                    with Image.open(catalog.preview(item['id'],size)) as image:self.assertEqual(image.size,(200,300))
+                    with Image.open(catalog.preview(item['id'],size)) as image:self.assertEqual(ImageOps.exif_transpose(image).size,(200,300))
                 self.assertEqual(metadata.call_count,1)
                 raw.write_bytes(b'raw-version-two'); catalog.scan(root)
                 self.assertNotEqual(catalog.items()['rows'][0]['preview'],old_url)
@@ -41,7 +43,7 @@ class AssetCatalogTests(unittest.TestCase):
             self.assertTrue(paired['has_jpg']); self.assertEqual(paired['extension'], '.jpg')
             first = catalog.items(limit=1); second = catalog.items(limit=1, cursor=first['next_cursor'])
             self.assertNotEqual(first['rows'][0]['id'], second['rows'][0]['id']); self.assertFalse(second['has_more'])
-            with patch('media_engine.find_exiftool', side_effect=AssertionError('配对 JPG 不读取 RAW')):
+            with patch('media_engine.find_exiftool', side_effect=RuntimeError('ExifTool 不可用时回退 JPG')):
                 with Image.open(catalog.preview(paired['id'], size=900)) as image:
                     self.assertEqual(max(image.size), 900)
             catalog.assign(paired['id'], 'FINAL-9001')

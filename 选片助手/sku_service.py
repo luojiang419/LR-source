@@ -12,19 +12,26 @@ from datetime import datetime,timezone,timedelta
 import media_engine as media
 from sku_match import match,normalize,match_automatic
 from full_auto_ocr import FullAutoOCR
+from ocr_metadata import OcrMetadata,initialize_ocr,record_ocr
 from sku_vision import recognize
+from sku_rules import SkuRules
 from sku_workbook import inspect_workbook,export_workbook,read_image
 from sku_progress import capture_time,statistics,completion_order
+from label_concurrency import ConcurrentLabels
+from ocr_progress import OcrProgress
 
 
-class SkuService(FullAutoOCR):
-    DEBOUNCE=1.2
+class SkuService(ConcurrentLabels,FullAutoOCR,OcrMetadata,SkuRules):
+    RETRY_DELAY=1.2
 
-    def __init__(self,store,providers,*,recognizer=recognize,clock=time.time,autostart=True,archive=None,scheduler=None):
+    def __init__(self,store,providers,*,recognizer=recognize,clock=time.time,autostart=True,archive=None,scheduler=None,require_sku_choice=False):
         self.store=store;self.providers=providers;self.recognizer=recognizer;self.clock=clock
         self.archive=archive;self.scheduler=scheduler
+        self.require_sku_choice=require_sku_choice
+        self.ocr_progress=OcrProgress()
         self.db=store.data/'sku.sqlite3';self.root=store.data/'sku-projects';self.root.mkdir(exist_ok=True)
-        self.lock=threading.RLock();self.closed=threading.Event();self.dirty=set()
+        self.lock=threading.RLock();self.closed=threading.Event();self.wake=threading.Event();self.dirty=set()
+        self._init_label_workers()
         with self.connect() as c:
             c.executescript('''CREATE TABLE IF NOT EXISTS projects(id TEXT PRIMARY KEY,name TEXT,metadata TEXT,session_id TEXT,scope TEXT NOT NULL DEFAULT '',enabled INTEGER,created REAL,export_error TEXT NOT NULL DEFAULT '');
                 CREATE TABLE IF NOT EXISTS sku_rows(id TEXT PRIMARY KEY,project TEXT,sheet TEXT,excel_row INTEGER,sku TEXT,normalized TEXT,baseline TEXT,status TEXT,UNIQUE(project,sheet,excel_row));
@@ -35,15 +42,25 @@ class SkuService(FullAutoOCR):
             c.execute('CREATE TABLE IF NOT EXISTS live_sessions(session TEXT PRIMARY KEY,updated REAL)')
             c.execute("CREATE TABLE IF NOT EXISTS parse_jobs(id TEXT PRIMARY KEY,session_id TEXT,capture_id TEXT,status TEXT,created REAL,result TEXT DEFAULT '{}',reason TEXT DEFAULT '')")
             for table in ('parse_jobs','jobs'):
+                import task_history
+                task_history.initialize(c, table)
                 c.execute(f'CREATE INDEX IF NOT EXISTS {table}_capture_status ON {table}(session_id,capture_id,created DESC)')
+                if 'updated' not in {r['name'] for r in c.execute('PRAGMA table_info('+table+')')}:
+                    c.execute('ALTER TABLE '+table+' ADD COLUMN updated REAL NOT NULL DEFAULT 0')
             for table,columns in [('sku_rows',['baseline_completed_at','completed_at','completion_job','source_values']),('jobs',['captured_at','capture_time_source','trigger'])]:
                 present={r['name'] for r in c.execute('PRAGMA table_info('+table+')')}
                 for column in columns:
                     if column not in present:c.execute('ALTER TABLE '+table+' ADD COLUMN '+column+" TEXT NOT NULL DEFAULT ''")
+            if 'priority' not in {r['name'] for r in c.execute('PRAGMA table_info(jobs)')}:
+                c.execute('ALTER TABLE jobs ADD COLUMN priority REAL NOT NULL DEFAULT 0')
+            for table in ('jobs','parse_jobs'):
+                if 'run_token' not in {r['name'] for r in c.execute('PRAGMA table_info('+table+')')}:
+                    c.execute('ALTER TABLE '+table+" ADD COLUMN run_token TEXT NOT NULL DEFAULT ''")
             c.execute("UPDATE jobs SET status='queued',reason='程序重启后恢复' WHERE status='running'")
             c.execute("UPDATE parse_jobs SET status='queued',reason='程序重启后恢复' WHERE status='running'")
             controls=c.execute("SELECT value FROM settings WHERE key='task_controls'").fetchone()
             full=c.execute("SELECT value FROM settings WHERE key='full_auto_ocr'").fetchone()
+        initialize_ocr(self)
         controls=json.loads(controls[0]) if controls else {}
         self.task_mode=controls.get('mode','auto');self.tasks_paused=controls.get('paused',False)
         self.full_auto=json.loads(full[0]) if full else {'enabled':False};self.full_scan_at=0
@@ -104,6 +121,8 @@ class SkuService(FullAutoOCR):
             job['result']=json.loads(job['result'] or '{}');job['targets']=json.loads(job['targets'] or '[]')
         rows=self.rows(p['id']) if p else []
         if p:
+            from sku_presentation import preferences
+            p['presentation']=preferences(self,p['id'])
             self._ensure_images(p)
             p['export_path']=str(self.root/p['id']/'拍摄对账.xlsx')
             if p['metadata'].get('automatic_day'):p['export_path']=str(self.root/p['id']/(p['metadata']['automatic_day']+'.xlsx'))
@@ -119,7 +138,10 @@ class SkuService(FullAutoOCR):
                 batch=ids[start:start+500]
                 evidence.update({r['id']:dict(r) for r in c.execute('SELECT id,session_id,capture_id,captured_at,capture_time_source FROM jobs WHERE id IN ('+','.join('?' for _ in batch)+')',batch)})
         for row in rows:row['completion']=evidence.get(row.get('completion_job'))
-        return {'project':p,'projects':projects,'rows':rows,'jobs':jobs,'progress':statistics(rows,p['metadata']['sheets']) if p else [],'full_auto':self.full_auto_state()}
+        from sku_reconciliation import decorate_images
+        decorate_images(self,rows)
+        from sku_presentation import grouped_rows
+        return {'project':p,'projects':projects,'rows':rows,'all_rows':grouped_rows(rows,p['metadata']['sheets']) if p else [],'jobs':jobs,'progress':statistics(rows,p['metadata']['sheets']) if p else [],'full_auto':self.full_auto_state()}
 
     def _ensure_images(self,p):
         if all('images' in s or s.get('skipped') for s in p['metadata']['sheets']):return
@@ -138,20 +160,27 @@ class SkuService(FullAutoOCR):
         if not 0<=index<len(images):raise ValueError('该款号没有此产品图')
         return read_image(self.root/p['id']/'source.xlsx',images[index]['media'])
 
-    def import_file(self,name,content,session_id=None):
+    def import_file(self,name,content,session_id=None,preferred_scope=None):
         if not str(name).lower().endswith('.xlsx'):raise ValueError('目前支持 .xlsx，请先将其他格式另存为 xlsx')
         if not 0<len(content)<=20_000_000:raise ValueError('表格须小于 20MB')
         pid=uuid.uuid4().hex;folder=self.root/pid;folder.mkdir();source=folder/'source.xlsx';source.write_bytes(content)
         try:sheets=inspect_workbook(source)
         except Exception as exc:raise ValueError('表格无法导入：'+str(exc)[:180]) from None
         if session_id and not self.store.session(session_id):raise ValueError('当前照片目录不存在')
+        names=[s['name'] for s in sheets if not s.get('skipped')]
+        scope=(preferred_scope if preferred_scope in names else names[0]) if preferred_scope is not None else ''
         metadata={'sheets':[{k:v for k,v in s.items() if k!='rows'} for s in sheets],'source_sha256':hashlib.sha256(content).hexdigest(),'progress_version':1}
         with self.lock,self.connect() as c:
-            c.execute('INSERT INTO projects(id,name,metadata,session_id,scope,enabled,created) VALUES (?,?,?,?,?,?,?)',(pid,Path(name).name,json.dumps(metadata,ensure_ascii=False),session_id,'',1,self.clock()))
+            c.execute('INSERT INTO projects(id,name,metadata,session_id,scope,enabled,created) VALUES (?,?,?,?,?,?,?)',(pid,Path(name).name,json.dumps(metadata,ensure_ascii=False),session_id,scope,1,self.clock()))
             for sheet in sheets:
                 for row in sheet['rows']:
                     c.execute('INSERT INTO sku_rows(id,project,sheet,excel_row,sku,normalized,baseline,status,baseline_completed_at,completed_at,source_values) VALUES (?,?,?,?,?,?,?,?,?,?,?)',(uuid.uuid4().hex,pid,sheet['name'],row['excel_row'],row['sku'],row['normalized'],row['baseline'],row['baseline'],row.get('baseline_completed_at',''),row.get('baseline_completed_at',''),json.dumps(row.get('cells',{}),ensure_ascii=False)))
             c.execute("INSERT OR REPLACE INTO settings VALUES ('active',?)",(pid,))
+        aliases={key:value for sheet in sheets for key,value in sheet.get('header_aliases',{}).items()}
+        if aliases:
+            from sku_presentation import save_preferences
+            save_preferences(self,pid,{'headers':aliases,'images':{}})
+        if self.archive and session_id and scope:self.archive.start_stream(session_id,pid,scope)
         self._reconcile_full_context();self.export(pid);return self.state()
 
     def configure(self,pid,session_id,scope,enabled=True):
@@ -159,11 +188,11 @@ class SkuService(FullAutoOCR):
         if not p:raise ValueError('拍摄对账任务不存在')
         names={s['name'] for s in p['metadata']['sheets'] if not s.get('skipped')}
         if scope not in names:raise ValueError('请先选择当前拍摄类型／工作表')
-        if not self.store.session(session_id):raise ValueError('请先打开现场照片目录，再绑定对账任务')
+        if session_id and not self.store.session(session_id):raise ValueError('请先打开现场照片目录，再绑定对账任务')
         with self.lock,self.connect() as c:
             c.execute('UPDATE projects SET session_id=?,scope=?,enabled=? WHERE id=?',(session_id,scope,int(bool(enabled)),pid))
             c.execute("INSERT OR REPLACE INTO settings VALUES ('active',?)",(pid,))
-        if self.archive and (p['session_id']!=session_id or p['scope']!=scope):self.archive.start_stream(session_id,pid,scope)
+        if self.archive and session_id and (p['session_id']!=session_id or p['scope']!=scope):self.archive.start_stream(session_id,pid,scope)
         self._reconcile_full_context();return self.state()
 
     def activate(self,pid):
@@ -183,28 +212,39 @@ class SkuService(FullAutoOCR):
             with self.connect() as c:c.execute('INSERT OR REPLACE INTO live_sessions VALUES (?,?)',(sid,self.clock()))
             with self.store.connect() as c:c.execute('INSERT OR REPLACE INTO settings VALUES (?,?)',('shooting_session:'+sid,self.store.session(sid)['root']))
         previous=old.get('overrides',{});current=state.get('overrides',{})
-        for cid,value in current.items():
-            if value!=2 or previous.get(cid)==2 or self.task_mode!='auto':continue
-            if (context:=self._full_context()) and context['session']==sid:continue
-            context=state.get('skuMarkers',{}).get(cid)
-            if isinstance(context,dict) and context.get('project_id') and not context.get('ignore'):
-                self.enqueue(sid,cid,context.get('project_id'),context.get('scope'),trigger='auto')
-            elif p and p['enabled'] and p['session_id']==sid and p['scope']:self.enqueue(sid,cid,trigger='auto')
-            else:self.enqueue(sid,cid,trigger='auto')
         for cid,value in previous.items():
             if value==2 and current.get(cid)!=2:
                 with self.lock,self.connect() as c:
-                    affected=[r[0] for r in c.execute("SELECT DISTINCT project FROM jobs WHERE session_id=? AND capture_id=? AND trigger!='full_auto'",(sid,cid))]
-                    c.execute("UPDATE jobs SET status='cancelled',reason='标签不再是二星，本次识别贡献已撤销' WHERE session_id=? AND capture_id=? AND status!='ignored' AND trigger!='full_auto'",(sid,cid));self.dirty.update(affected)
-                    for job in c.execute("SELECT * FROM jobs WHERE session_id=? AND capture_id=? AND trigger!='full_auto'",(sid,cid)).fetchall():self._archive_event(c,dict(job))
-
+                    if current.get(cid,0)==0:
+                        affected=[r[0] for r in c.execute('SELECT DISTINCT project FROM jobs WHERE session_id=? AND capture_id=?',(sid,cid))]
+                        self._clear_capture_ocr(c,sid,cid)
+                    else:
+                        # 非零评级沿用原规则，全图 OCR 的单张资料不因改成其他星级而丢失。
+                        affected=[r[0] for r in c.execute("SELECT DISTINCT project FROM jobs WHERE session_id=? AND capture_id=? AND trigger!='full_auto'",(sid,cid))]
+                        c.execute("UPDATE jobs SET status='cancelled',reason='标签不再是二星，本次识别贡献已撤销' WHERE session_id=? AND capture_id=? AND status!='ignored' AND trigger!='full_auto'",(sid,cid))
+                    self.dirty.update(affected)
+                    # 人工确认及补识别的段可能使用合成 job ID，按标签身份统一撤销。
+                    payload={'kind':'ocr_reset','session_id':sid,'capture_id':cid}
+                    c.execute('INSERT INTO archive_events(id,job,payload) VALUES (?,?,?)',(uuid.uuid4().hex,'reset:'+sid+':'+cid,json.dumps(payload)))
+                    # 清单读库立即可见；Excel 和照片补偿仍由原后台队列执行。
+                    for pid in affected:self._refresh_progress(c,pid)
+                self._wake_label()
+        for cid,value in current.items():
+            if value!=2 or previous.get(cid)==2:continue
+            if self._prioritize_full_label(sid,cid):continue
+            if self.task_mode!='auto':continue
+            context=state.get('skuMarkers',{}).get(cid)
+            if isinstance(context,dict) and context.get('project_id') and not context.get('ignore'):
+                self.enqueue(sid,cid,context.get('project_id'),context.get('scope'),trigger='auto',immediate=True)
+            elif p and p['enabled'] and p['session_id']==sid and p['scope']:self.enqueue(sid,cid,trigger='auto',immediate=True)
+            else:self.enqueue(sid,cid,trigger='auto',immediate=True)
     def request_catalog(self,sid):
         with self.lock:self.catalog_pending.add(sid)
 
     def _rating(self,sid,record):
         return self.store.session(sid)['state'].get('overrides',{}).get(record['id'],record.get('existingRating',0))
 
-    def _automatic_project(self,sid):
+    def _automatic_project(self,sid,*,start_stream=True):
         from sku_workbook_auto import create_book
         with self.lock:
             p=self.project()
@@ -223,10 +263,10 @@ class SkuService(FullAutoOCR):
             with self.connect() as c:
                 c.execute('INSERT INTO projects(id,name,metadata,session_id,scope,enabled,created) VALUES (?,?,?,?,?,?,?)',(pid,day+'.xlsx',json.dumps(metadata,ensure_ascii=False),sid,'现场记录',1,self.clock()))
                 c.execute("INSERT OR REPLACE INTO settings VALUES ('active',?)",(pid,))
-            if self.archive:self.archive.start_stream(sid,pid,'现场记录')
+            if self.archive and start_stream:self.archive.start_stream(sid,pid,'现场记录')
             self.export(pid);return self.project(pid)
 
-    def _record_unplanned(self,job,readings,result):
+    def _record_unplanned(self,job,readings,result,*,accept_observed=False):
         codes={}
         for reading in readings:
             if reading.get('confidence',0)<.9 and not reading.get('unscored'):return result
@@ -234,11 +274,12 @@ class SkuService(FullAutoOCR):
                 if isinstance(code,str) and 0<len(code.strip())<=80 and normalize(code):codes.setdefault(normalize(code),code.strip())
         if len(codes)!=1:return result
         key,code=next(iter(codes.items()))
-        uncertain=bool(result.get('candidates') and max(candidate['score'] for candidate in result['candidates'])>=.85 and result['status']!='matched')
-        all_rows=self.rows(job['project']);exact=[r for r in all_rows if r['normalized']==key]
+        uncertain=not accept_observed and bool(result.get('candidates') and max(candidate['score'] for candidate in result['candidates'])>=.85 and result['status']!='matched')
+        all_rows=self.rows(job['project']);managed=self.project(job['project'])['metadata'].get('managed_sheet')
+        exact=[r for r in all_rows if r['normalized']==key and r['sheet'] in (job['scope'],managed)]
         if len(exact)>1:return result
         if exact:
-            if exact[0]['baseline']=='待核对':return dict(result,status='review',row_ids=[],reason='插拍款号与原计划近似，请核对后确认')
+            if exact[0]['baseline']=='待核对' and not accept_observed:return dict(result,status='review',row_ids=[],reason='插拍款号与原计划近似，请核对后确认')
             return dict(result,status='matched',row_ids=[exact[0]['id']],reason='OCR 唯一款号精确匹配')
         with self.lock,self.connect() as c:
             project=self.project(job['project']);metadata=project['metadata'];sheet=metadata.get('managed_sheet')
@@ -266,17 +307,24 @@ class SkuService(FullAutoOCR):
         with self.connect() as c:c.execute('INSERT INTO parse_jobs(id,session_id,capture_id,status,created) VALUES (?,?,?,?,?)',(jid,sid,cid,'running',self.clock()))
         return self._parse_job(jid,sid,cid)
 
-    def _parse_job(self,jid,sid,cid):
+    def _parse_job(self,jid,sid,cid,run_token=None):
+        if run_token is None:
+            with self.connect() as c:run_token=c.execute('SELECT run_token FROM parse_jobs WHERE id=?',(jid,)).fetchone()[0]
         try:
-            result=self._read_capture(sid,cid,jid)
+            result=self._read_capture(sid,cid,jid,run_token)
+            if self.require_sku_choice:result['reading']['requires_sku_choice']=True
             with self.connect() as c:
-                changed=c.execute("UPDATE parse_jobs SET status='completed',result=?,reason='' WHERE id=? AND status='running'",(json.dumps(result['reading'],ensure_ascii=False),jid)).rowcount
+                changed=c.execute("UPDATE parse_jobs SET status='completed',result=?,reason='',updated=? WHERE id=? AND status='running' AND run_token=?",(json.dumps(result['reading'],ensure_ascii=False),self.clock(),jid,run_token)).rowcount
+                if changed:record_ocr(c,'read',jid,sid,cid,result['reading'],self.clock())
                 if changed and self.archive:
                     payload={'kind':'ocr_read','session_id':sid,'capture_id':cid,'read_id':jid}
                     c.execute('INSERT INTO archive_events(id,job,payload) VALUES (?,?,?)',(uuid.uuid4().hex,jid,json.dumps(payload)))
+            if changed:
+                result['auto_applied']=self.apply_sku_rules(sid,cid,[result['reading']])
+            result['recommended']=self.recommended_codes([result['reading']])
             return result
         except Exception as exc:
-            with self.connect() as c:c.execute("UPDATE parse_jobs SET status=?,reason=? WHERE id=? AND status='running'",('queued' if self.tasks_paused or self.closed.is_set() else 'failed',str(exc)[:400],jid))
+            with self.connect() as c:c.execute("UPDATE parse_jobs SET status=?,reason=? WHERE id=? AND status='running' AND run_token=?",('queued' if self.tasks_paused or self.closed.is_set() else 'failed',str(exc)[:400],jid,run_token))
             raise
 
     def enqueue_parses(self,sid,cids):
@@ -289,6 +337,7 @@ class SkuService(FullAutoOCR):
             for cid in dict.fromkeys(cids):
                 if not c.execute("SELECT 1 FROM parse_jobs WHERE session_id=? AND capture_id=? AND status IN ('queued','running')",(sid,cid)).fetchone():
                     c.execute('INSERT INTO parse_jobs(id,session_id,capture_id,status,created) VALUES (?,?,?,?,?)',(uuid.uuid4().hex,sid,cid,'queued',self.clock()))
+        self._wake_label()
         return self.task_state()
 
     def configure_tasks(self,mode=None,paused=None,action=None,job_id=None):
@@ -310,15 +359,16 @@ class SkuService(FullAutoOCR):
                 with self.connect() as c:c.execute("UPDATE jobs SET trigger='manual' WHERE id=? AND trigger!='full_auto'",(jid,))
             else:self.review(jid,'ignore')
         if mode=='manual' and self.full_auto.get('enabled'):self.set_full_auto(False)
+        self._wake_label()
         return self.task_state()
 
     def task_state(self):
         with self.connect() as c:
-            manual=[dict(r,id='read:'+r['id'],trigger='manual',kind='ocr') for r in c.execute('SELECT * FROM parse_jobs ORDER BY created DESC LIMIT 100')]
-            labels=[dict(r,id='label:'+r['id'],kind='label') for r in c.execute('SELECT * FROM jobs ORDER BY created DESC LIMIT 100')]
+            manual=[dict(r,id='read:'+r['id'],trigger='manual',kind='ocr') for r in c.execute('SELECT * FROM parse_jobs WHERE task_hidden=0 ORDER BY created DESC LIMIT 100')]
+            labels=[dict(r,id='label:'+r['id'],kind='label') for r in c.execute('SELECT * FROM jobs WHERE task_hidden=0 ORDER BY created DESC LIMIT 100')]
             counts={}
             for table in ('parse_jobs','jobs'):
-                for r in c.execute(f'SELECT status,count(*) AS n FROM {table} GROUP BY status'):counts[r['status']]=counts.get(r['status'],0)+r['n']
+                for r in c.execute(f'SELECT status,count(*) AS n FROM {table} WHERE task_hidden=0 GROUP BY status'):counts[r['status']]=counts.get(r['status'],0)+r['n']
         jobs=sorted(manual+labels,key=lambda j:j['created'],reverse=True)[:100];catalog={}
         for j in jobs:
             if j.get('trigger')=='full_auto':j['kind']='ocr'
@@ -330,7 +380,21 @@ class SkuService(FullAutoOCR):
         provider=self.providers.selected('ocr') or self.providers.purpose('sku_label') or self.providers.selected('multimodal')
         return {'mode':self.task_mode,'paused':self.tasks_paused,'jobs':jobs,'counts':counts,'model':provider['name'] if provider else '未配置模型','full_auto':self.full_auto_state()}
 
-    def _read_capture(self,sid,cid,jid=None):
+    def clear_completed_tasks(self):
+        import task_history
+        with self.lock, self.connect() as c:
+            return sum(task_history.clear(c, table, ('completed','matched','confirmed')) for table in ('parse_jobs','jobs'))
+
+    def clear_task_list(self):
+        import task_history
+        with self.lock, self.connect() as c:
+            return sum(task_history.clear_inactive(c, table) for table in ('parse_jobs','jobs'))
+
+    def _read_capture(self,sid,cid,jid=None,run_token=None):
+        with self.ocr_progress.track('parse_jobs',jid,run_token) as progress:
+            return self._read_capture_progress(sid,cid,jid,run_token,progress)
+
+    def _read_capture_progress(self,sid,cid,jid,run_token,progress):
         """手动读取当前图的 SKU 文本；不要求二星或 Excel，不记账、不备案。"""
         session=self.store.session(sid)
         if not session:raise ValueError('请先打开照片目录')
@@ -343,43 +407,75 @@ class SkuService(FullAutoOCR):
             return [(str(path),stat.st_size,stat.st_mtime_ns) for path in paths for stat in [path.stat()]]
         before=signature()
         fresh=dict(record,fingerprint=hashlib.sha256(json.dumps(before,ensure_ascii=False).encode()).hexdigest())
-        path=media.preview(fresh,session['root'],self.store.data/'previews',media.find_exiftool(self.store.root),2400,False)
-        with self.scheduler.slot(label=True,cancel=self.closed) if self.scheduler else nullcontext():
+        image=media.preview_bytes(fresh,session['root'],self.store.data/'previews',media.find_exiftool(self.store.root),2400,False)
+        progress('waiting_slot',provider)
+        def current():
+            if self.tasks_paused or self.closed.is_set():return False
+            if not jid:return True
+            with self.connect() as c:
+                row=c.execute('SELECT status,run_token FROM parse_jobs WHERE id=?',(jid,)).fetchone()
+            return bool(row and row['status']=='running' and (run_token is None or row['run_token']==run_token))
+        with self.providers.inference_slot(provider,cancel=self.closed,valid=current), self.scheduler.slot(label=True,cancel=self.closed,independent=provider.get('protocol')!='local') if self.scheduler else nullcontext():
             if self.tasks_paused:raise ValueError('OCR 队列已暂停')
             if jid:
                 with self.connect() as c:
-                    if c.execute('SELECT status FROM parse_jobs WHERE id=?',(jid,)).fetchone()['status']!='running':raise ValueError('任务已取消')
+                    row=c.execute('SELECT status,run_token FROM parse_jobs WHERE id=?',(jid,)).fetchone()
+                    if not row or row['status']!='running' or run_token is not None and row['run_token']!=run_token:raise ValueError('任务已取消')
             self.providers.check_inference(provider)
-            reading=self.recognizer(provider,path.read_bytes())
+            progress('recognizing',provider)
+            reading=self.recognizer({**provider,'_progress':lambda phase:progress(phase,provider)},image)
         current=next((r for r in self.store.records(sid) if r['id']==cid),None)
-        if not current or current['fingerprint']!=record['fingerprint'] or signature()!=before:raise ValueError('解析期间照片发生变化，请重新解析')
+        after=signature()
+        if not current or current['fingerprint']!=record['fingerprint'] or after!=before:
+            # 评级只改元数据；等待本软件写入完成后按已登记版本链验证，不能误丢 OCR。
+            with self.archive.lock if self.archive else nullcontext():
+                current=next((r for r in self.store.records(sid) if r['id']==cid),None);after=signature()
+                observed=hashlib.sha256(json.dumps(after,ensure_ascii=False).encode()).hexdigest()
+                fingerprint=hashlib.sha256(json.dumps(before,ensure_ascii=False).encode()).hexdigest();seen=set()
+                managed=bool(current and observed==current['fingerprint'] and fingerprint==record['fingerprint'])
+                if managed:
+                    with self.connect() as c:
+                        while fingerprint!=observed and fingerprint not in seen:
+                            seen.add(fingerprint)
+                            version=c.execute('SELECT after FROM metadata_versions WHERE session=? AND capture=? AND before=?',(sid,cid,fingerprint)).fetchone()
+                            if not version:break
+                            fingerprint=version[0]
+                if not managed or fingerprint!=observed:raise ValueError('解析期间照片发生变化，请重新解析')
         return {'session_id':sid,'capture_id':cid,'name':record['name'],'reading':reading}
 
-    def enqueue(self,sid,cid,project_id=None,scope=None,*,trigger='manual'):
+    def enqueue(self,sid,cid,project_id=None,scope=None,*,trigger='manual',immediate=False):
         record=next((r for r in self.store.records(sid) if r['id']==cid),None)
         if not record:raise ValueError('标签照片不存在')
         if self._rating(sid,record)!=2:raise ValueError('请先将标签照片标为二星')
         with self.connect() as c:prior=[dict(r) for r in c.execute("SELECT * FROM jobs WHERE session_id=? AND capture_id=? AND status NOT IN ('cancelled','ignored')",(sid,cid))]
-        if trigger=='auto' and any(self._valid(job) for job in prior):return {'queued':False}
+        if trigger=='auto' and any(self._valid(job) for job in prior):
+            if immediate:
+                with self.lock,self.connect() as c:
+                    for job in prior:
+                        if job['status'] in ('queued','waiting_model') and self._valid(job):c.execute('UPDATE jobs SET due=?,priority=? WHERE id=?',(self.clock(),self.clock(),job['id']))
+                self._wake_label()
+            return {'queued':False}
         p=self.project(project_id)
         day=datetime.fromtimestamp(self.clock(),timezone(timedelta(hours=8))).strftime('%Y-%m-%d')
         if trigger=='auto' and (not p or not p['enabled'] or p['session_id']!=sid or not p['scope'] or p['metadata'].get('automatic_day',day)!=day):p=self._automatic_project(sid)
         scope=scope or (p['scope'] if p else '')
         if not p or not p['enabled'] or not scope or p['session_id']!=sid:raise ValueError('请先选拍摄工作表并绑定当前照片目录')
         if scope not in {s['name'] for s in p['metadata']['sheets'] if not s.get('skipped')}:raise ValueError('识别工作表范围无效')
-        with self.connect() as c:
+        with self.lock,self.connect() as c:
             stamp,time_source=capture_time(record)
-            c.execute('''INSERT INTO jobs(id,project,session_id,capture_id,fingerprint,scope,status,due,created,result,targets,reason,captured_at,capture_time_source) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(project,session_id,capture_id,fingerprint,scope)
-                DO UPDATE SET status=CASE WHEN jobs.status IN ('matched','confirmed','running','queued') THEN jobs.status ELSE 'queued' END,due=excluded.due''',
-                (uuid.uuid4().hex,p['id'],sid,cid,record['fingerprint'],scope,'queued',self.clock()+self.DEBOUNCE,self.clock(),'{}','[]','等待二星稳定后识别',stamp,time_source))
+            c.execute('''INSERT INTO jobs(id,project,session_id,capture_id,fingerprint,scope,status,due,created,result,targets,reason,captured_at,capture_time_source,priority) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(project,session_id,capture_id,fingerprint,scope)
+                DO UPDATE SET status=CASE WHEN jobs.status IN ('matched','confirmed','running','queued') THEN jobs.status ELSE 'queued' END,due=excluded.due,priority=MAX(jobs.priority,excluded.priority),updated=excluded.created''',
+                (uuid.uuid4().hex,p['id'],sid,cid,record['fingerprint'],scope,'queued',self.clock(),self.clock(),'{}','[]','二星标签已入队，优先识别' if immediate else '等待识别',stamp,time_source,self.clock() if immediate or trigger=='manual' else 0))
             if trigger=='manual':c.execute("UPDATE jobs SET trigger='manual' WHERE project=? AND session_id=? AND capture_id=? AND fingerprint=? AND scope=?",(p['id'],sid,cid,record['fingerprint'],scope))
+            c.execute('DELETE FROM ocr_resets WHERE session_id=? AND capture_id=?',(sid,cid))
+        if immediate or trigger=='manual':self._wake_label()
         return self.state()
 
     def _valid(self,job):
         session=self.store.session(job['session_id'])
         if not session:return None
         record=next((r for r in self.store.records(job['session_id']) if r['id']==job['capture_id']),None)
-        if not record or job.get('trigger')!='full_auto' and self._rating(job['session_id'],record)!=2:return None
+        if not record or job.get('trigger') not in ('full_auto','choice') and self._rating(job['session_id'],record)!=2:return None
         fingerprint=job['fingerprint'];seen=set()
         with self.connect() as c:
             while fingerprint!=record['fingerprint'] and fingerprint not in seen:
@@ -407,7 +503,7 @@ class SkuService(FullAutoOCR):
                         except ValueError:pass
                     else:
                         with self.connect() as c:
-                            previous=[dict(row) for row in c.execute("SELECT * FROM jobs WHERE session_id=? AND capture_id=? AND trigger NOT IN ('manual','full_auto') AND status NOT IN ('cancelled','ignored')",(sid,record['id']))]
+                            previous=[dict(row) for row in c.execute("SELECT * FROM jobs WHERE session_id=? AND capture_id=? AND trigger NOT IN ('manual','full_auto','choice') AND status NOT IN ('cancelled','ignored')",(sid,record['id']))]
                             for job in previous:
                                 c.execute("UPDATE jobs SET status='cancelled',reason='文件实际星级已改变' WHERE id=?",(job['id'],))
                                 self._archive_event(c,dict(job,status='cancelled'))
@@ -415,19 +511,33 @@ class SkuService(FullAutoOCR):
             dirty=list(self.dirty);self.dirty.clear()
         for pid in dirty:self.export(pid)
         if self.tasks_paused:return
+        context=self._full_context()
         with self.lock,self.connect() as c:
-            read=c.execute("SELECT * FROM parse_jobs WHERE status='queued' ORDER BY created LIMIT 1").fetchone()
-            if read:c.execute("UPDATE parse_jobs SET status='running',reason='正在读取图片文字' WHERE id=?",(read['id'],))
+            urgent=c.execute("SELECT 1 FROM jobs WHERE priority>0 AND status IN ('queued','waiting_model') AND due<=? AND (trigger='manual' OR (trigger='full_auto' AND ?) OR (trigger NOT IN ('manual','full_auto') AND ?)) LIMIT 1",(self.clock(),bool(context),self.task_mode=='auto')).fetchone()
+            read=None if urgent or self.label_thread.is_alive() and self._parallel_reads_enabled() else c.execute("SELECT * FROM parse_jobs WHERE status='queued' ORDER BY created LIMIT 1").fetchone()
         if read:
-            try:self._parse_job(read['id'],read['session_id'],read['capture_id'])
+            claimed=self._claim_parse(read['id'])
+            if not claimed:return
+            try:self._parse_job(read['id'],read['session_id'],read['capture_id'],claimed['run_token'])
             except Exception:pass
             return
+        context=self._full_context();starred=self._full_starred(context) if context else []
+        parallel=self.label_thread.is_alive() and self._parallel_labels_enabled()
         with self.connect() as c:
-            row=c.execute("SELECT * FROM jobs WHERE status IN ('queued','waiting_model') AND due<=? AND (trigger='manual' OR (trigger='full_auto' AND ?) OR (trigger NOT IN ('manual','full_auto') AND ?)) ORDER BY due LIMIT 1",(self.clock(),bool(self._full_context()),self.task_mode=='auto')).fetchone()
+            row=c.execute("SELECT * FROM jobs WHERE status IN ('queued','waiting_model') AND due<=? AND (NOT ? OR (priority<=0 AND trigger='full_auto' AND NOT ?)) AND (trigger='manual' OR (trigger='full_auto' AND ?) OR (trigger NOT IN ('manual','full_auto') AND ?)) ORDER BY priority DESC,CASE WHEN trigger='manual' OR (session_id=? AND capture_id IN (SELECT value FROM json_each(?))) THEN 0 ELSE 1 END,due,created LIMIT 1",(self.clock(),parallel,self._parallel_reads_enabled(),bool(context),self.task_mode=='auto',context['session'] if context else '',json.dumps(starred))).fetchone()
             if not row:return
-            job=dict(row)
-            c.execute("UPDATE jobs SET status='running',reason='正在识别标签' WHERE id=?",(job['id'],))
+        job=self._claim_label(row['id'])
+        if job:self._process_label(job)
+
+    def _process_label(self,job,*,parallel=False):
+        with self.ocr_progress.track('jobs',job['id'],job.get('_run_token','')) as progress:
+            return self._process_label_progress(job,parallel=parallel,progress=progress)
+
+    def _process_label_progress(self,job,*,parallel,progress):
         try:
+            if self.closed.is_set() or self.tasks_paused:
+                self._release_label(job);return
+            if not self._label_current(job):return
             p=self.project(job['project'])
             if not p or not p['enabled']:
                 self._finish(job,'cancelled',{},[],'自动识别已关闭');return
@@ -436,54 +546,73 @@ class SkuService(FullAutoOCR):
             record=self._valid(job)
             if not record:
                 self._finish(job,'cancelled',{},[],'星级或照片已变化，本次未记账');return
-            if self.archive and job.get('trigger')!='full_auto':self.archive.reserve(job)
-            selected=[p for p in (self.providers.selected('ocr'),self.providers.purpose('sku_label') or self.providers.selected('multimodal')) if p]
-            if job.get('trigger')=='full_auto':selected=selected[:1]
+            reserve=self.archive and (job.get('trigger')!='full_auto' or self._rating(job['session_id'],record)==2)
+            if reserve and not parallel:self.archive.reserve(job)
+            selected=self._label_providers(job)
+            if parallel:selected.sort(key=lambda p:p.get('protocol')=='local')
             if not selected:
-                with self.connect() as c:c.execute("UPDATE jobs SET status='waiting_model',due=?,reason='请在 AI 助手选择 OCR 或多模态模型' WHERE id=?",(self.clock()+2,job['id']))
+                with self.connect() as c:c.execute("UPDATE jobs SET status='waiting_model',due=?,reason='请在 AI 助手选择 OCR 或多模态模型' WHERE id=? AND status='running' AND run_token=?",(self.clock()+2,job['id'],job['_run_token']))
                 return
             session=self.store.session(job['session_id'])
-            path=media.preview(record,session['root'],self.store.data/'previews',media.find_exiftool(self.store.root),2400,False)
-            image=path.read_bytes();readings=[];failures=[]
+            image=media.preview_bytes(record,session['root'],self.store.data/'previews',media.find_exiftool(self.store.root),2400,False)
+            progress('waiting_slot')
+            readings=[];failures=[]
             for provider in selected:
                 if self.closed.is_set():
-                    with self.connect() as c:c.execute("UPDATE jobs SET status='queued' WHERE id=?",(job['id'],))
+                    self._release_label(job)
                     return
                 try:
-                    if self.scheduler:
-                        with self.scheduler.slot(label=True,cancel=self.closed):
-                            if self.tasks_paused or job.get('trigger')=='full_auto' and not self._full_job_current(job) or job.get('trigger') not in ('manual','full_auto') and self.task_mode!='auto':
-                                with self.connect() as c:c.execute("UPDATE jobs SET status='queued',reason='等待恢复解析' WHERE id=? AND status='running'",(job['id'],))
-                                return
-                            self.providers.check_inference(provider)
-                            readings.append(self.recognizer(provider,image))
-                    else:
+                    valid=lambda:not self.tasks_paused and self._label_current(job) and (job.get('trigger')!='full_auto' or self._full_job_current(job)) and (job.get('trigger') in ('manual','full_auto') or self.task_mode=='auto')
+                    with self.providers.inference_slot(provider,priority=job.get('priority',0),cancel=self.closed,valid=valid), self.scheduler.slot(label=True,cancel=self.closed,independent=provider.get('protocol')!='local') if self.scheduler else nullcontext():
+                        if not self._label_current(job):return
+                        if self.tasks_paused or job.get('trigger')=='full_auto' and not self._full_job_current(job) or job.get('trigger') not in ('manual','full_auto') and self.task_mode!='auto':
+                            self._release_label(job);return
                         self.providers.check_inference(provider)
-                        readings.append(self.recognizer(provider,image))
+                        progress('recognizing',provider)
+                        readings.append(self.recognizer({**provider,'_progress':lambda phase:progress(phase,provider)},image))
                 except Exception as exc:failures.append(provider['name']+'：'+str(exc)[:150])
             if not readings:raise ValueError('；'.join(failures))
-            result=(match_automatic if job.get('trigger')=='full_auto' else match)(readings,self.rows(job['project'],job['scope']))
-            if not failures and job.get('trigger')!='full_auto':result=self._record_unplanned(job,readings,result)
-            result['readings']=readings;result['errors']=failures
-            if failures and result['status']=='matched':result.update(status='review',row_ids=[],reason='部分选用模型失败，请确认后记账')
+            if self.closed.is_set() or self.tasks_paused:
+                self._release_label(job);return
+            # API 先发出；归档区间/写图锁只影响结果提交，不能挡住最新二星的网络请求。
+            if reserve and parallel and self._label_current(job) and self._valid(job):self.archive.reserve(job)
             with self.lock:
+                if not self._label_current(job,confirmed=True):return
+                if not self._valid(job):
+                    self._finish(job,'cancelled',{},[],'识别期间星级或照片发生变化，未记账');return
+                result=(match_automatic if job.get('trigger')=='full_auto' else match)(readings,self.rows(job['project'],job['scope']))
+                starred_label=job.get('trigger')=='full_auto' and self._rating(job['session_id'],record)==2
+                if self.require_sku_choice:result.update(status='review',row_ids=[],requires_sku_choice=True,reason='OCR 资料已保存，请选择正确 SKU 款号')
+                elif not failures and (job.get('trigger')!='full_auto' or starred_label):result=self._record_unplanned(job,readings,result,accept_observed=self._rating(job['session_id'],record)==2)
+                if starred_label:result['starred_label']=True
+                result['readings']=readings;result['errors']=failures
+                if failures and result['status']=='matched':result.update(status='review',row_ids=[],reason='部分选用模型失败，请确认后记账')
                 # 星级与图像在请求期间变化，或者用户忽略了任务，都不能提交为已拍摄。
                 with self.connect() as c:current=c.execute('SELECT status FROM jobs WHERE id=?',(job['id'],)).fetchone()
-                if not self._valid(job) or not current or current['status']!='running':
-                    if current and current['status']=='running':self._finish(job,'cancelled',result,[],'识别期间星级或照片发生变化，未记账')
+                if not self._valid(job) or not self._label_current(job):
+                    if self.require_sku_choice and self._label_current(job,confirmed=True) and current['status']=='confirmed' and self._valid(job):
+                        with self.connect() as c:record_ocr(c,'job',job['id'],job['session_id'],job['capture_id'],result,self.clock())
+                    if self._label_current(job):self._finish(job,'cancelled',result,[],'识别期间星级或照片发生变化，未记账')
                     return
                 self._finish(job,result['status'],result,result['row_ids'],result['reason'])
+                if not failures:self.apply_sku_rules(job['session_id'],job['capture_id'],readings)
         except Exception as exc:
+            if self.closed.is_set() or self.tasks_paused or job.get('trigger') not in ('manual','full_auto') and self.task_mode!='auto':
+                self._release_label(job);return
             with self.connect() as c:current=c.execute('SELECT status FROM jobs WHERE id=?',(job['id'],)).fetchone()
-            if current and current['status']=='running':self._finish(job,'failed',{},[],str(exc)[:350])
+            if self._label_current(job):self._finish(job,'failed',{},[],str(exc)[:350])
 
     def _finish(self,job,status,result,targets,reason):
         with self.lock,self.connect() as c:
+            if job.get('_run_token') and not self._label_current(job):return
             if job.get('trigger')=='full_auto':status,result,targets,reason=self._full_commit(job,status,result,targets,reason)
-            c.execute('UPDATE jobs SET status=?,result=?,targets=?,reason=? WHERE id=?',(status,json.dumps(result,ensure_ascii=False),json.dumps(targets),reason,job['id']))
+            if status in ('ignored','cancelled'):c.execute('DELETE FROM ocr_choices WHERE session_id=? AND capture_id=? AND reading_key=?',(job['session_id'],job['capture_id'],'legacy:'+job['id']))
+            record_ocr(c,'job',job['id'],job['session_id'],job['capture_id'],result,self.clock())
+            c.execute('UPDATE jobs SET status=?,result=?,targets=?,reason=?,updated=? WHERE id=?',(status,json.dumps(result,ensure_ascii=False),json.dumps(targets),reason,self.clock(),job['id']))
             self._archive_event(c,dict(job,status=status,targets=json.dumps(targets),reason=reason))
         try:self.export(job['project'])
         except ValueError:pass  # 识别结论保留，导出失败独立提示和重试。
+        if self.archive:self.deliver_events(self.archive)
 
     def review(self,jid,action,row_id=None):
         with self.lock:
@@ -501,47 +630,68 @@ class SkuService(FullAutoOCR):
                 elif action=='ignore':c.execute("UPDATE jobs SET status='ignored',targets='[]',reason='人工忽略，不计入对账' WHERE id=?",(jid,))
                 elif action=='retry':
                     if not self._valid(job):raise ValueError('请先将原标签照片标为二星')
-                    c.execute("UPDATE jobs SET status='queued',targets='[]',due=?,reason='等待重试' WHERE id=?",(self.clock()+self.DEBOUNCE,jid))
+                    c.execute("UPDATE jobs SET status='queued',targets='[]',due=?,reason='等待重试' WHERE id=?",(self.clock()+self.RETRY_DELAY,jid))
                 else:raise ValueError('无效复核操作')
+                c.execute('UPDATE jobs SET updated=? WHERE id=?',(self.clock(),jid))
                 self._archive_event(c,dict(c.execute('SELECT * FROM jobs WHERE id=?',(jid,)).fetchone()))
             self.export(job['project'])
         return self.state()
 
     def _archive_event(self,c,job):
-        if job.get('trigger')=='full_auto':return
+        if job.get('trigger')=='full_auto':
+            record=next((r for r in self.store.records(job['session_id']) if r['id']==job['capture_id']),None)
+            if not record or self._rating(job['session_id'],record)!=2:return
+            job=dict(job,kind='ocr_interval')
         c.execute('INSERT INTO archive_events(id,job,payload) VALUES (?,?,?)',(uuid.uuid4().hex,job['id'],json.dumps(job,ensure_ascii=False)))
 
     def deliver_events(self,archive):
+        # 后台、人工确认和全自动完成会同时投递，按持久事件顺序处理清零及重标。
+        with archive.lock:self._deliver_events(archive)
+
+    def _deliver_events(self,archive):
         with self.connect() as c:events=c.execute('SELECT * FROM archive_events WHERE delivered=0 ORDER BY rowid LIMIT 20').fetchall()
         for event in events:
             job=json.loads(event['payload'])
+            if job.get('kind')=='ocr_reset':
+                archive.clear_ocr_intervals(event['id'],job['session_id'],job['capture_id'])
+                with self.connect() as c:c.execute('UPDATE archive_events SET delivered=1 WHERE id=?',(event['id'],))
+                continue
             if job.get('kind')=='ocr_read':
                 archive.reconcile_ocr(event['id'],job['session_id'],job['capture_id'])
+                with self.connect() as c:c.execute('UPDATE archive_events SET delivered=1 WHERE id=?',(event['id'],))
+                continue
+            if job.get('kind')=='ocr_choice':
+                archive.confirm_ocr_interval(event['id'],job,job['sku'])
                 with self.connect() as c:c.execute('UPDATE archive_events SET delivered=1 WHERE id=?',(event['id'],))
                 continue
             targets=json.loads(job.get('targets') or '[]');sku=None
             if targets:
                 with self.connect() as c:
                     row=c.execute('SELECT sku FROM sku_rows WHERE id=?',(targets[0],)).fetchone();sku=row[0] if row else None
-            archive.handle_event(event['id'],job,sku)
+            if job.get('kind')=='ocr_interval':archive.confirm_ocr_interval(event['id'],job,sku)
+            else:archive.handle_event(event['id'],job,sku)
             with self.connect() as c:c.execute('UPDATE archive_events SET delivered=1 WHERE id=?',(event['id'],))
 
     def metadata_changed(self,sid,cid,before,after):
         if before==after:return
         with self.connect() as c:c.execute('INSERT OR REPLACE INTO metadata_versions VALUES (?,?,?,?)',(sid,cid,before,after))
 
+    def _refresh_progress(self,c,pid):
+        targets={}
+        for job in c.execute("SELECT * FROM jobs WHERE project=? AND status IN ('matched','confirmed') ORDER BY captured_at,created,id",(pid,)):
+            for rid in json.loads(job['targets']):
+                prior=targets.get(rid)
+                if prior is None or completion_order(job)>completion_order(prior):targets[rid]=job
+        c.execute("UPDATE sku_rows SET status=baseline,completed_at=baseline_completed_at,completion_job='' WHERE project=?",(pid,))
+        for rid,job in targets.items():c.execute("UPDATE sku_rows SET status='已拍摄',completed_at=?,completion_job=? WHERE project=? AND id=?",(job['captured_at'],job['id'],pid,rid))
+        return targets
+
     def export(self,pid):
         with self.lock:
             p=self.project(pid)
             if not p:raise ValueError('对账任务不存在')
             with self.connect() as c:
-                targets={}
-                for job in c.execute("SELECT * FROM jobs WHERE project=? AND status IN ('matched','confirmed') ORDER BY captured_at,created,id",(pid,)):
-                    for rid in json.loads(job['targets']):
-                        prior=targets.get(rid)
-                        if prior is None or completion_order(job)>completion_order(prior):targets[rid]=job
-                c.execute("UPDATE sku_rows SET status=baseline,completed_at=baseline_completed_at,completion_job='' WHERE project=?",(pid,))
-                for rid,job in targets.items():c.execute("UPDATE sku_rows SET status='已拍摄',completed_at=?,completion_job=? WHERE project=? AND id=?",(job['captured_at'],job['id'],pid,rid))
+                targets=self._refresh_progress(c,pid)
             rows=self.rows(pid);metadata=p['metadata'];plans=[]
             if metadata.get('managed_sheet'):
                 from sku_workbook_auto import replace_sheet
@@ -560,7 +710,17 @@ class SkuService(FullAutoOCR):
             source=self.root/pid/'source.xlsx';output=self.root/pid/'拍摄对账.xlsx'
             if metadata.get('automatic_day'):output=self.root/pid/(metadata['automatic_day']+'.xlsx')
             try:
-                export_workbook(source,output,plans,{(r['sheet'],r['excel_row']):r['status'] for r in rows},{(r['sheet'],r['excel_row']):r['completed_at'] for r in rows})
+                from sku_reconciliation import decorate_images,export_images
+                for row in rows:row['completion']=dict(targets[row['id']]) if row['id'] in targets else None
+                decorate_images(self,rows)
+                from sku_presentation import preferences,grouped_rows
+                from sku_workbook_presentation import finalize
+                pictures=export_images(self,rows);working=output.with_suffix('.work.xlsx')
+                try:
+                    export_workbook(source,working,plans,{(r['sheet'],r['excel_row']):r['status'] for r in rows},{(r['sheet'],r['excel_row']):r['completed_at'] for r in rows},capture_images=pictures)
+                    finalize(working,plans,preferences(self,pid)['headers'],grouped_rows(rows,metadata['sheets']),pictures)
+                    working.replace(output)
+                finally:working.unlink(missing_ok=True)
                 with self.connect() as c:c.execute("UPDATE projects SET export_error='' WHERE id=?",(pid,))
             except Exception as exc:
                 with self.connect() as c:c.execute('UPDATE projects SET export_error=? WHERE id=?',('Excel 更新失败，请关闭占用文件后重试：'+str(exc)[:150],pid))
@@ -568,11 +728,16 @@ class SkuService(FullAutoOCR):
             return output
 
     def _run(self):
+        self.label_thread.start()
         while not self.closed.is_set():
+            self.wake.clear()
             try:self.tick()
             except Exception:pass  # 已保存的任务和导出错误可在界面查询；下次循环继续。
-            self.closed.wait(.2)
+            self.wake.wait(.2)
 
     def close(self):
+        if getattr(self,'metadata_sync',None):self.metadata_sync.close()
         self.closed.set()
+        self._wake_label()
         if self.thread.is_alive():self.thread.join(timeout=2)
+        self._close_label_workers()

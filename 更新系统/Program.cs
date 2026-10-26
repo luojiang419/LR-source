@@ -43,7 +43,7 @@ namespace FramekeepBootstrap {
                 if(args.Length==2 && args[0]=="--session") session=Path.GetFullPath(args[1]);
                 else {
 #if INSTALLER
-                    session=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"Framekeep","updates",Guid.NewGuid().ToString("N"));
+                    session=Path.Combine(Path.GetTempPath(),"Framekeep","updates",Guid.NewGuid().ToString("N"));
                     Directory.CreateDirectory(session);
                     var setup=new Dictionary<string,object>{{"mode","install"},{"root",""},{"session",session},{"parentPid",0},{"prepareComponents",true},{"installDriver",true}};
 #if COMPLETE
@@ -56,7 +56,7 @@ namespace FramekeepBootstrap {
                     string root=Directory.GetParent(Path.GetDirectoryName(Own)).FullName;
                     var installed=Read(Path.Combine(root,".framekeep-install.json"));
                     if(Convert.ToString(installed["product"])!="framekeep" || !String.Equals(Path.GetFullPath(Convert.ToString(installed["root"])),root,StringComparison.OrdinalIgnoreCase))throw new IOException("安装记录与卸载程序位置不匹配。");
-                    session=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"Framekeep","uninstall",Guid.NewGuid().ToString("N"));Directory.CreateDirectory(session);
+                    session=Path.Combine(Path.GetTempPath(),"Framekeep","uninstall",Guid.NewGuid().ToString("N"));Directory.CreateDirectory(session);
                     Write(Path.Combine(session,"session.json"),new {mode="uninstall",root,session,parentPid=0});
                     string clone=Path.Combine(session,"卸载末帧选片.exe");File.Copy(Own,clone);
                     Process.Start(new ProcessStartInfo(clone,"--session "+Quote(session)) {UseShellExecute=false,CreateNoWindow=true,WorkingDirectory=session});

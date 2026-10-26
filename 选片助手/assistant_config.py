@@ -5,6 +5,7 @@ import os
 import re
 from pathlib import Path
 from urllib.parse import urlsplit
+from api_endpoints import validated_url, api_endpoint
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -27,12 +28,12 @@ def load_config(path=None):
     key = re.search(r'\bsk-[A-Za-z0-9_-]+', text)
     model = re.search(r'\bgpt-[A-Za-z0-9_.-]+', text)
     if not endpoint or not key or not model:
-        raise ConfigError('配置文件需要 HTTPS 接口地址、API 密钥和明确模型。')
+        raise ConfigError('配置文件需要 HTTP/HTTPS 接口地址、API 密钥和明确模型。')
     base = endpoint.group(0).rstrip('/，。)')
+    try:base=validated_url(base)
+    except ValueError as exc:raise ConfigError(str(exc)) from None
     parsed = urlsplit(base)
-    if parsed.scheme != 'https' or not parsed.hostname or parsed.username or parsed.password or parsed.query or parsed.fragment:
-        raise ConfigError('接口地址须为不含认证信息、查询串和片段的 HTTPS 地址。')
-    url = base if base.endswith('/responses') else base + ('/responses' if base.endswith('/v1') else '/v1/responses')
+    url = api_endpoint(base,'responses')
     return {'url': url, 'key': key.group(0), 'model': model.group(0), 'host': parsed.hostname}
 
 

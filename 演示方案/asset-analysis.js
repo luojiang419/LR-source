@@ -16,12 +16,12 @@
   const dialog=document.createElement('section');dialog.id='analysis-dialog';dialog.className='asset-workspace hidden';dialog.setAttribute('role','tabpanel');dialog.setAttribute('aria-labelledby',tab.id);
   dialog.innerHTML=`<div class="asset-workspace-heading analysis-heading"><div class="analysis-heading-title"><h2>解析任务</h2><p>查看元数据写入、OCR 与多模态解析进度。</p></div><div class="analysis-heading-tools"><div class="analysis-heading-metrics" aria-label="解析任务统计"><div><span>等待解析</span><strong id="analysis-queued">0</strong></div><div><span>解析中</span><strong id="analysis-running">0</strong></div><div><span>已完成</span><strong id="analysis-completed">0</strong></div><div><span>需处理</span><strong id="analysis-failed">0</strong></div></div><div class="analysis-heading-selection"><span>本次选片</span><strong id="analysis-selection"></strong><button id="analysis-close" class="bordered">返回选片</button></div><button id="analysis-settings" class="bordered">配置解析模型</button></div></div>
   <div class="asset-workspace-grid"><main class="asset-workspace-main">
-    <section id="metadata-tasks-card" class="workspace-card workspace-result-card"><header><h3 id="task-list-title">任务列表</h3><select id="metadata-batch" aria-label="写入目录" hidden></select><button id="metadata-review" hidden>处理异常</button></header><div id="metadata-verification" class="parsing-list-note" role="status" hidden></div><div id="metadata-files" class="sku-table-wrap" hidden></div><div id="analysis-jobs" class="sku-table-wrap"></div></section>
+    <section id="metadata-tasks-card" class="workspace-card workspace-result-card"><header><h3 id="task-list-title">任务列表</h3><select id="metadata-batch" aria-label="写入目录" hidden></select><button id="metadata-review" hidden>处理异常</button><button id="parsing-clear-list" class="bordered" type="button" title="清空当前类型已结束的任务，保留等待及进行中的任务和解析结果" disabled>清空列表</button></header><div id="metadata-verification" class="parsing-list-note" role="status" hidden></div><div id="metadata-files" class="sku-table-wrap" hidden></div><div id="analysis-jobs" class="sku-table-wrap"></div></section>
     <section id="task-progress-panel" class="workspace-card"><div class="task-progress-controls"><h3>任务进度</h3><div class="parsing-filters"><label class="workspace-inline">类型<select id="parsing-kind"><option value="auto">自动切换</option><option value="metadata">元数据写入</option><option value="all">OCR + 多模态</option><option value="ocr">OCR</option><option value="multimodal">多模态</option></select></label><label id="analysis-filter-control" class="workspace-inline">状态<select id="analysis-filter"><option value="all">全部任务</option><option value="active">等待与进行中</option><option value="completed">已完成</option><option value="attention">需处理</option></select></label></div><div class="parsing-progress"><div id="metadata-progress" class="metadata-progress-track" role="progressbar" aria-label="任务进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="metadata-progress-fill"></span></div><strong id="metadata-percent">0%</strong><span id="metadata-progress-text" role="status"></span><span id="parsing-connection" role="status"></span></div></div></section>
   </main><aside class="asset-workspace-sidebar" aria-label="解析任务控制">
     <section class="workspace-card"><header><h3>OCR 解析</h3><span id="parsing-ocr-state" class="workspace-badge"></span></header><div class="workspace-fields"><label>解析模式<select id="parsing-ocr-mode"><option value="auto">自动 · 二星标签触发</option><option value="manual">手动 · 点击时解析</option></select></label><p id="parsing-ocr-model" class="workspace-caption"></p><button id="parsing-ocr-run" class="primary">OCR 解析所选照片</button><div class="asset-actions"><button id="parsing-ocr-pause">暂停 OCR 队列</button><button id="parsing-ocr-resume">恢复 OCR 队列</button></div><p class="dialog-copy">手动 OCR 只读取文字，不要求二星或工作表；二星自动标签仍沿用拍摄对账规则。</p></div></section>
     <section class="workspace-card"><header><h3>解析方案</h3><button id="analysis-new-schema">新建方案</button></header><div class="workspace-fields"><label>当前方案<select id="analysis-schema"><option value="">先创建解析方案</option></select></label><details id="analysis-schema-editor"><summary>编辑维度与提示词</summary><label>方案名称<input id="analysis-schema-name" maxlength="100" placeholder="例如：服装材质与颜色"></label><label>解析指令<textarea id="analysis-prompt" rows="4" placeholder="填写需要提取的维度与判断要求"></textarea></label><label>JSON Schema<textarea id="analysis-json-schema" rows="8">{"type":"object","properties":{},"additionalProperties":true}</textarea></label><button id="analysis-save-schema">保存方案版本</button></details></div><footer class="workspace-submit"><button id="analysis-run" class="primary">解析所选照片</button><p id="analysis-message" role="status"></p></footer></section>
-    <section class="workspace-card"><header><h3>队列控制</h3><span id="analysis-queue-state" class="workspace-badge">运行中</span></header><div class="workspace-fields"><label>同时解析<select id="analysis-concurrency"><option value="2">2 张</option><option value="1">1 张</option></select></label><div class="asset-actions"><button id="analysis-pause">暂停普通解析</button><button id="analysis-resume">恢复普通解析</button></div><p id="analysis-stats" class="workspace-caption" role="status"></p><p class="dialog-copy">款号标签优先处理；每个拍摄资产使用一张代表图。</p></div></section>
+    <section class="workspace-card"><header><h3>队列控制</h3><span id="analysis-queue-state" class="workspace-badge">运行中</span></header><div class="workspace-fields"><label>本机模型并发<select id="analysis-concurrency"><option value="2">2 张</option><option value="1">1 张</option></select></label><div class="asset-actions"><button id="analysis-pause">暂停普通解析</button><button id="analysis-resume">恢复普通解析</button></div><p id="analysis-stats" class="workspace-caption" role="status"></p><p class="dialog-copy">API 并发在模型卡片中设置；本机模型按此处限制。款号标签优先处理。</p></div></section>
   </aside></div>`;document.querySelector('.workbench > .statusbar').before(dialog);
   $('analysis-schema').parentElement.before(Object.assign(document.createElement('label'),{innerHTML:'多模态解析模式<select id="parsing-multimodal-mode"><option value="manual">手动 · 点击时解析</option><option value="auto">自动 · 当前目录新照片</option></select>'}));
   $('analysis-schema').parentElement.after(Object.assign(document.createElement('p'),{id:'parsing-auto-scope',className:'workspace-caption'}));
@@ -31,6 +31,7 @@
   $('analysis-settings').onclick=()=>$('assistant-settings').click();
   const names={queued:'等待解析',retry:'等待重试',waiting_model:'等待模型',running:'解析中',completed:'已完成',matched:'已对账',confirmed:'已确认',review:'待复核',unmatched:'未匹配',ignored:'已忽略',failed:'失败',stale:'源图已变化',cancelled:'已取消'};
   const waiting=['queued','retry','waiting_model'],done=['completed','matched','confirmed'],attention=['failed','stale','review','unmatched'];
+  const clearable=[...done,...attention,'ignored','cancelled'];
   function selectionSummary(){
     const ids=window.FramekeepAssets?.selection()||[];
     $('analysis-selection').textContent=ids.length?`${ids.length} 张`:'未选择';
@@ -42,6 +43,7 @@
   let state={schemas:[],jobs:[]},ocr={mode:'auto',paused:false,jobs:[],counts:{}},metadata={batches:[]},metadataId='',selectedKey='',busy=false,polling=false,generation=0;
   let autoKind='',observedTasks={},preferredTask='';
   const metadataActive=['indexing','matching','writing','verifying'];
+  $('task-progress-panel').querySelector('.task-progress-controls').insertAdjacentHTML('beforeend','<button id="parsing-clear-completed" class="bordered" type="button" title="清理所有类型的已完成任务，保留识别结果与拍摄记录">清理已完成</button>');
   function preferTask(kind){preferredTask=kind;$('parsing-kind').value='auto'}
   function taskKind(){
     const sources={metadata:{stamp:Math.max(0,...(metadata.batches||[]).map(b=>b.updated||0)),active:(metadata.batches||[]).some(b=>metadataActive.includes(b.status))}};
@@ -100,16 +102,23 @@
   $('metadata-batch').onchange=e=>{metadataId=e.target.value;render()};
   $('metadata-review').onclick=()=>window.FramekeepRawSync?.review(metadataId);
   window.FramekeepMetadataTasks={submitted(id){metadataId=id;preferTask('metadata');FramekeepWorkspace.show('analysis');dialog.querySelector('.asset-workspace-main').scrollTop=0}};
-  async function action(fn){if(busy)return;busy=true;generation++;try{await fn()}catch(e){$('analysis-message').textContent=e.message}finally{busy=false}}
+  function updateClearListButton(kind=$('metadata-tasks-card').dataset.kind){
+    const sources=kind==='ocr'?[ocr]:[];
+    $('parsing-clear-list').hidden=!sources.length;
+    $('parsing-clear-list').disabled=busy||!sources.some(data=>clearable.some(status=>(data.counts?.[status]||0)>0));
+  }
+  async function action(fn){if(busy)return;busy=true;generation++;updateClearListButton();try{await fn()}catch(e){$('analysis-message').textContent=e.message}finally{busy=false;updateClearListButton()}}
   function render(){
     const kind=taskKind(),isMetadata=kind==='metadata';
     $('metadata-tasks-card').dataset.kind=kind;$('task-progress-panel').dataset.kind=kind;
     $('task-list-title').textContent=isMetadata?'元数据写入':kind==='ocr'?'OCR 解析':kind==='multimodal'?'多模态解析':'解析任务';
+    updateClearListButton(kind);
     $('metadata-batch').hidden=!isMetadata;$('metadata-review').hidden=true;$('metadata-verification').hidden=true;
     $('metadata-files').hidden=!isMetadata;$('analysis-jobs').hidden=isMetadata;$('analysis-filter-control').hidden=isMetadata;
     if(isMetadata)renderMetadata();
     const counts={...state.counts};for(const [key,n] of Object.entries(ocr.counts||{}))counts[key]=(counts[key]||0)+n;
     const sum=keys=>keys.reduce((n,k)=>n+(counts[k]||0),0);
+    $('parsing-clear-completed').disabled=busy||!(sum(done)||(metadata.batches||[]).some(batch=>batch.status==='completed'&&batch.verification?.status==='completed'));
     if(!isMetadata){
       const visibleCounts=kind==='ocr'?ocr.counts||{}:kind==='multimodal'?state.counts||{}:counts;
       const total=Object.values(visibleCounts).reduce((n,x)=>n+x,0),pending=[...waiting,'running'].reduce((n,k)=>n+(visibleCounts[k]||0),0),finished=total-pending;
@@ -122,7 +131,7 @@
     $('parsing-auto-scope').textContent=state.automatic?.enabled?`自动目录：${state.automatic.folder} · 方案 v${state.automatic.version}`:'启用自动时绑定当前目录与所选方案，只解析之后新入库的照片。';
     $('parsing-apply-auto').hidden=!state.automatic?.enabled;
     const options='<option value="">选择解析方案</option>'+state.schemas.map(s=>`<option value="${s.id}:${s.version}">${esc(s.name)} · v${s.version}</option>`).join('');if($('analysis-schema').innerHTML!==options)$('analysis-schema').innerHTML=options;$('analysis-schema').value=selectedKey;
-    $('analysis-stats').textContent=`并发 ${state.scheduler?.active||0}/${state.scheduler?.limit||2} · `+Object.entries(state.counts||{}).map(([k,n])=>`${names[k]||k} ${n}`).join(' / ');
+    $('analysis-stats').textContent=`运行请求 ${state.scheduler?.active||0} · 本机并发上限 ${state.scheduler?.limit||2} · `+Object.entries(state.counts||{}).map(([k,n])=>`${names[k]||k} ${n}`).join(' / ');
     if(document.activeElement!==$('analysis-concurrency'))$('analysis-concurrency').value=state.scheduler?.limit||2;
     for(const [id,count] of [['queued',sum(waiting)],['running',counts.running||0],['completed',sum(done)],['failed',sum(attention)]])$('analysis-'+id).textContent=count;
     $('analysis-queue-state').textContent=state.paused?'已暂停':'运行中';$('analysis-pause').disabled=!!state.paused;$('analysis-resume').disabled=!state.paused;
@@ -136,6 +145,15 @@
     if($('analysis-jobs').dataset.content!==html){$('analysis-jobs').dataset.content=html;$('analysis-jobs').innerHTML=html}
   }
   function receive(data){state=data.analysis;ocr=data.ocr;metadata=data.metadata||{batches:[]};if(!selectedKey&&state.automatic?.schema_id)selectedKey=`${state.automatic.schema_id}:${state.automatic.version}`;render()}
+  $('parsing-clear-list').onclick=()=>{
+    const channel=$('metadata-tasks-card').dataset.kind;
+    action(async()=>{receive(await api('/api/parsing/clear-list',{channel}));$('analysis-message').textContent='已清空当前类型的已结束任务，等待及进行中的任务、解析结果与拍摄记录已保留';});
+  };
+  $('parsing-clear-completed').onclick=()=>action(async()=>{
+    const button=$('parsing-clear-completed');button.disabled=true;
+    try{receive(await api('/api/parsing/clear-completed',{}));$('analysis-message').textContent='已清理完成的任务，识别结果与拍摄记录已保留';}
+    finally{button.disabled=!(done.some(status=>(ocr.counts?.[status]||0)+(state.counts?.[status]||0)>0)||(metadata.batches||[]).some(batch=>batch.status==='completed'&&batch.verification?.status==='completed'));}
+  });
   async function load(){const request=generation,data=await api('/api/parsing');if(request!==generation)return;receive(data);$('parsing-connection').textContent=''}
   FramekeepWorkspace.register('analysis',tab,dialog,()=>{selectionSummary();action(load)});$('analysis-close').onclick=()=>FramekeepWorkspace.show('selection');
   $('analysis-filter').onchange=render;

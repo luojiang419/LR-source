@@ -139,7 +139,7 @@ class IntervalTests(unittest.TestCase):
         self.assertEqual(self.segments()['C-300']['status'],'needs_review')
         self.assertEqual(self.archive.asset(self.archive.ensure(self.sid,self.ids[3]))['sku'],'C-300')
         self.mark(1,'A-100',10);self.mark(5,'B-200',20);self.mark(3,'C-300',30)
-        self.assertNotIn(self.ids[2],labels(self.sku,self.sid)['labels'])
+        self.assertEqual(labels(self.sku,self.sid)['labels'][self.ids[2]],'MANUAL-999')
 
     def test_out_of_order_boundaries_and_cancellation_recompute_members(self):
         self.archive.start_stream(self.sid,'project','模特图')

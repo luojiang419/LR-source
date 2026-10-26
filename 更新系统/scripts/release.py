@@ -26,7 +26,7 @@ def prepare():
     print(config['releaseId'])
 
 
-def build(notes=None, output=None):
+def build(notes=None, output=None, *, local_key=None):
     release=ROOT/'build/tauri-release/末帧选片'
     config=read_json(release/'update-config.json')
     output=Path(output) if output else ROOT/'build/updates'/f"{config['version']}-{config['releaseId']}"
@@ -45,10 +45,11 @@ def build(notes=None, output=None):
         'notes':notes or '新增独立自动更新器、魔搭签名更新源与轻量安装器；更新前保存评级，失败自动回滚。',
         'package':{'name':package.name,'size':package.stat().st_size,'sha256':sha256(package),
             'url':file_url(f"releases/{config['version']}/{config['releaseId']}/{package.name}")},'files':records}
-    key=Ed25519PrivateKey.from_private_bytes((ROOT/'.update-private/signing-key').read_bytes())
+    key=local_key or Ed25519PrivateKey.from_private_bytes((ROOT/'.update-private/signing-key').read_bytes())
     payload=json.dumps(manifest,ensure_ascii=False,separators=(',',':'))
     envelope={'payload':payload,'signature':key.sign(payload.encode()).hex()}
-    verify_envelope(envelope)
+    if local_key is None:verify_envelope(envelope)
+    else:key.public_key().verify(bytes.fromhex(envelope['signature']),payload.encode('utf8'))
     write_json(output/'manifest.json',manifest);write_json(output/'envelope.json',envelope)
     print(output)
     return output
@@ -74,10 +75,14 @@ def publish_components(api,existing):
     for item,local in items:
         parsed=urllib.parse.urlsplit(item['url']);relative=urllib.parse.parse_qs(parsed.query).get('FilePath',[''])[0]
         if parsed.hostname!='modelscope.cn' or '/'+TRUST['repository']+'/' not in parsed.path or not relative.startswith('components/'+item['sha256']+'/'):raise ValueError('运行时发布目标与固定内容地址不一致')
-        if sha256(local)!=item['sha256']:raise ValueError('运行时镜像构建已变化，未发布')
-        if relative not in existing:api.upload_file(path_or_fileobj=str(local),path_in_repo=relative,repo_id=TRUST['repository'],commit_message='components: verified inference runtime')
+        # 已发布的内容地址以匿名回读为准，发布程序更新不要求保留每份历史压缩包。
+        # 只有需要新上传时才依赖本地文件；现有本地文件仍须与清单匹配。
+        if local.is_file() and sha256(local)!=item['sha256']:raise ValueError('运行时镜像构建已变化，未发布')
+        if relative not in existing:
+            if not local.is_file():raise ValueError('远端组件缺失且本地没有可上传镜像：'+item.get('name',relative))
+            api.upload_file(path_or_fileobj=str(local),path_in_repo=relative,repo_id=TRUST['repository'],commit_message='components: verified inference runtime')
         if remote_digest(item['url'])!=item['sha256']:raise ValueError('运行时镜像匿名校验失败，未激活更新')
-        published.append({'path':relative,'sha256':item['sha256'],'size':local.stat().st_size})
+        published.append({'path':relative,'sha256':item['sha256'],'size':item['size']})
     return published
 
 

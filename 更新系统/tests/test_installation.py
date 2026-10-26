@@ -9,12 +9,34 @@ import unittest
 from unittest.mock import patch
 import uuid
 import socket
+import sqlite3
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 import installation as i
 
 
 class InstallPolicyTests(unittest.TestCase):
+    def test_registration_refresh_keeps_persistent_data_during_isolated_run(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder)/'app';(root/'update').mkdir(parents=True)
+            persistent=Path(folder)/'persistent';isolated=Path(folder)/'isolated'
+            i.write_json(root/i.MARKER,{'product':i.PRODUCT,'root':str(root),'dataPath':str(persistent)})
+            i.write_json(root/i.LAYOUT,{'product':i.PRODUCT,'version':'1.0.0','releaseId':'20261022000000','files':[]})
+            for supplied in (persistent,isolated):
+                with patch.object(i,'registered_here',return_value=True),patch.object(i,'complete_registration') as complete:
+                    i.refresh_registered_install(root,supplied)
+                self.assertEqual(complete.call_args.args[1]['dataPath'],str(persistent))
+                self.assertEqual(i.read_json(root/i.MARKER)['dataPath'],str(persistent))
+
+    def test_registration_refresh_without_marker_keeps_registered_data(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder)/'app';(root/'update').mkdir(parents=True)
+            persistent=Path(folder)/'persistent'
+            i.write_json(root/i.LAYOUT,{'product':i.PRODUCT,'version':'1.0.0','releaseId':'20261022000000','files':[]})
+            with patch.object(i,'registered_here',return_value=True),patch.object(i.WindowsIntegration,'preferences',return_value={'DataLocation':str(persistent)}),patch.object(i,'complete_registration') as complete:
+                i.refresh_registered_install(root,Path(folder)/'isolated')
+            self.assertEqual(complete.call_args.args[1]['dataPath'],str(persistent))
+
     def test_d_then_e_then_user_directory_with_space_and_permission_checks(self):
         with tempfile.TemporaryDirectory() as folder:
             fallback=Path(folder)/'Programs/Framekeep'
@@ -43,7 +65,7 @@ class InstallPolicyTests(unittest.TestCase):
             self.assertEqual(i.data_directory(root),data)
             self.assertEqual(i.data_directory(root,old),old)
             with patch.dict(os.environ,{'LOCALAPPDATA':folder}):
-                fresh=Path(folder)/'new';self.assertEqual(i.data_directory(fresh),Path(folder)/'Framekeep/data')
+                fresh=Path(folder)/'new';self.assertEqual(i.data_directory(fresh),fresh/'data')
 
     def test_installing_to_new_partition_keeps_registered_legacy_data(self):
         with tempfile.TemporaryDirectory() as folder:
@@ -52,12 +74,15 @@ class InstallPolicyTests(unittest.TestCase):
                 def preferences(self):return {'InstallLocation':str(old)}
             self.assertEqual(i.data_directory(Path(folder)/'new',integration=Previous()),legacy)
 
-    def test_project_launcher_data_is_not_replaced_by_empty_profile(self):
+    def test_portable_data_is_independent_of_parent_development_project(self):
         with tempfile.TemporaryDirectory() as folder:
             project=Path(folder);(project/'启动末帧.ps1').write_text('fixture');data=project/'.framekeep';data.mkdir();(data/'framekeep.sqlite3').write_bytes(b'existing ratings')
             root=project/'dist/末帧选片';root.mkdir(parents=True)
             (root/'.framekeep').mkdir();(root/'.framekeep/legacy.log').write_text('older portable residue')
-            self.assertEqual(i.data_directory(root),data)
+            self.assertEqual(i.data_directory(root),root/'.framekeep')
+            (root/'data').mkdir();(root/'data/settings.json').write_text('{}')
+            self.assertEqual(i.data_directory(root),root/'data')
+            self.assertEqual(i.data_directory(root,data),data)
 
     def test_running_portable_workbench_is_detected_before_install(self):
         with socket.socket() as listener:

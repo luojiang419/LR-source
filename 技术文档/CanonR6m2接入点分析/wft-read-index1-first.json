@@ -1,0 +1,71 @@
+{
+  "observed_at": "2026-10-22T04:40:19.202116+00:00",
+  "sdk_sha256": "1c23a9984bd671c4bab8470430e1ab9269de00f3e3405cc9213249e3f7fb454e",
+  "scope": "identity + one private WFT read; no Set/Change/Delete/capture/firmware calls",
+  "set_number": 1,
+  "calls": [
+    {
+      "api": "EdsInitializeSDK",
+      "code": "0x00000000"
+    },
+    {
+      "api": "EdsGetCameraList",
+      "code": "0x00000000"
+    },
+    {
+      "api": "EdsGetChildCount",
+      "code": "0x00000000"
+    },
+    {
+      "api": "EdsGetChildAtIndex",
+      "code": "0x00000000"
+    },
+    {
+      "api": "EdsOpenSession",
+      "code": "0x00000000"
+    },
+    {
+      "api": "EdsGetPropertySize",
+      "code": "0x00000000"
+    },
+    {
+      "api": "EdsGetPropertyData",
+      "code": "0x00000000"
+    },
+    {
+      "api": "EdsGetPropertySize",
+      "code": "0x00000000"
+    },
+    {
+      "api": "EdsGetPropertyData",
+      "code": "0x00000000"
+    },
+    {
+      "api": "EdsGetWftData",
+      "code": "0x00000060"
+    },
+    {
+      "api": "EdsCloseSession",
+      "code": "0x00000000"
+    },
+    {
+      "api": "EdsRelease",
+      "code": "0x00000000"
+    },
+    {
+      "api": "EdsRelease",
+      "code": "0x00000000"
+    },
+    {
+      "api": "EdsTerminateSDK",
+      "code": "0x00000000"
+    }
+  ],
+  "raw_saved": false,
+  "camera_count": 1,
+  "product": "Canon EOS R6m2",
+  "firmware": "1.7.0",
+  "reported_size": 8192,
+  "guard_intact": true,
+  "stop_reason": "read failed or returned an unexpected size/guard; no raw bytes saved"
+}

@@ -25,6 +25,144 @@ import media_engine as media
 ROOT=Path(__file__).resolve().parents[1]
 
 class ParsingTaskTests(unittest.TestCase):
+    def test_clear_task_list_hides_all_finished_ocr_and_preserves_evidence(self):
+        from sku_library import browse
+        import task_history
+        cid=self.add('clear.JPG');photo=self.photos/'clear.JPG'
+        digest=hashlib.sha256(photo.read_bytes()).hexdigest()
+        self.sku.parse_capture(self.sid,cid);before=browse(self.sku)
+        active=('queued','running','retry','waiting_model','future_status')
+        with self.sku.connect() as c:
+            for table in ('parse_jobs','jobs'):
+                for status in (*task_history.INACTIVE_STATUSES,*active):
+                    c.execute(f'INSERT INTO {table}(id,session_id,capture_id,status,created,result) VALUES (?,?,?,?,1,?)',
+                              (table+':'+status,self.sid,cid,status,'{"sku":"retained"}'))
+            for index in range(105):
+                c.execute("INSERT INTO parse_jobs(id,session_id,capture_id,status,created) VALUES (?,?,?,'ignored',1)",
+                          ('old-'+str(index),self.sid,cid))
+            rows={table:[tuple(r) for r in c.execute(f'SELECT id,status,result FROM {table} ORDER BY id')] for table in ('parse_jobs','jobs')}
+        self.assertEqual(self.sku.clear_task_list(),1+2*len(task_history.INACTIVE_STATUSES)+105)
+        self.assertEqual(set(self.sku.task_state()['counts']),set(active))
+        self.assertEqual(self.sku.clear_task_list(),0)
+        self.assertEqual(browse(self.sku)['groups'],before['groups'])
+        with self.sku.connect() as c:
+            for table in rows:
+                self.assertEqual([tuple(r) for r in c.execute(f'SELECT id,status,result FROM {table} ORDER BY id')],rows[table])
+                self.assertTrue(all(r[0]==0 for r in c.execute(f"SELECT task_hidden FROM {table} WHERE status IN ('queued','running','retry','waiting_model','future_status')")))
+            c.execute("UPDATE parse_jobs SET status='queued' WHERE id='parse_jobs:failed'")
+        self.assertIn('read:parse_jobs:failed',{j['id'] for j in self.sku.task_state()['jobs']})
+        self.sku.close();self.sku=SkuService(self.store,self.providers,recognizer=self.recognize,autostart=False)
+        self.assertNotIn('ignored',self.sku.task_state()['counts'])
+        self.assertNotIn('cancelled',self.sku.task_state()['counts'])
+        self.assertEqual(hashlib.sha256(photo.read_bytes()).hexdigest(),digest)
+
+    def test_clear_task_list_during_running_ocr_allows_request_to_finish(self):
+        finished=self.add('finished.JPG');running=self.add('running.JPG');queued=self.add('queued.JPG')
+        self.sku.parse_capture(self.sid,finished)
+        entered=threading.Event();release=threading.Event();errors=[]
+        def recognize(provider,image):
+            entered.set()
+            if not release.wait(10):raise RuntimeError('测试识别请求未释放')
+            return reading()
+        def run():
+            try:self.sku.parse_capture(self.sid,running)
+            except Exception as exc:errors.append(exc)
+        with patch.object(self.sku,'recognizer',side_effect=recognize):
+            worker=threading.Thread(target=run);worker.start()
+            try:
+                self.assertTrue(entered.wait(5))
+                self.sku.enqueue_parses(self.sid,[queued])
+                self.assertEqual(self.sku.clear_task_list(),1)
+                self.assertEqual(self.sku.task_state()['counts'],{'queued':1,'running':1})
+            finally:release.set();worker.join(10)
+        self.assertFalse(worker.is_alive());self.assertFalse(errors,errors)
+        self.assertEqual(self.sku.task_state()['counts'],{'completed':1,'queued':1})
+        self.sku.tick()
+        self.assertEqual(self.sku.task_state()['counts'],{'completed':2})
+
+    def test_ocr_clear_list_header_http_and_reload(self):
+        import server
+        cid=self.add('clear-list.JPG')
+        with self.sku.connect() as c:
+            for status in ('ignored','cancelled','failed','completed','queued','running'):
+                c.execute('INSERT INTO parse_jobs(id,session_id,capture_id,status,created) VALUES (?,?,?,?,1)',(status,self.sid,cid,status))
+        aid=self.archive.ensure(self.sid,cid);self.analysis.create_batch([aid],self.schema['id'],1)
+        with self.analysis.connect() as c:c.execute("UPDATE jobs SET status='failed'")
+        http=ThreadingHTTPServer(('127.0.0.1',0),server.Handler);http.daemon_threads=True
+        values={'STORE':self.store,'DATA':self.store.data,'MODELS':self.providers,'ARCHIVE':self.archive,'ANALYSIS':self.analysis,'SKU':self.sku,'WATCH':None,'MOUSE':None,'RAWLINK':None,'FILESEARCH':None}
+        patches=[patch.object(server,k,v) for k,v in values.items()]
+        for p in patches:p.start()
+        threading.Thread(target=http.serve_forever,daemon=True).start()
+        try:
+            with sync_playwright() as pw:
+                browser=pw.chromium.launch(executable_path='C:/Program Files/Google/Chrome/Application/chrome.exe',headless=True)
+                page=browser.new_page(viewport={'width':1500,'height':1000});errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
+                page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='domcontentloaded');page.locator('#asset-analysis-open').click()
+                page.locator('#parsing-kind').select_option('ocr')
+                button=page.locator('#parsing-clear-list')
+                page.wait_for_function('()=>!document.getElementById("parsing-clear-list").disabled')
+                self.assertEqual(page.locator('#metadata-tasks-card>header #parsing-clear-list').count(),1)
+                for theme in ('dark','light','pure-white','hardcore'):
+                    page.evaluate('(t)=>FramekeepTheme.set(t)',theme)
+                    for width in (1500,375,320):
+                        page.set_viewport_size({'width':width,'height':1000})
+                        self.assertTrue(button.is_visible())
+                        self.assertFalse(page.evaluate('document.documentElement.scrollWidth>innerWidth'))
+                        self.assertGreater(button.bounding_box()['x'],page.locator('#task-list-title').bounding_box()['x'])
+                page.evaluate('FramekeepTheme.set("dark")');page.set_viewport_size({'width':1500,'height':1000})
+                page.route('**/api/parsing/clear-list',lambda route:route.fulfill(status=500,json={'error':'模拟清理失败'}))
+                button.click();page.wait_for_function('()=>document.getElementById("analysis-message").textContent.includes("模拟清理失败")')
+                self.assertEqual(page.locator('#analysis-jobs tbody tr').count(),6)
+                self.assertFalse(button.is_disabled());page.unroute('**/api/parsing/clear-list')
+                out=ROOT/'build/parsing-clear-list';out.mkdir(parents=True,exist_ok=True)
+                page.screenshot(path=str(out/'before.png'))
+                with page.expect_response('**/api/parsing/clear-list') as response:button.click()
+                self.assertEqual(response.value.status,200)
+                page.wait_for_function('()=>document.querySelectorAll("#analysis-jobs tbody tr").length===2')
+                self.assertTrue(button.is_disabled())
+                self.assertEqual(self.sku.task_state()['counts'],{'queued':1,'running':1})
+                self.assertEqual(self.analysis.state()['counts'],{'failed':1})
+                page.screenshot(path=str(out/'after.png'))
+                page.reload(wait_until='domcontentloaded');page.locator('#asset-analysis-open').click();page.locator('#parsing-kind').select_option('ocr')
+                page.wait_for_function('()=>document.querySelectorAll("#analysis-jobs tbody tr").length===2')
+                self.assertTrue(button.is_disabled())
+                with self.sku.connect() as c:self.assertEqual(c.execute('SELECT count(*) FROM parse_jobs').fetchone()[0],6)
+                self.assertFalse(errors,errors);browser.close()
+        finally:
+            http.shutdown();http.server_close()
+            for p in reversed(patches):p.stop()
+
+    def test_clear_completed_preserves_evidence_and_reactivated_tasks(self):
+        from sku_library import browse
+        cid=self.add('label.JPG');self.sku.parse_capture(self.sid,cid)
+        before=browse(self.sku);self.assertGreater(before['total'],0)
+        with self.sku.connect() as c:
+            for index in range(105):
+                c.execute("INSERT INTO parse_jobs(id,session_id,capture_id,status,created,result) VALUES (?,?,?,'completed',?,'{}')",(f'finished-{index}',self.sid,cid,index))
+            for status in ('queued','running','failed','review','cancelled'):
+                c.execute('INSERT INTO parse_jobs(id,session_id,capture_id,status,created) VALUES (?,?,?,?,1)',(status,self.sid,cid,status))
+            c.execute("INSERT INTO jobs(id,session_id,capture_id,status,created,result) VALUES ('matched',?,?,'matched',1,'{}')",(self.sid,cid))
+        self.assertEqual(self.sku.clear_completed_tasks(),107)
+        self.assertEqual(set(self.sku.task_state()['counts']),{'queued','running','failed','review','cancelled'})
+        self.assertEqual(browse(self.sku)['groups'],before['groups'])
+        with self.sku.connect() as c:
+            self.assertEqual(c.execute('SELECT count(*) FROM parse_jobs').fetchone()[0],111)
+            c.execute("UPDATE parse_jobs SET status='queued' WHERE id='finished-0'")
+        self.assertTrue(any(job['id']=='read:finished-0' for job in self.sku.task_state()['jobs']))
+        self.sku.close();self.sku=SkuService(self.store,self.providers,recognizer=self.recognize,autostart=False)
+        self.assertNotIn('completed',self.sku.task_state()['counts'])
+        self.assertEqual(self.sku.clear_completed_tasks(),0)
+        aid=self.archive.ensure(self.sid,cid)
+        self.analysis.create_batch([aid],self.schema['id'],1)
+        with patch('asset_analysis.vision',return_value='{"color":"blue"}'):self.analysis.tick()
+        self.assertEqual(self.analysis.state()['counts'],{'completed':1})
+        self.assertEqual(self.analysis.clear_completed_tasks(),1)
+        self.assertEqual(self.analysis.state()['jobs'],[])
+        with self.analysis.connect() as c:
+            self.assertEqual(c.execute('SELECT count(*) FROM results').fetchone()[0],1)
+            c.execute("UPDATE jobs SET status='stale'")
+        self.assertEqual(self.analysis.state()['counts'],{'stale':1})
+
     def setUp(self):
         self.temp=tempfile.TemporaryDirectory();self.base=Path(self.temp.name);self.photos=self.base/'photos';self.photos.mkdir()
         self.store=Store(self.base/'data',ROOT);self.sid=self.store.ensure_live_session(self.photos);self.store.activate(self.sid)
@@ -155,6 +293,14 @@ class ParsingTaskTests(unittest.TestCase):
                     out=ROOT/'build/parsing-tasks';out.mkdir(exist_ok=True);page.screenshot(path=str(out/f'{theme}.png'))
                 page.reload(wait_until='domcontentloaded');page.locator('#asset-analysis-open').click()
                 page.wait_for_function('()=>document.getElementById("parsing-ocr-mode").value==="manual" && document.getElementById("parsing-multimodal-mode").value==="auto"')
+                page.wait_for_function('()=>!document.getElementById("parsing-clear-completed").disabled')
+                with self.sku.connect() as c:results=c.execute('SELECT count(*) FROM parse_jobs').fetchone()[0]
+                with page.expect_response('**/api/parsing/clear-completed'):
+                    page.locator('#parsing-clear-completed').click()
+                page.wait_for_function('()=>document.getElementById("analysis-completed").textContent==="0"')
+                with self.sku.connect() as c:self.assertEqual(c.execute('SELECT count(*) FROM parse_jobs').fetchone()[0],results)
+                page.reload(wait_until='domcontentloaded');page.locator('#asset-analysis-open').click()
+                page.wait_for_function('()=>document.getElementById("analysis-completed").textContent==="0"')
                 self.assertEqual(self.store.session(self.sid)['state'].get('overrides',{}),{});self.assertFalse(errors,errors)
                 browser.close()
         finally:

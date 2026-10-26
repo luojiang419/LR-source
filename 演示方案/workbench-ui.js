@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.querySelector('.right-panel').setAttribute('aria-label','现场评级和照片信息');
   const folderFooter=document.createElement('div');folderFooter.className='folder-sidebar-footer';
   folderFooter.setAttribute('role','group');folderFooter.setAttribute('aria-label','文件夹与监控操作');
-  folderFooter.append($('open-folder'),$('folder-watch'));
+  folderFooter.append($('open-folder'),$('canon-tether-open'),$('folder-watch'));
   $('add-folder-row').remove();
   document.querySelector('.left-panel').append(folderFooter);
   // 底部保留页面导航，选片筛选并入顶栏以腾出图片区高度。
@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     const label=document.createElement('span');label.className='workspace-tab-label';label.textContent=tab.textContent;
     tab.innerHTML=`<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${icons[tab.id]||''}</svg>`;tab.append(label);
   }
-  bottom.append(tabs);const workbench=document.querySelector('.workbench');workbench.classList.add('workspace-with-bottom-tabs');workbench.append(bottom);
+  bottom.append(tabs);const workbench=document.querySelector('.workbench');workbench.classList.add('workspace-with-bottom-tabs');workbench.append(bottom);window.FramekeepTaskStatus?.mount();
   const navigation=document.querySelector('.workspace-navigation'),tools=$('selection-tools');
   const toolContent=document.createElement('div');toolContent.className='workspace-tool-content';
   toolContent.append(...[...tools.children].filter(node=>node.tagName!=='SUMMARY'));
@@ -72,8 +72,9 @@ document.addEventListener('DOMContentLoaded',()=>{
   parsing.innerHTML='<span id="capture-ocr-status">OCR 未解析</span><span id="capture-sku-result">SKU:—</span><span id="capture-multimodal-status" data-status="unparsed"><i class="parsing-status-light" aria-hidden="true"></i><span>多模态 未解析</span></span>';
   $('loupe-name').after(parsing);
   const parsed=new Set(['completed','matched','confirmed']);
-  function parsingLabel(status){return parsed.has(status)?'已解析':({queued:'排队中',retry:'等待重试',waiting_model:'等待模型',running:'解析中',review:'待核对',unmatched:'未匹配',failed:'解析失败',cancelled:'已取消',ignored:'已忽略',stale:'已失效',loading:'读取中',unknown:'状态不可用'}[status]||'未解析')}
+  function parsingLabel(status){return parsed.has(status)?'已解析':({queued:'排队中',retry:'等待重试',waiting_model:'等待模型',paused:'已暂停',manual:'等待手动开始',running:'解析中',review:'待核对',unmatched:'未匹配',failed:'解析失败',cancelled:'已取消',ignored:'已忽略',stale:'已失效',loading:'读取中',unknown:'状态不可用'}[status]||'未解析')}
   function paintParsing(data){
+    document.dispatchEvent(new CustomEvent('framekeep:capture-status',{detail:{session_id:parsingSession,capture_id:parsingCapture,...data}}));
     const ocr=data.ocr||{},multi=data.multimodal||{};
     $('capture-ocr-status').textContent='OCR '+parsingLabel(ocr.status);
     $('capture-ocr-status').title=ocr.reason||'';
@@ -83,12 +84,12 @@ document.addEventListener('DOMContentLoaded',()=>{
     const indicator=$('capture-multimodal-status');indicator.dataset.status=parsed.has(multi.status)?'completed':multi.status||'unparsed';
     indicator.querySelector('span').textContent='多模态 '+parsingLabel(multi.status);indicator.title=multi.reason||'多模态解析状态';
   }
-  let parsingKey='',parsingRequest=null,parsingSequence=0;
+  let parsingKey='',parsingRequest=null,parsingSequence=0,parsingSession='',parsingCapture='';
   async function syncParsing(force=false){
-    const target=Framekeep.remoteTarget(),key=target.photoId&&!target.paused?JSON.stringify([target.sessionId,target.photoId]):'';
-    if(document.hidden||page.classList.contains('hidden')||!parsing.getClientRects().length){parsingRequest?.abort();parsingRequest=null;parsingKey='';return}
+    const target=Framekeep.remoteTarget(),key=target.photoId?JSON.stringify([target.sessionId,target.photoId]):'';
+    if(document.hidden||page.classList.contains('hidden')){parsingRequest?.abort();parsingRequest=null;parsingKey='';return}
     if(key===parsingKey&&(!force||parsingRequest))return;
-    const changed=key!==parsingKey;parsingKey=key;parsingRequest?.abort();const sequence=++parsingSequence;
+    const changed=key!==parsingKey;parsingKey=key;parsingSession=target.sessionId;parsingCapture=target.photoId;parsingRequest?.abort();const sequence=++parsingSequence;
     if(!key){paintParsing({});return}
     if(changed)paintParsing({ocr:{status:'loading'},multimodal:{status:'loading'}});
     const controller=new AbortController();parsingRequest=controller;
@@ -100,6 +101,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   }
   document.addEventListener('framekeep:selection',()=>syncParsing());
   document.addEventListener('framekeep:workspace',()=>syncParsing());
+  document.addEventListener('framekeep:ocr-refresh',()=>{parsingRequest?.abort();parsingRequest=null;syncParsing(true)});
   document.addEventListener('visibilitychange',()=>syncParsing(true));
   const parsingTimer=setInterval(()=>syncParsing(true),2000);
   window.addEventListener('pagehide',()=>{clearInterval(parsingTimer);parsingRequest?.abort()},{once:true});
@@ -111,6 +113,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   viewButton.setAttribute('aria-haspopup','menu');viewButton.setAttribute('aria-expanded','false');viewButton.setAttribute('aria-controls','view-options');
   const viewPanel=document.createElement('div');viewPanel.className='view-menu-panel';viewPanel.hidden=true;
   layoutControls.id='view-options';layoutControls.setAttribute('role','menu');layoutControls.setAttribute('aria-label','视图显示选项');
+  const splitButton=document.createElement('button');splitButton.id='layout-split';splitButton.textContent='分屏拍摄';splitButton.setAttribute('aria-pressed','false');layoutControls.insertBefore(splitButton,$('layout-focus'));
   const viewItems=[...layoutControls.querySelectorAll('button')];
   const viewLabels={'layout-header':'顶部工具栏','layout-left':'左侧面板','layout-right':'右侧面板','layout-tools':'选片工具','layout-focus':'专注预览'};
   for(const item of viewItems){item.textContent=viewLabels[item.id]||item.textContent;item.setAttribute('aria-label',item.textContent);item.setAttribute('role','menuitemcheckbox');item.tabIndex=-1;}

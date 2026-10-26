@@ -11,7 +11,7 @@ use std::{
         Arc, Mutex,
     },
     thread,
-    time::{Duration, Instant},
+    time::{Duration, Instant, SystemTime, UNIX_EPOCH},
 };
 use tauri::{Manager, WebviewUrl, WebviewWindow, WindowEvent};
 use tauri_plugin_dialog::{DialogExt, MessageDialogButtons};
@@ -67,17 +67,45 @@ fn data_directory(app_root: &Path, explicit: Option<PathBuf>) -> PathBuf {
             }
         }
     }
-    if let Some(project) = app_root.parent().and_then(Path::parent) {
-        if project.join("启动末帧.ps1").is_file()
-            && project.join(".framekeep/framekeep.sqlite3").is_file()
-        {
-            return project.join(".framekeep");
-        }
-    }
-    app_root.join(".framekeep")
+    let legacy=app_root.join(".framekeep");
+    if legacy.is_dir() && !app_root.join("data").is_dir() { return legacy; }
+    app_root.join("data")
 }
 
 impl Engine {
+    fn deliver_photos(&self) {
+        let inbox=self.data.join("canon-link/inbox");
+        while !self.closing.load(Ordering::SeqCst) {
+            let mut pending=fs::read_dir(&inbox).ok().into_iter().flatten().filter_map(Result::ok)
+                .map(|item|item.path()).filter(|path|path.extension().and_then(|s|s.to_str())==Some("json")).collect::<Vec<_>>();
+            pending.sort();
+            for path in pending {
+                if self.closing.load(Ordering::SeqCst) {return;}
+                if let Ok(payload)=fs::read_to_string(&path) {
+                    match self.post_json("/api/desktop/canon",&payload) {
+                        Ok(result)=>{
+                            if result.get("error").is_some() {let _=fs::rename(&path,path.with_extension("rejected"));}
+                            else {let _=fs::remove_file(&path);}
+                        }
+                        Err(_)=>break,
+                    }
+                }
+            }
+            thread::sleep(Duration::from_millis(80));
+        }
+    }
+
+    fn post_json(&self,path:&str,body:&str)->Result<serde_json::Value,String> {
+        let mut stream=TcpStream::connect_timeout(&SocketAddr::from(([127,0,0,1],self.port)),Duration::from_millis(400)).map_err(|e|e.to_string())?;
+        stream.set_read_timeout(Some(Duration::from_secs(8))).map_err(|e|e.to_string())?;
+        stream.set_write_timeout(Some(Duration::from_secs(2))).map_err(|e|e.to_string())?;
+        let request=format!("POST {path} HTTP/1.0\r\nHost: 127.0.0.1:{}\r\nX-Framekeep-Desktop: {}\r\nContent-Type: application/json\r\nContent-Length: {}\r\n\r\n{}",self.port,self.token,body.len(),body);
+        stream.write_all(request.as_bytes()).map_err(|e|e.to_string())?;
+        let mut response=Vec::new();stream.read_to_end(&mut response).map_err(|e|e.to_string())?;
+        let start=response.windows(4).position(|w|w==b"\r\n\r\n").ok_or("照片接入服务未返回响应")?+4;
+        serde_json::from_slice(&response[start..]).map_err(|e|e.to_string())
+    }
+
     fn request(&self, path: &str, shutdown: bool) -> Result<serde_json::Value, String> {
         let addr = SocketAddr::from(([127, 0, 0, 1], self.port));
         let mut stream = TcpStream::connect_timeout(&addr, Duration::from_millis(400))
@@ -144,6 +172,7 @@ impl Engine {
             .env("FRAMEKEEP_APP_ROOT", &self.app_root)
             .env("FRAMEKEEP_DESKTOP_TOKEN", &self.token)
             .env("FRAMEKEEP_DESKTOP_PID", std::process::id().to_string())
+            .env("FRAMEKEEP_DESKTOP_EXE",std::env::current_exe().map_err(|e|e.to_string())?)
             .stdin(Stdio::null())
             .stdout(log.try_clone().map_err(|e| e.to_string())?)
             .stderr(log);
@@ -238,13 +267,32 @@ async fn choose_folders(window: WebviewWindow) -> Result<Vec<String>, String> {
 }
 
 #[tauri::command]
+async fn choose_cache_folder(window: WebviewWindow) -> Result<Option<String>, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        window.dialog().file().set_title("选择缓存或备份文件夹").set_parent(&window)
+            .blocking_pick_folder()
+            .map(|p| p.into_path().map(|p| p.to_string_lossy().into_owned()).map_err(|e| e.to_string())).transpose()
+    }).await.map_err(|e| e.to_string())?
+}
+
+#[tauri::command]
+async fn choose_cache_backup(window: WebviewWindow) -> Result<Option<String>, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        window.dialog().file().set_title("导入图片缓存备份").set_parent(&window)
+            .add_filter("末帧缓存备份", &["zip"]).blocking_pick_file()
+            .map(|p| p.into_path().map(|p| p.to_string_lossy().into_owned()).map_err(|e| e.to_string())).transpose()
+    }).await.map_err(|e| e.to_string())?
+}
+
+#[tauri::command]
 async fn save_manifest(
     window: WebviewWindow,
     suggested_name: String,
     data: serde_json::Value,
 ) -> Result<bool, String> {
-    if data["schema"] != "framekeep.selection" || data["demo"] != false {
-        return Err("只能保存正式选片清单。".into());
+    let metadata = data["schema"] == "framekeep.sku-metadata" && data["version"] == 1;
+    if !metadata && (data["schema"] != "framekeep.selection" || data["demo"] != false) {
+        return Err("只能保存正式选片清单或 SKU 元数据备份。".into());
     }
     tauri::async_runtime::spawn_blocking(move || {
         let name = Path::new(&suggested_name)
@@ -254,10 +302,10 @@ async fn save_manifest(
         let Some(path) = window
             .dialog()
             .file()
-            .set_title("保存选片结果")
+            .set_title(if metadata { "导出 SKU 元数据" } else { "保存选片结果" })
             .set_parent(&window)
             .set_file_name(name)
-            .add_filter("选片清单", &["json"])
+            .add_filter(if metadata { "SKU 元数据" } else { "选片清单" }, &["json"])
             .blocking_save_file()
         else {
             return Ok(false);
@@ -304,7 +352,7 @@ async fn finish_close(
             if health["busy"].as_bool().unwrap_or(false)
                 && !window
                     .dialog()
-                    .message("仍有索引或LR同步任务。关闭程序将中断未完成的任务，是否退出？")
+                    .message("仍有索引、缓存管理或 LR 同步任务。关闭程序将中断未完成的任务，是否退出？")
                     .title("退出末帧选片")
                     .buttons(MessageDialogButtons::OkCancel)
                     .blocking_show()
@@ -318,6 +366,29 @@ async fn finish_close(
     })
     .await
     .map_err(|e| e.to_string())?
+}
+
+fn photo_arguments(args:&[String],cwd:&Path)->Vec<String> {
+    args.iter().skip(1).filter_map(|value|{
+        let path=Path::new(value);
+        let extension=path.extension()?.to_str()?.to_ascii_lowercase();
+        if !["jpg","jpeg","tif","tiff","png","heic","heif","cr3","cr2","nef","nrw","arw","srf","sr2","raf","rw2","orf","dng","pef","3fr","fff","rwl","iiq","srw"].contains(&extension.as_str()) {return None;}
+        Some(if path.is_absolute(){path.to_path_buf()}else{cwd.join(path)}.to_string_lossy().to_string())
+    }).take(64).collect()
+}
+
+fn queue_photos(data:&Path,args:&[String],cwd:&Path)->bool {
+    let paths=photo_arguments(args,cwd);if paths.is_empty(){return false;}
+    let inbox=data.join("canon-link/inbox");
+    let stamp=SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_nanos();
+    let target=inbox.join(format!("{:032}-{}.json",stamp,uuid::Uuid::new_v4()));
+    let temporary=target.with_extension("tmp");
+    if fs::create_dir_all(&inbox).is_ok() {
+        if let Ok(payload)=serde_json::to_vec(&serde_json::json!({"paths":paths})) {
+            if fs::write(&temporary,payload).is_ok(){let _=fs::rename(&temporary,&target);}
+        }
+    }
+    true
 }
 
 fn main() {
@@ -334,6 +405,9 @@ fn main() {
         .ok()
         .and_then(|s| s.parse().ok())
         .unwrap_or(8769);
+    let initial_args=std::env::args().collect::<Vec<_>>();
+    let initial_cwd=std::env::current_dir().unwrap_or_default();
+    let inbox_data=data.clone();
     let engine = Arc::new(Engine {
         child: Mutex::new(None),
         port,
@@ -346,10 +420,14 @@ fn main() {
     });
     let cleanup = engine.clone();
     let app=tauri::Builder::default()
-        .plugin(tauri_plugin_single_instance::init(|app,_,_|{if let Some(w)=app.get_webview_window("main"){let _=w.unminimize();let _=w.show();let _=w.set_focus();}}))
+        .plugin(tauri_plugin_single_instance::init(move |app,args,cwd|{
+            if queue_photos(&inbox_data,&args,Path::new(&cwd)){return;}
+            if let Some(w)=app.get_webview_window("main"){let _=w.unminimize();let _=w.show();let _=w.set_focus();}
+        }))
         .plugin(tauri_plugin_dialog::init()).manage(engine.clone())
-        .invoke_handler(tauri::generate_handler![choose_folders,save_manifest,save_sku_workbook,finish_close,desktop_ready,close_for_update])
+        .invoke_handler(tauri::generate_handler![choose_folders,choose_cache_folder,choose_cache_backup,save_manifest,save_sku_workbook,finish_close,desktop_ready,close_for_update])
         .setup(move |app| {
+            queue_photos(&engine.data,&initial_args,&initial_cwd);
             let window=tauri::WebviewWindowBuilder::new(app,"main",WebviewUrl::App("index.html".into()))
                 .title("末帧选片").inner_size(1440.,900.).min_inner_size(1000.,680.).center()
                 // 让资源管理器文件拖放进入前端的HTML5事件，避免WebView2被原生处理器截获。
@@ -367,7 +445,10 @@ fn main() {
             let handle=app.handle().clone();
             thread::spawn(move || {
                 match engine.start() {
-                    Ok(())=>{let _=window.navigate(format!("http://127.0.0.1:{}/",engine.port).parse().unwrap());}
+                    Ok(())=>{
+                        let delivery=engine.clone();thread::spawn(move||delivery.deliver_photos());
+                        let _=window.navigate(format!("http://127.0.0.1:{}/",engine.port).parse().unwrap());
+                    }
                     Err(error)=>{handle.dialog().message(error).title("无法打开末帧选片").blocking_show();handle.exit(1);}
                 }
             });
@@ -384,6 +465,26 @@ fn main() {
 mod tests {
     use super::*;
     #[test]
+    fn canon_arguments_keep_unicode_paths_and_ignore_non_images() {
+        let cwd=Path::new("C:/拍摄 目录");
+        let args=vec!["末帧.exe".into(),"第一张.JPG".into(),"--unknown".into(),"data.txt".into(),"C:/RAW/001.CR3".into()];
+        let paths=photo_arguments(&args,cwd);
+        assert_eq!(paths.len(),2);assert_eq!(PathBuf::from(&paths[0]),cwd.join("第一张.JPG"));
+        assert_eq!(PathBuf::from(&paths[1]),PathBuf::from("C:/RAW/001.CR3"));
+    }
+    #[test]
+    fn canon_inbox_is_persistent_and_limits_notifications() {
+        let data=std::env::temp_dir().join(format!("canon-inbox-{}",uuid::Uuid::new_v4()));
+        let args=vec!["app.exe".into(),"photo.JPG".into()];
+        assert!(queue_photos(&data,&args,Path::new("C:/shots")));
+        let files=fs::read_dir(data.join("canon-link/inbox")).unwrap().map(Result::unwrap).collect::<Vec<_>>();
+        assert_eq!(files.len(),1);
+        let payload:serde_json::Value=serde_json::from_slice(&fs::read(files[0].path()).unwrap()).unwrap();
+        assert_eq!(PathBuf::from(payload["paths"][0].as_str().unwrap()),Path::new("C:/shots").join("photo.JPG"));
+        fs::remove_file(files[0].path()).unwrap();fs::remove_dir(data.join("canon-link/inbox")).unwrap();
+        fs::remove_dir(data.join("canon-link")).unwrap();fs::remove_dir(data).unwrap();
+    }
+    #[test]
     fn explicit_data_wins() {
         assert_eq!(
             data_directory(Path::new("C:/portable"), Some(PathBuf::from("D:/ratings"))),
@@ -394,7 +495,7 @@ mod tests {
     fn portable_data_stays_beside_program() {
         assert_eq!(
             data_directory(Path::new("C:/portable"), None),
-            PathBuf::from("C:/portable/.framekeep")
+            PathBuf::from("C:/portable/data")
         );
     }
     #[test]

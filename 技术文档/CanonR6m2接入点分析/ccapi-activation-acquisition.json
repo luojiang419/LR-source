@@ -1,0 +1,28 @@
+{
+  "date": "2026-10-22",
+  "source_page": "https://iocsnapshot.com/compatible-cameras/canon-camera/",
+  "download_url": "https://iocsnapshot.com/CCAPI_Activation_Tool_Win_v1.3.0e.zip",
+  "source_kind": "third-party camera application vendor; not Canon direct download",
+  "archive": {
+    "bytes": 308169,
+    "sha256": "4e991b7ef63b32ab13f2b9e50b71e56c0bc7e70ff5ad5d0cb3a0510f5cf331b1",
+    "crc_check": "passed"
+  },
+  "installation_path": "G:\\app\\LR\\tools\\canon-ccapi\\activation-win-v1.3.0e",
+  "binary_execution": false,
+  "camera_activation": false,
+  "authenticode": "EXE and both DLLs are NotSigned; original publisher authenticity remains unverified",
+  "runtime": {
+    "required": ".NET Framework 4.5.2 x86",
+    "installed": ".NET Framework 4.8.09221",
+    "installed_release": 533509
+  },
+  "rea_summary_evidence": "ev_7dc680531e6a022ea4473cbb7154a7c85007685c657e462f6febef07510d0135",
+  "rea_parent_evidence": "ev_1aeecc5e76d3caf754f5e8880c504531449ce5cad8f225265f23732b0299272e",
+  "limits": [
+    "Static metadata and dependency inspection do not establish safe execution or R6 Mark II compatibility.",
+    "Bundle label v1.3.0e differs from EXE file version 1.0.0.0.",
+    "Included EDSDK 13.9.11.0 predates R6 Mark II; actual compatibility is untested.",
+    "Latest EDSDK 13.20.11 read-only probe enumerated zero cameras."
+  ]
+}

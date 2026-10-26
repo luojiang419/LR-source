@@ -16,4 +16,9 @@ def main():
     target=Path(__file__).resolve().parents[1]/'.runtime/exiftool';target.mkdir(parents=True,exist_ok=True)
     with tarfile.open(fileobj=io.BytesIO(payload),mode='r:gz') as archive:archive.extractall(target,filter='data')
     print('ExifTool 13.59 运行时已安装，SHA-512 校验通过。')
+    from setup_ffmpeg import install
+    install()
+    from setup_gpu import install as install_gpu
+    from setup_gpu_video import install as install_gpu_video
+    install_gpu();install_gpu_video()
 if __name__=='__main__':main()

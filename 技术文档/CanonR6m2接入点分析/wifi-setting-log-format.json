@@ -1,0 +1,9 @@
+{
+  "kind": "ordinary PE byte inspection, correlated with REA wrapper excerpt",
+  "sdk_sha256": "1c23a9984bd671c4bab8470430e1ab9269de00f3e3405cc9213249e3f7fb454e",
+  "rva": "0x11e200",
+  "file_offset": "0x11d400",
+  "encoding": "ascii",
+  "text": "SDK   EdsSendWifiSetting (inSsid=%s, inPassword=%s, inAuthType=%d, inEncryptType=%d, inEncryptKeyCharType=%d)\n",
+  "limitation": "log-format argument names only; not a validated API prototype or observed camera behavior"
+}

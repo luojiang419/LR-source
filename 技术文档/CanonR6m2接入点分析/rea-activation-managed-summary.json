@@ -1,0 +1,216 @@
+{
+  "evidence_id": "ev_7dc680531e6a022ea4473cbb7154a7c85007685c657e462f6febef07510d0135",
+  "subject": {
+    "name": "CCAPI Activation Tool.exe",
+    "digest": {
+      "sha256": "4bb8a57e0c55ecc8f75f906162df1034b9b5e99039bd786fe8e29940b393a64d"
+    },
+    "local_path": "G:\\app\\LR\\tools\\canon-ccapi\\activation-win-v1.3.0e\\CCAPI Activation Tool.exe",
+    "format": "pe",
+    "architecture": "x86"
+  },
+  "provider": {
+    "id": "rea-analysis-view",
+    "name": "REA analysis view projection",
+    "version": "1"
+  },
+  "analysis_profile": null,
+  "predicate_type": "rea.analysis-view",
+  "operation": "inspect_analysis_view",
+  "parameters": {
+    "parent_evidence_id": "ev_1aeecc5e76d3caf754f5e8880c504531449ce5cad8f225265f23732b0299272e",
+    "view": {
+      "kind": "summary"
+    }
+  },
+  "raw_result": null,
+  "normalized_result": {
+    "kind": "summary",
+    "view": {
+      "kind": "summary"
+    },
+    "parent_evidence_id": "ev_1aeecc5e76d3caf754f5e8880c504531449ce5cad8f225265f23732b0299272e",
+    "parent_operation": "inspect_managed_artifact",
+    "parent_digest": "1aeecc5e76d3caf754f5e8880c504531449ce5cad8f225265f23732b0299272e",
+    "view_digest": "562a9f5ce4b9258b0af7bb2af5abf8b2cd1b36d33e19a2f7e16efce386778783",
+    "artifact": {
+      "path": "G:\\app\\LR\\tools\\canon-ccapi\\activation-win-v1.3.0e\\CCAPI Activation Tool.exe",
+      "sha256": "4bb8a57e0c55ecc8f75f906162df1034b9b5e99039bd786fe8e29940b393a64d"
+    },
+    "coverage": {
+      "status": "complete-within-view",
+      "examined": 93,
+      "total": 93,
+      "next_offset": null,
+      "exhausted": true
+    },
+    "limitations": [
+      "Static inspection did not load the assembly, resolve dependencies through a CLR, decompile C#, or execute target code."
+    ],
+    "unknowns": [
+      "Collection counts and pages cover producer-returned rows; metadata completeness remains the original metadata status and coverage, not an absence claim about unreturned rows.",
+      "Metadata tokens are build-local coordinates bound to the recorded artifact SHA-256 and module MVID; this view does not load or execute the assembly."
+    ],
+    "summary": {
+      "artifact": {
+        "path": "G:\\app\\LR\\tools\\canon-ccapi\\activation-win-v1.3.0e\\CCAPI Activation Tool.exe",
+        "sha256": "4bb8a57e0c55ecc8f75f906162df1034b9b5e99039bd786fe8e29940b393a64d",
+        "byte_length": 55296,
+        "format": "pe"
+      },
+      "pe": {
+        "machine": 332,
+        "machine_hex": "0x014c",
+        "architecture": "x86",
+        "optional_header": "pe32",
+        "section_count": 3,
+        "characteristics": 258,
+        "cli": {
+          "header_offset": 520,
+          "header_size": 72,
+          "runtime_version": "2.5",
+          "flags": 3,
+          "flag_names": [
+            "il-only",
+            "32-bit-required"
+          ],
+          "entry_point": {
+            "kind": "metadata-token",
+            "value": "0x06000020"
+          },
+          "metadata_rva": 14568,
+          "metadata_size": 41300,
+          "resources_rva": 55868,
+          "resources_size": 3760,
+          "strong_name_rva": 0,
+          "strong_name_size": 0,
+          "managed_native_header_rva": 0,
+          "managed_native_header_size": 0,
+          "ready_to_run_signature": false
+        }
+      },
+      "classification": {
+        "status": "managed",
+        "container": "pe",
+        "runtime_family": "dotnet-framework",
+        "implementation": "cil",
+        "managed_architecture": "x86",
+        "evidence": [
+          {
+            "code": "cli-header-observed",
+            "detail": "A file-backed PE CLI header and metadata root were admitted.",
+            "file_offset": 520
+          },
+          {
+            "code": "target-framework-observed",
+            "detail": "An assembly-level TargetFrameworkAttribute names .NET Framework.",
+            "file_offset": 21128
+          },
+          {
+            "code": "managed-architecture-derived",
+            "detail": "Managed architecture x86 is derived from PE machine and CLI flags.",
+            "file_offset": 536
+          }
+        ]
+      },
+      "metadata": {
+        "status": "complete",
+        "version": "v4.0.30319",
+        "stream_names": [
+          "#Blob",
+          "#GUID",
+          "#Strings",
+          "#US",
+          "#~"
+        ],
+        "table_row_counts": {
+          "Module": 1,
+          "TypeRef": 116,
+          "TypeDef": 55,
+          "Field": 687,
+          "MethodDef": 180,
+          "Param": 267,
+          "InterfaceImpl": 1,
+          "MemberRef": 156,
+          "Constant": 558,
+          "CustomAttribute": 84,
+          "FieldMarshal": 7,
+          "DeclSecurity": 2,
+          "ClassLayout": 1,
+          "StandAloneSig": 20,
+          "PropertyMap": 6,
+          "Property": 35,
+          "MethodSemantics": 51,
+          "MethodImpl": 2,
+          "ModuleRef": 2,
+          "ImplMap": 55,
+          "Assembly": 1,
+          "AssemblyRef": 5,
+          "ManifestResource": 4,
+          "NestedClass": 41,
+          "MethodSpec": 2
+        }
+      },
+      "module": {
+        "name": "CCAPI Activation Tool.exe",
+        "generation": 0,
+        "mvid": "6791f53b-de99-48a9-9a64-8f2c5a57ef62",
+        "enc_id": null,
+        "enc_base_id": null,
+        "token": "0x00000001",
+        "row_offset": 7120
+      },
+      "assembly": {
+        "name": "CCAPI Activation Tool",
+        "version": "1.0.0.0",
+        "culture": null,
+        "flags": 0,
+        "hash_algorithm": 32772,
+        "public_key": {
+          "kind": "none",
+          "byte_length": 0,
+          "sha256": null,
+          "token": null
+        },
+        "token": "0x20000001",
+        "row_offset": 22716
+      },
+      "target_frameworks": [
+        ".NETFramework,Version=v4.5.2"
+      ],
+      "coverage": {
+        "state": "complete",
+        "issues": []
+      },
+      "limitations": [
+        "Static inspection did not load the assembly, resolve dependencies through a CLR, decompile C#, or execute target code."
+      ],
+      "reported_counts": {
+        "references": 5,
+        "resources": 4,
+        "attributes": 84
+      },
+      "identity_scope": {
+        "token_identity": "build-local",
+        "requires_artifact_sha256": "4bb8a57e0c55ecc8f75f906162df1034b9b5e99039bd786fe8e29940b393a64d",
+        "requires_mvid": "6791f53b-de99-48a9-9a64-8f2c5a57ef62"
+      }
+    }
+  },
+  "confidence": "derived",
+  "authority": "shipped-artifact",
+  "environment": null,
+  "limitations": [
+    "Static inspection did not load the assembly, resolve dependencies through a CLR, decompile C#, or execute target code."
+  ],
+  "relationship_coverage": null,
+  "locations": [
+    {
+      "kind": "artifact-path",
+      "path": "G:\\app\\LR\\tools\\canon-ccapi\\activation-win-v1.3.0e\\CCAPI Activation Tool.exe"
+    }
+  ],
+  "evidence_links": [
+    "ev_1aeecc5e76d3caf754f5e8880c504531449ce5cad8f225265f23732b0299272e"
+  ]
+}

@@ -1,0 +1,104 @@
+{
+  "kind": "selected excerpt of REA Evidence; full record is retained locally",
+  "parent_evidence_id": "ev_7f51aa7aa437ce410f6c8e8a1244f596d794ac9a0ca172dc65ca1eb772cd3d84",
+  "source_record_path": "G:\\app\\LR\\.runtime\\canon-r6m2-analysis\\rea-sdk-disassembly.json",
+  "source_record_sha256": "220c032cbf0c75b497bfb21c4a3610773c68df5e6d042253334c329abdd94a83",
+  "subject": {
+    "name": "EDSDK.dll",
+    "digest": {
+      "sha256": "1c23a9984bd671c4bab8470430e1ab9269de00f3e3405cc9213249e3f7fb454e"
+    },
+    "local_path": "G:\\app\\LR\\EDSDK132011CD(13.20.11)\\Windows\\EDSDK_64\\Dll\\EDSDK.dll",
+    "format": "unknown",
+    "architecture": null
+  },
+  "operation": "inspect_with_objdump",
+  "parameters": {
+    "path": "G:\\app\\LR\\EDSDK132011CD(13.20.11)\\Windows\\EDSDK_64\\Dll\\EDSDK.dll",
+    "operation": "disassemble",
+    "follow_debug_links": false,
+    "provider_executable": "C:\\ProgramData\\mingw64\\mingw64\\bin\\objdump.EXE",
+    "command_arguments": [
+      "-d",
+      "G:\\app\\LR\\EDSDK132011CD(13.20.11)\\Windows\\EDSDK_64\\Dll\\EDSDK.dll"
+    ]
+  },
+  "source_completion": {
+    "exit_code": null,
+    "output_truncated": true,
+    "completion_status": "unknown",
+    "artifact_changed": false
+  },
+  "limitations": [
+    "The executable version and supported formats are reported as unknown because no reliable version probe was performed.",
+    "A non-zero process exit is preserved as an observed command result.",
+    "The provider command ended before completion could be confirmed; captured output is partial.",
+    "When both are available, pre-run and post-run digests detect artifact changes across the provider call but cannot prove the exact bytes consumed during the call."
+  ],
+  "selection": {
+    "export": "EdsSendWifiSetting",
+    "rva": "0x1e4f0",
+    "file_offset": "0x1d8f0",
+    "va_inclusive": [
+      "0x18001e4f0",
+      "0x18001e5be"
+    ]
+  },
+  "disassembly_lines": [
+    "   18001e4f0:\t48 8b c4             \tmov    %rsp,%rax",
+    "   18001e4f3:\t48 89 58 08          \tmov    %rbx,0x8(%rax)",
+    "   18001e4f7:\t48 89 68 10          \tmov    %rbp,0x10(%rax)",
+    "   18001e4fb:\t48 89 70 18          \tmov    %rsi,0x18(%rax)",
+    "   18001e4ff:\t48 89 78 20          \tmov    %rdi,0x20(%rax)",
+    "   18001e503:\t41 54                \tpush   %r12",
+    "   18001e505:\t41 56                \tpush   %r14",
+    "   18001e507:\t41 57                \tpush   %r15",
+    "   18001e509:\t48 83 ec 40          \tsub    $0x40,%rsp",
+    "   18001e50d:\t44 8b b4 24 88 00 00 \tmov    0x88(%rsp),%r14d",
+    "   18001e514:\t00 ",
+    "   18001e515:\t41 8b f9             \tmov    %r9d,%edi",
+    "   18001e518:\t44 8b bc 24 80 00 00 \tmov    0x80(%rsp),%r15d",
+    "   18001e51f:\t00 ",
+    "   18001e520:\t49 8b f0             \tmov    %r8,%rsi",
+    "   18001e523:\t44 89 70 d8          \tmov    %r14d,-0x28(%rax)",
+    "   18001e527:\t48 8b ea             \tmov    %rdx,%rbp",
+    "   18001e52a:\t44 89 78 d0          \tmov    %r15d,-0x30(%rax)",
+    "   18001e52e:\t4c 8b e1             \tmov    %rcx,%r12",
+    "   18001e531:\t44 89 48 c8          \tmov    %r9d,-0x38(%rax)",
+    "   18001e535:\tb9 04 00 00 00       \tmov    $0x4,%ecx",
+    "   18001e53a:\t4d 8b c8             \tmov    %r8,%r9",
+    "   18001e53d:\tbb 02 00 00 00       \tmov    $0x2,%ebx",
+    "   18001e542:\t4c 8b c2             \tmov    %rdx,%r8",
+    "   18001e545:\t48 8d 15 b4 fc 0f 00 \tlea    0xffcb4(%rip),%rdx        # 0x18011e200",
+    "   18001e54c:\te8 7f 75 07 00       \tcall   0x180095ad0",
+    "   18001e551:\t48 8b 0d b8 01 15 00 \tmov    0x1501b8(%rip),%rcx        # 0x18016e710",
+    "   18001e558:\t48 85 c9             \ttest   %rcx,%rcx",
+    "   18001e55b:\t74 26                \tje     0x18001e583",
+    "   18001e55d:\t48 8b 01             \tmov    (%rcx),%rax",
+    "   18001e560:\t4c 8b ce             \tmov    %rsi,%r9",
+    "   18001e563:\t44 89 74 24 30       \tmov    %r14d,0x30(%rsp)",
+    "   18001e568:\t4c 8b c5             \tmov    %rbp,%r8",
+    "   18001e56b:\t44 89 7c 24 28       \tmov    %r15d,0x28(%rsp)",
+    "   18001e570:\t49 8b d4             \tmov    %r12,%rdx",
+    "   18001e573:\t89 7c 24 20          \tmov    %edi,0x20(%rsp)",
+    "   18001e577:\tff 90 d8 03 00 00    \tcall   *0x3d8(%rax)",
+    "   18001e57d:\t8b d8                \tmov    %eax,%ebx",
+    "   18001e57f:\t85 c0                \ttest   %eax,%eax",
+    "   18001e581:\t74 1d                \tje     0x18001e5a0",
+    "   18001e583:\t44 8b cb             \tmov    %ebx,%r9d",
+    "   18001e586:\t4c 8d 05 3b f4 0f 00 \tlea    0xff43b(%rip),%r8        # 0x18011d9c8",
+    "   18001e58d:\t48 8d 15 3c f4 0f 00 \tlea    0xff43c(%rip),%rdx        # 0x18011d9d0",
+    "   18001e594:\tb9 01 00 00 00       \tmov    $0x1,%ecx",
+    "   18001e599:\te8 32 75 07 00       \tcall   0x180095ad0",
+    "   18001e59e:\t8b c3                \tmov    %ebx,%eax",
+    "   18001e5a0:\t48 8b 5c 24 60       \tmov    0x60(%rsp),%rbx",
+    "   18001e5a5:\t48 8b 6c 24 68       \tmov    0x68(%rsp),%rbp",
+    "   18001e5aa:\t48 8b 74 24 70       \tmov    0x70(%rsp),%rsi",
+    "   18001e5af:\t48 8b 7c 24 78       \tmov    0x78(%rsp),%rdi",
+    "   18001e5b4:\t48 83 c4 40          \tadd    $0x40,%rsp",
+    "   18001e5b8:\t41 5f                \tpop    %r15",
+    "   18001e5ba:\t41 5e                \tpop    %r14",
+    "   18001e5bc:\t41 5c                \tpop    %r12",
+    "   18001e5be:\tc3                   \tret"
+  ]
+}

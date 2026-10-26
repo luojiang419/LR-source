@@ -25,7 +25,7 @@ class RawBrowserTests(_RawFixture):
                     page.wait_for_function('()=>!document.getElementById("raw-sync-start").disabled');page.locator('#raw-sync-start').click()
                     page.wait_for_function('()=>document.getElementById("raw-sync-summary").textContent==="已同步 1"')
                     self.assertNotIn('后拷RAW',page.evaluate('FRAMEKEEP_SESSION.root'))
-                    fields=self.archive.writer.read(self.target);self.assertEqual(fields['XMP-fk:SKU'],'SKU-远程123');self.assertEqual(fields['XMP-xmp:Rating'],4)
+                    fields=self.archive.writer.read_asset(self.target);self.assertEqual(fields['XMP-fk:SKU'],'SKU-远程123');self.assertEqual(fields['XMP-xmp:Rating'],4)
                     self.assertTrue(page.locator('#raw-sync-open').is_hidden())
                     out=ROOT/'build/raw-reconcile';page.screenshot(path=str(out/'raw-sync-browser.png'));self.assertFalse(errors,errors)
                     page.reload(wait_until='networkidle');page.wait_for_function('()=>document.getElementById("raw-sync-summary").textContent==="已同步 1"')

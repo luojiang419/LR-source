@@ -1,0 +1,46 @@
+[
+  {
+    "Name": "CCAPI Activation Tool.exe",
+    "Bytes": 55296,
+    "SHA256": "4BB8A57E0C55ECC8F75F906162DF1034B9B5E99039BD786FE8E29940B393A64D",
+    "FileVersion": "1.0.0.0",
+    "Company": "",
+    "Status": "NotSigned",
+    "Signer": null,
+    "Thumbprint": null,
+    "TimestampSigner": null
+  },
+  {
+    "Name": "EDSDK.dll",
+    "Bytes": 510976,
+    "SHA256": "DC72B8B0641D87982D01AC4A0476ED2A9AEBF1A62ACB831BBF5F772AEAA08FDB",
+    "FileVersion": "13.9.11.0",
+    "Company": "",
+    "Status": "NotSigned",
+    "Signer": null,
+    "Thumbprint": null,
+    "TimestampSigner": null
+  },
+  {
+    "Name": "IJPLMCOM.dll",
+    "Bytes": 163840,
+    "SHA256": "2A66F059D9675C725935050E804BDF07CFB0883402BA28C62042A3A2C0AEE084",
+    "FileVersion": "1, 2, 1, 101",
+    "Company": "Canon INC.",
+    "Status": "NotSigned",
+    "Signer": null,
+    "Thumbprint": null,
+    "TimestampSigner": null
+  },
+  {
+    "Name": "ReadMe.txt",
+    "Bytes": 1734,
+    "SHA256": "CEC89EADE5C92752E9865AADE04F3628AEFFA5998D3B0D9BED6FF34B5119948B",
+    "FileVersion": null,
+    "Company": null,
+    "Status": "UnknownError",
+    "Signer": null,
+    "Thumbprint": null,
+    "TimestampSigner": null
+  }
+]

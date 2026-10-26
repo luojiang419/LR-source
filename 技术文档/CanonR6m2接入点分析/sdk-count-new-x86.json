@@ -1,0 +1,30 @@
+{
+    "observed_at":  "2026-10-22T04:19:07.2337448Z",
+    "process_bits":  32,
+    "dll":  "G:\\app\\LR\\EDSDK132011CD(13.20.11)\\Windows\\EDSDK\\Dll\\EDSDK.dll",
+    "sdk_sha256":  "88ae61f2f9885824f5e5d076613d1759a3f7f8db7ac5ca4b726f2ee59bfad4ea",
+    "scope":  "Read-only enumeration; no camera session, property write, activation or telemetry",
+    "calls":  [
+                  {
+                      "code":  "0x00000000",
+                      "api":  "EdsInitializeSDK"
+                  },
+                  {
+                      "code":  "0x00000000",
+                      "api":  "EdsGetCameraList"
+                  },
+                  {
+                      "code":  "0x00000000",
+                      "api":  "EdsGetChildCount"
+                  },
+                  {
+                      "code":  "0x00000000",
+                      "api":  "EdsRelease"
+                  },
+                  {
+                      "code":  "0x00000000",
+                      "api":  "EdsTerminateSDK"
+                  }
+              ],
+    "camera_count":  1
+}

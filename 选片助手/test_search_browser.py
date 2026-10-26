@@ -45,6 +45,8 @@ class SearchBrowserTests(unittest.TestCase):
                     browser=pw.chromium.launch(executable_path='C:/Program Files/Google/Chrome/Application/chrome.exe',headless=True)
                     try:
                         page=browser.new_page(viewport={'width':1680,'height':1050});errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
+                        # 独立验证历史文件检索组件；新版资产库流程由 test_asset_catalog_browser 覆盖。
+                        page.route('**/asset-library.js',lambda route:route.fulfill(status=200,body=''))
                         page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='networkidle');page.locator('#asset-archive-open').click()
                         page.wait_for_function('()=>document.querySelectorAll("#archive-results tbody tr").length===60')
                         self.assertTrue(page.locator('#archive-prev').is_disabled());page.locator('#archive-next').click();page.wait_for_function('()=>document.getElementById("archive-page").textContent.includes("第 2 页")')
@@ -52,7 +54,7 @@ class SearchBrowserTests(unittest.TestCase):
                         page.locator('#archive-prev').click();page.wait_for_function('()=>document.getElementById("archive-page").textContent.includes("第 2 页")')
                         page.locator('#archive-scope').fill('模特图');page.locator('#archive-search').click();page.wait_for_function('()=>document.querySelectorAll("#archive-results tbody tr").length===0')
                         page.locator('#archive-scope').fill('细节图');page.locator('#archive-match').select_option('exact');page.locator('#archive-sku').fill('sku-1234');page.locator('#archive-search').click();page.wait_for_function('()=>document.querySelectorAll("#archive-results tbody tr").length===60')
-                        page.locator('summary',has_text='文件位置搜索').click();page.locator('#file-query').fill('IMG001');page.locator('#file-search').click();page.wait_for_function('()=>document.querySelectorAll("#file-search-results tbody tr").length===2')
+                        page.locator('details').filter(has=page.locator('#file-query')).locator('summary').click();page.locator('#file-query').fill('IMG001');page.locator('#file-search').click();page.wait_for_function('()=>document.querySelectorAll("#file-search-results tbody tr").length===2')
                         self.assertIn('未备案候选',page.locator('#file-search-results').inner_text())
                         out=ROOT/'build/search-acceptance';out.mkdir(exist_ok=True);page.screenshot(path=str(out/'search-browser.png'))
                         response.clear();response.update(available=False,message='Everything 已退出')

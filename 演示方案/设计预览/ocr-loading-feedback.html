@@ -1,0 +1,126 @@
+<div id="ocr-confirm-preview" class="viz-dotted-background" aria-label="OCR 解析动画确认预览">
+  <div class="of-controls">
+    <button type="button" class="cursor-interaction of-replay">★ ★ 标记两星并重播</button>
+    <label>查看阶段<select class="cursor-interaction of-phase" aria-label="查看阶段"><option value="scan">OCR 解析</option><option value="load">模型加载 · 有百分比</option><option value="wait">等待模型 · 无百分比</option><option value="done">解析完成</option><option value="error">请求超时</option></select></label>
+  </div>
+  <div class="of-layout">
+    <section class="of-photo" aria-label="中央预览区示意">
+      <div class="of-preview-label">中央预览区 · 右上角同步显示</div>
+      <div class="of-tag" aria-hidden="true"><span>SIZE: S</span><strong>LC7877499-P6</strong><span>261009</span><small>70% COTTON<br>28.5% POLYESTER<br>1.5% ELASTANE</small></div>
+      <div class="of-overlay"></div>
+      <div class="of-stars" aria-label="二星标签"><span>★ ★</span><span> ★ ★ ★</span><i></i></div>
+      <span class="of-filename">XSY_6518.CR3 · 标签示意</span>
+    </section>
+    <section class="of-sidebar" aria-label="右侧款号备案预览">
+      <header>▾ 款号备案 <span>1 张</span></header>
+      <div class="of-side-body">
+        <div class="of-main-status" aria-live="polite" aria-atomic="true"></div>
+        <div class="of-steps" aria-label="解析阶段"><span data-step="image">图片就绪</span><span data-step="model">模型准备</span><span data-step="ocr">OCR 解析</span><span data-step="done">完成</span></div>
+        <div class="of-fields"><label>SKU 款号<input class="of-sku" placeholder="识别完成后显示款号" readonly></label><button type="button" disabled>OCR 解析当前图</button><button type="button" disabled>OCR 资料 / 选择 SKU</button></div>
+      </div>
+    </section>
+  </div>
+  <div class="of-footer"><span>动画与进度为演示，未运行真实识别</span><button class="cursor-interaction of-confirm" type="button">确认动画，接入真实触发</button></div>
+  <div class="of-approval" role="status" aria-live="polite"></div>
+</div>
+<style>
+#ocr-confirm-preview{--of-bg:#1c1d1f;--of-panel:#242526;--of-raised:#2c2d2d;--of-line:#414240;--of-text:#f0ede8;--of-muted:#b6b2aa;--of-accent:#dfcaa8;--of-success:#8ad3ac;--of-danger:#f4a49a;--of-soft:#383833;--of-opacity:.75;font:13px/1.55 "Segoe UI","Microsoft YaHei",sans-serif;color:var(--of-text);padding:0 0 6px;color-scheme:dark}
+#ocr-confirm-preview *{box-sizing:border-box}
+#ocr-confirm-preview .of-controls{display:flex;align-items:center;flex-wrap:wrap;gap:10px;padding:16px 100px 16px 14px;background:var(--of-bg)}
+#ocr-confirm-preview button,#ocr-confirm-preview select{font:inherit;color:var(--of-text);border:1px solid var(--of-line);border-radius:8px;background:var(--of-raised);padding:8px 11px;max-width:100%}
+#ocr-confirm-preview label{display:flex;gap:8px;align-items:center;min-width:0;color:var(--of-muted);font-size:12px}
+#ocr-confirm-preview .of-replay{color:var(--of-accent);border-color:color-mix(in srgb,var(--of-accent) 38%,var(--of-line))}
+#ocr-confirm-preview .of-layout{display:grid;grid-template-columns:minmax(260px,1fr) minmax(260px,.82fr);gap:10px;padding:0 10px 12px;background:var(--of-bg)}
+#ocr-confirm-preview .of-photo{position:relative;isolation:isolate;min-height:470px;border-radius:13px;overflow:hidden;background:repeating-linear-gradient(93deg,#ffffff05 0 1px,transparent 1px 4px),radial-gradient(ellipse at 10% 20%,#df5288,transparent 60%),linear-gradient(130deg,#911240,#c72b65 45%,#551c3c)}
+#ocr-confirm-preview .of-preview-label{position:absolute;left:13px;bottom:58px;right:13px;color:#f5e5eb;font-size:11px}
+#ocr-confirm-preview .of-tag{position:absolute;top:54%;left:50%;transform:translate(-50%,-40%) rotate(-6deg);width:195px;padding:23px 19px;color:#36302f;background:#f1ece4;box-shadow:5px 9px 30px #42112e66;font-family:"Segoe UI",sans-serif;line-height:1.7;display:flex;flex-direction:column;font-size:16px}
+#ocr-confirm-preview .of-tag strong{font-size:17px;font-weight:500;white-space:nowrap}#ocr-confirm-preview .of-tag small{font-size:13px}
+#ocr-confirm-preview .of-stars{position:absolute;bottom:13px;left:12px;padding:5px 10px;border-radius:9px;background:#222327db;border:1px solid #ffffff20;font-size:21px;letter-spacing:2px}
+#ocr-confirm-preview .of-stars>span:first-child{color:#f2e5cc}#ocr-confirm-preview .of-stars>span:nth-child(2){color:#77787a}
+#ocr-confirm-preview .of-stars i{position:absolute;inset:0;border-radius:inherit;animation:of-star-glow 2.5s ease-in-out infinite;pointer-events:none}
+#ocr-confirm-preview .of-filename{position:absolute;right:12px;bottom:24px;color:#f2e2e9;font-size:11px;max-width:46%;text-align:right}
+#ocr-confirm-preview .of-sidebar{border:1px solid var(--of-line);border-radius:13px;overflow:hidden;background:var(--of-panel);min-width:0}
+#ocr-confirm-preview .of-sidebar>header{padding:14px;border-bottom:1px solid var(--of-line);font-size:13px}
+#ocr-confirm-preview .of-sidebar>header span{color:var(--of-muted);padding-left:4px;font-size:11px}
+#ocr-confirm-preview .of-side-body{padding:14px}
+#ocr-confirm-preview .of-status{color:var(--of-accent);border:1px solid color-mix(in srgb,var(--of-accent) 26%,transparent);border-radius:13px;background:linear-gradient(125deg,color-mix(in srgb,var(--of-accent) 8%,var(--of-panel)),var(--of-bg));padding:14px;min-width:0;overflow:hidden}
+#ocr-confirm-preview .of-status-top{display:flex;align-items:center;gap:10px;min-width:0}
+#ocr-confirm-preview .of-copy{min-width:0;flex:1;display:flex;flex-direction:column;gap:4px}
+#ocr-confirm-preview .of-eyebrow{font-size:11px;letter-spacing:.06em;color:var(--of-muted)}
+#ocr-confirm-preview .of-title{font-size:15px;color:var(--of-text);font-weight:500;line-height:1.5;overflow-wrap:anywhere}
+#ocr-confirm-preview .of-sub{font-size:11px;color:var(--of-muted);line-height:1.6;margin-top:10px;overflow-wrap:anywhere}
+#ocr-confirm-preview .of-scanner{width:54px;height:64px;flex-shrink:0;color:var(--of-accent)}
+#ocr-confirm-preview .of-raster{animation:of-lines 2.5s ease-in-out infinite}
+#ocr-confirm-preview .of-sweep{animation:of-scan 2.5s cubic-bezier(.42,0,.22,1) infinite;filter:drop-shadow(0 0 3px currentColor)}
+#ocr-confirm-preview .of-track{height:4px;background:color-mix(in srgb,currentColor 12%,transparent);overflow:hidden;border-radius:8px;margin-top:13px}
+#ocr-confirm-preview .of-fill{display:block;height:100%;width:0;background:var(--of-accent);border-radius:inherit;transition:width .18s linear}
+#ocr-confirm-preview .of-meter-line{display:flex;justify-content:space-between;gap:8px;font-size:11px;margin-top:7px;color:var(--of-muted);font-variant-numeric:tabular-nums}
+#ocr-confirm-preview .of-percent{color:var(--of-text);white-space:nowrap}
+#ocr-confirm-preview .of-status[data-phase=scan] .of-fill,#ocr-confirm-preview .of-status[data-phase=wait] .of-fill{width:35%!important;animation:of-flow 1.9s ease-in-out infinite;background:linear-gradient(90deg,transparent,var(--of-accent),transparent)}
+#ocr-confirm-preview .of-overlay{position:absolute;top:12px;right:12px;width:280px;max-width:calc(100% - 24px);opacity:var(--of-opacity);pointer-events:none}
+#ocr-confirm-preview .of-overlay .of-status{padding:12px;box-shadow:0 8px 22px #0003;backdrop-filter:blur(12px)}
+#ocr-confirm-preview .of-overlay .of-scanner{width:42px;height:50px}
+#ocr-confirm-preview .of-overlay .of-title{font-size:13px}
+#ocr-confirm-preview .of-overlay .of-sub{margin-top:7px}
+#ocr-confirm-preview .of-steps{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:15px 0 18px;font-size:11px;color:var(--of-muted)}
+#ocr-confirm-preview .of-steps span{display:flex;gap:6px;align-items:center;white-space:nowrap}
+#ocr-confirm-preview .of-steps span:before{content:"";width:5px;height:5px;background:var(--of-line);border-radius:50%;flex-shrink:0}
+#ocr-confirm-preview .of-steps span[data-state=done]{color:var(--of-success)}#ocr-confirm-preview .of-steps span[data-state=done]:before{background:var(--of-success)}
+#ocr-confirm-preview .of-steps span[data-state=active]{color:var(--of-accent)}#ocr-confirm-preview .of-steps span[data-state=active]:before{background:var(--of-accent);box-shadow:0 0 9px color-mix(in srgb,var(--of-accent) 40%,transparent)}
+#ocr-confirm-preview .of-fields{display:flex;flex-direction:column;gap:10px}
+#ocr-confirm-preview .of-fields label{align-items:stretch;flex-direction:column;gap:7px}
+#ocr-confirm-preview .of-fields input{width:100%;font:inherit;font-size:12px;background:var(--of-bg);border:1px solid var(--of-line);border-radius:9px;padding:10px;color:var(--of-text)}
+#ocr-confirm-preview .of-fields button{font-size:12px;border-radius:20px;opacity:.55}
+#ocr-confirm-preview .of-footer{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;background:var(--of-bg);padding:4px 14px 16px}
+#ocr-confirm-preview .of-footer>span{font-size:11px;color:var(--of-muted)}
+#ocr-confirm-preview .of-confirm{background:var(--of-accent);color:var(--of-bg);font-weight:500}
+#ocr-confirm-preview .of-approval{font-size:12px;padding:0 14px;color:var(--of-muted);background:var(--of-bg)}
+#ocr-confirm-preview .of-status[data-phase=done]{color:var(--of-success);border-color:color-mix(in srgb,var(--of-success) 30%,transparent)}
+#ocr-confirm-preview .of-status[data-phase=done] .of-title{color:var(--of-success);font-size:17px}
+#ocr-confirm-preview .of-status[data-phase=done] .of-scanner,#ocr-confirm-preview .of-status[data-phase=done] .of-track,#ocr-confirm-preview .of-status[data-phase=done] .of-meter-line,#ocr-confirm-preview .of-status[data-phase=error] .of-scanner,#ocr-confirm-preview .of-status[data-phase=error] .of-track,#ocr-confirm-preview .of-status[data-phase=error] .of-meter-line{display:none}
+#ocr-confirm-preview .of-status[data-phase=error]{border-color:color-mix(in srgb,var(--of-danger) 30%,transparent)}#ocr-confirm-preview .of-status[data-phase=error] .of-title{color:var(--of-danger)}
+#ocr-confirm-preview[data-phase=done] .of-stars i,#ocr-confirm-preview[data-phase=error] .of-stars i{animation:none}
+@keyframes of-scan{0%,100%{transform:translateY(0);opacity:.45}50%{transform:translateY(35px);opacity:1}}
+@keyframes of-lines{0%,100%{opacity:.35}50%{opacity:.8}}
+@keyframes of-flow{from{transform:translateX(-120%)}to{transform:translateX(400%)}}
+@keyframes of-star-glow{0%,100%{box-shadow:0 0 0 #dfcaa800}50%{box-shadow:0 0 15px #dfcaa840}}
+@media(max-width:600px){#ocr-confirm-preview .of-layout{grid-template-columns:1fr}#ocr-confirm-preview .of-photo{min-height:405px}#ocr-confirm-preview .of-sidebar .of-steps{grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}#ocr-confirm-preview .of-steps span{white-space:normal}#ocr-confirm-preview .of-controls{padding:16px 100px 14px 12px}#ocr-confirm-preview .of-controls label{flex-wrap:wrap}#ocr-confirm-preview .of-confirm{width:100%}}
+@media(prefers-reduced-motion:reduce){#ocr-confirm-preview *,#ocr-confirm-preview *:before{animation:none!important;transition:none!important}#ocr-confirm-preview .of-sweep{transform:translateY(16px)}}
+</style>
+<script>
+(()=>{
+  const root=document.getElementById('ocr-confirm-preview');
+  const scanner='<svg class="of-scanner" viewBox="0 0 54 64" role="img" aria-label="标签文字扫描动画"><rect x="7" y="6" width="40" height="52" rx="8" fill="currentColor" fill-opacity=".04" stroke="currentColor" stroke-opacity=".3"/><g class="of-raster" fill="currentColor"><rect x="15" y="18" width="8" height="3" rx="1"/><rect x="26" y="18" width="13" height="3" rx="1"/><rect x="15" y="26" width="18" height="3" rx="1"/><rect x="36" y="26" width="3" height="3" rx="1"/><rect x="15" y="34" width="7" height="3" rx="1"/><rect x="25" y="34" width="14" height="3" rx="1"/><rect x="15" y="42" width="19" height="3" rx="1"/></g><g class="of-sweep" fill="currentColor"><rect x="4" y="9" width="46" height="11" rx="3" fill-opacity=".1"/><rect x="3" y="19" width="48" height="1.5" rx=".75"/><circle cx="50" cy="19.7" r="2"/></g></svg>';
+  const markup='<div class="of-status"><div class="of-status-top">'+scanner+'<div class="of-copy"><span class="of-eyebrow">OCR / 款号识别</span><strong class="of-title"></strong></div></div><div class="of-sub"></div><div class="of-track" role="progressbar" aria-label="当前阶段进度"><span class="of-fill"></span></div><div class="of-meter-line"><span class="of-meter-label"></span><span class="of-percent"></span></div></div>';
+  root.querySelector('.of-main-status').innerHTML=markup;root.querySelector('.of-overlay').innerHTML=markup;
+  let interval=null,started=performance.now(),phase='scan',percent=42;
+  const descriptions={scan:['正在解析款号','请求已发送，正在读取标签文字','解析进行中'],load:['正在加载 OCR 模型','准备识别资源，完成后自动开始解析','模型加载进度'],wait:['等待模型就绪','服务未返回加载百分比，持续检查连接','模型启动中'],done:['LC7877499-P6','SKU · 解析完成，款号保留在原位',''],error:['模型响应超时','已等待 60 秒 · 请检查模型服务或重试','']};
+  function draw(){
+    root.dataset.phase=phase;root.querySelector('.of-phase').value=phase;
+    const copy=descriptions[phase],seconds=Math.floor((performance.now()-started)/1000);
+    for(const card of root.querySelectorAll('.of-status')){
+      card.dataset.phase=phase;card.querySelector('.of-title').textContent=copy[0];card.querySelector('.of-sub').textContent=copy[1];card.querySelector('.of-meter-label').textContent=copy[2];
+      card.querySelector('.of-percent').textContent=phase==='load'?Math.round(percent)+'%':'已等待 '+seconds+' 秒';card.querySelector('.of-fill').style.width=percent+'%';
+      const track=card.querySelector('.of-track');if(phase==='load'){track.setAttribute('aria-valuenow',String(Math.round(percent)));track.setAttribute('aria-valuemin','0');track.setAttribute('aria-valuemax','100')}else track.removeAttribute('aria-valuenow');
+    }
+    const current=phase==='done'?4:phase==='scan'||phase==='error'?2:1;
+    [...root.querySelectorAll('[data-step]')].forEach((step,i)=>step.dataset.state=i<current?'done':i===current?'active':'pending');
+    root.querySelector('.of-sku').value=phase==='done'?'LC7877499-P6':'';
+  }
+  function setPhase(value){clearInterval(interval);phase=value;started=performance.now();percent=42;draw();if(['scan','wait'].includes(phase))interval=setInterval(draw,1000)}
+  root.querySelector('.of-phase').addEventListener('change',e=>setPhase(e.target.value));
+  root.querySelector('.of-replay').addEventListener('click',()=>{
+    clearInterval(interval);phase='load';percent=0;started=performance.now();draw();
+    interval=setInterval(()=>{const ms=performance.now()-started;if(ms<4000){phase='load';percent=ms/40}else if(ms<8000){phase='scan'}else{phase='done';clearInterval(interval)}draw()},100);
+  });
+  root.querySelector('.of-confirm').addEventListener('click',async()=>{
+    if(window.openai?.sendFollowUpMessage){await window.openai.sendFollowUpMessage({prompt:'确认当前 OCR 动画方案。请继续接入真实两星触发：标记后立即同步显示侧栏和预览浮层，接入实际可获取的模型加载百分比、OCR阶段和等待时长，并用隔离资料做真实验证。保留我的业务照片、评级和当前会话。',title:'确认动画并接入真实触发'})}
+    else root.querySelector('.of-approval').textContent='请回到对话回复“确认这版动画”，我会继续接入真实触发。';
+  });
+  setPhase('scan');
+  if(typeof Tweak!=='undefined'){
+    const settings={transparency:25};const tweak=new Tweak({container:root,onChange:()=>root.style.setProperty('--of-opacity',String(1-settings.transparency/100))});
+    tweak.addSlider(settings,'transparency',{label:'预览浮层透明度',min:0,max:100,step:1,unit:'%'});
+  }
+})();
+</script>
