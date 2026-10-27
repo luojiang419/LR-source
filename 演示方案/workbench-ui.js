@@ -59,6 +59,10 @@ const startWorkbenchUi=()=>{
   ]);
   for(const [name,heading] of headings){
     if(!heading)continue;
+    if(name==='retrieval'){
+      heading.querySelector('.retrieval-navigation')?.remove();
+      heading.classList.remove('retrieval-desktop-heading');
+    }
     heading.dataset.workspaceHeading=name;
     heading.hidden=true;pageHeading.append(heading);
   }

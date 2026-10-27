@@ -129,10 +129,9 @@ body.quick-search-native,html[data-hardcore-layout=false] body.quick-search-nati
   .retrieval-filter-scroll {overflow:visible;}.reference-search>header span {display:none;}
 }
 
-/* 桌面检索与团队 Web 工作台采用同一工作面；快捷窗口继续保留独立三栏。 */
+/* 检索工作面共用搜索布局；桌面导航沿用统一底栏，快捷窗口保留独立三栏。 */
 .workspace-retrieval-active .app-header {gap:16px;flex-wrap:nowrap;min-height:60px;}
-.workspace-retrieval-active .app-header>.header-actions,
-.workspace-retrieval-active .workspace-bottom-bar {display:none!important;}
+.workspace-retrieval-active .app-header>.header-actions {display:none!important;}
 .workspace-retrieval-active .workspace-header-heading {overflow:visible;}
 .workspace-retrieval-active .identity {flex:none;white-space:nowrap;}
 .retrieval-desktop-heading .retrieval-heading-title {position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;}

@@ -9,7 +9,7 @@ import unittest
 from unittest.mock import patch
 
 from PIL import Image
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import expect, sync_playwright
 
 import server
 from asset_archive import AssetArchive
@@ -81,10 +81,11 @@ class RetrievalBrowserTests(unittest.TestCase):
                 page.wait_for_function('()=>document.querySelectorAll("#quick-search-dialog .retrieval-card").length===2')
                 quick.locator('.retrieval-query').press('ArrowDown');self.assertEqual(quick.locator('[aria-selected=true]').count(),1)
                 page.keyboard.press('Escape');quick.wait_for(state='hidden',timeout=3000);self.assertFalse(quick.is_visible())
-                page.locator('[data-workspace-target="asset-archive-open"]').click();page.wait_for_selector('#catalog-grid .catalog-card')
+                page.locator('#asset-archive-open').click();page.wait_for_selector('#catalog-grid .catalog-card')
                 page.locator('#catalog-grid .catalog-card').first.click();page.locator('#catalog-image-search').click();panel.locator('.reference-threshold').press('Home')
                 page.wait_for_function('()=>document.querySelectorAll("#asset-retrieval-page .retrieval-card").length===3&&document.querySelector("#asset-retrieval-page .retrieval-result-status").textContent.includes("布局与配色")')
-                self.assertIn('布局与配色',panel.locator('.retrieval-result-status').inner_text())
+                # 归档跳转的页面刷新与参考图搜索都可能更新状态，等待最终文本。
+                expect(panel.locator('.retrieval-result-status')).to_contain_text('布局与配色')
                 panel.locator('[data-action="clear-image"]').click();query.fill('红色');query.press('Enter')
                 page.wait_for_function('()=>document.querySelectorAll("#asset-retrieval-page .retrieval-card").length===2')
                 out=ROOT/'build/multimodal-search';out.mkdir(parents=True,exist_ok=True)
@@ -97,7 +98,7 @@ class RetrievalBrowserTests(unittest.TestCase):
                 self.assertFalse(errors,errors)
             finally:browser.close()
 
-    def test_desktop_web_layout_filters_details_navigation_and_resizing(self):
+    def test_desktop_bottom_navigation_filters_details_and_resizing(self):
         with sync_playwright() as pw:
             browser=pw.chromium.launch(channel='msedge',headless=True)
             try:
@@ -106,7 +107,11 @@ class RetrievalBrowserTests(unittest.TestCase):
                 page.goto(self.url,wait_until='domcontentloaded');page.locator('#asset-retrieval-open').click()
                 panel=page.locator('#asset-retrieval-page');query=panel.locator('.retrieval-query')
                 page.wait_for_function('()=>document.querySelectorAll("#asset-retrieval-page .retrieval-card").length===3')
-                self.assertFalse(page.locator('.workspace-bottom-bar').is_visible())
+                self.assertTrue(page.locator('.workspace-bottom-bar').is_visible())
+                self.assertEqual(page.locator('.retrieval-navigation').count(),0)
+                self.assertTrue(page.locator('[data-workspace-heading="retrieval"] h2').is_visible())
+                self.assertEqual(page.locator('#asset-retrieval-open').get_attribute('aria-selected'),'true')
+                self.assertEqual(page.locator('.workspace-bottom-bar [role=tab]').count(),7)
                 for width in (1366,850,650):
                     page.set_viewport_size({'width':width,'height':886})
                     toolbar=panel.locator('.retrieval-searchbar').bounding_box()
@@ -118,12 +123,18 @@ class RetrievalBrowserTests(unittest.TestCase):
                     results=panel.locator('.retrieval-results-area').bounding_box()
                     self.assertLess(reference['x']+reference['width'],results['x'])
                     self.assertFalse(panel.locator('.retrieval-detail').is_visible())
-                    self.assertTrue(page.locator('[data-workspace-target="asset-archive-open"]').is_visible())
+                    bottom=page.locator('.workspace-bottom-bar').bounding_box()
+                    content=panel.bounding_box()
+                    self.assertIsNotNone(bottom)
+                    self.assertLessEqual(content['y']+content['height'],bottom['y']+1)
+                    self.assertLessEqual(bottom['y']+bottom['height'],886)
+                    self.assertTrue(page.locator('#asset-archive-open').is_visible())
                     self.assertLessEqual(page.evaluate('document.documentElement.scrollWidth'),width)
                 for theme in ('light','pure-white','hardcore','dark'):
                     page.evaluate('(theme)=>FramekeepTheme.set(theme)',theme)
                     self.assertTrue(panel.locator('.retrieval-root').is_visible())
                     self.assertFalse(panel.locator('.retrieval-detail').is_visible())
+                    self.assertTrue(page.locator('.workspace-bottom-bar').is_visible())
                     self.assertLessEqual(page.evaluate('document.documentElement.scrollWidth'),650)
                 page.set_viewport_size({'width':1366,'height':886})
                 query.fill('LC5678')
@@ -146,12 +157,20 @@ class RetrievalBrowserTests(unittest.TestCase):
                 page.locator('.retrieval-actions-menu>summary').click()
                 page.locator('[data-workspace-heading="retrieval"] [data-action="quick"]').click()
                 page.wait_for_selector('#quick-search-dialog[open]');page.keyboard.press('Escape')
-                page.locator('[data-workspace-target="asset-archive-open"]').click()
+                page.locator('#asset-archive-open').click()
                 page.wait_for_function('()=>!document.querySelector("#asset-archive-dialog").classList.contains("hidden")')
                 self.assertTrue(page.locator('.workspace-bottom-bar').is_visible())
                 page.locator('#asset-retrieval-open').click()
-                page.locator('[data-workspace-target="sku-open"]').click()
+                page.locator('#sku-open').click()
                 page.wait_for_function('()=>!document.querySelector(".workbench").classList.contains("workspace-retrieval-active")')
+                self.assertTrue(page.locator('.workspace-bottom-bar').is_visible())
+                page.locator('#asset-retrieval-open').click()
+                page.locator('#selection-tab').click()
+                self.assertTrue(page.locator('#selection-page').is_visible())
+                self.assertEqual(page.locator('#selection-tab').get_attribute('aria-selected'),'true')
+                page.locator('#asset-retrieval-open').click()
+                self.assertTrue(panel.is_visible())
+                self.assertEqual(page.locator('#asset-retrieval-open').get_attribute('aria-selected'),'true')
                 self.assertTrue(page.locator('.workspace-bottom-bar').is_visible())
                 self.assertFalse(errors,errors)
             finally:browser.close()
