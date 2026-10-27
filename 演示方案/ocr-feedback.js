@@ -103,7 +103,7 @@
       show(status,title,note,progress);
     }
     else if(['completed','matched','confirmed'].includes(status)&&code)show('completed',code,status==='confirmed'?'SKU · 已确认':'SKU · 解析完成');
-    else if(['review','unmatched'].includes(status))show('review',code||'款号待确认',code?'OCR 候选 · 请核对后应用':ocr.reason||'打开 OCR 资料选择正确款号');
+    else if(['review','unmatched'].includes(status))show('review',code||'款号待确认',ocr.rule_error||(code?'OCR 候选 · 请核对后应用':ocr.reason||'打开 OCR 资料选择正确款号'));
     else if(status==='waiting_model')show('waiting','等待配置 OCR 模型',ocr.reason||'请在设置中选择可用模型');
     else if(status==='paused'||status==='manual')show('waiting',status==='paused'?'OCR 解析已暂停':'等待手动开始解析',ocr.reason);
     else if(['failed','unknown'].includes(status))show('failed',status==='failed'?'款号解析失败':'解析状态暂不可用',ocr.reason||'请重试或检查模型连接');

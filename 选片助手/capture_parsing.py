@@ -40,7 +40,7 @@ def capture_status(store, sku, archive, analysis, sid, cid):
             if job['status'] in ('running','queued','retry'):
                 ocr['progress']=sku.ocr_progress.snapshot(job['kind'],job['id'],job['run_token']) or {'phase':'recognizing' if job['status']=='running' else 'queued','percent':None,'elapsed_seconds':max(0,sku.clock()-job['created'])}
             if job['status'] in ('completed','matched','confirmed','review','unmatched') and result.get('requires_sku_choice'):
-                ocr.update(status='review',codes=[],candidates=sku.recommended_codes(readings),reason='OCR 资料已保存，请选择正确 SKU')
+                ocr.update(status='review',codes=[],candidates=sku.recommended_codes(readings),rule_error=result.get('rule_error',''),reason=result.get('rule_error') or 'OCR 资料已保存，请选择正确 SKU')
             if job['status'] in ('queued','waiting_model','retry'):
                 if sku.tasks_paused:ocr.update(status='paused',reason='在解析任务页继续队列后自动恢复')
                 elif job['trigger'] not in ('manual','full_auto') and sku.task_mode!='auto':ocr.update(status='manual',reason='在解析任务页开始任务，或切换为自动解析')

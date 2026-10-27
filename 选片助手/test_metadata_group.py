@@ -29,14 +29,15 @@ class MetadataGroupTests(unittest.TestCase):
         f=self.f;cid=cid or f.ids[0]
         return preview_group(f.archive,f.sku,f.sid,cid,[cid],code,'模特图',f.pid)
     def test_edit_from_any_member_updates_all_and_keeps_next_same_sku_interval(self):
-        f=self.f;f.parse();f.choose();f.sku.parse_capture(f.sid,f.ids[3]);f.choose(CODE,f.ids[3]);self.drain()
+        f=self.f;f.parse();f.choose();f.sku.parse_capture(f.sid,f.ids[3]);second=f.choose(CODE,f.ids[3]);self.drain()
+        self.assertEqual(second['sku'],CODE+'-A')
         untouched=[sha(f.photos/f'{i}.JPG') for i in (2,3)]
         for cid in f.ids[:2]:self.assertEqual(self.preview(cid)['group']['capture_ids'],f.ids[:2])
         p=self.preview();result=apply_group(f.archive,f.sku,p['preview_id'],'CORRECT-100')
         self.assertEqual(result['capture_count'],2);self.assertEqual(result['sku'],'CORRECT-100');self.drain()
         for i in range(2):self.assertEqual(f.archive.writer.read(f.photos/f'{i}.JPG')['XMP-fk:SKU'],'CORRECT-100')
         self.assertEqual(untouched,[sha(f.photos/f'{i}.JPG') for i in (2,3)])
-        self.assertEqual(labels(f.sku,f.sid)['labels'],dict(zip(f.ids,['CORRECT-100','CORRECT-100',CODE,CODE])))
+        self.assertEqual(labels(f.sku,f.sid)['labels'],dict(zip(f.ids,['CORRECT-100','CORRECT-100',second['sku'],second['sku']])))
         with self.assertRaisesRegex(ValueError,'失效'):apply_group(f.archive,f.sku,p['preview_id'],'AGAIN-100')
         # 修改后继续点击推荐款号仍更新整款，不因编辑变成单图人工锁定。
         f.choose('AGAIN-100');self.drain()

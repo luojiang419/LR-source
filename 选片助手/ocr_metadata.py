@@ -37,6 +37,8 @@ CREATE INDEX IF NOT EXISTS ocr_documents_capture ON ocr_documents(session_id,cap
 CREATE VIRTUAL TABLE IF NOT EXISTS ocr_document_search USING fts5(searchable,tokenize='trigram');
 CREATE TABLE IF NOT EXISTS ocr_resets(session_id TEXT,capture_id TEXT,updated REAL,PRIMARY KEY(session_id,capture_id));
 CREATE TABLE IF NOT EXISTS ocr_choices(session_id TEXT,capture_id TEXT,sku TEXT,reading_key TEXT,updated REAL,PRIMARY KEY(session_id,capture_id));''')
+        from sku_shoot_versions import initialize
+        initialize(c)
         for table,kind,status in [('parse_jobs','read',"'completed'"),('jobs','job',"'matched','confirmed','review','unmatched'")]:
             for row in c.execute(f'SELECT id,session_id,capture_id,result,created,updated FROM {table} WHERE status IN ({status})').fetchall():
                 try:result=json.loads(row['result'] or '{}')
@@ -102,10 +104,18 @@ class OcrMetadata:
         signature=[(str(p),p.stat().st_size,p.stat().st_mtime_ns) for p in paths]
         image_key=hashlib.sha256(json.dumps(signature).encode()).hexdigest()
         recommended=self.recommended_codes(readings)
+        version={'base_sku':chosen[0] if chosen else '','shoot_version':''}
+        if chosen and self.archive:
+            with self.archive.connect() as c:link=c.execute('SELECT asset FROM catalog_links WHERE session=? AND capture=?',(sid,target)).fetchone()
+            if link:
+                with self.connect() as c:assigned=c.execute('SELECT * FROM sku_shoot_versions WHERE asset=? AND sku=?',(link['asset'],chosen[0])).fetchone()
+                if assigned:
+                    from sku_shoot_versions import describe
+                    version=describe(assigned)
         return {'session_id':sid,'capture_id':cid,'target_capture_id':target,'source_name':source_record['name'],'name':record['name'],'reading_key':key,'image_key':image_key,'readings':readings,
             'candidates':candidates[:40],'recommended':recommended[:12],
             'latest_recommended':self.recommended_codes(json.loads(documents[0]['raw'])) if documents else [],
-            'selected_sku':chosen[0] if chosen else '',
+            'selected_sku':chosen[0] if chosen else '',**version,
             'has_ocr':bool(documents),'text':'\n\n'.join(dict.fromkeys(d['text'] for d in documents if d['text']))}
 
     def choose_ocr_sku(self,sid,cid,code,reading_key,image_key,scope='',*,allow_manual=False,project_id=None,automatic=False):
@@ -124,15 +134,24 @@ class OcrMetadata:
             boundary=self._rating(sid,record)==2
             preview=self.archive.preview(sid,[cid],code,scope,project['id'],overwrite=True)
             old=preview['targets'][0]['before']
-            # 历史上已单张人工备案的标签仍允许这次明确选择修正；其他人工照片由区间保护。
-            if not boundary or old.get('locked'):
-                if old.get('sku')!=code or old.get('scope')!=scope or not old.get('locked'):self.archive.apply(preview['preview_id'])
+            version={'base_sku':code,'sku':code,'shoot_version':''}
             with self.connect() as c:
                 # 款号行、主款确认、拍摄证据及归档事件必须同成同败。
                 c.execute('BEGIN IMMEDIATE')
-                exact=[dict(r) for r in c.execute('SELECT * FROM sku_rows WHERE project=? AND sheet=? AND normalized=?',(project['id'],scope,normalize(code)))]
+                if boundary:
+                    from sku_shoot_versions import allocate
+                    version=allocate(c,self.archive,preview['targets'][0]['id'],sid,cid,code,self.clock())
+                    if version['sku']!=code:
+                        code=version['sku']
+                        preview=self.archive.preview(sid,[cid],code,scope,project['id'],overwrite=True)
+                        old=preview['targets'][0]['before']
+                # 历史上已单张人工备案的标签仍允许明确修正；其他人工照片由区间保护。
+                if not boundary or old.get('locked'):
+                    if old.get('sku')!=code or old.get('scope')!=scope or not old.get('locked'):self.archive.apply(preview['preview_id'])
+                base=version['base_sku']
+                exact=[dict(r) for r in c.execute('SELECT * FROM sku_rows WHERE project=? AND sheet=? AND normalized=?',(project['id'],scope,normalize(base)))]
                 result={'row_ids':[r['id'] for r in exact]} if exact else self._record_unplanned({'project':project['id'],'session_id':sid,'capture_id':cid,'scope':scope},
-                    [{'codes':[code],'unscored':True}],{'status':'review','row_ids':[],'candidates':[]},accept_observed=True,connection=c)
+                    [{'codes':[base],'unscored':True}],{'status':'review','row_ids':[],'candidates':[]},accept_observed=True,connection=c)
                 c.execute('INSERT INTO ocr_choices VALUES (?,?,?,?,?) ON CONFLICT(session_id,capture_id) DO UPDATE SET sku=excluded.sku,reading_key=excluded.reading_key,updated=excluded.updated',(sid,cid,code,reading_key,self.clock()))
                 targets=json.dumps(result.get('row_ids',[]));stamp,time_source=capture_time(record)
                 c.execute("UPDATE jobs SET status='confirmed',targets=?,reason='用户已选择正确 SKU，其他 OCR 资料保留',updated=? WHERE project=? AND session_id=? AND capture_id=? AND scope=? AND status NOT IN ('ignored','cancelled')",(targets,self.clock(),project['id'],sid,cid,scope))
@@ -171,4 +190,4 @@ class OcrMetadata:
             from operation_errors import record_error
             record_error(self.store.data,'sku-choice-result',exc)
             warnings.append('SKU 和拍摄记录已保存，归档信息暂未刷新')
-        return {'session_id':sid,'capture_id':requested,'target_capture_id':cid,'sku':code,'saved':True,'automatic':automatic,'warnings':warnings,'capture_count':count,'operation_id':operation}
+        return {'session_id':sid,'capture_id':requested,'target_capture_id':cid,**version,'saved':True,'automatic':automatic,'warnings':warnings,'capture_count':count,'operation_id':operation}

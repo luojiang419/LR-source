@@ -57,6 +57,7 @@ def gallery_items(sku,pid):
     if not project:raise ValueError('拍摄任务不存在')
     data=browse(sku,all_rows=True);groups={}
     for row in sku.rows(pid):groups.setdefault(row['normalized'],{'sku':row['sku'],'normalized':row['normalized'],'images':[]})
+    with sku.connect() as c:versions={normalize(row['sku']):normalize(row['base_sku']) for row in c.execute('SELECT sku,base_sku FROM sku_shoot_versions')}
     sessions={};ratings={}
     for item in data['rows']:
         if not item.get('normalized'):continue
@@ -64,11 +65,12 @@ def gallery_items(sku,pid):
         if sid not in sessions:
             sessions[sid]=sku.store.session(sid) or {}
             ratings[sid]=sessions[sid].get('state',{}).get('overrides',{})
-        group=groups.setdefault(item['normalized'],{'sku':item['sku'],'normalized':item['normalized'],'images':[]})
+        key=versions.get(item['normalized'],item['normalized'])
+        group=groups.setdefault(key,{'sku':item['sku'],'normalized':key,'images':[]})
         group['images'].append({'key':'capture:'+item['session_id']+':'+item['capture_id'],
             'kind':'capture','session_id':item['session_id'],'capture_id':item['capture_id'],
             'name':item['name'],'url':item['preview']+('&' if '?' in item['preview'] else '?')+'size=240',
-            'source':'ocr' if ratings[sid].get(item['capture_id'])==2 else item.get('source',''),'normalized':item['normalized'],'sku':item['sku']})
+            'source':'ocr' if ratings[sid].get(item['capture_id'])==2 else item.get('source',''),'normalized':key,'sku':item['sku']})
     # 商品图优先于标签；无现场组图的款号使用原文档图片。
     for group in groups.values():
         products=[im for im in group['images'] if im['source']!='ocr']

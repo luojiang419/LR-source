@@ -8,6 +8,7 @@ from sku_match import normalize
 def decorate_images(sku,rows):
     from sku_library import interval_rows
     sessions={};first={};first_sku={}
+    with sku.connect() as c:chosen={(r['session_id'],r['capture_id']):r['sku'] for r in c.execute('SELECT session_id,capture_id,sku FROM ocr_choices')}
     for sid in {r['completion']['session_id'] for r in rows if r.get('completion')}:
         projected,_=interval_rows(sku,sid)
         for image in projected:
@@ -22,8 +23,9 @@ def decorate_images(sku,rows):
         row['sku_image']=None;evidence=row.get('completion')
         if evidence:
             sid=evidence['session_id'];label=evidence['capture_id']
-            candidate=first_sku.get((sid,normalize(row['sku'])))
-            cid=candidate['capture_id'] if candidate else first.get((sid+':'+label,normalize(row['sku'])),label)
+            row['shoot_sku']=chosen.get((sid,label),row['sku'])
+            code=normalize(row['shoot_sku']);candidate=first_sku.get((sid,code))
+            cid=candidate['capture_id'] if candidate else first.get((sid+':'+label,code),label)
             record=sessions[sid].get(cid)
             if record:
                 row['sku_image']={'session_id':sid,'capture_id':cid,'name':record['name'],'url':f'/api/preview/{quote(sid)}/{quote(cid)}?size=240&v={quote(record.get("fingerprint",""))}'}

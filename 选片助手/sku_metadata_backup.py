@@ -16,7 +16,7 @@ VERSION = 1
 MAX_BYTES = 200_000_000
 TABLES = {
     'catalog': ('sessions', 'captures', 'settings'),
-    'sku': ('projects', 'sku_rows', 'jobs', 'parse_jobs', 'ocr_documents', 'ocr_choices',
+    'sku': ('projects', 'sku_rows', 'jobs', 'parse_jobs', 'ocr_documents', 'ocr_choices', 'sku_shoot_versions',
             'metadata_versions', 'archive_events', 'library_bins', 'library_items', 'library_renames'),
     'archive': ('assets', 'files', 'locations', 'versions', 'file_fingerprints', 'catalog_links',
                 'assignments', 'operations', 'metadata_jobs', 'streams', 'bindings', 'segments',

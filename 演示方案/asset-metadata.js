@@ -60,7 +60,7 @@
   <section id="settings-database" class="app-settings-section" aria-labelledby="settings-database-title"><div class="settings-section-heading"><h3 id="settings-database-title">数据库管理</h3><p>换机时先导入资产归档，再导入 SKU 数据库，自动同步元数据。</p></div>
     <div class="workspace-card sku-metadata-card"><p class="workspace-caption">包含全部款号、分组、已移除记录、OCR 资料、拍摄区间、照片索引、人工星级及拍摄文档，不受搜索和分页影响。原照片与同目录 XMP 文件请一起迁移；照片离线时仍保留款号、星级和元数据。更新星级后自动同步 XMP，JPG 同时写入内嵌评级。</p><div class="asset-actions"><button id="sku-metadata-import" type="button" class="bordered">导入元数据</button><button id="sku-metadata-export" type="button" class="bordered">导出元数据</button><input id="sku-metadata-file" type="file" accept=".json,application/json" hidden></div><p class="workspace-caption">在“资产归档”添加新机器照片目录，再导入备份。系统自动匹配照片，恢复款号、拍摄类型、项目、区间、星级和 OCR 资料，并同步写入照片。盘符和目录可以变化；不可靠匹配、不同人工修改和缺少的照片会列为异常。重复导入不重复添加，可继续同步新增归档。</p><p id="sku-metadata-message" class="workspace-caption" role="status" aria-live="polite"></p><p id="sku-metadata-sync-status" class="workspace-caption" role="status" aria-live="polite"></p><ul id="sku-metadata-sync-issues" class="workspace-caption"></ul></div>
   </section>
-  <section id="settings-sku-rules" class="app-settings-section" aria-labelledby="settings-sku-rules-title"><div class="settings-section-heading"><h3 id="settings-sku-rules-title">款号匹配规则</h3><p>自动识别当前公司的款号，默认使用 LC 前缀。</p></div><div class="workspace-card"><p class="workspace-caption">OCR 款号包含配置的前缀、后缀或文字时，唯一有效命中直接应用，无需点击款号；多个不同款号命中时保留人工选择。忽略大小写及全半角差异，款号需含数字；已有确认不会被覆盖。</p><div id="sku-rules-list"></div><div class="asset-actions"><button id="sku-rule-add" type="button">添加规则</button><button id="sku-rule-default" type="button">恢复 LC 默认规则</button><button id="sku-rule-save" type="button" class="primary">保存规则</button></div><p id="sku-rule-message" role="status" class="workspace-caption">正在读取规则…</p></div></section></div></div>`;
+  <section id="settings-sku-rules" class="app-settings-section" aria-labelledby="settings-sku-rules-title"><div class="settings-section-heading"><h3 id="settings-sku-rules-title">款号匹配规则</h3><p>自动识别当前公司的款号，默认使用 LC 前缀。</p></div><div class="workspace-card"><p class="workspace-caption">OCR 款号包含配置的前缀、后缀或文字时，唯一有效命中直接应用，无需点击款号；多个不同款号命中时保留人工选择。同款首次保留原 SKU，新的二星标签重拍自动追加 -A、-B 至 -Z；同一标签重试保留原版本。忽略大小写及全半角差异，款号需含数字；已有确认不会被覆盖。</p><div id="sku-rules-list"></div><div class="asset-actions"><button id="sku-rule-add" type="button">添加规则</button><button id="sku-rule-default" type="button">恢复 LC 默认规则</button><button id="sku-rule-save" type="button" class="primary">保存规则</button></div><p id="sku-rule-message" role="status" class="workspace-caption">正在读取规则…</p></div></section></div></div>`;
   document.querySelector('.workbench > .statusbar').before(settings);
   window.FramekeepDesktop?.initSettings();
   const lengthSettings=document.createElement('div');lengthSettings.className='sku-length-settings';
@@ -425,7 +425,7 @@
       $('asset-ocr-codes').innerHTML=codeButtons(codes)||'<p class="dialog-copy">未找到推荐款号，可选择下方原文或打开 OCR 资料填写正确款号。</p>';
       $('asset-ocr-text').innerHTML=codeButtons(rawLines(snapshot.text),true)||'<span>未返回可见文本</span>';
       $('asset-ocr-result').querySelector('details').open=true;$('asset-ocr-result').hidden=false;markOcrCode(snapshot.selected_sku);
-      msg(codes.length?'SKU 待核对：点击正确款号即可应用到整款图片':'SKU 待核对：请查看 OCR 原文或打开 OCR 资料自行选择');
+      msg(data.ocr.rule_error||(codes.length?'SKU 待核对：点击正确款号即可应用到整款图片':'SKU 待核对：请查看 OCR 原文或打开 OCR 资料自行选择'));
       window.FramekeepSidebar?.show('photos');panel.open=true;
       requestAnimationFrame(()=>{if(context===parseContext()&&ocrSnapshot===snapshot)$('asset-ocr-result').scrollIntoView({block:'nearest'})});
     }catch(error){if(error.name!=='AbortError'&&reviewRequest===request&&context===parseContext())msg('待核对款号读取失败：'+error.message+'；可打开 OCR 资料重试')}
@@ -433,7 +433,7 @@
   });
   function useOcrCode(code){$('asset-sku').value=code;$('asset-sku').dispatchEvent(new Event('input',{bubbles:true}))}
   function markOcrCode(code){
-    for(const button of $('asset-ocr-result').querySelectorAll('[data-ocr-code]')){const chosen=button.dataset.ocrCode===code;button.setAttribute('aria-pressed',String(chosen));button.querySelector('.asset-ocr-code-action').textContent=chosen?'已应用 ✓':'点击应用'}
+    for(const button of $('asset-ocr-result').querySelectorAll('[data-ocr-code]')){const chosen=button.dataset.ocrCode===code||(ocrSnapshot?.selected_sku===code&&button.dataset.ocrCode===ocrSnapshot.base_sku);button.setAttribute('aria-pressed',String(chosen));button.querySelector('.asset-ocr-code-action').textContent=chosen?'已应用 ✓':'点击应用'}
   }
   async function refreshOcrRecommendations(){
     if(!ocrSnapshot||ocrContext!==parseContext())return;
@@ -454,7 +454,7 @@
         if(result.operation_id)operation=result.operation_id;
         document.dispatchEvent(new CustomEvent('framekeep:ocr-choice',{detail:result}));document.dispatchEvent(new CustomEvent('framekeep:ocr-result',{detail:result}));
         if(context===parseContext()&&ocrSnapshot===data){
-          ocrSnapshot.selected_sku=result.sku;markOcrCode(result.sku);
+          ocrSnapshot.selected_sku=result.sku;ocrSnapshot.base_sku=result.base_sku;markOcrCode(result.sku);
           const edited=edit!==skuEditVersion;if(!edited)useOcrCode(result.sku);
           msg('已应用 SKU '+result.sku+`，整款 ${result.capture_count||1} 张`+((result.warnings||[]).length?'；'+result.warnings.join('；'):edited?'；保留应用期间手动修改的输入':'，元数据写入已提交，其他 OCR 资料保留供搜索'));
         }
@@ -463,7 +463,7 @@
   };
   const ocrDetailsButton=document.createElement('button');ocrDetailsButton.id='asset-ocr-details';ocrDetailsButton.className='bordered';ocrDetailsButton.textContent='OCR 资料 / 选择 SKU';$('asset-parse-sku').after(ocrDetailsButton);
   ocrDetailsButton.onclick=()=>{if(current())window.FramekeepOcrDetails?.open(FRAMEKEEP_SESSION.id,current()).catch(error=>msg(error.message));else msg('请先选择照片')};
-  document.addEventListener('framekeep:ocr-choice',event=>{if(!ocrApplying&&event.detail.session_id===FRAMEKEEP_SESSION.id&&event.detail.capture_id===current()){useOcrCode(event.detail.sku);if(ocrContext===parseContext()&&ocrSnapshot){ocrSnapshot.selected_sku=event.detail.sku;markOcrCode(event.detail.sku)}msg('已确认 SKU '+event.detail.sku+'，其他 OCR 资料保留供搜索')}});
+  document.addEventListener('framekeep:ocr-choice',event=>{if(!ocrApplying&&event.detail.session_id===FRAMEKEEP_SESSION.id&&event.detail.capture_id===current()){useOcrCode(event.detail.sku);if(ocrContext===parseContext()&&ocrSnapshot){ocrSnapshot.selected_sku=event.detail.sku;ocrSnapshot.base_sku=event.detail.base_sku;markOcrCode(event.detail.sku)}msg('已确认 SKU '+event.detail.sku+'，其他 OCR 资料保留供搜索')}});
   $('asset-parse-sku').onclick=()=>act(async()=>{
     const sid=FRAMEKEEP_SESSION.id,cid=current(),context=parseContext(),edit=skuEditVersion;
     if(!cid)throw new Error('请先选择要解析的当前照片');
@@ -481,6 +481,7 @@
       ocrContext=context;ocrSnapshot=snapshot;$('asset-ocr-text').innerHTML=(reading.model?`<span class="asset-ocr-source">${esc(reading.model)}</span>`:'')+(codeButtons(rawLines(reading.text),true)||'<span>未返回可见文本</span>');$('asset-ocr-result').querySelector('details').open=true;$('asset-ocr-result').hidden=false;
       $('asset-ocr-codes').innerHTML=codeButtons(codes);markOcrCode(snapshot.selected_sku);
       if(result.auto_applied){if(edit===skuEditVersion)useOcrCode(result.auto_applied.sku);msg(`规则已自动应用 ${result.auto_applied.sku}，整款 ${result.auto_applied.capture_count} 张，元数据写入已提交`)}
+      else if(snapshot.selected_sku){if(edit===skuEditVersion)useOcrCode(snapshot.selected_sku);msg(`该标签已确认 ${snapshot.selected_sku}，保留已有拍摄版本与归属`)}
       else if(codes.length===1&&edit===skuEditVersion){useOcrCode(codes[0]);msg(`已读取 ${codes[0]}，点击款号按钮即可应用；有误可打开 OCR 资料自行选择`)}
       else if(codes.length){msg(edit!==skuEditVersion?'解析完成；保留手动修改的输入，点击推荐款号即可应用':'读出多个款号，点击正确款号即可应用；有误可打开 OCR 资料自行选择')}
       else msg('未读出可用 SKU 款号，请查看 OCR 原文或打开 OCR 资料自行选择');

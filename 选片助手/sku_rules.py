@@ -104,4 +104,10 @@ class SkuRules:
                 # 人工归属优先；自动规则不能覆盖先前编辑。
                 assigned=c.execute('SELECT a.sku FROM assets a JOIN catalog_links l ON l.asset=a.id WHERE l.session=? AND l.capture=?',(sid,cid)).fetchone()
             if assigned and assigned['sku']:return None
-            return self.choose_ocr_sku(sid,cid,eligible[0],details['reading_key'],details['image_key'],automatic=True)
+            from sku_shoot_versions import VersionLimitError
+            try:return self.choose_ocr_sku(sid,cid,eligible[0],details['reading_key'],details['image_key'],automatic=True)
+            except VersionLimitError as exc:
+                with self.connect() as c:
+                    c.execute("UPDATE jobs SET reason=?,result=json_set(result,'$.rule_error',?) WHERE session_id=? AND capture_id=? AND status IN ('review','unmatched')",(str(exc),str(exc),sid,cid))
+                    c.execute("UPDATE parse_jobs SET reason=?,result=json_set(result,'$.rule_error',?) WHERE session_id=? AND capture_id=? AND status='completed'",(str(exc),str(exc),sid,cid))
+                raise
