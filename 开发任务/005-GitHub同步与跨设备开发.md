@@ -2,12 +2,16 @@
 
 [CODEX_LONG_TASK_CONTINUE_V3]
 
-- 当前状态：2026-10-27 全部分支汇总后的完整源码已推送到公开仓库 luojiang419/LR-source 的 main，GitHub API 已核对公开提交和源码树一致；本记录补充后同步最终快照。
+- 当前状态：2026-10-27 全部分支汇总后的完整源码已公开交付；追加桌面检索布局同步修复已完成编译验收，本轮完整快照以 luojiang419/LR-source 的 main 最终引用为准。
 - 下一步：其他设备直接 git clone https://github.com/luojiang419/LR-source.git 获取当前完整源码。
 - TODO：无本次源码交付遗留。
 - 最近验证：687 份受管文件的敏感路径和高置信度凭据模式扫描无命中；GitHub 仓库为 public、默认分支 main；首次快照 5ab299a 与源码 7ed1cec 文件树完全相同。合并与运行验证见任务 115。
 - branch/commit：主项目 feat/integrate-multimodal-main；公开独立快照 public/source-snapshot 跟踪 public/main，最终公开 hash 以 GitHub / Git 为准。
 - 阻塞：无。036 文档、厂商 SDK、错误样本及所有本机资料/密钥/缓存/构建产物保留本地，不混入源码快照。
+
+## 2026-10-27 桌面检索布局同步修复
+
+桌面端资产检索已补齐 Web 最新布局，重新构建发行程序并同步便携目录，原有资料保留。具体实现与 5 项回归、冻结运行/资源一致性验收见任务 115。沿用公开 main 的独立快照历史交付全部已提交源码，不发布私有历史、不 force push；其他开发者拉取后按 README 完整重建，避免仅更新 Rust 可执行文件却继续使用旧冻结页面。最终远端提交及文件树核对结果保存在忽略目录 build/desktop-search-layout/source-delivery.json。
 
 ## 2026-10-27 全分支最新完整源码公开交付
 
