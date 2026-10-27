@@ -109,6 +109,28 @@ class IntervalTests(unittest.TestCase):
         result=browse(self.sku);self.assertEqual(result['interval_count'],3)
         self.assertEqual({row['sku']:row['count'] for row in result['groups']},{'A-100':4,'B-200':2})
 
+    def test_same_ocr_boundary_can_be_adopted_by_a_second_stream_and_replayed(self):
+        self.mark(1,'A-100',10);self.mark(5,'B-200',20)
+        self.archive.start_stream(self.sid,'project','模特图')
+        self.automatic('B-200',5)
+        with self.archive.connect() as c:
+            first=c.execute("SELECT id,stream FROM segments WHERE sku='A-100'").fetchone()
+            # 保留旧版 sid/capture 补识别身份，不能靠清库或删除历史段修复。
+            c.execute('UPDATE segments SET job=? WHERE id=?',('ocr:'+self.sid+':'+self.ids[1],first['id']))
+        self.archive.start_stream(self.sid,'project','细节图',start_capture=self.ids[0])
+        job=dict(self.job('B-200',5),id='second-stream-B',scope='细节图')
+        self.archive.reserve(job);self.archive.handle_event('second-stream',job,'B-200')
+        with self.archive.connect() as c:
+            segments=[dict(r) for r in c.execute("SELECT * FROM segments WHERE sku='A-100'")]
+            self.assertEqual(len(segments),2)
+            self.assertEqual(len({r['stream'] for r in segments}),2)
+            self.assertTrue(any(r['id']==first['id'] for r in segments))
+            operations=c.execute('SELECT count(*) FROM operations').fetchone()[0]
+        self.archive.reconcile_ocr('second-stream-replay',self.sid,self.ids[5])
+        with self.archive.connect() as c:
+            self.assertEqual(c.execute('SELECT count(*) FROM operations').fetchone()[0],operations)
+            self.assertEqual(c.execute("SELECT count(*) FROM segments WHERE sku='A-100'").fetchone()[0],2)
+
     def test_queued_auto_assignments_reflow_and_remain_idempotent(self):
         self.archive.start_stream(self.sid,'project','模特图');self.automatic('A-100',1);self.automatic('B-200',5)
         old=self.segments()['B-200']['operation'];self.automatic('C-300',3);self.assert_three()

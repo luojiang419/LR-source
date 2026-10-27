@@ -611,8 +611,16 @@ class SkuService(ConcurrentLabels,FullAutoOCR,OcrMetadata,SkuRules):
             c.execute('UPDATE jobs SET status=?,result=?,targets=?,reason=?,updated=? WHERE id=?',(status,json.dumps(result,ensure_ascii=False),json.dumps(targets),reason,self.clock(),job['id']))
             self._archive_event(c,dict(job,status=status,targets=json.dumps(targets),reason=reason))
         try:self.export(job['project'])
-        except ValueError:pass  # 识别结论保留，导出失败独立提示和重试。
-        if self.archive:self.deliver_events(self.archive)
+        except Exception as exc:
+            from operation_errors import record_error
+            record_error(self.store.data,'sku-finish-export',exc)
+            self.dirty.add(job['project']);self.wake.set()
+        # 识别结果已提交；历史归档/导出故障不能跳过后续公司规则自动确认。
+        if self.archive:
+            try:self.deliver_events(self.archive)
+            except Exception as exc:
+                from operation_errors import record_error
+                record_error(self.store.data,'sku-finish-archive',exc)
 
     def review(self,jid,action,row_id=None):
         with self.lock:

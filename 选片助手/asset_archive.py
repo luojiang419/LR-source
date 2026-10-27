@@ -471,7 +471,8 @@ PRAGMA user_version=1;''')
                         if old and old['operation']:self.revert(old['operation'])
                         with self.connect() as c:
                             if old:c.execute("UPDATE segments SET sku=?,operation='',status='ready',reason='' WHERE id=?",(marker['sku'],old['id']))
-                            else:c.execute('INSERT INTO segments(id,job,stream,label,members,status,sku,created) VALUES (?,?,?,?,?,?,?,?)',(uid(),'ocr:'+sid+':'+capture,stream['id'],binding['asset'],'[]','waiting_sku',marker['sku'],time.time()))
+                            # 同一会话可切换工作表并建立多个拍摄段，补识别身份必须属于本段。
+                            else:c.execute('INSERT INTO segments(id,job,stream,label,members,status,sku,created) VALUES (?,?,?,?,?,?,?,?)',(uid(),'ocr:'+stream['id']+':'+capture,stream['id'],binding['asset'],'[]','waiting_sku',marker['sku'],time.time()))
                             c.execute("UPDATE assets SET role='sku_label' WHERE id=?",(binding['asset'],))
                 self._rebuild_segments(stream['id'])
             with self.connect() as c:c.execute('INSERT OR IGNORE INTO event_receipts VALUES (?)',(event_id,))

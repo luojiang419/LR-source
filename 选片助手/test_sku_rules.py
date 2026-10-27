@@ -3,6 +3,7 @@ from contextlib import ExitStack
 from http.server import ThreadingHTTPServer
 from pathlib import Path
 import threading
+import sqlite3
 import unittest
 from unittest.mock import patch
 
@@ -91,6 +92,29 @@ class RuleIntegrationTests(unittest.TestCase):
         code='LC7877529-P105';self.sku.set_sku_rules([{'kind':'contains','value':'LC'}],{'min_exclusive':10,'max_exclusive':20})
         self.reading.update(text=code+'\nLC99',codes=[code,'LC99'],ocr_candidates=[])
         self.assertEqual(self.parse()['auto_applied']['sku'],code)
+
+    def background_rule_with_postcommit_failure(self,method,error):
+        code='LC7877499-P905'
+        self.reading.update(text='SIZE:S\n'+code+'\n261009 G264-1',codes=[code],ocr_candidates=[code])
+        self.sku.enqueue(self.sid,self.ids[1])
+        with patch.object(self.sku,method,side_effect=error) as failed:
+            self.sku.tick()
+            self.assertGreaterEqual(failed.call_count,2)  # 结果保存和自动确认均尝试后续任务。
+        from capture_parsing import capture_status
+        feedback=capture_status(self.store,self.sku,self.archive,None,self.sid,self.ids[1])['ocr']
+        self.assertEqual(feedback['status'],'confirmed');self.assertEqual(feedback['codes'],[code])
+        row=next(r for r in self.sku.state()['rows'] if r['sku']==code)
+        self.assertEqual(row['status'],'已拍摄');self.assertTrue(row['completed_at']);self.assertTrue(row['sku_image'])
+        self.sku.deliver_events(self.archive)
+        self.assertEqual(self.archive.query(code)['total'],2)
+        return code
+
+    def test_background_rule_confirms_even_when_history_archive_delivery_fails(self):
+        self.background_rule_with_postcommit_failure('deliver_events',sqlite3.IntegrityError('UNIQUE constraint failed: segments.job'))
+
+    def test_background_rule_confirms_even_when_workbook_export_fails(self):
+        self.background_rule_with_postcommit_failure('export',PermissionError('workbook is open'))
+        self.assertIn(self.pid,self.sku.dirty)
 
     def test_suffix_persists_and_single_photo_without_document(self):
         rules=[{'kind':'suffix','value':'P905'}];self.sku.set_sku_rules(rules)
