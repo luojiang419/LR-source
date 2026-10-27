@@ -11,7 +11,7 @@ from xml.etree import ElementTree as E
 from zipfile import ZipFile
 
 from PIL import Image
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import expect,sync_playwright
 import test_ocr_metadata as fixture
 from sku_service import SkuService
 from sku_library import browse
@@ -185,12 +185,12 @@ class DocumentTests(unittest.TestCase):
                             self.assertNotEqual(preview.evaluate('e=>e.style.transform'),before)
                         page.locator('#sku-image-fit').click();fits()
                         page.locator('#sku-image-plus').click();self.assertEqual(page.locator('#sku-image-scale').inner_text(),'125%')
-                        page.locator('#sku-image-minus').click();fits();page.keyboard.press('Equal');self.assertEqual(page.locator('#sku-image-scale').inner_text(),'125%')
+                        page.locator('#sku-image-minus').click();fits();stage.focus();page.keyboard.press('Equal');self.assertEqual(page.locator('#sku-image-scale').inner_text(),'125%')
                         stage.dblclick();fits();stage.dblclick();self.assertEqual(page.locator('#sku-image-scale').inner_text(),'200%')
                         page.keyboard.press('0');fits();page.keyboard.press('3');self.assertEqual(self.store.session(self.sid)['state']['overrides'],original)
                         stage.dispatch_event('wheel',{'deltaY':-10000,'deltaMode':1});self.assertLessEqual(int(page.locator('#sku-image-scale').inner_text().strip('%')),1600)
                         for _ in range(4):stage.dispatch_event('wheel',{'deltaY':10000,'deltaMode':1})
-                        fits();page.keyboard.press('Escape');self.assertFalse(viewer.evaluate('e=>e.open'));self.assertTrue(trigger.evaluate('e=>e===document.activeElement'))
+                        fits();page.keyboard.press('Escape');self.assertFalse(viewer.evaluate('e=>e.open'));expect(trigger).to_be_focused()
                         trigger.click();loaded();fits();page.locator('#sku-image-close').click();self.assertFalse(viewer.evaluate('e=>e.open'))
                         out=fixture.ROOT/'build/sku-document-acceptance';out.mkdir(exist_ok=True)
                         for theme in ['dark','light','pure-white','hardcore']:

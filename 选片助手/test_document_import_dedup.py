@@ -70,7 +70,7 @@ class ImportDedupTests(unittest.TestCase):
         self.assertTrue(result['already_imported']);self.assertEqual(result['project']['id'],self.pid)
         self.assertTrue(any(row['status']=='已拍摄' for row in result['rows']))
 
-    def test_removed_document_starts_fresh_and_old_photo_edit_uses_new_task(self):
+    def test_removed_document_stays_removed_and_new_task_recovers_valid_folder_progress(self):
         self.parse();self.choose()
         with self.sku.connect() as c:
             c.execute("UPDATE projects SET metadata=json_set(metadata,'$.removed_at','2026-10-27'),enabled=0 WHERE id=?",(self.pid,))
@@ -80,7 +80,7 @@ class ImportDedupTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'已移除'):self.sku.activate(self.pid)
         result=self.sku.import_file('plan.xlsx',self.content,self.sid,'模特图');pid=result['project']['id']
         self.assertNotEqual(pid,self.pid);self.assertFalse(result['already_imported'])
-        self.assertTrue(all(row['status']=='未拍摄' for row in result['rows']))
+        self.assertEqual([(r['sheet'],r['sku']) for r in result['rows'] if r['status']=='已拍摄'],[('模特图',fixture.CODE)])
         self.assertEqual(len(result['projects']),1)
         confirm_group(self.archive,self.sku,self.sid,self.ids[1],[self.ids[1]],fixture.CODE,'模特图',pid)
         state=self.sku.state();self.assertEqual(state['project']['id'],pid)

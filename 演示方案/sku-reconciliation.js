@@ -166,7 +166,11 @@
   }
   function closeSkuImage(){if(imageDialog.open)imageDialog.close()}
   $('sku-image-close').onclick=closeSkuImage;imageDialog.addEventListener('cancel',event=>{event.preventDefault();closeSkuImage()});
-  imageDialog.addEventListener('close',()=>{++imageRequest;endImageDrag();skuImage.onload=skuImage.onerror=null;skuImage.hidden=true;skuImage.removeAttribute('src');if(imageOrigin?.isConnected)imageOrigin.focus({preventScroll:true});imageOrigin=null});
+  imageDialog.addEventListener('close',()=>{
+    ++imageRequest;endImageDrag();skuImage.onload=skuImage.onerror=null;skuImage.hidden=true;skuImage.removeAttribute('src');
+    const origin=imageOrigin?.isConnected?imageOrigin:[...$('sku-rows').querySelectorAll('[data-completion]')].find(node=>node.dataset.completion===imageOrigin?.dataset.completion);
+    origin?.focus({preventScroll:true});imageOrigin=null;
+  });
   $('sku-image-minus').onclick=()=>zoomSkuImage(imageScale/1.25);$('sku-image-plus').onclick=()=>zoomSkuImage(imageScale*1.25);$('sku-image-fit').onclick=fitSkuImage;
   imageStage.addEventListener('wheel',event=>{event.preventDefault();const delta=event.deltaY*(event.deltaMode===1?16:event.deltaMode===2?imageStage.clientHeight:1);zoomSkuImage(imageScale*Math.exp(-clampImage(delta,-600,600)*.002),event.clientX,event.clientY)},{passive:false});
   imageStage.addEventListener('dblclick',event=>{event.preventDefault();if(imageScale>1)fitSkuImage();else zoomSkuImage(2,event.clientX,event.clientY)});
@@ -193,7 +197,7 @@
   }
   $('sku-rows').addEventListener('click',event=>{const cover=event.target.closest('[data-sku-cover]');if(cover){openSkuGallery(cover);return}const sheet=event.target.closest('[data-sku-sheet],[data-common-sheet]');if(sheet){const name=sheet.dataset.skuSheet||sheet.dataset.commonSheet;if(commonView||name!==state.project?.scope)action(()=>configure(name));return}const target=event.target.closest('[data-sku-image],[data-completion]');if(target)openSkuImage(target)});
   function render(){
-    const p=state.project;if(displayProject!==p?.id){displayProject=p?.id;commonView=false;allView=false}bar.classList.toggle('hidden',!p);manualType.hidden=!!p;const common=commonGroups(),commonShot=common.filter(r=>r.shot).length,allGroups=state.all_rows||[],allShot=allGroups.filter(r=>r.shot).length,count=allView?{total:allGroups.length,shot:allShot,pending:allGroups.length-allShot,rows:allGroups.length}:commonView?{total:common.length,shot:commonShot,pending:common.length-commonShot,rows:common.length}:state.progress?.find(s=>s.sheet===p?.scope),all=(state.progress||[]).reduce((sum,s)=>sum+s.shot,0);(button.querySelector('.workspace-tab-label')||button).textContent=p?`拍摄进度 · ${all} 已拍摄`:'拍摄进度';
+    const p=state.project;if(displayProject!==p?.id){displayProject=p?.id;commonView=false;allView=false}bar.classList.toggle('hidden',!p);manualType.hidden=!!p;const common=commonGroups(),commonShot=common.filter(r=>r.shot).length,allGroups=state.all_rows||[],allShot=allGroups.filter(r=>r.shot).length,count=allView?{total:allGroups.length,shot:allShot,pending:allGroups.length-allShot,rows:allGroups.length}:commonView?{total:common.length,shot:commonShot,pending:common.length-commonShot,rows:common.length}:state.progress?.find(s=>s.sheet===p?.scope),all=state.folder_progress?.session_id===window.FRAMEKEEP_SESSION.id?state.folder_progress.confirmed_skus:(state.progress||[]).reduce((sum,s)=>sum+s.shot,0);(button.querySelector('.workspace-tab-label')||button).textContent=p?`拍摄进度 · ${all} 已拍摄`:'拍摄进度';
     $('shooting-document').textContent=p&&!p.metadata.automatic_day?`${p.name}${p.scope?' · '+p.scope:''}`:'自由拍摄 · 无需导入表格';$('shooting-document').title=p&&!p.metadata.automatic_day?p.name:'';
     const context=JSON.stringify(FramekeepSku.context());if(context!==lastContext){lastContext=context;document.dispatchEvent(new CustomEvent('framekeep:sku-context'))}
     const project=JSON.stringify(FramekeepSku.shootingTypes());if(project!==lastProject){lastProject=project;document.dispatchEvent(new CustomEvent('framekeep:sku-project'))}
@@ -220,6 +224,7 @@
     $('sku-project-info').textContent=p?`${p.name} · 当前拍摄：${p.scope||'尚未选择'} · ${bound?'已绑定当前照片目录':'需绑定当前照片目录'}。源表保持原样，工作副本自动更新。`:'先导入本次拍摄表格，各页款号分别对账。';
     if(p?.export_error)message(p.export_error);
     dialog.querySelector('.progress-note').textContent=allView?'全部工作表按款号去重，原表行按来源工作表分别列出；查看汇总不改变当前 OCR 工作表。双击表头修改列名称。':commonView?'公共款号在多个工作表中重复出现，按款号去重，各表状态分别保留；全部所属工作表均已拍摄才计为完成。查看公共不改变当前 OCR 工作表。':'序号按当前列表从1连续排列，原表行号单独保留。完成时间取自标签照片拍摄信息，点击时间可查证标签；缺失拍摄时间时不使用文件时间代替。';
+    const folder=state.folder_progress;if(folder?.session_id===window.FRAMEKEEP_SESSION.id){const line=document.createElement('strong');line.className='progress-folder-summary';line.textContent=`当前目录：二星标签 ${folder.two_star} 张 · 已确认 ${folder.confirmed_labels} 张 / ${folder.confirmed_skus} 款 · 待确认 ${folder.pending_labels} 张`;dialog.querySelector('.progress-note').prepend(line)}
     const summary=count?`<div><span>总款数</span><strong id="progress-total">${count.total}</strong></div><div><span>已拍摄</span><strong id="progress-shot">${count.shot}</strong></div><div><span>未拍摄</span><strong id="progress-pending">${count.pending}</strong></div><div class="progress-meter"><span>${count.total?Math.round(count.shot/count.total*100):0}% 完成</span><progress aria-label="当前工作表完成进度" max="${count.total||1}" value="${count.shot}"></progress>${count.rows!==count.total?'<small>按款号去重统计，原表行全部保留</small>':''}</div>`:'<p class="progress-empty">选择工作表后显示本页拍摄进度</p>';if($('sku-progress-summary').innerHTML!==summary)$('sku-progress-summary').innerHTML=summary;
     renderRows();
     const sheetKey=p?.id+'|'+p?.scope+'|'+(allView?'all':commonView?'common':'scope');

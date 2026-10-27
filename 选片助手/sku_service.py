@@ -116,6 +116,19 @@ class SkuService(ConcurrentLabels,FullAutoOCR,OcrMetadata,SkuRules):
     def state(self):
         p=self.project()
         if p and p['metadata'].get('removed_at'):p=None
+        folder_progress=None
+        if p:
+            from sku_folder_progress import signature
+            with self.lock,self.connect() as c:
+                key=signature(self,c,p)
+                cached=getattr(self,'folder_progress_cache',{}).get(p['id'])
+                if not cached or cached[0]!=key:
+                    self._refresh_progress(c,p['id'])
+                    summary=getattr(self,'folder_progress_summary',{}).get(p['id'])
+                    if not hasattr(self,'folder_progress_cache'):self.folder_progress_cache={}
+                    self.folder_progress_cache[p['id']]=(key,summary)
+                folder_progress=self.folder_progress_cache[p['id']][1]
+            p=self.project(p['id'])
         with self.connect() as c:
             projects=[dict(r) for r in c.execute("SELECT id,name,scope,created FROM projects WHERE json_extract(metadata,'$.removed_at') IS NULL ORDER BY created DESC")]
             jobs=[dict(r) for r in c.execute('SELECT * FROM jobs WHERE project=? ORDER BY created DESC LIMIT 60',(p['id'],))] if p else []
@@ -143,7 +156,7 @@ class SkuService(ConcurrentLabels,FullAutoOCR,OcrMetadata,SkuRules):
         from sku_reconciliation import decorate_images
         decorate_images(self,rows)
         from sku_presentation import grouped_rows
-        return {'project':p,'projects':projects,'rows':rows,'all_rows':grouped_rows(rows,p['metadata']['sheets']) if p else [],'jobs':jobs,'progress':statistics(rows,p['metadata']['sheets']) if p else [],'full_auto':self.full_auto_state()}
+        return {'project':p,'projects':projects,'rows':rows,'all_rows':grouped_rows(rows,p['metadata']['sheets']) if p else [],'jobs':jobs,'progress':statistics(rows,p['metadata']['sheets']) if p else [],'folder_progress':folder_progress,'full_auto':self.full_auto_state()}
 
     def _ensure_images(self,p):
         if all('images' in s or s.get('skipped') for s in p['metadata']['sheets']):return
@@ -756,11 +769,23 @@ class SkuService(ConcurrentLabels,FullAutoOCR,OcrMetadata,SkuRules):
         with self.connect() as c:c.execute('INSERT OR REPLACE INTO metadata_versions VALUES (?,?,?,?)',(sid,cid,before,after))
 
     def _refresh_progress(self,c,pid):
-        targets={}
+        from sku_folder_progress import reconcile
+        project=dict(c.execute('SELECT * FROM projects WHERE id=?',(pid,)).fetchone())
+        project['metadata']=json.loads(project['metadata'])
+        rows=[dict(r) for r in c.execute('SELECT * FROM sku_rows WHERE project=?',(pid,))]
+        targets,handled,summary,changed=reconcile(self,c,project,rows)
+        if not hasattr(self,'folder_progress_summary'):self.folder_progress_summary={}
+        self.folder_progress_summary[pid]=summary
+        getattr(self,'folder_progress_cache',{}).pop(pid,None)
+        if changed:self.dirty.add(pid)
         for job in c.execute("SELECT * FROM jobs WHERE project=? AND status IN ('matched','confirmed') ORDER BY captured_at,created,id",(pid,)):
+            if (job['session_id'],job['capture_id']) in handled:continue
             for rid in json.loads(job['targets']):
                 prior=targets.get(rid)
                 if prior is None or completion_order(job)>completion_order(prior):targets[rid]=job
+        if any((r['status'],r.get('completed_at',''),r.get('completion_job',''))!=
+               (('已拍摄',targets[r['id']]['captured_at'],targets[r['id']]['id']) if r['id'] in targets else
+                (r['baseline'],r.get('baseline_completed_at',''),'')) for r in rows):self.dirty.add(pid)
         c.execute("UPDATE sku_rows SET status=baseline,completed_at=baseline_completed_at,completion_job='' WHERE project=?",(pid,))
         for rid,job in targets.items():c.execute("UPDATE sku_rows SET status='已拍摄',completed_at=?,completion_job=? WHERE project=? AND id=?",(job['captured_at'],job['id'],pid,rid))
         return targets

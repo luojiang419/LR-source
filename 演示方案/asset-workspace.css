@@ -282,6 +282,7 @@ html[data-hardcore-layout=true] .workspace-card,html[data-hardcore-layout=true] 
 #app-settings-message:empty{display:none;}
 @media(max-width:1000px){.settings-file-grid,.settings-stream-fields{grid-template-columns:minmax(0,1fr);}.settings-stream-close{border-left:0;border-top:1px solid var(--theme-border);padding-left:0;padding-top:18px;}}
 @media(max-width:700px){.app-settings-layout{display:flex;flex-direction:column;gap:16px;}.app-settings-nav{flex:none;flex-direction:row;gap:6px;overflow-x:auto;border-right:0;border-bottom:1px solid var(--theme-border);padding:0 0 8px;}.app-settings-nav button{flex:none;padding:9px 10px;gap:6px;}.app-settings-nav button span{display:none;}.app-settings-grid{padding-right:3px;gap:24px;}.settings-service-card{align-items:stretch;flex-direction:column;gap:16px;padding:16px;}.settings-service-action button{width:100%;}html[data-hardcore-layout] #app-settings-page.asset-workspace{padding:12px;gap:12px;}}
+.progress-folder-summary{display:block;margin-bottom:5px;color:var(--theme-text);font-size:12px;line-height:1.7}
 #parsing-auto-scope{overflow-wrap:anywhere}
 #parsing-connection{color:var(--theme-warning)}
 #metadata-tasks-card [hidden],#task-progress-panel [hidden]{display:none}
