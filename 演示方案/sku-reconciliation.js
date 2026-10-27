@@ -241,7 +241,7 @@
         await FramekeepIO.flush();const bytes=new Uint8Array(await file.arrayBuffer());let binary='';for(let i=0;i<bytes.length;i+=32768)binary+=String.fromCharCode(...bytes.subarray(i,i+32768));
         state=await api('/api/sku/import',{name:file.name,content_base64:btoa(binary),session_id:sessionId,preferred_scope:previousScope},90000);
         $('sku-search').value='';$('sku-filter').value='all';lastJobs='';render();
-        const bound=!!sessionId&&state.project.session_id===window.FRAMEKEEP_SESSION.id;message(bound?'已导入并绑定当前目录，可直接开启全自动 OCR。':'已导入拍摄计划，可查看各工作表；打开照片目录后可绑定拍摄。');return {...FramekeepSku.shootingTypes(),bound};
+        const bound=!!sessionId&&state.project.session_id===window.FRAMEKEEP_SESSION.id,reused=!!state.already_imported;message(reused?'该文件已导入，已复用原拍摄任务并保留已有进度。':bound?'已导入并绑定当前目录，可直接开启全自动 OCR。':'已导入拍摄计划，可查看各工作表；打开照片目录后可绑定拍摄。');return {...FramekeepSku.shootingTypes(),bound,reused};
       }finally{$('sku-import').disabled=$('shooting-import').disabled=false}
     });
   }
@@ -289,7 +289,7 @@
   $('sku-projects').addEventListener('change',e=>action(async()=>{const projectId=e.target.value;await FramekeepIO.flush();state=await api('/api/sku/activate',{project_id:projectId});lastJobs='';render()}));
   $('sku-import').addEventListener('click',()=>$('sku-file').click());
   $('shooting-import').addEventListener('click',()=>$('shooting-plan-file').click());
-  $('shooting-plan-file').addEventListener('change',async event=>{try{if(event.target.files[0]){const result=await importPlan(event.target.files[0],true);Framekeep.notify(result.bound?'表格已导入，可在右栏开启全自动 OCR':'表格已导入，请选择工作表并绑定照片目录');window.FramekeepSidebar?.show('shooting')}}catch(error){Framekeep.notify(error.message);$('shooting-auto-status').textContent=error.message}finally{event.target.value=''}});
+  $('shooting-plan-file').addEventListener('change',async event=>{try{if(event.target.files[0]){const result=await importPlan(event.target.files[0],true);Framekeep.notify(result.reused?'该文件已导入，已复用原任务并保留拍摄进度':result.bound?'表格已导入，可在右栏开启全自动 OCR':'表格已导入，请选择工作表并绑定照片目录');window.FramekeepSidebar?.show('shooting')}}catch(error){Framekeep.notify(error.message);$('shooting-auto-status').textContent=error.message}finally{event.target.value=''}});
   $('sku-file').addEventListener('change',async e=>{try{await importPlan(e.target.files[0],true)}catch(error){message(error.message);Framekeep.notify(error.message)}finally{e.target.value=''}});
   $('sku-export').addEventListener('click',()=>action(async()=>{
     if(!state.project)throw new Error('请先导入拍摄清单');

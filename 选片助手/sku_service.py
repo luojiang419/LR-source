@@ -40,6 +40,7 @@ class SkuService(ConcurrentLabels,FullAutoOCR,OcrMetadata,SkuRules):
             c.execute('CREATE TABLE IF NOT EXISTS archive_events(id TEXT PRIMARY KEY,job TEXT,payload TEXT,delivered INTEGER DEFAULT 0)')
             c.execute('CREATE TABLE IF NOT EXISTS metadata_versions(session TEXT,capture TEXT,before TEXT,after TEXT,PRIMARY KEY(session,capture,before))')
             c.execute('CREATE TABLE IF NOT EXISTS live_sessions(session TEXT PRIMARY KEY,updated REAL)')
+            c.execute("CREATE INDEX IF NOT EXISTS project_source_hash ON projects(json_extract(metadata,'$.source_sha256'))")
             c.execute("CREATE TABLE IF NOT EXISTS parse_jobs(id TEXT PRIMARY KEY,session_id TEXT,capture_id TEXT,status TEXT,created REAL,result TEXT DEFAULT '{}',reason TEXT DEFAULT '')")
             for table in ('parse_jobs','jobs'):
                 import task_history
@@ -114,8 +115,9 @@ class SkuService(ConcurrentLabels,FullAutoOCR,OcrMetadata,SkuRules):
 
     def state(self):
         p=self.project()
+        if p and p['metadata'].get('removed_at'):p=None
         with self.connect() as c:
-            projects=[dict(r) for r in c.execute('SELECT id,name,scope,created FROM projects ORDER BY created DESC')]
+            projects=[dict(r) for r in c.execute("SELECT id,name,scope,created FROM projects WHERE json_extract(metadata,'$.removed_at') IS NULL ORDER BY created DESC")]
             jobs=[dict(r) for r in c.execute('SELECT * FROM jobs WHERE project=? ORDER BY created DESC LIMIT 60',(p['id'],))] if p else []
         for job in jobs:
             job['result']=json.loads(job['result'] or '{}');job['targets']=json.loads(job['targets'] or '[]')
@@ -163,29 +165,58 @@ class SkuService(ConcurrentLabels,FullAutoOCR,OcrMetadata,SkuRules):
     def import_file(self,name,content,session_id=None,preferred_scope=None):
         if not str(name).lower().endswith('.xlsx'):raise ValueError('目前支持 .xlsx，请先将其他格式另存为 xlsx')
         if not 0<len(content)<=20_000_000:raise ValueError('表格须小于 20MB')
-        pid=uuid.uuid4().hex;folder=self.root/pid;folder.mkdir();source=folder/'source.xlsx';source.write_bytes(content)
-        try:sheets=inspect_workbook(source)
-        except Exception as exc:raise ValueError('表格无法导入：'+str(exc)[:180]) from None
         if session_id and not self.store.session(session_id):raise ValueError('当前照片目录不存在')
-        names=[s['name'] for s in sheets if not s.get('skipped')]
-        scope=(preferred_scope if preferred_scope in names else names[0]) if preferred_scope is not None else ''
-        metadata={'sheets':[{k:v for k,v in s.items() if k!='rows'} for s in sheets],'source_sha256':hashlib.sha256(content).hexdigest(),'progress_version':1}
-        with self.lock,self.connect() as c:
-            c.execute('INSERT INTO projects(id,name,metadata,session_id,scope,enabled,created) VALUES (?,?,?,?,?,?,?)',(pid,Path(name).name,json.dumps(metadata,ensure_ascii=False),session_id,scope,1,self.clock()))
-            for sheet in sheets:
-                for row in sheet['rows']:
-                    c.execute('INSERT INTO sku_rows(id,project,sheet,excel_row,sku,normalized,baseline,status,baseline_completed_at,completed_at,source_values) VALUES (?,?,?,?,?,?,?,?,?,?,?)',(uuid.uuid4().hex,pid,sheet['name'],row['excel_row'],row['sku'],row['normalized'],row['baseline'],row['baseline'],row.get('baseline_completed_at',''),row.get('baseline_completed_at',''),json.dumps(row.get('cells',{}),ensure_ascii=False)))
+        digest=hashlib.sha256(content).hexdigest();folder=None
+        with self.lock:
+            try:
+                with self.connect() as c:
+                    # 指纹检查与登记同一事务；多窗口/多服务同时导入也只新建一次。
+                    c.execute('BEGIN IMMEDIATE')
+                    existing=c.execute("""SELECT id FROM projects WHERE json_extract(metadata,'$.source_sha256')=?
+                        AND json_extract(metadata,'$.removed_at') IS NULL AND json_extract(metadata,'$.automatic_day') IS NULL
+                        ORDER BY id=(SELECT value FROM settings WHERE key='active') DESC,
+                        (SELECT count(*) FROM jobs WHERE project=projects.id AND status IN ('confirmed','matched')) DESC,created DESC LIMIT 1""",(digest,)).fetchone()
+                    if existing:pid=existing['id']
+                    else:
+                        pid=uuid.uuid4().hex;folder=self.root/pid;folder.mkdir();source=folder/'source.xlsx';source.write_bytes(content)
+                        try:sheets=inspect_workbook(source)
+                        except Exception as exc:raise ValueError('表格无法导入：'+str(exc)[:180]) from None
+                        names=[s['name'] for s in sheets if not s.get('skipped')]
+                        scope=(preferred_scope if preferred_scope in names else names[0]) if preferred_scope is not None else ''
+                        metadata={'sheets':[{k:v for k,v in s.items() if k!='rows'} for s in sheets],'source_sha256':digest,'progress_version':1}
+                        c.execute('INSERT INTO projects(id,name,metadata,session_id,scope,enabled,created) VALUES (?,?,?,?,?,?,?)',(pid,Path(name).name,json.dumps(metadata,ensure_ascii=False),session_id,scope,1,self.clock()))
+                        for sheet in sheets:
+                            for row in sheet['rows']:
+                                c.execute('INSERT INTO sku_rows(id,project,sheet,excel_row,sku,normalized,baseline,status,baseline_completed_at,completed_at,source_values) VALUES (?,?,?,?,?,?,?,?,?,?,?)',(uuid.uuid4().hex,pid,sheet['name'],row['excel_row'],row['sku'],row['normalized'],row['baseline'],row['baseline'],row.get('baseline_completed_at',''),row.get('baseline_completed_at',''),json.dumps(row.get('cells',{}),ensure_ascii=False)))
+                        c.execute("INSERT OR REPLACE INTO settings VALUES ('active',?)",(pid,))
+            except Exception:
+                if folder:
+                    (folder/'source.xlsx').unlink(missing_ok=True);folder.rmdir()
+                raise
+            if existing:return self._reuse_import(pid,session_id,preferred_scope)
+            aliases={key:value for sheet in sheets for key,value in sheet.get('header_aliases',{}).items()}
+            if aliases:
+                from sku_presentation import save_preferences
+                save_preferences(self,pid,{'headers':aliases,'images':{}})
+            if self.archive and session_id and scope:self.archive.start_stream(session_id,pid,scope)
+            self._reconcile_full_context();self.export(pid)
+            return dict(self.state(),already_imported=False)
+
+    def _reuse_import(self,pid,session_id,preferred_scope):
+        project=self.project(pid);sid=project['session_id'] or session_id;scope=project['scope']
+        names=[s['name'] for s in project['metadata']['sheets'] if not s.get('skipped')]
+        if not scope and preferred_scope is not None:scope=preferred_scope if preferred_scope in names else names[0]
+        with self.connect() as c:
+            active=c.execute("SELECT value FROM settings WHERE key='active'").fetchone()
+            c.execute('UPDATE projects SET session_id=?,scope=? WHERE id=?',(sid,scope,pid))
             c.execute("INSERT OR REPLACE INTO settings VALUES ('active',?)",(pid,))
-        aliases={key:value for sheet in sheets for key,value in sheet.get('header_aliases',{}).items()}
-        if aliases:
-            from sku_presentation import save_preferences
-            save_preferences(self,pid,{'headers':aliases,'images':{}})
-        if self.archive and session_id and scope:self.archive.start_stream(session_id,pid,scope)
-        self._reconcile_full_context();self.export(pid);return self.state()
+        if self.archive and sid and scope and (not active or active[0]!=pid or sid!=project['session_id'] or scope!=project['scope']):self.archive.start_stream(sid,pid,scope)
+        self._reconcile_full_context()
+        return dict(self.state(),already_imported=True)
 
     def configure(self,pid,session_id,scope,enabled=True):
         p=self.project(pid)
-        if not p:raise ValueError('拍摄对账任务不存在')
+        if not p or p['metadata'].get('removed_at'):raise ValueError('拍摄对账任务不存在或已移除，请重新导入')
         names={s['name'] for s in p['metadata']['sheets'] if not s.get('skipped')}
         if scope not in names:raise ValueError('请先选择当前拍摄类型／工作表')
         if session_id and not self.store.session(session_id):raise ValueError('请先打开现场照片目录，再绑定对账任务')
@@ -197,7 +228,7 @@ class SkuService(ConcurrentLabels,FullAutoOCR,OcrMetadata,SkuRules):
 
     def activate(self,pid):
         project=self.project(pid)
-        if not project:raise ValueError('对账任务不存在')
+        if not project or project['metadata'].get('removed_at'):raise ValueError('对账任务不存在或已移除，请重新导入')
         with self.lock,self.connect() as c:c.execute("INSERT OR REPLACE INTO settings VALUES ('active',?)",(pid,))
         if self.archive:
             if project['scope'] and project['session_id']:self.archive.start_stream(project['session_id'],pid,project['scope'])

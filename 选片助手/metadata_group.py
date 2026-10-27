@@ -46,7 +46,9 @@ def preview_group(archive,sku,sid,cid,selection,code,scope,project=''):
         # 侧栏输入作为草稿；空草稿沿用现有整款归属。
         code=code or group['sku']
         scope=(group['scope'] or scope) if group['kind']=='interval' else (scope or group['scope'])
-        project=(group['project'] or project) if group['kind']=='interval' else (project or group['project'])
+        old_project=sku.project(group['project']) if sku and group['project'] else None
+        prior=group['project'] if not old_project or not old_project['metadata'].get('removed_at') else ''
+        project=(prior or project) if group['kind']=='interval' else (project or prior)
         preview=archive.preview(sid,group['capture_ids'],code or 'PENDING-SKU',scope,project,overwrite=True)
         preview['sku']=code
         group=group_context(archive,sku,sid,cid,selection) # ensure 后的实际资产版本用于提交校验。
