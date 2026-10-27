@@ -61,7 +61,7 @@ class RetrievalBrowserTests(unittest.TestCase):
                 panel=page.locator('#asset-retrieval-page');query=panel.locator('.retrieval-query')
                 page.wait_for_function('()=>document.querySelectorAll("#asset-retrieval-page .retrieval-card").length===3')
                 tabs=page.locator('.workspace-tabs [role=tab]').evaluate_all('(nodes)=>nodes.map(n=>n.id)')
-                self.assertLess(tabs.index('asset-retrieval-open'),tabs.index('sku-open'))
+                self.assertEqual(tabs,['selection-tab','sku-open','asset-archive-open','sku-database-open','asset-retrieval-open','asset-analysis-open','app-settings-open'])
                 query.fill('LC1234');query.press('Enter');page.wait_for_function('()=>document.querySelectorAll("#asset-retrieval-page .retrieval-card").length===2')
                 query.fill('');query.press('Enter');page.wait_for_function('()=>document.querySelectorAll("#asset-retrieval-page .retrieval-card").length===3')
                 panel.locator('.retrieval-facet-key').select_option('color')

@@ -27,6 +27,7 @@ const startWorkbenchUi=()=>{
     'app-settings-open':'<path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3"/><circle cx="15" cy="17" r="3"/>'
   };
   tabs.append($('app-settings-open'));
+  $('sku-database-open').after($('asset-retrieval-open'));
   for(const tab of tabs.querySelectorAll('[role=tab]')){
     const label=document.createElement('span');label.className='workspace-tab-label';label.textContent=tab.textContent;
     tab.innerHTML=`<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${icons[tab.id]||''}</svg>`;tab.append(label);
