@@ -125,6 +125,93 @@ class InputConfirmTests(unittest.TestCase):
                 self.assertEqual(calls,[]);self.assertEqual(errors,[])
             finally:browser.close()
 
+    def test_shared_rating_baseline_survives_unrelated_view_revision(self):
+        cid=self.ids[0];path=str(self.photos/'0.JPG')
+        self.archive.ratings.set([path],4)
+        initial=self.store.session(self.sid);remote=copy.deepcopy(initial['state']);remote['view']='list'
+        self.store.save(self.sid,initial['revision'],remote)
+        body={'session_id':self.sid,'revision':initial['revision'],'changes':{'overrides':{cid:3}},
+              'state_baseline':{'overrides':{cid:4}},'rating_baseline':{cid:4}}
+        with self.http():server.save_session_state(body,partial=True)
+        self.assertEqual(self.archive.ratings.get([path]),3)
+        self.archive.ratings.set([path],5)
+        with self.http(),self.assertRaisesRegex(ValueError,'其他窗口'):server.save_session_state(body,partial=True)
+        self.assertEqual(self.archive.ratings.get([path]),5)
+
+    def test_browser_unrelated_409_does_not_block_manual_sku(self):
+        with self.http() as url,sync_playwright() as pw:
+            browser=pw.chromium.launch(channel='msedge',headless=True)
+            try:
+                page=browser.new_page(viewport={'width':1580,'height':1000})
+                page.goto(url,wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading')
+                page.evaluate('(cid)=>Framekeep.browsePhoto(cid)',self.ids[1]);page.locator('#sku-asset-panel').evaluate('e=>e.open=true')
+                page.route('**/api/metadata/group/preview',lambda route:route.fulfill(status=409,json={'error':'其他窗口修改了预览'}))
+                page.evaluate('()=>FramekeepIO.api("/api/metadata/group/preview",{}).catch(()=>{})')
+                page.locator('#asset-sku').fill('LC7877115-P305')
+                with page.expect_response('**/api/metadata/group/confirm') as response:page.locator('#asset-parse-sku').click()
+                self.assertEqual(response.value.status,200)
+                page.wait_for_function('()=>document.getElementById("asset-message").textContent.includes("已确认 SKU LC7877115-P305")')
+                self.assertEqual(labels(self.sku,self.sid)['labels'],dict.fromkeys(self.ids[:2],'LC7877115-P305'))
+            finally:browser.close()
+
+    def test_browser_stale_revision_merges_other_photo_and_later_save_keeps_it(self):
+        with self.http() as url,sync_playwright() as pw:
+            browser=pw.chromium.launch(channel='msedge',headless=True)
+            try:
+                page=browser.new_page(viewport={'width':1580,'height':1000});errors=[]
+                page.on('pageerror',lambda e:errors.append(str(e)))
+                page.goto(url,wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading')
+                page.evaluate('(cid)=>Framekeep.browsePhoto(cid)',self.ids[1]);page.evaluate('()=>FramekeepIO.flush()')
+                page.locator('#sku-asset-panel').evaluate('e=>e.open=true')
+                external=[]
+                def concurrent(route):
+                    if not external:
+                        remote=self.store.session(self.sid);state=copy.deepcopy(remote['state'])
+                        state.setdefault('overrides',{})[self.ids[2]]=5
+                        state.setdefault('skuMarkers',{})[self.ids[2]]={'scope':'细节图'}
+                        self.store.save(self.sid,remote['revision'],state);external.append(True)
+                    route.continue_()
+                page.route('**/api/session',concurrent)
+                page.evaluate('(cid)=>{Framekeep.assignRemoteRating(cid,4);return FramekeepIO.flush()}',self.ids[0])
+                self.assertTrue(external)
+                for code in ('LC7877115-P305','LATEST-600'):
+                    page.locator('#asset-sku').fill(code)
+                    with page.expect_response('**/api/metadata/group/confirm') as response:page.locator('#asset-parse-sku').click()
+                    self.assertEqual(response.value.status,200)
+                    page.wait_for_function('(code)=>document.getElementById("asset-message").textContent.includes("已确认 SKU "+code)',arg=code)
+                page.evaluate('(cid)=>{Framekeep.assignRemoteRating(cid,3);return FramekeepIO.flush()}',self.ids[0])
+                stored=self.store.session(self.sid)['state']
+                self.assertEqual(stored['overrides'][self.ids[2]],5)
+                self.assertEqual(stored['skuMarkers'][self.ids[2]],{'scope':'细节图'})
+                self.assertEqual(stored['overrides'][self.ids[0]],3)
+                self.assertEqual(labels(self.sku,self.sid)['labels'][self.ids[1]],'LATEST-600')
+                self.assertFalse(errors,errors)
+            finally:browser.close()
+
+    def test_browser_same_photo_rating_conflict_preserves_sku_draft(self):
+        with self.http() as url,sync_playwright() as pw:
+            browser=pw.chromium.launch(channel='msedge',headless=True)
+            try:
+                page=browser.new_page(viewport={'width':1580,'height':1000});confirmed=[]
+                page.on('request',lambda r:confirmed.append(r.url) if r.url.endswith('/api/metadata/group/confirm') else None)
+                page.goto(url,wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading')
+                page.evaluate('(cid)=>Framekeep.browsePhoto(cid)',self.ids[1]);page.evaluate('()=>FramekeepIO.flush()')
+                page.locator('#sku-asset-panel').evaluate('e=>e.open=true');page.locator('#asset-sku').fill('KEEP-DRAFT-700')
+                changed=[]
+                def concurrent(route):
+                    if not changed:
+                        remote=self.store.session(self.sid);state=copy.deepcopy(remote['state']);state.setdefault('overrides',{})[self.ids[0]]=5
+                        self.store.save(self.sid,remote['revision'],state);changed.append(True)
+                    route.continue_()
+                page.route('**/api/session',concurrent)
+                page.evaluate('(cid)=>{Framekeep.assignRemoteRating(cid,4);return FramekeepIO.flush().catch(()=>{})}',self.ids[0])
+                page.locator('#asset-parse-sku').click()
+                page.wait_for_function('()=>document.getElementById("asset-message").textContent.includes("同一照片")')
+                self.assertEqual(page.locator('#asset-sku').input_value(),'KEEP-DRAFT-700')
+                self.assertEqual(self.store.session(self.sid)['state']['overrides'][self.ids[0]],5)
+                self.assertFalse(confirmed)
+            finally:browser.close()
+
     def test_browser_manual_confirm_during_ocr_ignores_late_old_response(self):
         entered=threading.Event();release=threading.Event()
         def recognize(*args):entered.set();release.wait(15);return {'text':'WRONG-999','codes':['WRONG-999'],'unscored':True}

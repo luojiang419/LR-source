@@ -169,8 +169,14 @@ def save_session_state(body,partial=False):
     # 会话版本更新与评级/SKU 回调保持同序，防止另一窗口的新评级被迟到回调覆盖。
     with STORE.browser_lock:
         sid=body['session_id']
-        if partial:
-            before,state,revision=session_browser.patch_state(STORE,sid,body['revision'],body['changes'])
+        if partial or isinstance(body.get('changes'),dict) and isinstance(body.get('state_baseline'),dict):
+            current_ratings=None
+            if ARCHIVE and isinstance(body.get('state_baseline'),dict) and body['changes'].get('overrides'):
+                current=STORE.session(sid)
+                if current and current['revision']!=body['revision']:
+                    records=STORE.records(sid,ids=list(body['changes']['overrides']))
+                    current_ratings=ARCHIVE.ratings.session(current,records)['sharedRatings']
+            before,state,revision=session_browser.patch_state(STORE,sid,body['revision'],body['changes'],body.get('state_baseline'),current_ratings)
         else:
             before=STORE.session(sid) if isinstance(body.get('rating_baseline'),dict) else rated_session(sid)
             state=body['state'];revision=STORE.save(sid,body['revision'],state)

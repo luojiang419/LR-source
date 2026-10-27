@@ -167,6 +167,7 @@ class PresentationTests(unittest.TestCase):
                                 page.locator('#sku-cover-dialog').evaluate('e=>Promise.all(e.getAnimations().map(a=>a.finished.catch(()=>{})))')
                                 bounds=page.locator('#sku-cover-dialog').bounding_box();self.assertGreaterEqual(bounds['x'],-1);self.assertLessEqual(bounds['x']+bounds['width'],width+1)
                                 self.assertFalse(page.locator('#sku-cover-dialog').evaluate('e=>e.scrollWidth>e.clientWidth+1'))
+                                self.assertTrue(page.locator('#sku-cover-groups').evaluate('e=>e.firstElementChild.getBoundingClientRect().width>=e.clientWidth-8'))
                                 if width in (1500,320):page.screenshot(path=str(out/f'gallery-{theme}-{width}.png'))
                                 page.keyboard.press('Escape')
                         page.set_viewport_size({'width':1500,'height':1050});page.locator('[data-progress-sheet="模特图"]').click()

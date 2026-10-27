@@ -74,6 +74,20 @@ class SessionBrowserTests(unittest.TestCase):
         _,state,_=patch_state(self.store,self.sid,revision,{'overrides':{'P00003':None}})
         self.assertEqual(state['overrides'],{'P02490':5})
 
+    def test_stale_patch_with_baseline_keeps_other_photo_changes(self):
+        patch_state(self.store,self.sid,0,{'overrides':{'P02490':5},'skuMarkers':{'P02490':{'scope':'细节图'}}})
+        _,state,revision=patch_state(self.store,self.sid,0,{'overrides':{'P00003':4},'selectedId':'P00003'},
+                                    {'overrides':{'P00003':None},'selectedId':None})
+        self.assertEqual(revision,2)
+        self.assertEqual(state['overrides'],{'P02490':5,'P00003':4})
+        self.assertEqual(state['skuMarkers'],{'P02490':{'scope':'细节图'}})
+        for changes,baseline in [({'overrides':{'P02490':0}},{'overrides':{'P02490':None}}),
+                                 ({'skuMarkers':{'P02490':None}},{'skuMarkers':{'P02490':None}}),
+                                 ({'threshold':8,'protectManual':False},{'threshold':4,'protectManual':True})]:
+            with self.assertRaisesRegex(ValueError,'其他窗口'):
+                patch_state(self.store,self.sid,0,changes,baseline)
+        self.assertEqual(self.store.session(self.sid)['state'],state)
+
     def test_around_locator_and_saved_selection_resume_in_correct_page(self):
         session,rows=read(self.store,self.sid,{'around':'P02490'})
         self.assertEqual(session['browser']['offset'],2400);self.assertIn('P02490',{r['id'] for r in rows})

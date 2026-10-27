@@ -202,7 +202,7 @@ shared AS MATERIALIZED ('''+shared+'''), rows AS (
     return session,result
 
 
-def patch_state(store,sid,revision,changes):
+def patch_state(store,sid,revision,changes,baseline=None,current_ratings=None):
     if not isinstance(changes,dict):raise ValueError('会话修改格式无效')
     allowed={'keep','threshold','protectManual','filter','view','selectedId','query','sort','thumbSize','folderPrefix','scope','overrides','rejectedPrevious','skuMarkers'}
     if set(changes)-allowed:raise ValueError('会话包含未知修改项')
@@ -210,11 +210,26 @@ def patch_state(store,sid,revision,changes):
     if not before or store.is_removed(sid):raise ValueError('文件夹会话不存在或已移除')
     state=dict(before['state'])
     reset_rules=any(key in changes and changes[key]!=state.get(key,default) for key,default in (('keep',1),('threshold',4))) and not changes.get('protectManual',state.get('protectManual',True))
+    if before['revision']!=revision and isinstance(baseline,dict):
+        conflict='同一照片的星级或款号已被其他窗口修改，输入已保留，请刷新后核对。'
+        if reset_rules:raise ValueError(conflict)
+        for key in ('keep','threshold','protectManual','overrides','rejectedPrevious','skuMarkers'):
+            if key not in changes:continue
+            expected=baseline.get(key)
+            if key in ('overrides','rejectedPrevious','skuMarkers'):
+                if not isinstance(changes[key],dict) or not isinstance(expected,dict):raise ValueError(conflict)
+                for identity,value in changes[key].items():
+                    current=(current_ratings or {}).get(identity,state.get(key,{}).get(identity)) if key=='overrides' else state.get(key,{}).get(identity)
+                    if identity not in expected or current!=expected[identity] and current!=value:raise ValueError(conflict)
+            else:
+                default={'keep':1,'threshold':4,'protectManual':True}[key]
+                if state.get(key,default) not in (default if expected is None else expected,changes[key]):raise ValueError(conflict)
+        revision=before['revision']
     if reset_rules:
         state['overrides']={};state['rejectedPrevious']={}
     for key,value in changes.items():
         if key in ('overrides','rejectedPrevious','skuMarkers'):
-            if not isinstance(value,dict) or len(value)>PAGE_SIZE*2:raise ValueError('一次修改的照片数量过多')
+            if not isinstance(value,dict) or len(value)>LARGE_SESSION:raise ValueError('一次修改的照片数量过多')
             merged=dict(state.get(key,{}))
             for identity,item in value.items():
                 if item is None:merged.pop(identity,None)

@@ -23,21 +23,28 @@
     if(body!==undefined)await window.FramekeepComponents?.before(path,body);
     if(body!==undefined)body={session_id:session.id,...body};
     if(body!==undefined&&!token){const response=await fetch('/api/state',{signal:AbortSignal.timeout(timeout)});if(!response.ok)throw new Error('无法获取写入凭证，请稍后重试');const state=await response.json();token=state.request_token}
-    const response=await fetch(path,{...(body===undefined?{}:{method:'POST',headers:{'Content-Type':'application/json','X-Framekeep-Token':token},body:JSON.stringify(body)}),signal:signal?AbortSignal.any([signal,AbortSignal.timeout(timeout)]):AbortSignal.timeout(timeout)});const data=await response.json();if(!response.ok){if(response.status===409)conflicted=true;throw new Error(data.error||`请求失败 ${response.status}`)}return data;
+    const response=await fetch(path,{...(body===undefined?{}:{method:'POST',headers:{'Content-Type':'application/json','X-Framekeep-Token':token},body:JSON.stringify(body)}),signal:signal?AbortSignal.any([signal,AbortSignal.timeout(timeout)]):AbortSignal.timeout(timeout)});const data=await response.json();if(!response.ok){if(response.status===409&&['/api/session','/api/session/patch'].includes(path))conflicted=true;throw new Error(data.error||`请求失败 ${response.status}`)}return data;
     }finally{finish?.()}
   }
   function stash(){if(!session.id)return;try{localStorage.setItem('framekeep:'+session.id,JSON.stringify({snapshot:session.snapshot,revision,state:Framekeep.persistedState()}))}catch{}}
-  function partialBody(state){const previous=JSON.parse(lastSaved),delta=changes(state,previous),baseline={};for(const id of Object.keys(delta.overrides||{}))if(Object.hasOwn(previous.overrides||{},id))baseline[id]=previous.overrides[id];return {session_id:session.id,revision,changes:delta,rating_baseline:baseline}}
+  function partialBody(state){
+    const previous=JSON.parse(lastSaved),delta=changes(state,previous),baseline={},stateBaseline={};
+    for(const [key,value] of Object.entries(delta)){
+      stateBaseline[key]=['overrides','rejectedPrevious','skuMarkers'].includes(key)?Object.fromEntries(Object.keys(value).map(id=>[id,previous[key]?.[id]??null])):previous[key]??null;
+    }
+    for(const id of Object.keys(delta.overrides||{}))if(Object.hasOwn(previous.overrides||{},id))baseline[id]=previous.overrides[id];
+    return {session_id:session.id,revision,changes:delta,state_baseline:stateBaseline,rating_baseline:baseline};
+  }
   async function flush(){
     clearTimeout(timer);if(!session.id)return;
     // 入队时冻结本次操作，避免保存中的快速 2→0→2 被合并为重复二星。
     const serialized=canonical(Framekeep.persistedState()),state=JSON.parse(serialized);
-    saving=saving.catch(()=>{}).then(async()=>{if(conflicted)throw new Error('其他窗口修改了会话，请刷新后操作。');if(serialized===lastSaved)return;$('save-status').textContent='保存中…';const paged=!!session.browser?.paged,result=await api(paged?'/api/session/patch':'/api/session',paged?partialBody(state):{session_id:session.id,revision,state,rating_baseline:JSON.parse(lastSaved).overrides||{}});revision=result.revision;const previous=JSON.parse(lastSaved);lastSaved=serialized;stash();$('save-status').textContent='已保存';window.FramekeepPaging?.saved(previous,state);if(canonical(previous.overrides||{})!==canonical(state.overrides||{}))document.dispatchEvent(new CustomEvent('framekeep:ratings-saved',{detail:{session_id:session.id}}));if(result.sku_error)Framekeep.notify(result.sku_error)});
+    saving=saving.catch(()=>{}).then(async()=>{if(serialized===lastSaved)return;$('save-status').textContent='保存中…';const paged=!!session.browser?.paged,body=partialBody(state);if(!paged)body.state=state;const result=await api(paged?'/api/session/patch':'/api/session',body);revision=result.revision;conflicted=false;const previous=JSON.parse(lastSaved);lastSaved=serialized;stash();$('save-status').textContent='已保存';window.FramekeepPaging?.saved(previous,state);if(canonical(previous.overrides||{})!==canonical(state.overrides||{}))document.dispatchEvent(new CustomEvent('framekeep:ratings-saved',{detail:{session_id:session.id}}));if(result.sku_error)Framekeep.notify(result.sku_error)});
     return saving;
   }
   function schedule(){if(switching||window.FramekeepPaging?.busy)return;stash();clearTimeout(timer);const save=()=>flush().catch(e=>{$('save-status').textContent=e.message});if(canonical(Framekeep.persistedState().overrides||{})!==canonical(JSON.parse(lastSaved).overrides||{}))save();else timer=setTimeout(save,450)}
   document.addEventListener('framekeep:selection',schedule);$('thumb-size').addEventListener('input',schedule);$('thumb-smaller').addEventListener('click',schedule);$('thumb-larger').addEventListener('click',schedule);$('catalog-view').addEventListener('wheel',e=>{if(e.ctrlKey)schedule()},{passive:true});
-  window.addEventListener('pagehide',()=>{stash();const state=Framekeep.persistedState();if(token&&session.id&&!conflicted&&canonical(state)!==lastSaved)fetch(session.browser?.paged?'/api/session/patch':'/api/session',{method:'POST',headers:{'Content-Type':'application/json','X-Framekeep-Token':token},body:JSON.stringify(session.browser?.paged?partialBody(state):{session_id:session.id,revision,state,rating_baseline:JSON.parse(lastSaved).overrides||{}}),keepalive:true}).catch(()=>{})});
+  window.addEventListener('pagehide',()=>{stash();const state=Framekeep.persistedState();if(token&&session.id&&!conflicted&&canonical(state)!==lastSaved){const paged=!!session.browser?.paged,body=partialBody(state);if(!paged)body.state=state;fetch(paged?'/api/session/patch':'/api/session',{method:'POST',headers:{'Content-Type':'application/json','X-Framekeep-Token':token},body:JSON.stringify(body),keepalive:true}).catch(()=>{})}});
   async function reloadRatings(){
     await window.FramekeepPaging?.whenIdle();
     if(!session.id||switching)return;
