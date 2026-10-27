@@ -607,6 +607,9 @@ class Handler(SimpleHTTPRequestHandler):
             if path=='/api/metadata/group/apply':
                 from metadata_group import apply_group
                 return self.reply(apply_group(ARCHIVE,SKU,body['preview_id'],body['sku']))
+            if path=='/api/metadata/group/confirm':
+                from metadata_group import confirm_group
+                return self.reply(confirm_group(ARCHIVE,SKU,body['session_id'],body['capture_id'],body.get('capture_ids'),body['sku'],body.get('scope',''),body.get('project','')))
             if path=='/api/metadata/preview':return self.reply(ARCHIVE.preview(body['session_id'],body['capture_ids'],body['sku'],body['scope'],body.get('project',''),'sidecar',body.get('overwrite',False)))
             if path=='/api/metadata/apply':return self.reply(ARCHIVE.apply(body['preview_id']))
             if path=='/api/metadata/retry':return self.reply(ARCHIVE.retry(body['operation_id']))

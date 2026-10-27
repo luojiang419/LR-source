@@ -6,7 +6,7 @@
   const rawLines=text=>String(text||'').split(/\r?\n/).map(line=>line.trim()).filter(Boolean);
   window.FramekeepOcrUI={codeButtons,rawLines};
   const panel=document.createElement('details');panel.id='sku-asset-panel';panel.className='side-section asset-panel';panel.open=true;
-  panel.innerHTML='<summary>款号备案 <span id="asset-count"></span></summary><div class="side-body asset-panel-body"><p class="dialog-copy">Shift 连选 · Ctrl 加选，与照片星级独立</p><label>SKU 款号<input id="asset-sku" maxlength="80" placeholder="识别后自动填入，也可批量修改"></label><button id="asset-preview" class="primary" aria-describedby="asset-write-help">写入 SKU 元数据</button><p id="asset-write-help" class="dialog-copy">推荐款号点击即写入整款；需要修改时，可在此编辑并更新整款 RAW / JPG。</p><p id="asset-message" role="status" class="dialog-copy"></p></div>';
+  panel.innerHTML='<summary>款号备案 <span id="asset-count"></span></summary><div class="side-body asset-panel-body"><p class="dialog-copy">Shift 连选 · Ctrl 加选，与照片星级独立</p><label>SKU 款号<input id="asset-sku" maxlength="80" placeholder="输入后点击确定，更新当前整款 SKU"></label><button id="asset-preview" class="primary" aria-describedby="asset-write-help">写入 SKU 元数据</button><p id="asset-write-help" class="dialog-copy">输入正确款号后点击确定，整款 RAW / JPG 同步更新；清空输入可重新进行 OCR 识别。</p><p id="asset-message" role="status" class="dialog-copy"></p></div>';
   document.querySelector('.right-panel').append(panel);
   const ocrControls=document.createElement('div');ocrControls.className='asset-ocr-controls';ocrControls.innerHTML='<button id="asset-parse-sku" class="bordered" title="使用已选 OCR 模型读取当前图，不要求二星">OCR 解析当前图</button><div id="asset-ocr-result" class="asset-ocr-result" hidden><div id="asset-ocr-codes" class="asset-actions" role="group" aria-label="推荐款号，点击即应用"></div><details open><summary>OCR 原文</summary><div id="asset-ocr-text" class="asset-ocr-raw" role="group" aria-label="原文识别项，点击即应用"></div></details></div>';$('asset-sku').parentElement.after(ocrControls);
   const settingsButton=document.createElement('button');settingsButton.id='app-settings-open';settingsButton.textContent='设置';settingsButton.setAttribute('role','tab');settingsButton.setAttribute('aria-controls','app-settings-page');settingsButton.setAttribute('aria-selected','false');settingsButton.tabIndex=-1;document.querySelector('.workspace-tabs').append(settingsButton);
@@ -355,7 +355,8 @@
   let selected=[],anchor=null,lastFocus=null,lastContext='',previewId=null,operation=null,stream=null,busy=false,queryRows=[];
   let skuEdited=false,selectionRead='',archiveVersion='',readSequence=0,skuEditVersion=0,parsing=false,ocrContext='',ocrSnapshot=null,ocrApplying=false;
   let reviewKey='',reviewRequest=null;
-  $('asset-sku').addEventListener('input',()=>{skuEdited=true;skuEditVersion++;previewId=null});
+  let manualSkuDraft=false,settingSku=false,confirming=false,manualGeneration=0,activeParseFeedback=null,activeParseController=null;
+  $('asset-sku').addEventListener('input',()=>{skuEdited=true;skuEditVersion++;previewId=null;if(!settingSku)manualSkuDraft=true;paint()});
   syncShootingTypes();
   let cursors=[''],pageIndex=0,nextCursor='',fileOffset=0,fileText='';
   function resetPage(){cursors=[''];pageIndex=0;nextCursor=''}
@@ -363,7 +364,15 @@
   async function act(fn){if(busy)return;busy=true;try{await fn()}catch(e){msg(e.message);const target=$('archive-message');if(target)target.textContent=e.message;Framekeep.notify(e.message)}finally{busy=false}}
   function current(){return Framekeep.remoteTarget().photoId}
   function selection(){return selected.length?selected:(current()?[current()]:[])}
-  function paint(){document.querySelectorAll('[data-photo],[data-watch-photo]').forEach(el=>el.classList.toggle('asset-selected',selection().includes(el.dataset.photo||el.dataset.watchPhoto)));$('asset-count').textContent=`${selection().length} 张`;$('asset-parse-sku').disabled=parsing||!current()||Framekeep.remoteTarget().paused;$('asset-parse-sku').textContent=parsing?'OCR 解析中…':'OCR 解析当前图'}
+  function paint(){
+    document.querySelectorAll('[data-photo],[data-watch-photo]').forEach(el=>el.classList.toggle('asset-selected',selection().includes(el.dataset.photo||el.dataset.watchPhoto)));
+    $('asset-count').textContent=`${selection().length} 张`;
+    const draft=manualSkuDraft&&!!$('asset-sku').value.trim(),button=$('asset-parse-sku');
+    button.disabled=confirming||!current()||(!draft&&(parsing||Framekeep.remoteTarget().paused));
+    button.textContent=confirming?'确定中…':draft?'确定':parsing?'OCR 解析中…':'OCR 解析当前图';
+    button.dataset.action=draft?'confirm':'ocr';
+    button.title=draft?'将输入的款号应用到当前 SKU 区间全部图片':'使用已选 OCR 模型读取当前图，不要求二星';
+  }
   function changed(){
     const context=JSON.stringify(Framekeep.browseContext()),focus=current();
     if(context!==lastContext){selected=focus?[focus]:[];anchor=focus;lastContext=context;previewId=null;resetSelection()}
@@ -387,8 +396,8 @@
   }};
   function resetSelection(){
     reviewKey='';reviewRequest?.controller.abort();reviewRequest=null;
-    skuEdited=false;selectionRead='';readSequence++;skuEditVersion++;$('asset-sku').value='';ocrContext='';ocrSnapshot=null;$('asset-ocr-result').hidden=true;$('asset-ocr-codes').replaceChildren();$('asset-ocr-text').textContent='';
-    $('asset-sku').placeholder='识别后自动填入，也可批量修改';
+    manualSkuDraft=false;manualGeneration++;skuEdited=false;selectionRead='';readSequence++;skuEditVersion++;$('asset-sku').value='';ocrContext='';ocrSnapshot=null;$('asset-ocr-result').hidden=true;$('asset-ocr-codes').replaceChildren();$('asset-ocr-text').textContent='';
+    $('asset-sku').placeholder='输入后点击确定，更新当前整款 SKU';
   }
   async function fillSelection(force=false){
     const key=JSON.stringify([FRAMEKEEP_SESSION.id,selection(),archiveVersion]);
@@ -397,7 +406,7 @@
     if(request!==readSequence||key!==JSON.stringify([FRAMEKEEP_SESSION.id,selection(),archiveVersion])||(!force&&skuEdited))return;
     const skus=[...new Set(assets.map(a=>a.sku))],scopes=[...new Set(assets.map(a=>a.scope))];
     $('asset-sku').value=skus.length===1?skus[0]:'';
-    $('asset-sku').placeholder=skus.length>1?'所选款号不同，输入后可批量修改':'识别后自动填入，也可批量修改';
+    $('asset-sku').placeholder=skus.length>1?'所选款号不同，输入后可批量修改':'输入后点击确定，更新当前整款 SKU';
     if(force)msg(`所选 ${assets.length} 张：SKU ${skus.length===1?(skus[0]||'未备案'):'混合值'}；类型 ${scopes.length===1?(scopes[0]||'未填写'):'混合值'}`);
     skuEdited=false;selectionRead=key;previewId=null;
   }
@@ -406,7 +415,7 @@
   // 自动二星识别沿用手动解析的候选按钮与确认接口，不自动替用户应用款号。
   document.addEventListener('framekeep:capture-status',async event=>{
     const data=event.detail,context=parseContext();
-    if(data.session_id!==FRAMEKEEP_SESSION.id||data.capture_id!==current()||parsing||ocrApplying)return;
+    if(data.session_id!==FRAMEKEEP_SESSION.id||data.capture_id!==current()||parsing||ocrApplying||confirming)return;
     if(data.ocr?.status!=='review'){
       reviewRequest?.controller.abort();reviewRequest=null;
       if(reviewKey&&['queued','running','retry','cancelled','stale'].includes(data.ocr?.status)){
@@ -431,7 +440,7 @@
     }catch(error){if(error.name!=='AbortError'&&reviewRequest===request&&context===parseContext())msg('待核对款号读取失败：'+error.message+'；可打开 OCR 资料重试')}
     finally{if(reviewRequest===request)reviewRequest=null}
   });
-  function useOcrCode(code){$('asset-sku').value=code;$('asset-sku').dispatchEvent(new Event('input',{bubbles:true}))}
+  function useOcrCode(code){settingSku=true;try{$('asset-sku').value=code;$('asset-sku').dispatchEvent(new Event('input',{bubbles:true}))}finally{settingSku=false}}
   function markOcrCode(code){
     for(const button of $('asset-ocr-result').querySelectorAll('[data-ocr-code]')){const chosen=button.dataset.ocrCode===code||(ocrSnapshot?.selected_sku===code&&button.dataset.ocrCode===ocrSnapshot.base_sku);button.setAttribute('aria-pressed',String(chosen));button.querySelector('.asset-ocr-code-action').textContent=chosen?'已应用 ✓':'点击应用'}
   }
@@ -455,7 +464,7 @@
         document.dispatchEvent(new CustomEvent('framekeep:ocr-choice',{detail:result}));document.dispatchEvent(new CustomEvent('framekeep:ocr-result',{detail:result}));
         if(context===parseContext()&&ocrSnapshot===data){
           ocrSnapshot.selected_sku=result.sku;ocrSnapshot.base_sku=result.base_sku;markOcrCode(result.sku);
-          const edited=edit!==skuEditVersion;if(!edited)useOcrCode(result.sku);
+          const edited=edit!==skuEditVersion;if(!edited){manualSkuDraft=false;useOcrCode(result.sku)}
           msg('已应用 SKU '+result.sku+`，整款 ${result.capture_count||1} 张`+((result.warnings||[]).length?'；'+result.warnings.join('；'):edited?'；保留应用期间手动修改的输入':'，元数据写入已提交，其他 OCR 资料保留供搜索'));
         }
       }finally{ocrApplying=false;buttons.forEach(b=>b.disabled=false);$('asset-ocr-result').removeAttribute('aria-busy');if(context===parseContext()&&ocrSnapshot===data)markOcrCode(data.selected_sku)}
@@ -463,19 +472,22 @@
   };
   const ocrDetailsButton=document.createElement('button');ocrDetailsButton.id='asset-ocr-details';ocrDetailsButton.className='bordered';ocrDetailsButton.textContent='OCR 资料 / 选择 SKU';$('asset-parse-sku').after(ocrDetailsButton);
   ocrDetailsButton.onclick=()=>{if(current())window.FramekeepOcrDetails?.open(FRAMEKEEP_SESSION.id,current()).catch(error=>msg(error.message));else msg('请先选择照片')};
-  document.addEventListener('framekeep:ocr-choice',event=>{if(!ocrApplying&&event.detail.session_id===FRAMEKEEP_SESSION.id&&event.detail.capture_id===current()){useOcrCode(event.detail.sku);if(ocrContext===parseContext()&&ocrSnapshot){ocrSnapshot.selected_sku=event.detail.sku;ocrSnapshot.base_sku=event.detail.base_sku;markOcrCode(event.detail.sku)}msg('已确认 SKU '+event.detail.sku+'，其他 OCR 资料保留供搜索')}});
-  $('asset-parse-sku').onclick=()=>act(async()=>{
-    const sid=FRAMEKEEP_SESSION.id,cid=current(),context=parseContext(),edit=skuEditVersion;
+  document.addEventListener('framekeep:ocr-choice',event=>{if(!ocrApplying&&!confirming&&!manualSkuDraft&&event.detail.session_id===FRAMEKEEP_SESSION.id&&event.detail.capture_id===current()){useOcrCode(event.detail.sku);if(ocrContext===parseContext()&&ocrSnapshot){ocrSnapshot.selected_sku=event.detail.sku;ocrSnapshot.base_sku=event.detail.base_sku;markOcrCode(event.detail.sku)}msg('已确认 SKU '+event.detail.sku+'，其他 OCR 资料保留供搜索')}});
+  const parseSku=()=>act(async()=>{
+    const sid=FRAMEKEEP_SESSION.id,cid=current(),context=parseContext(),edit=skuEditVersion,generation=manualGeneration;
     if(!cid)throw new Error('请先选择要解析的当前照片');
     reviewKey='';reviewRequest?.controller.abort();reviewRequest=null;
     const feedback=window.FramekeepOcrFeedback?.begin({session_id:sid,capture_id:cid,running:true});let feedbackError=null;
+    const requestController=new AbortController();activeParseController=requestController;activeParseFeedback=feedback;
     parsing=true;readSequence++;paint();msg('正在用已选模型解析当前图的 SKU 款号…');$('asset-ocr-result').hidden=true;
     try{
-      const result=await api('/api/sku/parse',{session_id:sid,capture_id:cid},660000);
+      const result=await api('/api/sku/parse',{session_id:sid,capture_id:cid},660000,requestController.signal);
+      if(generation!==manualGeneration)return;
+      if(context!==parseContext()||result.session_id!==sid||result.capture_id!==cid){msg('图片选择已变化，本次结果未填入，请重新解析');return}
       if(result.auto_applied)document.dispatchEvent(new CustomEvent('framekeep:ocr-choice',{detail:result.auto_applied}));
       document.dispatchEvent(new CustomEvent('framekeep:ocr-result',{detail:{session_id:sid,capture_id:cid}}));
-      if(context!==parseContext()||result.session_id!==sid||result.capture_id!==cid){msg('图片选择已变化，本次结果未填入，请重新解析');return}
       const snapshot=await api('/api/sku/ocr/details?'+new URLSearchParams({session_id:sid,capture_id:cid}));
+      if(generation!==manualGeneration)return;
       if(context!==parseContext()){msg('图片选择已变化，本次结果未填入，请重新解析');return}
       const reading=result.reading||{},codes=[...new Set((result.recommended||reading.codes||[]).filter(code=>typeof code==='string'&&code.trim()&&code.length<=80&&!/[\x00-\x1f]/.test(code)).map(code=>code.trim()))];
       ocrContext=context;ocrSnapshot=snapshot;$('asset-ocr-text').innerHTML=(reading.model?`<span class="asset-ocr-source">${esc(reading.model)}</span>`:'')+(codeButtons(rawLines(reading.text),true)||'<span>未返回可见文本</span>');$('asset-ocr-result').querySelector('details').open=true;$('asset-ocr-result').hidden=false;
@@ -485,8 +497,32 @@
       else if(codes.length===1&&edit===skuEditVersion){useOcrCode(codes[0]);msg(`已读取 ${codes[0]}，点击款号按钮即可应用；有误可打开 OCR 资料自行选择`)}
       else if(codes.length){msg(edit!==skuEditVersion?'解析完成；保留手动修改的输入，点击推荐款号即可应用':'读出多个款号，点击正确款号即可应用；有误可打开 OCR 资料自行选择')}
       else msg('未读出可用 SKU 款号，请查看 OCR 原文或打开 OCR 资料自行选择');
-    }catch(error){feedbackError=error;throw error}finally{parsing=false;paint();window.FramekeepOcrFeedback?.end(feedback,feedbackError)}
+    }catch(error){if(generation!==manualGeneration)return;feedbackError=error;throw error}finally{parsing=false;if(activeParseFeedback===feedback)activeParseFeedback=null;if(activeParseController===requestController)activeParseController=null;paint();window.FramekeepOcrFeedback?.end(feedback,feedbackError)}
   });
+  async function confirmManualSku(){
+    if(confirming)return;
+    const sid=FRAMEKEEP_SESSION.id,cid=current(),code=$('asset-sku').value.trim(),context=parseContext(),edit=skuEditVersion;
+    if(!cid||!code)return;
+    confirming=true;manualGeneration++;readSequence++;reviewRequest?.controller.abort();reviewRequest=null;paint();msg('正在确认 '+code+' 并更新整款图片…');
+    try{
+      await window.FramekeepIO?.flush();
+      if(context!==parseContext())throw new Error('当前照片已变化，请在目标图片上重新确认');
+      const result=await api('/api/metadata/group/confirm',{session_id:sid,capture_id:cid,capture_ids:selection().slice(),sku:code,scope:window.FramekeepSku?.currentType()||'',project:window.FramekeepSku?.shootingTypes()?.project_id||''});
+      operation=result.operation_id;
+      activeParseController?.abort();
+      if(activeParseFeedback){window.FramekeepOcrFeedback?.end(activeParseFeedback,null);activeParseFeedback=null}
+      document.dispatchEvent(new CustomEvent('framekeep:ocr-choice',{detail:result}));
+      document.dispatchEvent(new CustomEvent('framekeep:ocr-result',{detail:{session_id:sid,capture_id:cid}}));
+      if(context===parseContext()){
+        if(edit===skuEditVersion){manualSkuDraft=false;useOcrCode(result.sku)}
+        ocrSnapshot=null;ocrContext='';reviewKey='';$('asset-ocr-result').hidden=true;
+        msg('已确认 SKU '+result.sku+`，已应用到${result.group_kind==='interval'?'整款':'所选'} ${result.capture_count} 张图片，元数据写入已提交`+((result.warnings||[]).length?'；'+result.warnings.join('；'):''));
+      }
+    }catch(error){if(context===parseContext())msg(error.message);Framekeep.notify(error.message)}
+    finally{confirming=false;paint()}
+  }
+  $('asset-parse-sku').onclick=()=>manualSkuDraft&&$('asset-sku').value.trim()?confirmManualSku():parseSku();
+  $('asset-sku').addEventListener('keydown',event=>{if(event.key==='Enter'&&!event.isComposing&&manualSkuDraft&&$('asset-sku').value.trim()){event.preventDefault();confirmManualSku()}});
   $('asset-preview').onclick=()=>act(async()=>{
     const source=window.FramekeepSku?.shootingTypes(),scope=window.FramekeepSku?.currentType();
     const context=()=>JSON.stringify([FRAMEKEEP_SESSION.id,selection(),FramekeepSku.currentType(),FramekeepSku.shootingTypes()?.project_id,$('asset-sku').value.trim(),$('asset-mode').value,$('asset-overwrite').checked]),before=context();

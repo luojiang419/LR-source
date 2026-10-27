@@ -71,7 +71,7 @@ def apply_group(archive,sku,pid,code):
         chosen={}
         if current['kind']=='interval' and sku:
             details=sku.ocr_details(current['session_id'],current['label'])
-            chosen=sku.choose_ocr_sku(current['session_id'],current['label'],code,details['reading_key'],details['image_key'],preview['scope'],allow_manual=True,project_id=preview['project'] or None)
+            chosen=sku.choose_ocr_sku(current['session_id'],current['label'],code,details['reading_key'],details['image_key'],preview['scope'],allow_manual=True,project_id=preview['project'] or None,literal=True)
             current=group_context(archive,sku,current['session_id'],current['capture_id'],current['capture_ids'])
         # 明确修改整款允许覆盖该范围原 SKU，保留区间身份，避免变成单图人工锁定。
         if current['kind']=='interval':
@@ -80,4 +80,16 @@ def apply_group(archive,sku,pid,code):
         with archive.connect() as c:
             c.execute('UPDATE previews SET used=1 WHERE id=?',(pid,))
             if current['segment']:c.execute("UPDATE segments SET sku=?,operation=?,status='confirmed',reason='' WHERE id=?",(code.strip(),result['operation']['id'],current['segment']))
-        return {**result,**chosen,'session_id':current['session_id'],'capture_id':original['capture_id'],'sku':code.strip(),'capture_count':len(current['capture_ids']),'group_kind':current['kind']}
+        return {**result,**chosen,'saved':True,'operation_id':result['operation']['id'],'session_id':current['session_id'],'capture_id':original['capture_id'],'sku':code.strip(),'capture_count':len(current['capture_ids']),'group_kind':current['kind']}
+
+
+def confirm_group(archive,sku,sid,cid,selection,code,scope='',project=''):
+    """侧栏直接确认，在同一锁范围内定位并更新完整当前区间。"""
+    from sku_match import normalize
+    if not isinstance(code,str) or not normalize(code) or len(code.strip())>80 or any(ord(ch)<32 for ch in code):raise ValueError('请填写正确 SKU（最多 80 字符）')
+    if not sku:raise ValueError('款号服务尚未就绪')
+    with sku.lock,archive.lock:
+        p=sku.project(project or None)
+        if not p or p['session_id']!=sid:p=sku._automatic_project(sid)
+        preview=preview_group(archive,sku,sid,cid,selection,code.strip(),scope or p['scope'] or '现场记录',p['id'])
+        return apply_group(archive,sku,preview['preview_id'],code.strip())

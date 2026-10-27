@@ -20,6 +20,16 @@ def describe(row):
             'shoot_version':string.ascii_uppercase[row['version']-1] if row['version'] else ''}
 
 
+def remember_manual(c,asset,code,stamp):
+    """明确输入以当前文字为准；已有同字版本仍保留其原款号关联。"""
+    assigned=c.execute('SELECT * FROM sku_shoot_versions WHERE asset=? AND sku=?',(asset,code)).fetchone()
+    if assigned:return describe(assigned)
+    c.execute('''INSERT INTO sku_shoot_versions VALUES (?,?,?,?,?,?)
+        ON CONFLICT(asset,normalized) DO UPDATE SET base_sku=excluded.base_sku,sku=excluded.sku,version=0''',
+        (asset,normalize(code),code,code,0,stamp))
+    return {'base_sku':code,'sku':code,'shoot_version':''}
+
+
 def allocate(c,archive,asset,sid,cid,code,stamp):
     """调用方持有 BEGIN IMMEDIATE；清零保留占号，同一永久标签身份重试不递增。"""
     # 用户重新点击已经分配的带版本款号时，继续使用该标签的原款号。

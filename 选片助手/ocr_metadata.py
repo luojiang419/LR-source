@@ -118,7 +118,7 @@ class OcrMetadata:
             'selected_sku':chosen[0] if chosen else '',**version,
             'has_ocr':bool(documents),'text':'\n\n'.join(dict.fromkeys(d['text'] for d in documents if d['text']))}
 
-    def choose_ocr_sku(self,sid,cid,code,reading_key,image_key,scope='',*,allow_manual=False,project_id=None,automatic=False):
+    def choose_ocr_sku(self,sid,cid,code,reading_key,image_key,scope='',*,allow_manual=False,project_id=None,automatic=False,literal=False):
         if not isinstance(code,str) or not normalize(code) or len(code)>80 or any(ord(ch)<32 for ch in code):raise ValueError('请填写正确 SKU（最多 80 字符）')
         code=code.strip()
         with self.lock:
@@ -139,12 +139,15 @@ class OcrMetadata:
                 # 款号行、主款确认、拍摄证据及归档事件必须同成同败。
                 c.execute('BEGIN IMMEDIATE')
                 if boundary:
-                    from sku_shoot_versions import allocate
-                    version=allocate(c,self.archive,preview['targets'][0]['id'],sid,cid,code,self.clock())
+                    from sku_shoot_versions import allocate,remember_manual
+                    version=(remember_manual(c,preview['targets'][0]['id'],code,self.clock()) if literal
+                             else allocate(c,self.archive,preview['targets'][0]['id'],sid,cid,code,self.clock()))
                     if version['sku']!=code:
                         code=version['sku']
                         preview=self.archive.preview(sid,[cid],code,scope,project['id'],overwrite=True)
                         old=preview['targets'][0]['before']
+                if literal:
+                    c.execute("UPDATE parse_jobs SET status='cancelled',run_token='',reason='手动款号已确认，旧识别任务已取消',updated=? WHERE session_id=? AND capture_id=? AND status IN ('queued','running')",(self.clock(),sid,cid))
                 # 历史上已单张人工备案的标签仍允许明确修正；其他人工照片由区间保护。
                 if not boundary or old.get('locked'):
                     if old.get('sku')!=code or old.get('scope')!=scope or not old.get('locked'):self.archive.apply(preview['preview_id'])
