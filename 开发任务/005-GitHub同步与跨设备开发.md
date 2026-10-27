@@ -2,12 +2,20 @@
 
 [CODEX_LONG_TASK_CONTINUE_V3]
 
-- 当前状态：用户已纠正本轮交付目标为公开仓库 `luojiang419/LR-source`；已把最新完整源码推送到默认分支 `main` 并核对远端一致。
-- 下一步：其他设备直接 `git clone https://github.com/luojiang419/LR-source.git` 获取最新源码。
-- TODO：公开源码同步已完成；截图历史副本清理仍按任务 096 等待目录路径。
-- 最近验证：GitHub API 确认 `private=false`、`visibility=public`、默认分支 `main`；624 份受管文件的敏感路径及常见凭据模式检查无命中；公开快照树与开发 HEAD 完全一致。源码测试及冻结验收见任务 096。
-- branch/commit：开发分支 `fix/no-source-recovery-folders`；公开快照分支 `public/source-snapshot` 跟踪 `public/main`。
-- 阻塞：无。保留用户任务 036 的未提交修改和未跟踪厂商 SDK。
+- 当前状态：2026-10-27 全部分支汇总后的完整源码已推送到公开仓库 luojiang419/LR-source 的 main，GitHub API 已核对公开提交和源码树一致；本记录补充后同步最终快照。
+- 下一步：其他设备直接 git clone https://github.com/luojiang419/LR-source.git 获取当前完整源码。
+- TODO：无本次源码交付遗留。
+- 最近验证：687 份受管文件的敏感路径和高置信度凭据模式扫描无命中；GitHub 仓库为 public、默认分支 main；首次快照 5ab299a 与源码 7ed1cec 文件树完全相同。合并与运行验证见任务 115。
+- branch/commit：主项目 feat/integrate-multimodal-main；公开独立快照 public/source-snapshot 跟踪 public/main，最终公开 hash 以 GitHub / Git 为准。
+- 阻塞：无。036 文档、厂商 SDK、错误样本及所有本机资料/密钥/缓存/构建产物保留本地，不混入源码快照。
+
+## 2026-10-27 全分支最新完整源码公开交付
+
+- 用户明确要求立即将全部源码推送 GitHub，沿用已确认的公开 LR-source/main，不改仓库可见性或默认分支，不 force push。
+- 本次源码为主项目 7ed1cec 汇总结果，已包含 132 个本地/33 个远程分支、原版未提交最新增量、多模态/CLIP/快捷检索、Web 最新布局/实时搜索、启动/托盘和来源/驱动/直方图修复；详见任务 115。
+- 所有 687 份受管文件均进入源码树，不仅是前端或补丁。敏感路径与高置信度凭据模式检查无命中；不提交本机未跟踪的 SDK/错误素材、用户原有 036 改动或 .env/密钥/数据/依赖缓存/发行包。
+- 复用公开仓库独立快照历史，公开 main 为唯一父提交，完整复制主项目当前已提交文件树；不把私有分支历史发布到公开仓库。首次快照 5ab299a 已成功推送；Git 后续 ls-remote 遇到一次 schannel 握手错误，改用 GitHub API 读取引用与 commit tree，确认远端 hash 和文件树准确一致。
+- 补充本次交付记录后再同步最终快照，并通过 GitHub API 核验；不重复执行源码测试/构建，不更新软件正式版本或 ModelScope 发布。
 
 ## 2026-10-26 公开仓库目标纠正
 
