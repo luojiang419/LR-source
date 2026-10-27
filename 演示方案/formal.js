@@ -69,15 +69,19 @@
     $('source-status').textContent=`${count} 个拍摄编号 · RAW 内嵌预览 / 配对 JPG`;summary.innerHTML=`已选 <strong id="selected-count">${$('selected-count').textContent}</strong> / ${count}`;
     $('send-lr').disabled=!count;
   }
-  async function refreshLive(sid,followId=null,enter=false){
+  async function refreshLive(sid,followId=null,enter=false,incremental=null){
     await window.FramekeepPaging?.whenIdle();
     if(switching)return false;
     if(session.id!==sid){if(!enter)return false;await openSession(sid)}
     if(session.id!==sid||switching)return false;
-    const next=await api('/api/state?'+(session.browser?.paged?FramekeepPaging.query({around:followId||Framekeep.remoteTarget().photoId||''}):'session_id='+encodeURIComponent(sid)));
+    const query=session.browser?.paged?FramekeepPaging.query({around:followId||Framekeep.remoteTarget().photoId||''}):new URLSearchParams({session_id:sid,around:followId||Framekeep.remoteTarget().photoId||'',...(incremental?{live_after:incremental.after,live_generation:incremental.generation}:{})});
+    const next=await api('/api/state?'+query);
     if(session.id!==sid||switching)return false;
+    const preview=followId?await Framekeep.prepareLivePreview(next.session,next.catalog,followId):null;
+    if(session.id!==sid||switching)return false;
+    if(preview&&!preview.follow)followId=null;
     // 保留本地人工覆盖、保存队列及鼠标会话；新增目录不替换会话 revision。
-    if(!Framekeep.updateLiveCatalog(next.session,next.catalog,followId,enter))return false;
+    if(!Framekeep.updateLiveCatalog(next.session,next.catalog,followId,enter,preview?.ready,next.catalog_delta))return false;
     sessionDetails();schedule();return true;
   }
   function explain(title,text){$('info-title').textContent=title;$('info-content').textContent=text;$('info-dialog').showModal()}

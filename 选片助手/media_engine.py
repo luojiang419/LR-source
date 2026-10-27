@@ -14,12 +14,37 @@ import time
 import atexit
 import base64
 import weakref
+from collections import OrderedDict
 from preview_cache import cache_for,cache_name,WARM_WORKERS
 from contextlib import nullcontext,contextmanager
 from datetime import datetime
 from pathlib import Path
 from PIL import Image, ImageOps, ImageDraw
 from preview_codec import MAX_PREVIEW_EDGE,embedded_jpeg
+
+_QUICK_PREVIEWS=OrderedDict()
+_QUICK_PREVIEW_GUARD=threading.Lock()
+
+
+def quick_preview_bytes(record,root,size=480):
+    """当前新图的有界内存预览，不等待历史缓存索引或写盘队列。"""
+    if not record.get('jpg') or not 160<=size<=480:return None
+    key=(str(root),record['fingerprint'],size,record.get('orientation',1))
+    with _QUICK_PREVIEW_GUARD:
+        if key in _QUICK_PREVIEWS:
+            _QUICK_PREVIEWS.move_to_end(key);return _QUICK_PREVIEWS[key]
+    path=resolved_file(root,record['jpg'])
+    if path.suffix.lower() not in ('.jpg','.jpeg'):return None
+    with _preview_lock('quick:'+repr(key)):
+        with _QUICK_PREVIEW_GUARD:
+            if key in _QUICK_PREVIEWS:return _QUICK_PREVIEWS[key]
+        from preview_codec import save_preview
+        image=_read_preview(path,size,record.get('orientation'))
+        stream=io.BytesIO();save_preview(image,stream);payload=stream.getvalue()
+        with _QUICK_PREVIEW_GUARD:
+            _QUICK_PREVIEWS[key]=payload
+            while len(_QUICK_PREVIEWS)>8:_QUICK_PREVIEWS.popitem(last=False)
+        return payload
 
 RAW_EXTS={'.cr3','.cr2','.nef','.nrw','.arw','.srf','.sr2','.raf','.rw2','.orf','.dng','.pef','.3fr','.fff','.rwl','.iiq','.srw'}
 IMAGE_EXTS={'.jpg','.jpeg','.tif','.tiff','.png','.heic','.heif'}
@@ -215,7 +240,7 @@ def fingerprint(paths):
     stats=[_STATS.get(str(p)) or p.stat() for p in paths]
     return hashlib.sha256(json.dumps([(str(p),s.st_size,s.st_mtime_ns) for p,s in zip(paths,stats)],ensure_ascii=False).encode()).hexdigest()
 
-def discover(root,recursive=True,cancel=None,*,exclude=(),indexed=None,on_indexed=None):
+def discover(root,recursive=True,cancel=None,*,exclude=(),indexed=None,on_indexed=None,stat_snapshot=None,only_paths=None):
     root=Path(root).resolve(strict=True)
     if not root.is_dir():raise ValueError('请选择照片文件夹。')
     grouped={}
@@ -237,6 +262,7 @@ def discover(root,recursive=True,cancel=None,*,exclude=(),indexed=None,on_indexe
                 shots.extend((p,None) for p in (images[1:] if raws else images))
             on_indexed(root,shots)
     stack=[root]
+    selected={os.path.normcase(os.path.splitext(str(p))[0]) for p in only_paths} if only_paths is not None else None
     while stack:
         if cancel is not None and cancel.is_set():raise ScanCancelled()
         with os.scandir(stack.pop()) as entries:
@@ -245,10 +271,16 @@ def discover(root,recursive=True,cancel=None,*,exclude=(),indexed=None,on_indexe
                 if entry.name.startswith('.framekeep-'):continue
                 if entry.is_symlink():continue
                 if entry.is_dir(follow_symlinks=False):
+                    if selected is not None and not any(stem.startswith(os.path.normcase(entry.path)+os.sep) for stem in selected):continue
                     if Path(entry.path).resolve() in excluded:continue
                     if recursive and not entry.name.startswith('.') and not Path(entry.path).is_junction():stack.append(Path(entry.path))
                     continue
+                if selected is not None:
+                    stem,extension=os.path.splitext(os.path.normcase(entry.path))
+                    if stem not in selected and not (extension=='.xmp' and os.path.splitext(stem)[0] in selected):continue
                 p=Path(entry.path)
+                if stat_snapshot is not None and p.suffix.lower() in RAW_EXTS|IMAGE_EXTS|{'.xmp'} and entry.is_file(follow_symlinks=False):
+                    stat_snapshot[os.path.normcase(str(p))]=entry.stat(follow_symlinks=False)
                 if p.suffix.lower() not in RAW_EXTS|IMAGE_EXTS or not entry.is_file(follow_symlinks=False):continue
                 _STATS[str(p)]=entry.stat(follow_symlinks=False)
                 relative=p.relative_to(root)
@@ -309,7 +341,7 @@ def _read_preview(source,size,orientation=None):
         try:orientation=int(orientation)
         except (ValueError,TypeError):orientation=1
         if orientation not in range(1,9):orientation=1
-        if image.format=='JPEG' and image.mode in ('RGB','L') and image.fp is not None and image.width*image.height<=100_000_000:
+        if size>480 and image.format=='JPEG' and image.mode in ('RGB','L') and image.fp is not None and image.width*image.height<=100_000_000:
             from gpu_media import decode_jpeg
             position=image.fp.tell();image.fp.seek(0)
             payload=image.fp.read();image.fp.seek(position)
@@ -318,6 +350,8 @@ def _read_preview(source,size,orientation=None):
         # JPEG 在解码阶段先缩小，避免展开全尺寸像素后才缩放。
         image.draft('RGB',(size,size))
         result=image.convert('RGB')
+        # 快速预览使用 JPEG 缩小解码，避免等待后台清晰图持有的 GPU 队列。
+        if size<=480:result.thumbnail((size,size),Image.Resampling.LANCZOS)
     # 明确的内嵌 1 表示像素已朝正，不能再用 RAW/目录的 6 重复旋转。
     return _orient_preview(result,orientation)
 
@@ -488,8 +522,10 @@ def _preview(record,root,cache,exiftool,size=480,decode=False,*,cache_index=None
             elif not decode:image=_companion_preview(record,root,load_size)
             if image is None and direct is None:raise RuntimeError('无可用预览；可在单张视图按需解码 RAW。')
             if image is not None:
-                from gpu_media import resize_preview
-                image=resize_preview(image,size)
+                if size<=480:image.thumbnail((size,size),Image.Resampling.LANCZOS)
+                else:
+                    from gpu_media import resize_preview
+                    image=resize_preview(image,size)
             # 独占创建临时文件，不能覆盖并最终清掉用户已有的同名 .tmp。
             with tempfile.NamedTemporaryFile(dir=index.folder,prefix='.framekeep-preview-',suffix='.tmp',delete=False) as stream:
                 temp=Path(stream.name)

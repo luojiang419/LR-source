@@ -2,6 +2,7 @@
 from __future__ import annotations
 import argparse
 from datetime import datetime
+from contextlib import nullcontext
 import base64
 import json
 import mimetypes
@@ -248,7 +249,14 @@ class Handler(SimpleHTTPRequestHandler):
                 js='window.FRAMEKEEP_SESSION='+stable_json(boot['session'])+';window.DEMO_PHOTOS='+stable_json(boot['photos'])+';'
                 return self.reply(js.encode(),kind='text/javascript; charset=utf-8')
             if path=='/api/state':
-                params={key:values[0] for key,values in parse_qs(url.query,keep_blank_values=True).items()};sid=params.get('session_id');session,rows=browse_state(sid,params)
+                params={key:values[0] for key,values in parse_qs(url.query,keep_blank_values=True).items()};sid=params.get('session_id')
+                if WATCH and sid and params.get('live_after','').isdigit() and session_browser.count(STORE,sid)<=session_browser.LARGE_SESSION:
+                    ids=WATCH.delta(sid,params.get('live_generation',''),int(params['live_after']))
+                    if ids is not None:
+                        session=STORE.session(sid);records=STORE.records(sid,ids=ids) if ids else []
+                        if ARCHIVE:session=ARCHIVE.ratings.session(session,records)
+                        return self.reply({'session':session,'catalog':ui_photos(sid,records=records),'catalog_delta':True})
+                session,rows=browse_state(sid,params)
                 if sid and not session:return self.reply({'error':'文件夹会话不存在'},404)
                 catalog=[dict(r,captured_at_local=r.get('time')) for r in rows];browser=session.get('browser',{}) if session else {}
                 return self.reply({'demo':False,'database':'SQLite','session':session,**STORE.folder_state(),'catalog':catalog,'indexed_captures':browser.get('total',len(rows)),'indexed_files':browser.get('files',sum(r.get('fileCount',0) for r in rows)),'snapshot_hash':session['snapshot'] if session else '', 'request_token':TOKEN,'bridge':{'last_seen':BRIDGE_LAST_SEEN,'latest_job':self.bridge_job()}})
@@ -412,7 +420,11 @@ class Handler(SimpleHTTPRequestHandler):
                 if not session or not row:return self.reply({'error':'照片不存在'},404)
                 try:
                     params=parse_qs(url.query);size=int(params.get('size',['480'])[0]);decode=params.get('decode',['0'])[0]=='1'
-                    record=json.loads(row[0]);payload=media.preview_bytes(record,session['root'],DATA/'previews',lambda:media.find_exiftool(ROOT),size,decode)
+                    record=json.loads(row[0])
+                    with PREVIEWS.foreground() if PREVIEWS else nullcontext():
+                        live=WATCH.state() if WATCH and params.get('instant',[''])[0]=='1' else {}
+                        payload=media.quick_preview_bytes(record,session['root'],size) if not decode and live.get('enabled') and live.get('session_id')==sid else None
+                        if payload is None:payload=media.preview_bytes(record,session['root'],DATA/'previews',lambda:media.find_exiftool(ROOT),size,decode)
                     if params.get('v',[''])[0]==record['fingerprint']:self.preview_cache='private, max-age=31536000, immutable'
                     return self.reply(payload,kind=image_mime(payload))
                 except Exception:
@@ -818,13 +830,21 @@ def _run_server(startup):
                               require_access_code=getattr(sys,'frozen',False) or os.environ.get('FRAMEKEEP_DEV_WEB_NO_CODE')!='1')
     RAWLINK=RawReconcile(ARCHIVE,autostart=False)
     UPDATES=UpdateClient(ROOT,DATA,args.port)
-    def catalog_changed(sid):
-        ARCHIVE.ratings.seed_session(sid)
-        RAWLINK.request(sid,discover=True);ANALYSIS.request_auto(sid);PIPELINE.changed(sid)
+    def catalog_changed(sid,records=None):
+        if records is None:ARCHIVE.ratings.seed_session(sid)
+        else:
+            session=STORE.session(sid)
+            ARCHIVE.ratings.seed_records(session,records)
+            PREVIEWS.request(session['root'],records)
+        if records is None:RAWLINK.request(sid,discover=True)
+        else:RAWLINK.request(sid,capture_ids=[record['id'] for record in records])
+        ANALYSIS.request_auto(sid);PIPELINE.changed(sid)
     PIPELINE=ArchivePipeline(CATALOG,ARCHIVE,SKU,RAWLINK,autostart=False)
     from sku_metadata_sync import attach
     metadata_sync=attach(SKU,CATALOG,RAWLINK,autostart=False)
     STORE.on_catalog=catalog_changed
+    STORE.on_live_catalog=catalog_changed
+    PREVIEWS.interactive=lambda:bool(WATCH and WATCH.state()['enabled'])
     STORE.on_external_metadata=ARCHIVE.ratings.observe_sidecars
     CANON=CanonLink(STORE,WATCH,os.environ.get('FRAMEKEEP_DESKTOP_EXE',str(ROOT/'末帧选片.exe')),
                     allow_registration=bool(os.environ.get('FRAMEKEEP_DESKTOP_PID')) and os.environ.get('FRAMEKEEP_CANON_REGISTRATION','1')!='0')

@@ -43,12 +43,12 @@
   const canon=document.createElement('section');canon.className='watch-plan';canon.id='canon-link-panel';
   canon.innerHTML='<label class="watch-option"><input id="canon-link-enabled" type="checkbox"> Canon EOS 联机接入</label><p id="canon-link-status" class="dialog-copy" role="status" aria-live="polite">正在检测 EOS Utility…</p><p class="dialog-copy">在 EOS Utility 的「链接软件 → 记录…」中选择本软件后，自动跟随 EOS 的保存目录及新建拍摄子文件夹，无需重复添加。也可手动设置新的保存目录。</p><div class="dialog-actions"><button id="canon-link-resume" class="bordered">跟随 EOS 保存目录</button><button id="canon-link-save" class="bordered">设置联机保存目录</button></div>';
   dialog.querySelector('.dialog-heading').after(canon);
-  let canonCheckedAt=0,autoGeneration=null,lastCanonEvent=null;
-  async function showCanon(){try{const state=await api('/api/canon'),folder=state.follow_eos?state.save_folder:state.destination||state.save_folder;$('canon-link-enabled').checked=!!state.enabled;$('canon-link-status').textContent=state.message+(state.error?'：'+state.error:'')+(folder?' · '+folder:'');tetherButton.textContent=state.enabled&&state.follow_eos?'联机拍摄 · 自动跟随':'联机拍摄';tetherButton.title=state.message+(folder?' · '+folder:'');
+  let canonCheckedAt=0,autoGeneration=null,lastCanonEvent=null,canonRequest=0,canonChanging=false;
+  async function showCanon(){const sequence=++canonRequest;if(dialog.open)$('canon-link-enabled').disabled=true;try{const state=await api('/api/canon');if(sequence!==canonRequest||canonChanging)return;const folder=state.follow_eos?state.save_folder:state.destination||state.save_folder;$('canon-link-enabled').checked=!!state.enabled;$('canon-link-status').textContent=state.message+(state.error?'：'+state.error:'')+(folder?' · '+folder:'');tetherButton.textContent=state.enabled&&state.follow_eos?'联机拍摄 · 自动跟随':'联机拍摄';tetherButton.title=state.message+(folder?' · '+folder:'');
     if(tether.open&&canonSaveState?.destination_pending&&state.destination_ready){canonSaveState=state;$('canon-save-status').textContent='保存设置已生效，可重新打开 EOS Utility 开始联机拍摄。'}
-  }catch(e){$('canon-link-status').textContent=e.message}}
+  }catch(e){if(sequence===canonRequest)$('canon-link-status').textContent=e.message}finally{if(sequence===canonRequest&&!canonChanging)$('canon-link-enabled').disabled=false}}
   $('canon-link-save').onclick=()=>openTether();
-  async function setCanon(enabled){try{await api('/api/canon',{enabled,follow_eos:true});canonCheckedAt=0;autoGeneration=null;await showCanon();wakePoll()}catch(e){$('canon-link-status').textContent=e.message}}
+  async function setCanon(enabled){if(canonChanging)return;canonChanging=true;canonRequest++;$('canon-link-enabled').disabled=true;try{await api('/api/canon',{enabled,follow_eos:true});canonCheckedAt=0;autoGeneration=null}catch(e){$('canon-link-status').textContent=e.message}finally{canonChanging=false;await showCanon();wakePoll()}}
   $('canon-link-enabled').addEventListener('change',()=>setCanon($('canon-link-enabled').checked));
   $('canon-link-resume').addEventListener('click',()=>setCanon(true));
   const plan=document.createElement('section');plan.id='watch-plan-dropzone';plan.className='watch-plan';plan.setAttribute('aria-labelledby','watch-plan-title');plan.setAttribute('aria-describedby','watch-plan-drop-hint');
@@ -113,7 +113,7 @@
     try{
       const state=await api('/api/watch'+(watchEnabled&&lastEvent!==null?'?after='+lastEvent+'&wait=15':''),undefined,20000,controller.signal);
       lastEvent=state.event_id??null;watchEnabled=!!state.enabled;window.FramekeepWatch.initializing=!!state.initializing&&state.session_id===window.FRAMEKEEP_SESSION.id;show(state);
-      if(Date.now()-canonCheckedAt>3000){canonCheckedAt=Date.now();showCanon()}
+      if(Date.now()-canonCheckedAt>3000||state.enabled&&state.source==='canon'&&state.canon_event&&state.canon_event!==lastCanonEvent){canonCheckedAt=Date.now();showCanon()}
       if(state.enabled&&state.source==='canon'&&state.canon_event&&state.canon_event!==lastCanonEvent&&!document.querySelector('dialog[open]')&&!Framekeep.remoteTarget().paused){
         await FramekeepIO.flush();
         if(window.FramekeepWorkspace&&FramekeepWorkspace.current()!=='selection')FramekeepWorkspace.show('selection');
@@ -129,7 +129,7 @@
         const changed=lastGeneration!==state.generation||lastVersion!==state.version||lastSession!==current;
         if(changed){
           const target=follow&&state.arrivals!==lastArrivals?state.last_photo_id:null;
-          if(await FramekeepIO.refreshLive(current,target)){
+          if(await FramekeepIO.refreshLive(current,target,false,lastGeneration===state.generation&&lastSession===current&&lastVersion>=0?{after:lastVersion,generation:state.generation}:null)){
             lastGeneration=state.generation;lastVersion=state.version;lastArrivals=state.arrivals;lastSession=current;
             FramekeepIO.refreshFolders().catch(()=>{});
           }
@@ -143,7 +143,7 @@
   let wasPaused=Framekeep.remoteTarget().paused;
   document.addEventListener('framekeep:selection',()=>{const paused=Framekeep.remoteTarget().paused;if(pollSession!==window.FRAMEKEEP_SESSION.id||wasPaused&&!paused)wakePoll();wasPaused=paused});
   button.addEventListener('click',async()=>{
-    renderPlan();dialog.showModal();$('watch-path').value=window.FRAMEKEEP_SESSION.root||'';
+    renderPlan();dialog.showModal();showCanon();$('watch-path').value=window.FRAMEKEEP_SESSION.root||'';
     const sequence=++watchDialogSequence,edit=watchFormEdit;
     try{const state=await api('/api/watch');if(!dialog.open||sequence!==watchDialogSequence)return;if(edit===watchFormEdit){if(state.folder)$('watch-path').value=state.folder;$('watch-recursive').checked=state.recursive!==false}show(state)}catch(e){if(dialog.open&&sequence===watchDialogSequence)$('watch-status').textContent=e.message}
   });

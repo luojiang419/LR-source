@@ -7,14 +7,22 @@ from pathlib import Path
 import threading
 import time
 import uuid
+from collections import deque
 
 from PIL import Image
 import media_engine as media
 from file_safety import atomic_write,photo_directory
 
 
-def signature(paths):
+def signature(paths,stat_snapshot=None):
     from rating_xmp import sidecar_signature
+    if stat_snapshot is not None:
+        # 同次 scandir 已拿到文件和侧车属性；不能为每张历史照片再探测两次不存在的 XMP。
+        def item(path):
+            stat=stat_snapshot[os.path.normcase(str(path))]
+            return (str(path),stat.st_size,stat.st_mtime_ns)
+        sides=dict.fromkeys(side for path in paths for side in (path.with_suffix('.xmp'),Path(str(path)+'.xmp')))
+        return tuple(item(path) for path in paths)+tuple(item(side) for side in sides if os.path.normcase(str(side)) in stat_snapshot)
     return tuple((str(p),p.stat().st_size,p.stat().st_mtime_ns) for p in paths)+sidecar_signature(paths)
 
 
@@ -69,14 +77,14 @@ class DirectorySignal:
 
 
 class FolderWatch:
-    INTERVAL=.08
+    INTERVAL=.025
     STABLE_SECONDS=.08
     RESCAN_SECONDS=2.0
 
     def __init__(self,store,*,clock=time.monotonic,autostart=True):
         self.store=store;self.clock=clock;self.lock=threading.RLock();self.tick_lock=threading.Lock()
         self.condition=threading.Condition(self.lock);self.wake=threading.Event();self.metadata=None;self.existing=None
-        self.closed=threading.Event();self.cancel=threading.Event();self.observed={};self.accepted={};self.retry_after={}
+        self.closed=threading.Event();self.cancel=threading.Event();self.observed={};self.accepted={};self.retry_after={};self.changes=deque(maxlen=128);self.hints={}
         self.config=store.data/'folder-watch.json'
         self.info={'enabled':False,'folder':'','recursive':True,'session_id':None,'generation':uuid.uuid4().hex,
                    'version':0,'event_id':0,'canon_event':'','arrivals':0,'last_photo_id':None,'pending':0,'initializing':False,'error':'','message':'未开启现场监控','source':'manual'}
@@ -102,6 +110,13 @@ class FolderWatch:
             self.condition.wait_for(lambda:self.closed.is_set() or self.info['event_id']!=after,timeout)
             return dict(self.info)
 
+    def delta(self,sid,generation,after):
+        with self.lock:
+            if sid!=self.info['session_id'] or generation!=self.info['generation'] or not self.info['enabled']:return None
+            if not 0<=after<=self.info['version']:return None
+            if after<self.info['version'] and (not self.changes or after<self.changes[0][0]-1):return None
+            return list(dict.fromkeys(cid for version,ids in self.changes if version>after for cid in ids))
+
     def _update(self,**values):
         # 调用方持有 lock；状态无变化时不唤醒客户端，也不发送整库刷新。
         if any(self.info.get(k)!=v for k,v in values.items()):
@@ -114,10 +129,16 @@ class FolderWatch:
     def set_source(self,source):
         with self.lock:self._update(source=source);self._persist();return self.state()
 
-    def notify_canon(self):
+    def notify_canon(self,paths=()):
         # 即使照片已入库，也通知当前界面进入联机；不重建会话或持久化通知。
         with self.lock:
-            if self.info['enabled'] and self.info['source']=='canon':self._update(canon_event=uuid.uuid4().hex)
+            if self.info['enabled'] and self.info['source']=='canon':
+                root=Path(self.info['folder'])
+                for path in paths:
+                    path=Path(path)
+                    if path.is_relative_to(root):self.hints[path]=None
+                while len(self.hints)>128:self.hints.pop(next(iter(self.hints)))
+                self._update(canon_event=uuid.uuid4().hex);self.wake.set()
 
     def start(self,folder,recursive=True,*,source='manual'):
         if not isinstance(folder,str) or not folder.strip():raise ValueError('请选择照片传入文件夹。')
@@ -129,7 +150,7 @@ class FolderWatch:
         sid=self.store.ensure_live_session(root)
         with self.store.connect() as c:c.execute("INSERT OR REPLACE INTO settings VALUES (?,?)",('shooting_session:'+sid,str(root)))
         with self.lock:
-            self.cancel.set();self.cancel=threading.Event();self.observed={};self.accepted={};self.retry_after={};self.existing=None
+            self.cancel.set();self.cancel=threading.Event();self.observed={};self.accepted={};self.retry_after={};self.existing=None;self.changes.clear();self.hints.clear()
             self._update(enabled=True,folder=str(root),recursive=bool(recursive),session_id=sid,source=source,
                              generation=uuid.uuid4().hex,canon_event=self.info['canon_event'] if source=='canon' else '',version=0,arrivals=0,last_photo_id=None,pending=0,initializing=True,error='',message='正在读取已有照片，原文件保留')
             self._persist();self.wake.set()
@@ -140,7 +161,7 @@ class FolderWatch:
             self.cancel.set();self._update(enabled=False,pending=0,initializing=False,message='已停止监控，原文件、已入库照片和评级保留')
             self._persist();self.wake.set();return self.state()
 
-    def tick(self):
+    def tick(self,paths=None):
         # 独立工作线程串行读取；页面轮询不会启动额外目录扫描。
         with self.tick_lock:
             with self.lock:
@@ -148,7 +169,8 @@ class FolderWatch:
                 info=dict(self.info);cancel=self.cancel;observed=self.observed;accepted=self.accepted;retry_after=self.retry_after
             try:
                 photo_directory(info['folder'],self.store.data)
-                root,shots=media.discover(info['folder'],info['recursive'],cancel=cancel,exclude=(self.store.data,))
+                stat_snapshot={}
+                root,shots=media.discover(info['folder'],info['recursive'],cancel=cancel,exclude=(self.store.data,),stat_snapshot=stat_snapshot,only_paths=paths)
                 if not self.store.session(info['session_id']):self.store.ensure_live_session(root)
                 if self.existing is None:
                     self.existing={path.casefold():r for r in self.store.records(info['session_id']) for path in (r.get('raw'),r.get('jpg')) if path}
@@ -157,7 +179,7 @@ class FolderWatch:
                 for primary,companion in shots:
                     if cancel.is_set():return
                     paths=[primary]+([companion] if companion else []);key=str(primary);current.add(key)
-                    try:sig=signature(paths)
+                    try:sig=signature(paths,stat_snapshot)
                     except OSError:pending+=1;continue
                     if not all(size>0 for _,size,_ in sig):pending+=1;continue
                     if accepted.get(key)==sig:continue
@@ -167,10 +189,12 @@ class FolderWatch:
                     if old and old['fingerprint']==media.fingerprint(paths) and old.get('sidecarFingerprint')==sidecar_fingerprint(paths):accepted[key]=sig;continue
                     previous=observed.get(key)
                     if previous is None or previous[0]!=sig:
-                        observed[key]=(sig,self.clock());pending+=1;continue
-                    if self.clock()-previous[1]<self.STABLE_SECONDS or not files_ready(paths):pending+=1;continue
+                        observed[key]=(sig,self.clock())
+                        # 完整 JPEG 且写句柄已释放时立即处理；RAW/其他格式仍等待稳定。
+                        if len(paths)!=1 or primary.suffix.lower() not in ('.jpg','.jpeg') or not files_ready(paths):pending+=1;continue
+                    elif self.clock()-previous[1]<self.STABLE_SECONDS or not files_ready(paths):pending+=1;continue
                     ready.append((primary,companion,sig))
-                for key in list(observed):
+                for key in list(observed) if paths is None else ():
                     if key not in current:observed.pop(key,None);accepted.pop(key,None)
                 # 每批最多 24 张，坏文件按条重试，不挡住同批其他照片。
                 records=[];completed=[];errors=[]
@@ -196,11 +220,14 @@ class FolderWatch:
                             for path in (record.get('raw'),record.get('jpg')):
                                 if path:existing[path.casefold()]=record
                         values={}
-                        if result['changed']:values['version']=self.info['version']+1
+                        if result['changed']:
+                            values['version']=self.info['version']+1
+                            self.changes.append((values['version'],tuple(result['changed'])))
                         if result['added']:
                             values.update(arrivals=self.info['arrivals']+len(result['added']),last_photo_id=result['added'][-1])
                         self._update(**values)
-                    initializing=self.info['initializing'] and pending>0
+                    if paths is not None:pending=max(pending,self.info['pending'])
+                    initializing=self.info['initializing'] and (paths is not None or pending>0)
                     message=(f'正在读取已有照片 · 待处理 {pending} 张' if initializing else f'正在监控 · 本次载入 {self.info["arrivals"]} 张'+(f' · 等待写完 {pending} 张' if pending else ''))
                     self._update(pending=pending,initializing=initializing,error='；'.join(errors[:2]),message=message)
             except media.ScanCancelled:pass
@@ -219,13 +246,23 @@ class FolderWatch:
                     signal=DirectorySignal(state['folder'],state['recursive']) if state['enabled'] else None
                     generation=state['generation'];next_scan=0
                 notified=signal.changed() if signal else False
-                if state['enabled'] and (notified or now>=next_scan):
+                with self.lock:hints=list(self.hints);self.hints.clear()
+                if state['enabled'] and hints:
+                    self.tick(hints);next_scan=min(next_scan,self.clock()+self.INTERVAL)
+                elif state['enabled'] and (notified or now>=next_scan):
                     self.tick();state=self.state()
                     # 有待写完/待处理文件时短间隔重试；空闲时只响应内核通知和补偿扫描。
                     delay=self.INTERVAL if state['pending'] or not signal or signal.handle is None else self.RESCAN_SECONDS
                     next_scan=self.clock()+delay
                     if signal and signal.handle is None:signal=DirectorySignal(state['folder'],state['recursive'])
-                if not state['enabled'] and self.metadata:self.metadata.close()
+                if not state['enabled'] and self.metadata:self.metadata.close();self.metadata=None
+                if state['enabled'] and self.metadata is None and not state['pending']:
+                    try:
+                        self.metadata=media.ExifToolSession(media.find_exiftool(self.store.root))
+                        self.metadata.execute(['-ver'],cancel=self.cancel)
+                    except Exception:
+                        if self.metadata:self.metadata.close()
+                        self.metadata=None
                 self.wake.wait(.025);self.wake.clear()
         finally:
             if signal:signal.close()

@@ -521,7 +521,8 @@ class PreviewWarmer:
     """持久并行队列；每张一次读取完成小图和最高 2048 预览。"""
     def __init__(self,cache,exiftool,*,autostart=True,catalog=None):
         self.cache=cache;self.exiftool=exiftool;self.closed=threading.Event();self.wake=threading.Event()
-        self.catalog=catalog;self.sessions=set();self.lock=threading.RLock();self.active=set()
+        self.catalog=catalog;self.sessions=set();self.lock=threading.RLock();self.active=set();self.foreground_until=0.0;self.foreground_active=0;self.foreground_guard=threading.Lock()
+        self.interactive=lambda:False
         self.requests=OrderedDict();self.request_lock=threading.Lock();self.request_wake=threading.Event()
         self.request_thread=threading.Thread(target=self._requests_run,name='foreground-preview-queue',daemon=True)
         self.reconcile_lock=threading.Lock();self.reconcile_requested=threading.Event();self.reconcile_videos=True;self.reconciling=False
@@ -550,9 +551,23 @@ class PreviewWarmer:
             while len(self.requests)>4096:self.requests.popitem(last=False)
         self.request_wake.set()
 
+    def defer_background(self,seconds=.4):
+        # 前台新图期间暂停领取后续历史任务；已在生成的任务正常收尾。
+        self.foreground_until=max(self.foreground_until,time.monotonic()+seconds)
+
+    @contextmanager
+    def foreground(self):
+        with self.foreground_guard:self.foreground_active+=1
+        try:yield
+        finally:
+            with self.foreground_guard:
+                self.foreground_active-=1;self.defer_background(.1)
+
     def _requests_run(self):
         while not self.closed.is_set():
             self.request_wake.wait(1);self.request_wake.clear()
+            if self.foreground_active or time.monotonic()<self.foreground_until:
+                self.closed.wait(.05);self.request_wake.set();continue
             with self.request_lock:
                 batch=[self.requests.popitem(last=False) for _ in range(min(128,len(self.requests)))]
             if not batch:continue
@@ -671,7 +686,13 @@ class PreviewWarmer:
 
     def process_one(self):
         import media_engine as media
+        if self.foreground_active or time.monotonic()<self.foreground_until:return False
+        interactive=self.interactive()
+        with self.lock:
+            # 拍摄期间只让两项历史预生成在途，避免全部 CPU/缓存写锁挤占当前图。
+            if interactive and len(self.active)>=2:return False
         with self.lock,self.cache.lock,self.cache.connect() as c:
+            if interactive and len(self.active)>=2:return False
             active=list(self.active)
             row=c.execute('SELECT * FROM pending INDEXED BY pending_request_order WHERE attempts<3'+
                 (' AND identity NOT IN ('+','.join('?' for _ in active)+')' if active else '')+

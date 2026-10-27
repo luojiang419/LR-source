@@ -277,7 +277,7 @@ class CanonLink:
             last=files[-1];self.actual_folder=last.parent
             # 通知定位的是当前拍摄会话，不能提升到包含多日历史照片的保存根。
             state=self._attach(last.parent)
-            self.watch.notify_canon()
+            self.watch.notify_canon(files)
             self.info.update(last_file=str(last),event=self.info['event']+1,error='',message='Canon 联机照片已自动接入')
             return {'accepted':True,'session_id':state['session_id'],'folder':state['folder']}
 
@@ -286,7 +286,9 @@ class CanonLink:
         if not state['enabled'] or Path(state['folder']).resolve()!=Path(folder).resolve() or state.get('recursive')!=recursive:
             state=self.watch.start(str(folder),recursive,source='canon')
         elif state.get('source')!='canon':state=self.watch.set_source('canon')
-        self.store.activate(state['session_id']);return state
+        # 同目录的每张通知/后台 tick 不应重新激活并触发完整评级和归档刷新。
+        if self.store.active_id()!=state['session_id']:self.store.activate(state['session_id'])
+        return state
 
     def tick(self):
         with self.lock:self._tick()

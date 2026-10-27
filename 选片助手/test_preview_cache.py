@@ -53,6 +53,50 @@ class PreviewCacheTests(unittest.TestCase):
         self.assertEqual(restarted.state()['pending'],1);self.assertTrue(worker.process_one());self.assertFalse(worker.process_one())
         self.assertEqual(restarted.state()['pending'],0);self.assertEqual(restarted.state()['images'],2)
 
+    def test_foreground_preview_defers_history_and_releases_after_errors(self):
+        record=self.record();worker=PreviewWarmer(self.cache,'unused',autostart=False)
+        worker.enqueue(self.photos,[record])
+        with self.assertRaisesRegex(RuntimeError,'foreground failed'):
+            with worker.foreground():
+                with patch.object(preview_cache_module.time,'monotonic',return_value=10**12):
+                    self.assertFalse(worker.process_one())
+                self.assertEqual(self.cache.state()['pending'],1)
+                raise RuntimeError('foreground failed')
+        self.assertEqual(worker.foreground_active,0)
+        with patch.object(preview_cache_module.time,'monotonic',return_value=worker.foreground_until+1):
+            self.assertTrue(worker.process_one())
+        self.assertEqual(self.cache.state()['pending'],0)
+
+    def test_live_monitor_limits_history_jobs_without_blocking_foreground(self):
+        records=[self.record(f'{i}.JPG') for i in range(3)]
+        worker=PreviewWarmer(self.cache,'unused',autostart=False);worker.interactive=lambda:True
+        worker.enqueue(self.photos,records);entered=threading.Event();release=threading.Event();count=[]
+        def warm(*args,**kwargs):
+            count.append(1)
+            if len(count)==2:entered.set()
+            if not release.wait(3):raise RuntimeError('历史任务未释放')
+        with patch.object(media,'warm_previews',side_effect=warm),ThreadPoolExecutor(max_workers=2) as pool:
+            futures=[pool.submit(worker.process_one) for _ in range(2)]
+            try:
+                self.assertTrue(entered.wait(3));self.assertFalse(worker.process_one())
+                with worker.foreground():self.assertEqual(worker.foreground_active,1)
+            finally:release.set()
+            self.assertTrue(all(f.result() for f in futures))
+        self.assertEqual(len(count),2)
+        with patch.object(preview_cache_module.time,'monotonic',return_value=worker.foreground_until+1):
+            self.assertTrue(worker.process_one())
+
+    def test_instant_live_preview_uses_bounded_memory_without_disk_cache_or_gpu(self):
+        record=self.record()
+        with patch.dict(media._QUICK_PREVIEWS,{},clear=True),patch.object(media,'cache_for',side_effect=AssertionError('不应等待磁盘缓存')),patch('gpu_media.decode_jpeg',side_effect=AssertionError('不应等待GPU')):
+            payload=media.quick_preview_bytes(record,self.photos)
+            with Image.open(io.BytesIO(payload)) as image:
+                self.assertLessEqual(max(image.size),480);self.assertFalse(image.getexif())
+            (self.photos/'001.JPG').unlink()
+            self.assertEqual(media.quick_preview_bytes(record,self.photos),payload)
+            for i in range(10):media.quick_preview_bytes(self.record(f'quick-{i}.JPG'),self.photos)
+            self.assertLessEqual(len(media._QUICK_PREVIEWS),8)
+
     def test_cache_reads_batch_access_writes_and_trim_uses_latest_access(self):
         record=self.record();self.warm(record);name=cache_name(record,480)
         with self.cache.connect() as c:c.execute('UPDATE previews SET accessed=1')

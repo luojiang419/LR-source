@@ -102,7 +102,7 @@
   window.addEventListener('blur',finishDrag);
   new ResizeObserver(()=>{finishDrag();entries.forEach(layout)}).observe(stage);
   window.FramekeepViewer={
-    refresh,reset,
+    refresh,reset,relayout(){signature=[...stage.querySelectorAll('[data-loupe]')].map(button=>button.dataset.loupe+'|'+button.querySelector('img').getAttribute('src')).join('\n');entries.forEach(layout)},
     setScale(scale){finishDrag();for(const entry of entries)zoom(entry,scale)},
     toggle(id){const entry=entries.find(item=>item.key===id)||entries[0];if(entry)zoom(entry,entry.scale>1?1:2)},
     getScale(id){return(entries.find(item=>item.key===id)||entries[0])?.scale||1}

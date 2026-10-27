@@ -36,7 +36,7 @@ class FolderWatchTests(unittest.TestCase):
 
     def test_empty_then_incremental_save_revision_and_no_duplicate(self):
         self.watch.tick();self.assertEqual(self.store.records(self.sid),[])
-        self.image();self.watch.tick();self.assertEqual(self.store.records(self.sid),[])
+        self.image();self.watch.tick();self.assertEqual(len(self.store.records(self.sid)),1)
         self.clock[0]+=2;self.watch.tick();rows=self.store.records(self.sid);self.assertEqual(len(rows),1)
         self.assertEqual(self.store.manifest(False,self.sid)['captures'][0]['rating'],0)
         self.store.save(self.sid,0,{'overrides':{rows[0]['id']:4}})
@@ -114,18 +114,75 @@ class FolderWatchTests(unittest.TestCase):
         finally:resumed.close()
 
     def test_switch_or_stop_during_metadata_does_not_publish_old_batch(self):
-        self.image();self.watch.tick();self.clock[0]+=2
+        self.image()
         other=self.base/'新目录';other.mkdir()
         def switch(paths,*args,**kwargs):
             self.watch.start(str(other));return [{} for _ in paths]
         self.read.side_effect=switch;self.watch.tick()
         self.assertEqual(self.store.records(self.sid),[])
         self.assertEqual(self.store.records(self.watch.state()['session_id']),[])
-        self.watch.start(str(self.photos));self.watch.tick();self.clock[0]+=2
+        self.watch.start(str(self.photos))
         def stop(paths,*args,**kwargs):
             self.watch.stop();return [{} for _ in paths]
         self.read.side_effect=stop;self.watch.tick()
         self.assertEqual(self.store.records(self.sid),[])
+
+    def test_complete_jpeg_is_immediate_but_raw_still_waits_for_stability(self):
+        self.image('immediate.JPG');(self.photos/'wait.CR3').write_bytes(b'RAW metadata mocked')
+        self.watch.tick();rows=self.store.records(self.sid)
+        self.assertEqual([r['jpg'] for r in rows],['immediate.JPG'])
+        self.assertEqual(self.clock[0],0)
+        self.clock[0]+=.1;self.watch.tick();self.assertEqual(len(self.store.records(self.sid)),2)
+
+    def test_delta_accumulates_bursts_and_rejects_old_generations_or_gaps(self):
+        generation=self.watch.state()['generation']
+        self.image('one.JPG');self.watch.tick();first=self.store.records(self.sid)[0]['id']
+        self.image('two.JPG');self.watch.tick();second=self.store.records(self.sid)[1]['id']
+        self.assertEqual(self.watch.delta(self.sid,generation,0),[first,second])
+        self.assertEqual(self.watch.delta(self.sid,generation,1),[second])
+        self.assertEqual(self.watch.delta(self.sid,generation,2),[])
+        self.assertIsNone(self.watch.delta('another',generation,0))
+        self.assertIsNone(self.watch.delta(self.sid,'old-generation',0))
+        self.watch.changes.popleft();self.assertIsNone(self.watch.delta(self.sid,generation,0))
+        self.watch.stop();self.assertIsNone(self.watch.delta(self.sid,generation,2))
+
+    def test_live_callback_receives_only_changed_records_without_full_catalog_work(self):
+        calls=[];self.store.on_live_catalog=lambda sid,records:calls.append((sid,[r['jpg'] for r in records]))
+        self.store.on_catalog=lambda *_:calls.append('full-rating-scan')
+        self.store.on_previews=lambda *_:calls.append('synchronous-preview')
+        self.image('one.JPG');self.watch.tick();self.image('two.JPG');self.watch.tick()
+        self.assertEqual(calls,[(self.sid,['one.JPG']),(self.sid,['two.JPG'])])
+
+    def test_canon_hint_reads_only_new_pair_and_preserves_history_signatures(self):
+        import folder_watch
+        old=self.image('old.JPG');self.watch.tick();accepted=dict(self.watch.accepted)
+        new=self.image('new.JPG');self.watch.set_source('canon')
+        self.watch.notify_canon([new,self.base/'outside.JPG'])
+        self.assertEqual(list(self.watch.hints),[new])
+        original=folder_watch.signature
+        def checked(paths,*args):
+            self.assertNotIn(old,paths);return original(paths,*args)
+        with patch.object(folder_watch,'signature',side_effect=checked):self.watch.tick([new])
+        self.assertEqual(len(self.store.records(self.sid)),2)
+        self.assertEqual(self.watch.accepted[str(old)],accepted[str(old)])
+        self.watch.tick();self.assertEqual(self.watch.state()['arrivals'],2)
+        (self.photos/'new.CR3').write_bytes(b'RAW metadata mocked')
+        self.watch.tick([new]);self.clock[0]+=.1;self.watch.tick([new])
+        paired=next(r for r in self.store.records(self.sid) if r.get('jpg')=='new.JPG')
+        self.assertEqual(paired['fileCount'],2)
+
+    def test_snapshot_tracks_xmp_changes_and_rechecks_writes_during_metadata(self):
+        import media_engine as media
+        path=self.image();side=path.with_suffix('.xmp');side.write_text('<x/>','utf8')
+        snapshot={};media.discover(self.photos,stat_snapshot=snapshot)
+        from folder_watch import signature
+        self.assertEqual(signature([path],snapshot),signature([path]))
+        def rewrite(paths,*args,**kwargs):
+            Image.new('RGB',(200,120),'red').save(path);return [{}]
+        self.read.side_effect=rewrite;self.watch.tick()
+        self.assertEqual(self.store.records(self.sid),[])
+        self.read.side_effect=lambda paths,*a,**kw:[{} for _ in paths]
+        self.clock[0]+=1;self.watch.tick();self.assertEqual(len(self.store.records(self.sid)),1)
 
     def test_start_on_existing_session_keeps_effective_stars(self):
         other=self.base/'已有';other.mkdir();Image.new('RGB',(100,100)).save(other/'old.JPG')

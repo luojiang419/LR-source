@@ -1,4 +1,6 @@
 /* 工作台动效令牌：业务状态同步生效，视觉过渡由浏览器负责。 */
+.photos{position:relative}
+.photos>.live-photo-outgoing{position:absolute;z-index:1;pointer-events:none}
 :root {
   --motion-ease: cubic-bezier(.22, 1, .36, 1);
   --motion-fast: 120ms;

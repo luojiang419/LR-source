@@ -167,6 +167,17 @@ class CanonLinkTests(unittest.TestCase):
         self.assertEqual(self.watch.state()['generation'],generation)
         self.assertEqual(self.config.read_bytes(),before)
 
+    def test_same_session_notifications_do_not_repeat_activation_work(self):
+        self.registered_profile();self.running=True;idle=self.auto_service();photo=self.picture()
+        with patch.object(self.store,'activate',wraps=self.store.activate) as activate:
+            idle.receive([str(photo)]);self.assertEqual(activate.call_count,1)
+            idle.receive([str(photo)]);idle.tick();idle.tick()
+            self.assertEqual(activate.call_count,1)
+            other=self.base/'手动浏览';other.mkdir();other_sid=self.store.ensure_live_session(other)
+            self.store.activate(other_sid);idle.receive([str(photo)])
+            self.assertEqual(activate.call_count,3)
+            self.assertEqual(self.store.active_id(),self.watch.state()['session_id'])
+
     def test_live_notification_directory_wins_conflicting_and_offline_disk_root(self):
         self.registered_profile();self.running=True;idle=self.auto_service();idle.tick()
         photo=self.picture(self.base/'内存中实际保存/日期');idle.receive([str(photo)])

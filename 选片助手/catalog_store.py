@@ -331,10 +331,14 @@ class Store:
                 c.execute('UPDATE sessions SET snapshot=?,updated=? WHERE id=?',(snapshot,now(),sid))
         if sidecar_changes and getattr(self,'on_external_metadata',None):
             self.on_external_metadata(sid,sidecar_changes)
-        if changed and self.on_previews:
+        live_callback=getattr(self,'on_live_catalog',None)
+        if changed and live_callback:
+            try:live_callback(sid,[known[cid] for cid in changed])
+            except Exception:pass  # 已提交的增量可由后续目录/评级读取恢复。
+        if changed and self.on_previews and not live_callback:
             try:self.on_previews(self.session(sid)['root'],[known[cid] for cid in changed])
             except Exception:pass  # 缓存失败不回滚已入库照片，浏览时仍可按需生成。
-        if changed and self.on_catalog:
+        if changed and self.on_catalog and not live_callback:
             try:self.on_catalog(sid)
             except Exception:pass  # 目录已提交；后台消费者可在后续请求恢复。
         return {'added':added,'changed':changed}

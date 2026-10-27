@@ -35,12 +35,22 @@ class GpuMediaTests(unittest.TestCase):
             with self.subTest(orientation=orientation):
                 stream=io.BytesIO();exif=Image.Exif();exif[274]=orientation;original.save(stream,'JPEG',quality=96,exif=exif)
                 payload=stream.getvalue();digest=hashlib.sha256(payload).hexdigest()
-                actual=media._read_preview(io.BytesIO(payload),200,6)
+                actual=gpu.decode_jpeg(payload,200,orientation)
                 with Image.open(io.BytesIO(payload)) as source:
                     expected=source.convert('RGB');expected.thumbnail((200,200),Image.Resampling.LANCZOS);expected=media._orient_preview(expected,orientation)
                 self.assertEqual(actual.size,expected.size);self.assertGreater(psnr(actual,expected),36)
                 self.assertEqual(hashlib.sha256(payload).hexdigest(),digest)
         self.assertEqual(gpu.state()['jpeg_gpu']-before,8)
+
+    def test_fast_preview_respects_exif_without_waiting_for_gpu(self):
+        original=fixture()
+        for orientation in range(1,9):
+            stream=io.BytesIO();exif=Image.Exif();exif[274]=orientation;original.save(stream,'JPEG',quality=96,exif=exif)
+            with patch.object(gpu,'decode_jpeg',side_effect=AssertionError('快速预览不能等待GPU')):
+                actual=media._read_preview(io.BytesIO(stream.getvalue()),200,6)
+            with Image.open(io.BytesIO(stream.getvalue())) as image:expected=media._orient_preview(image.convert('RGB'),orientation)
+            expected.thumbnail((200,200),Image.Resampling.LANCZOS)
+            self.assertEqual(actual.size,expected.size);self.assertGreater(psnr(actual,expected),36)
 
     def test_cpu_decoded_pixels_resize_on_gpu_and_parallel_contexts_are_safe(self):
         self.require_gpu();original=fixture();expected=original.copy();expected.thumbnail((160,160),Image.Resampling.LANCZOS)
@@ -63,6 +73,7 @@ class GpuMediaTests(unittest.TestCase):
         with patch.object(gpu,'backend',return_value=None):expected=media._read_preview(io.BytesIO(payload),160,'6');expected.thumbnail((160,160),Image.Resampling.LANCZOS)
         failed=unittest.mock.Mock();failed.jpeg_image.side_effect=gpu.GPUError('显存不足');failed.image.side_effect=gpu.GPUError('设备已离线')
         with patch.object(gpu,'backend',return_value=failed):
+            self.assertIsNone(gpu.decode_jpeg(payload,160,'6'))
             actual=media._read_preview(io.BytesIO(payload),160,'6');actual=gpu.resize_preview(actual,160)
         self.assertEqual(actual.size,expected.size);self.assertGreater(psnr(actual,expected),80)
         with patch.dict(os.environ,{'FRAMEKEEP_GPU':'off'}):
