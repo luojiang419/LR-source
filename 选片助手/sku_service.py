@@ -7,7 +7,7 @@ import sqlite3
 import threading
 import time
 import uuid
-from datetime import datetime,timezone,timedelta
+from datetime import datetime,timezone
 
 import media_engine as media
 from sku_match import match,normalize,match_automatic
@@ -279,7 +279,7 @@ class SkuService(ConcurrentLabels,FullAutoOCR,OcrMetadata,SkuRules):
         from sku_workbook_auto import create_book
         with self.lock:
             p=self.project()
-            day=datetime.fromtimestamp(self.clock(),timezone(timedelta(hours=8))).strftime('%Y-%m-%d')
+            day=datetime.fromtimestamp(self.clock()).strftime('%Y-%m-%d')
             if p and p['session_id'] in (None,'',sid) and p['enabled'] and p['metadata'].get('automatic_day',day)==day:
                 scope=p['scope'] or next((s['name'] for s in p['metadata']['sheets'] if not s.get('skipped')),'现场记录')
                 if p['session_id']!=sid or not p['scope']:self.configure(p['id'],sid,scope)
@@ -320,7 +320,7 @@ class SkuService(ConcurrentLabels,FullAutoOCR,OcrMetadata,SkuRules):
                 metadata['managed_sheet']=sheet
             row_number=c.execute('SELECT COALESCE(MAX(excel_row),1)+1 FROM sku_rows WHERE project=? AND sheet=?',(job['project'],sheet)).fetchone()[0]
             rid=uuid.uuid4().hex;record=next(r for r in self.store.records(job['session_id']) if r['id']==job['capture_id'])
-            stamp=datetime.fromtimestamp(self.clock(),timezone(timedelta(hours=8))).isoformat(timespec='seconds')
+            stamp=datetime.fromtimestamp(self.clock(),timezone.utc).astimezone().isoformat(timespec='seconds')
             values={'A':code,'B':record.get('jpg') or record.get('raw'),'C':Path(self.store.session(job['session_id'])['root']).name,'D':stamp}
             baseline='待核对' if uncertain else '未拍摄'
             c.execute('INSERT INTO sku_rows(id,project,sheet,excel_row,sku,normalized,baseline,status,baseline_completed_at,completed_at,source_values) VALUES (?,?,?,?,?,?,?,?,?,?,?)',(rid,job['project'],sheet,row_number,code,key,baseline,baseline,'','',json.dumps(values,ensure_ascii=False)))
@@ -487,7 +487,7 @@ class SkuService(ConcurrentLabels,FullAutoOCR,OcrMetadata,SkuRules):
                 self._wake_label()
             return {'queued':False}
         p=self.project(project_id)
-        day=datetime.fromtimestamp(self.clock(),timezone(timedelta(hours=8))).strftime('%Y-%m-%d')
+        day=datetime.fromtimestamp(self.clock()).strftime('%Y-%m-%d')
         if trigger=='auto' and (not p or not p['enabled'] or p['session_id']!=sid or not p['scope'] or p['metadata'].get('automatic_day',day)!=day):p=self._automatic_project(sid)
         scope=scope or (p['scope'] if p else '')
         if not p or not p['enabled'] or not scope or p['session_id']!=sid:raise ValueError('请先选拍摄工作表并绑定当前照片目录')
