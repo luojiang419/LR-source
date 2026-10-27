@@ -141,7 +141,7 @@ class SharedRatingTests(unittest.TestCase):
                 try:
                     page=browser.new_page(viewport={'width':1680,'height':1050});errors=[];requests=[];page.on('pageerror',lambda error:errors.append(str(error)))
                     page.on('request',lambda request:requests.append(request.post_data_json) if request.url.endswith('/api/session') else None)
-                    page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='domcontentloaded')
+                    page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='domcontentloaded');page.wait_for_function('()=>window.FramekeepBoot?.loading===false')
                     self.assertEqual(page.locator('#selection-tab').inner_text(),'现场拍摄')
                     self.assertFalse(page.locator('#open-folder').is_visible());self.assertFalse(page.locator('#threshold').is_visible())
                     page.locator('#asset-archive-open').click()
@@ -164,7 +164,7 @@ class SharedRatingTests(unittest.TestCase):
                     page.locator('#asset-archive-open').click();card.click();card.focus();page.keyboard.press('0')
                     page.wait_for_function('()=>document.getElementById("catalog-rating-status").textContent==="已清除星级"')
                     self.assertEqual(card.locator('.photo-rating-badge').count(),0)
-                    page.reload();page.locator('#asset-archive-open').click();card.wait_for();self.assertEqual(card.locator('.photo-rating-badge').count(),0)
+                    page.reload(wait_until='domcontentloaded');page.wait_for_function('()=>window.FramekeepBoot?.loading===false');page.locator('#asset-archive-open').click();card.wait_for();self.assertEqual(card.locator('.photo-rating-badge').count(),0)
                     self.assertEqual(self.archive.ratings.get([self.paths[0]]),0)
                     page.locator('#selection-tab').click();page.evaluate('(cid)=>Framekeep.browsePhoto(cid)',cid);page.keyboard.press('3');page.evaluate('()=>FramekeepIO.flush()')
                     self.assertEqual(page.evaluate('(cid)=>Framekeep.photoItems().find(i=>i.photo.id===cid).rating',cid),3)

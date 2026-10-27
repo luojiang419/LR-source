@@ -1,5 +1,5 @@
 /* 只迁移既有组件的位置；功能与事件全部来自当前正式页面脚本。 */
-document.addEventListener('DOMContentLoaded',()=>{
+const startWorkbenchUi=()=>{
   'use strict';
   if(!window.FramekeepLayout||!window.FramekeepTheme)return;
   const $=id=>document.getElementById(id);
@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   const tabs=document.querySelector('.workspace-tabs');
   const bottom=document.createElement('footer');bottom.className='workspace-bottom-bar';
   const icons={
+    'asset-retrieval-open':'<circle cx="10" cy="10" r="6"/><path d="m15 15 6 6M7 10h6M10 7v6"/>',
     'selection-tab':'<rect x="3" y="3" width="18" height="18" rx="2"/><path d="m3 16 5-5 4 4 4-6 5 7"/><circle cx="8" cy="7" r="1"/>',
     'sku-open':'<path d="M8 3h8v4H8zM8 5H5v16h14V5h-3M8 12h8M8 16h5"/>',
     'asset-archive-open':'<path d="M3 4h18v5H3zM5 9v12h14V9M9 13h6"/>',
@@ -51,6 +52,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   const pageHeading=document.createElement('div');pageHeading.className='workspace-header-heading';pageHeading.hidden=true;
   document.querySelector('.identity').after(pageHeading);
   const headings=new Map([
+    ['retrieval',document.querySelector('#asset-retrieval-page>.retrieval-heading')],
     ['archive',document.querySelector('#asset-archive-dialog>.catalog-heading')],
     ['sku-database',document.querySelector('#sku-database-page>.catalog-heading')],
     ['analysis',document.querySelector('#analysis-dialog>.analysis-heading')]
@@ -172,4 +174,5 @@ document.addEventListener('DOMContentLoaded',()=>{
   }
   window.addEventListener('framekeep:theme',applyThemeLayout);
   applyThemeLayout();
-},{once:true});
+};
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',startWorkbenchUi,{once:true});else startWorkbenchUi();

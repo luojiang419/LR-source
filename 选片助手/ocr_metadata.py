@@ -127,10 +127,12 @@ class OcrMetadata:
             # 历史上已单张人工备案的标签仍允许这次明确选择修正；其他人工照片由区间保护。
             if not boundary or old.get('locked'):
                 if old.get('sku')!=code or old.get('scope')!=scope or not old.get('locked'):self.archive.apply(preview['preview_id'])
-            exact=[r for r in self.rows(project['id'],scope) if r['normalized']==normalize(code)]
-            result={'row_ids':[r['id'] for r in exact]} if exact else self._record_unplanned({'project':project['id'],'session_id':sid,'capture_id':cid,'scope':scope},
-                [{'codes':[code],'unscored':True}],{'status':'review','row_ids':[],'candidates':[]},accept_observed=True)
             with self.connect() as c:
+                # 款号行、主款确认、拍摄证据及归档事件必须同成同败。
+                c.execute('BEGIN IMMEDIATE')
+                exact=[dict(r) for r in c.execute('SELECT * FROM sku_rows WHERE project=? AND sheet=? AND normalized=?',(project['id'],scope,normalize(code)))]
+                result={'row_ids':[r['id'] for r in exact]} if exact else self._record_unplanned({'project':project['id'],'session_id':sid,'capture_id':cid,'scope':scope},
+                    [{'codes':[code],'unscored':True}],{'status':'review','row_ids':[],'candidates':[]},accept_observed=True,connection=c)
                 c.execute('INSERT INTO ocr_choices VALUES (?,?,?,?,?) ON CONFLICT(session_id,capture_id) DO UPDATE SET sku=excluded.sku,reading_key=excluded.reading_key,updated=excluded.updated',(sid,cid,code,reading_key,self.clock()))
                 targets=json.dumps(result.get('row_ids',[]));stamp,time_source=capture_time(record)
                 c.execute("UPDATE jobs SET status='confirmed',targets=?,reason='用户已选择正确 SKU，其他 OCR 资料保留',updated=? WHERE project=? AND session_id=? AND capture_id=? AND scope=? AND status NOT IN ('ignored','cancelled')",(targets,self.clock(),project['id'],sid,cid,scope))
@@ -142,12 +144,31 @@ class OcrMetadata:
                 if boundary:
                     job={'id':'choice:'+sid+':'+cid,'kind':'ocr_choice','session_id':sid,'capture_id':cid,'project':project['id'],'scope':scope,'status':'confirmed','sku':code}
                     c.execute('INSERT INTO archive_events(id,job,payload) VALUES (?,?,?)',(uuid.uuid4().hex,job['id'],json.dumps(job,ensure_ascii=False)))
-            if boundary:self.deliver_events(self.archive)
-            self.export(project['id'])
+                self._refresh_progress(c,project['id'])
+                if automatic:c.execute("UPDATE jobs SET reason='公司款号包含规则唯一命中，已自动应用' WHERE session_id=? AND capture_id=? AND status='confirmed'",(sid,cid))
+            warnings=[]
+            if boundary:
+                try:self.deliver_events(self.archive)
+                except Exception as exc:
+                    from operation_errors import record_error
+                    record_error(self.store.data,'sku-choice-archive',exc)
+                    warnings.append('SKU 和拍摄记录已保存，整款归档待后台重试')
+            try:self.export(project['id'])
+            except Exception as exc:
+                from operation_errors import record_error
+                record_error(self.store.data,'sku-choice-export',exc)
+                self.dirty.add(project['id']);self.wake.set()
+                warnings.append('SKU 和拍摄记录已保存，Excel 更新待重试')
         from metadata_group import group_context
-        group=group_context(self.archive,self,sid,requested,[requested])
-        with self.archive.connect() as c:
-            segment=c.execute('SELECT operation FROM segments WHERE id=?',(group['segment'],)).fetchone()
-        if automatic:
-            with self.connect() as c:c.execute("UPDATE jobs SET reason='公司款号前后缀规则唯一命中，已自动应用' WHERE session_id=? AND capture_id=? AND status='confirmed'",(sid,cid))
-        return {'session_id':sid,'capture_id':requested,'target_capture_id':cid,'sku':code,'saved':True,'automatic':automatic,'capture_count':len(group['capture_ids']) if boundary else 1,'operation_id':segment['operation'] if segment else ''}
+        operation='';count=1
+        try:
+            group=group_context(self.archive,self,sid,requested,[requested])
+            count=len(group['capture_ids']) if boundary else 1
+            with self.archive.connect() as c:
+                segment=c.execute('SELECT operation FROM segments WHERE id=?',(group['segment'],)).fetchone()
+            operation=segment['operation'] if segment else ''
+        except Exception as exc:
+            from operation_errors import record_error
+            record_error(self.store.data,'sku-choice-result',exc)
+            warnings.append('SKU 和拍摄记录已保存，归档信息暂未刷新')
+        return {'session_id':sid,'capture_id':requested,'target_capture_id':cid,'sku':code,'saved':True,'automatic':automatic,'warnings':warnings,'capture_count':count,'operation_id':operation}

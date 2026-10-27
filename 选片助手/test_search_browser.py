@@ -47,7 +47,7 @@ class SearchBrowserTests(unittest.TestCase):
                         page=browser.new_page(viewport={'width':1680,'height':1050});errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
                         # 独立验证历史文件检索组件；新版资产库流程由 test_asset_catalog_browser 覆盖。
                         page.route('**/asset-library.js',lambda route:route.fulfill(status=200,body=''))
-                        page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='networkidle');page.locator('#asset-archive-open').click()
+                        page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading');page.locator('#asset-archive-open').click()
                         page.wait_for_function('()=>document.querySelectorAll("#archive-results tbody tr").length===60')
                         self.assertTrue(page.locator('#archive-prev').is_disabled());page.locator('#archive-next').click();page.wait_for_function('()=>document.getElementById("archive-page").textContent.includes("第 2 页")')
                         page.locator('#archive-next').click();page.wait_for_function('()=>document.querySelectorAll("#archive-results tbody tr").length===25');self.assertTrue(page.locator('#archive-next').is_disabled())

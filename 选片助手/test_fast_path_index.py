@@ -5,7 +5,7 @@ import time
 import unittest
 from pathlib import Path
 import random
-from unittest.mock import patch
+from unittest.mock import patch,Mock
 
 from asset_catalog import AssetCatalog
 from fast_path_index import FastPathIndex
@@ -22,7 +22,7 @@ def add_item(connection, item, relative, *, pair=None, source='unmatched', onlin
 class FastPathIndexTests(unittest.TestCase):
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
-        self.catalog = AssetCatalog(Path(self.temporary.name))
+        self.catalog = AssetCatalog(Path(self.temporary.name),fast_index=Mock())
         self.indices = []
         with self.catalog.connect() as connection:
             connection.execute("INSERT INTO roots(id,path,created) VALUES('root','Z:/',1)")
@@ -30,6 +30,7 @@ class FastPathIndexTests(unittest.TestCase):
     def tearDown(self):
         for index in self.indices:
             index.close()
+        self.catalog.close()
         self.temporary.cleanup()
 
     def index(self, background=False):

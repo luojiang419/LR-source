@@ -190,8 +190,8 @@ class MouseBrowserTests(unittest.TestCase):
                         try:
                             page = browser.new_page(viewport={'width': 1500, 'height': 980})
                             errors = []; page.on('pageerror', lambda e: errors.append(str(e)))
-                            page.goto(url, wait_until='networkidle')
-                            page.locator('#app-settings-open').click();page.locator('#mouse-remote').click(); page.locator('#mouse-start').click()
+                            page.goto(url, wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading')
+                            page.locator('#app-settings-open').click();page.locator('[data-settings-section=remote]').click();page.locator('#mouse-remote').click(); page.locator('#mouse-start').click()
                             page.wait_for_function("() => !document.getElementById('mouse-dialog').open")
                             def rating(n): page.wait_for_function('(n) => document.querySelectorAll("#stars .on").length===n', arg=n)
                             def click(): transport.feed(1, 2)
@@ -226,9 +226,9 @@ class MouseBrowserTests(unittest.TestCase):
                             page.locator(f'[data-session="{sessions[1][0]}"]').click()
                             page.wait_for_function('(id) => FRAMEKEEP_SESSION.id===id', arg=sessions[1][0]); rating(0)
                             click(); rating(1); page.evaluate('() => FramekeepIO.flush()')
-                            page.reload(wait_until='networkidle'); rating(1)
+                            page.reload(wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading'); rating(1)
                             # 刷新后的新窗口不会继承旧会话；停止按钮仍能恢复。
-                            page.locator('#app-settings-open').click();page.locator('#mouse-remote').click(); page.locator('#mouse-stop').click()
+                            page.locator('#app-settings-open').click();page.locator('[data-settings-section=remote]').click();page.locator('#mouse-remote').click(); page.locator('#mouse-stop').click()
                             page.wait_for_function('() => document.getElementById("mouse-start").disabled===false && document.getElementById("mouse-stop").disabled===true')
                             self.assertEqual(transport.filters[-1], 0)
                             self.assertFalse(errors, errors)

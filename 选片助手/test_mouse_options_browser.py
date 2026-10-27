@@ -34,13 +34,13 @@ class MouseOptionsBrowserTests(unittest.TestCase):
                     browser=pw.chromium.launch(executable_path='C:/Program Files/Google/Chrome/Application/chrome.exe',headless=True)
                     try:
                         page=browser.new_page(viewport={'width':1680,'height':1050});errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
-                        page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='networkidle');page.locator('#app-settings-open').click();page.locator('#mouse-remote').click()
+                        page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading');page.locator('#app-settings-open').click();page.locator('[data-settings-section=remote]').click();page.locator('#mouse-remote').click()
                         self.assertEqual(page.locator('#mouse-right-decrease').get_attribute('aria-checked'),'false');self.assertEqual(page.locator('#mouse-wheel-browse').get_attribute('aria-checked'),'false')
                         page.locator('#mouse-start').click();page.wait_for_function('()=>!document.getElementById("mouse-dialog").open')
                         def rating(n):page.wait_for_function('(n)=>document.querySelectorAll("#stars .on").length===n',arg=n)
                         def current(cid):page.wait_for_function('(id)=>Framekeep.remoteTarget().photoId===id',arg=cid)
                         def toggle(id,enabled):
-                            page.locator('#app-settings-open').click();page.locator('#mouse-remote').click();page.locator(id).click();page.wait_for_function('(v)=>document.querySelector(v[0]).getAttribute("aria-checked")===v[1]',arg=[id,str(enabled).lower()]);page.locator('#mouse-close').click();page.locator('#app-settings-close').click()
+                            page.locator('#app-settings-open').click();page.locator('[data-settings-section=remote]').click();page.locator('#mouse-remote').click();page.locator(id).click();page.wait_for_function('(v)=>document.querySelector(v[0]).getAttribute("aria-checked")===v[1]',arg=[id,str(enabled).lower()]);page.locator('#mouse-close').click();page.locator('#app-settings-close').click()
                         page.locator('#stars [data-rating="3"]').click();feed(transport,(4,0),(8,0),(0x400,-120));page.wait_for_timeout(250);rating(3);current(ids[0]);self.assertEqual(remote.sequence,0)
                         # 设置页保留设备连接，但遥控点击不能修改后台照片；返回选片后恢复。
                         page.locator('#app-settings-open').click();feed(transport,(1,0),(2,0));page.wait_for_timeout(250)
@@ -72,9 +72,9 @@ class MouseOptionsBrowserTests(unittest.TestCase):
                         page.locator('#sort').select_option('rating-desc');page.evaluate('(id)=>Framekeep.browsePhoto(id)',ids[0])
                         page.evaluate('(id)=>{for(let i=0;i<3;i++)Framekeep.incrementRating(id)}',ids[3]);current(ids[0])
                         feed(transport,(0x400,120));current(ids[3]);rating(4)
-                        page.locator('#app-settings-open').click();page.locator('#mouse-remote').click();out=ROOT/'build/mouse-options-acceptance';out.mkdir(exist_ok=True);page.screenshot(path=str(out/'options-browser.png'))
+                        page.locator('#app-settings-open').click();page.locator('[data-settings-section=remote]').click();page.locator('#mouse-remote').click();out=ROOT/'build/mouse-options-acceptance';out.mkdir(exist_ok=True);page.screenshot(path=str(out/'options-browser.png'))
                         page.locator('#mouse-stop').click()
-                        page.wait_for_function('()=>document.getElementById("mouse-start").disabled===false');page.reload(wait_until='networkidle');page.locator('#app-settings-open').click();page.locator('#mouse-remote').click();page.wait_for_function('()=>document.getElementById("mouse-right-decrease").getAttribute("aria-checked")==="true" && document.getElementById("mouse-wheel-browse").getAttribute("aria-checked")==="true"');self.assertEqual(page.locator('#mouse-right-decrease').get_attribute('aria-checked'),'true');self.assertEqual(page.locator('#mouse-wheel-browse').get_attribute('aria-checked'),'true');self.assertFalse(errors,errors)
+                        page.wait_for_function('()=>document.getElementById("mouse-start").disabled===false');page.reload(wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading');page.locator('#app-settings-open').click();page.locator('[data-settings-section=remote]').click();page.locator('#mouse-remote').click();page.wait_for_function('()=>document.getElementById("mouse-right-decrease").getAttribute("aria-checked")==="true" && document.getElementById("mouse-wheel-browse").getAttribute("aria-checked")==="true"');self.assertEqual(page.locator('#mouse-right-decrease').get_attribute('aria-checked'),'true');self.assertEqual(page.locator('#mouse-wheel-browse').get_attribute('aria-checked'),'true');self.assertFalse(errors,errors)
                     finally:browser.close()
             finally:
                 remote.close();http.shutdown();http.server_close()

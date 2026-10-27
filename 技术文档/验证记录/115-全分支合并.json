@@ -1,0 +1,1003 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-27",
+  "branch": "feat/integrate-multimodal-main",
+  "audit_base_commit": "85c2160eb45d3addd0d57139eee8d6c41eafb2f1",
+  "latest_main_snapshot": "328c1b9",
+  "latest_multimodal_branch": "722502b",
+  "latest_split_demo_branch": "2290cd1",
+  "public_snapshot": "0468003",
+  "public_snapshot_identical_to_included_source": "739eaed",
+  "local_branches": 132,
+  "remote_branches": 33,
+  "missing": [],
+  "refs": [
+    {
+      "ref": "refs/heads/backup/main-source-before-multimodal-20261027",
+      "commit": "328c1b9018d4f8408b970dc883918c09b17b6d42",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/codex/archive-folder-sync",
+      "commit": "f8ee51a5c0281df336857ae9bcacc273f66dd29b",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/codex/archive-sku-demo-v2",
+      "commit": "f5f8c9c7138e3379d8a520a3506dc6105ffc23d0",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/codex/asset-panel-spacing",
+      "commit": "2cfc4d215770b164d53b26ccc5bc4ddb21b4f428",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/codex/asset-workspace-auto-ranges",
+      "commit": "54440667d7616622f87ad335c9ce180ecb10ad46",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/codex/automatic-update-installer",
+      "commit": "e8cb3ca5a06eea1991114288df7b654f98fd1545",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/codex/bottom-tabs-sidebar-browser",
+      "commit": "44f3ff364a7f3ea92ba451f8ccc408ea85d2e712",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/codex/bright-asset-selection",
+      "commit": "7d3d6750b4a73a60b6b1a067c4538810e1d52e52",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/codex/compact-paired-photo-workspaces",
+      "commit": "fff5834e90a7b5b1b4d83ac208a47ca679bdb40e",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/codex/complete-install-components",
+      "commit": "f3f6d468254c5ff18a36da518a9473f1e4ea0a70",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/codex/confirmed-workbench-integration",
+      "commit": "e823362085231b6cfea7892419bad48fe84775e4",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/codex/consolidate-workbench-settings",
+      "commit": "1bb6ba60c0bd022c8c03a599cb69d9f7cf169e80",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/codex/current-shooting-sidebar",
+      "commit": "b13b4c8a60a6d412f27eb6e57b973435feeb36b8",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/codex/dual-sku-embedded",
+      "commit": "8f47437afc8bc0bf80aae403b049af3f93568811",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/codex/fix-monitor-photo-sorting",
+      "commit": "0459eb0b7a7590af8aa4d24383cd4628604b55af",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/codex/floating-thumbnail-slider",
+      "commit": "20ee1202bff6710bac1398cb250bd1ed92296fab",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/codex/folder-context-menu",
+      "commit": "7c5d4a281e9b30197593a79f22d4f5d0bfefd614",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/codex/formal-windows-installation",
+      "commit": "ec5cdf444ca329e9b1624c92d1dde19536579f2e",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/codex/hide-selection-export",
+      "commit": "158233998da1aa94de6adcc56d77aeef113cce89",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/codex/import-source-20261022",
+      "commit": "76bb7cf5494f766b59ff94863ed8b9b3abe79943",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/codex/installer-overwrite",
+      "commit": "04b7e5912d0979eed95decdc5ee400cddf352f2a",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/codex/local-vision-ocr",
+      "commit": "e9a1a70da21912d6220436720a5f3096144c4c28",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/codex/logitech-wireless-adapter",
+      "commit": "9c0c731a03f8ae814067dbdb48078017ca4eee0a",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/codex/low-latency-monitor",
+      "commit": "29a00be950e9f30b8135b43f937014edf5afc4ef",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/codex/minimax-hardcore-preview",
+      "commit": "dc00e6cfaf0f436986cfad0d40c9ee49146beb7d",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/codex/mouse-auto-enable",
+      "commit": "54cd0d21a9277b86b039bd3bf65caa0a29c8ff57",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/codex/mouse-driver-hot-refresh",
+      "commit": "6c73ad48f87044c3741efc7c5489022865a867a5",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/codex/mouse-fixed-star-controls",
+      "commit": "86d091c88a6202051542af87d6ffeaf600cd236c",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/codex/ocr-label-entry",
+      "commit": "21555ec8e054116c574dc68f9b158f3d61732185",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/codex/parsing-task-workspace",
+      "commit": "f90878a2561ea73b2758782fa69f979205cbe34a",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/codex/persistent-thumbnail-cache",
+      "commit": "575b050b0f786e2aad4b6b360f00abfdc8a1cc9d",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/codex/preview-escape-grid",
+      "commit": "c4ac60bc6f865e562f0bc04e065e605d059887c2",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/codex/preview-size-slider",
+      "commit": "30924c46b0feb1d485da1a14a9c622c9102f7e38",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/codex/progress-panel-usability",
+      "commit": "d0349d93352fcd9e4f2d054fabee79ee661aa61c",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/codex/progress-right-sidebar",
+      "commit": "1effb72df7fbeee61410c087f82d898cc0d7b9de",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/codex/resizable-sidebars",
+      "commit": "daaccc0d2d63e86b6259c6399875c8e699e42e55",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/codex/selection-sidebar-automation",
+      "commit": "5632fcf647563c73b9d827929760797523a702b2",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/codex/shared-archive-ratings",
+      "commit": "6094b7991adf2b9224635bf568f791e550fa15f6",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/codex/shiyin-layout-preview",
+      "commit": "11e1c93728b863aaf4c27da3224cbab1827b1917",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/codex/shiyin-theme-integration",
+      "commit": "9eac81526a9c4db85d038160dd97c3c66fe49ea4",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/codex/shooting-grid-types",
+      "commit": "202b2824246af34b95501cb3c7efa1bfbc967171",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/codex/sidebar-send-lr",
+      "commit": "714b11051397767c08c8eb62bb6c4765ed36a4fd",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/codex/simplify-preview-toolbar",
+      "commit": "c436b1e1b9848a1a12b58857e849b1bc76d0a2e8",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/codex/sku-auto-fill",
+      "commit": "a84a756e14c57b4b16e0f2513156cb1e8a80f5d2",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/codex/sku-auto-toggle",
+      "commit": "39ebc5c8e52d24dac41efc6d816c62e024352dec",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/codex/sku-rating-reset",
+      "commit": "f7f472253c26939f168d4877cdf22a018547bb74",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/codex/sku-search-counts",
+      "commit": "a4f4dc1ba8448a46848c845950086cc3640cc9b0",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/codex/sku-search-sheet-badge",
+      "commit": "41cbff40bb1c93e731fef0478bc69c0987f4ef03",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/codex/sku-search-sheet-buttons",
+      "commit": "90dfc7278ab12f9f85a92b8563f400e4d7b5acda",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/codex/toolbar-navigation-layout",
+      "commit": "3fdadd5a157a09a726000ea56e07cd9d00e3d37b",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/docs/lightroom-preview-analysis",
+      "commit": "67053b3be5446279eb3f4a83e1a18f14ae0872f1",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/feat/api-card-concurrency",
+      "commit": "54e9c806e6c7d0f53e233510bdea05938c85cff3",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/feat/api-endpoint-autocomplete",
+      "commit": "6cf270643d34d72e92fe1f45ca8150851d505cdc",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/feat/archive-sku-image-viewer",
+      "commit": "145496fa7a619b59327fb2ca7037ce858a166f1a",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/feat/asset-ocr-quick-apply",
+      "commit": "41963776a92e9389175e7bb973058981c514e5af",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/feat/bounded-session-browser",
+      "commit": "885332dac69f07b2e54a89521e1c8336a32a6af5",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/feat/canon-eos-auto-link",
+      "commit": "da182fc57e8c46412ee9292e57f10d80d4244eca",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/feat/canon-eos-integration",
+      "commit": "869de7a04d10c876addfa9f242aee7059ce23489",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/feat/compact-preview-cache",
+      "commit": "13af18e33ed621453744d166a5bbc1aed485c163",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/feat/concurrent-latest-label-ocr",
+      "commit": "101e64e3a6d3e7ab6044a480835eba159dcc27a7",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/feat/embedded-preview-default",
+      "commit": "4eef53182825dcc3b7e3c84e494aa90ca59052be",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/feat/fast-startup-animation",
+      "commit": "5a8e4a09f11e2519706398ede1d0aa8b9600b78f",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/feat/full-height-panel-rails",
+      "commit": "871c5a0a1d6dedac4742a145be5229d16a757046",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/feat/gpu-media-acceleration",
+      "commit": "4a2f231b73fdfb1fc494e054cbadc0111b056644",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/feat/index-settings-storage",
+      "commit": "fd01063762da1d9a2d16f5a8f6ea8dff2a055f93",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/feat/install-local-data-compact-metadata",
+      "commit": "657be539f1ad2ccd6fc28bc067166ec51d14a4ad",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/feat/instant-ocr-feedback",
+      "commit": "6dfc1d5ee98e9781fddba5a279c42a37d9e2c9b2",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/feat/integrate-multimodal-main",
+      "commit": "85c2160eb45d3addd0d57139eee8d6c41eafb2f1",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/feat/multimodal-sku-search",
+      "commit": "aabe00d86527427ef1b04f2f5f6fc771a77df9ac",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/feat/native-fast-reference-index",
+      "commit": "15594a50ca6b53606eb1b740cde1011e26bdce3d",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/feat/navigation-task-lights",
+      "commit": "1ad55ed003a506a9ac0c00105c1f2fc41df06512",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/feat/ocr-feedback-overlay",
+      "commit": "d114fec79094cf95de1c501bb5ce8db5d1d2ede3",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/feat/ocr-progress-preload",
+      "commit": "3df886c5f4a305cf972c0b29461bfc705a3c0b56",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/feat/ocr-progress-preview",
+      "commit": "0eb4287843587d12ad41cbd70a62dbc31ca35dc9",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/feat/parallel-image-cache",
+      "commit": "45840a108006d3fd16175d24ec434322e1118e3b",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/feat/preview-rating-position",
+      "commit": "e4b9aa378d329e91e63e70b0778f52d83de8612a",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/feat/reference-path-and-temp-cache",
+      "commit": "63ca88cc286c9733007a8dc37c28c646ee34f8bb",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/feat/reference-picker-eos-auto-follow",
+      "commit": "f8c8845cb03451f767381f045248cc62e9522a4d",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/feat/reference-result-grid",
+      "commit": "d7abccd97dfc1eca35a33bd02a9fb7c9c80a7771",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/feat/selection-empty-camera",
+      "commit": "6f70e5f89387f5a984e6553395ae5bf7fc97c8f9",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/feat/selection-folders-xmp-ratings",
+      "commit": "5b2f848869e08e637f57272c8474d9d620d8b3f2",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/feat/shooting-table-display",
+      "commit": "984bf32819d6d15671ad184515a62f4ec7ebca44",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/feat/sku-document-reconciliation",
+      "commit": "cb98be34f43e7ae7ec6fb6144b7d61047c8e3d89",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/feat/sku-match-rules",
+      "commit": "15e6a704b7da5a775bc0913f3a989bb62ed10c12",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/feat/sku-media-pool",
+      "commit": "18935bca0aa62f1bc2e21a4126947b11072d6876",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/feat/sku-metadata-portability",
+      "commit": "bf496907f8799bcf089fb20d242d05b2dd5b96e1",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/feat/split-capture-demo",
+      "commit": "2290cd1a0d4f2a3538db8384dd00c95760dde727",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/feat/split-capture-production",
+      "commit": "06522cf47b1c757166bb865d48063c4c784e7764",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/feat/tether-save-destination",
+      "commit": "0b811319a88a9360d04dfda9296da94470e1f061",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/feat/tray-close-startup",
+      "commit": "ff000abfae4a8bf1802d537dca7cd01982d3693f",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/feat/upgrade-cleanup-sku-matching",
+      "commit": "d7942a70d31057a9ded9bf891088a70ce20e1a49",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/feature/hardware-rating-demo",
+      "commit": "b65547d651cec5b441886288dc33c2684fe82a76",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/feature/multi-folder-workspace",
+      "commit": "042aba5dcc8242aa013d36e9da2c12d5598d6b0d",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/feature/production-bridge",
+      "commit": "247c172da7395dda2eda63e2648426f392a9de92",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/feature/remove-ai-selection",
+      "commit": "9d0370594e7823a726b880ff9ed9b89ce5dfb101",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/feature/tauri-desktop",
+      "commit": "8fded7add7b11d4c3d5a58d5c5c8463b83e7974d",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/fix/api-key-optional-directories",
+      "commit": "6c5ae59164acafb22a927dbb2774ad3e5ebdb3c3",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/fix/archive-refresh-persistence",
+      "commit": "4bea408474679c5c4c5df0a493bfeb2e3e656644",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/fix/engine-first-launch",
+      "commit": "5a8e4a09f11e2519706398ede1d0aa8b9600b78f",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/fix/engine-startup-order",
+      "commit": "da182fc57e8c46412ee9292e57f10d80d4244eca",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/fix/index-progress-and-task-cleanup",
+      "commit": "f2fbe1e6769e08c3c3e006d91c2afc92ddc09590",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/fix/installer-reinstall-recovery",
+      "commit": "154f2ba3a749d7552c6323665d3d7d8fde778508",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/fix/manual-tether-startup",
+      "commit": "570a68c05e49247cbd918c4d4e77b3da31b7464c",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/fix/monitor-tether-file-safety",
+      "commit": "a33655506ed7cc266dd7a6fda864ae4bc80612f0",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/fix/no-source-recovery-folders",
+      "commit": "88a698788c0cf87742eb456eb324497ae3f34a72",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/fix/preserve-monitored-photos",
+      "commit": "eb86d8fa0320e43c4368d2c67d37de6648e48b00",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/fix/preview-transfer-and-sku-sidebar",
+      "commit": "4f18087acfc7e187494ad67ea8f9da2f7e5e255e",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/fix/reference-index-progress-visible",
+      "commit": "6ee70b9071c569e8c486546d2aca0b18bfaa91e8",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/fix/reference-preview-wheel-crossfade",
+      "commit": "793ad3a173df60d8dc0de0716c5a5b5cf86f6425",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/fix/reference-search-submit",
+      "commit": "2c6b6458d6666060ca584d37c43d5e4c2ec85870",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/fix/selection-thumbnail-rating-flicker",
+      "commit": "7a9dd4e404b1bf723c20c45a16ee8a6ad404e963",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/fix/sharing-toggle-switch",
+      "commit": "67b880b15e590cd4b5c244b4085bc04d9996da68",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/fix/shooting-document-settings",
+      "commit": "c476501e51eb55f2165f7854649f0d3ee5b49c66",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/fix/shooting-image-preview",
+      "commit": "6eb2c36565a75f61f394c1e0c0fce403bbf6487c",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/fix/sku-choice-progress",
+      "commit": "f5c5d1dbfe5d27429e7eb61bcb8544fe33411250",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/fix/star-trigger-reliability",
+      "commit": "b4952bcb62cff77e83dac9f349fe4fdc9e0075e4",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/fix/two-star-review-sidebar",
+      "commit": "9726ce789d4fe0417dfd62f317729e5d9349819c",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/fix/workbench-import-preview",
+      "commit": "f701bfc5e08a7029de1b965c7a58e93fb3594005",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/public/source-snapshot",
+      "commit": "046800356496a40f1a38130aa7b08246c756e1b2",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/refactor/settings-category-panels",
+      "commit": "2d555dfc16727688a70dae3e2a0b4d6ee6bf7f3f",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/release/modelscope-20261022",
+      "commit": "8885f50b94caa8cba65f97a39cde0001e5521821",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/release/modelscope-20261022-api-manual-tether",
+      "commit": "e94060fafd9c10d032a06ac77f9d37bfe2277d63",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/release/modelscope-20261022-latest",
+      "commit": "8d10dd8e47e5fd6f1cd9d92f3e2804c9d9ab0a63",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/release/modelscope-20261022-sku-preview",
+      "commit": "688b6ccd787a9451472cf3b6df8075ef4f7912f8",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/release/modelscope-20261022-table",
+      "commit": "14e6eee464d392230b315765d947932f084f1e52",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/release/modelscope-embedded-preview",
+      "commit": "2e6fff6a7a4a1868983aff9fb61216f3d379e5da",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/release/modelscope-index-storage",
+      "commit": "574b2b6dd843e21164c55f4fe563dd5fd8b5383d",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/release/modelscope-instant-ocr",
+      "commit": "987bdb4472f0352569ee7bc3ac2e4700cf026ff0",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/release/modelscope-no-source-recovery",
+      "commit": "9200676df09336327c3329add7c69fa94a64a161",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/release/modelscope-rating-reset",
+      "commit": "5c00050e70ee1aa8985fbe745fe925da21563884",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/release/modelscope-settings-sku",
+      "commit": "cc46d4d2282c73587c06068f2ab2fe530d100082",
+      "included": true
+    },
+    {
+      "ref": "refs/heads/release/modelscope-upgrade-cleanup-sku",
+      "commit": "481d26c640b60d224819c23c478a458d57ef8149",
+      "included": true
+    },
+    {
+      "ref": "refs/remotes/origin/codex/api-model-discovery",
+      "commit": "7918c8dba5ec953c0f2a868a11a337236e92d169",
+      "included": true
+    },
+    {
+      "ref": "refs/remotes/origin/codex/archive-folder-sync",
+      "commit": "7bd5cc649ce103136c18251c4f1835be18286374",
+      "included": true
+    },
+    {
+      "ref": "refs/remotes/origin/codex/asset-archive",
+      "commit": "68fd1d885ccea943f3a93963fd36c5e469163600",
+      "included": true
+    },
+    {
+      "ref": "refs/remotes/origin/codex/asset-archive-design",
+      "commit": "953589dc8b175866410f2f15575bb888c6d3c3ba",
+      "included": true
+    },
+    {
+      "ref": "refs/remotes/origin/codex/bezier-ui-motion",
+      "commit": "af5d8729222a8d7e777d557d17bee6ffe203737c",
+      "included": true
+    },
+    {
+      "ref": "refs/remotes/origin/codex/bright-asset-selection",
+      "commit": "3428d1600040db31b10788d8b3027984094a5df7",
+      "included": true
+    },
+    {
+      "ref": "refs/remotes/origin/codex/centered-top-tabs",
+      "commit": "2ba245e0792c7ab907f13b9052a85ef7f5cbe572",
+      "included": true
+    },
+    {
+      "ref": "refs/remotes/origin/codex/compact-shooting-progress",
+      "commit": "c933ed00f892e8d6da372572fc945318c95ddfe9",
+      "included": true
+    },
+    {
+      "ref": "refs/remotes/origin/codex/docs-mouse-driver",
+      "commit": "bbdddcb3cab591a230488bdab525cab5be23359a",
+      "included": true
+    },
+    {
+      "ref": "refs/remotes/origin/codex/export-shooting-record",
+      "commit": "8931d70d81f52538da66e54975c1fadd9bf0148c",
+      "included": true
+    },
+    {
+      "ref": "refs/remotes/origin/codex/jpg-raw-reconcile",
+      "commit": "1dfa88ae29f4a67315673c4da62b19ac25ad9964",
+      "included": true
+    },
+    {
+      "ref": "refs/remotes/origin/codex/live-collapsible-workspace",
+      "commit": "f78e90faa22243c9ac5503ebbe220b8bcefffa47",
+      "included": true
+    },
+    {
+      "ref": "refs/remotes/origin/codex/live-folder-rating",
+      "commit": "b995c387024dac124cd6209d4f7c10dca5db6325",
+      "included": true
+    },
+    {
+      "ref": "refs/remotes/origin/codex/million-asset-search",
+      "commit": "a866c3f3f0c3e0ab6c310d31e0aee1147b0adf4c",
+      "included": true
+    },
+    {
+      "ref": "refs/remotes/origin/codex/mouse-driver-hot-refresh",
+      "commit": "6c73ad48f87044c3741efc7c5489022865a867a5",
+      "included": true
+    },
+    {
+      "ref": "refs/remotes/origin/codex/remote-mouse-options",
+      "commit": "f04f44745937aef51ae6fd6426dbb16c420cdcea",
+      "included": true
+    },
+    {
+      "ref": "refs/remotes/origin/codex/shooting-progress-tabs",
+      "commit": "01768fd46342b0483008eb1e1077f6ff3e7a0b77",
+      "included": true
+    },
+    {
+      "ref": "refs/remotes/origin/codex/sku-auto-toggle",
+      "commit": "0bdc9a8295caacfb901ec7697f298999cbeb8418",
+      "included": true
+    },
+    {
+      "ref": "refs/remotes/origin/codex/sku-ocr-reconciliation",
+      "commit": "c8364a27bb1d8b642f11bc4f8f2fb6693af0c993",
+      "included": true
+    },
+    {
+      "ref": "refs/remotes/origin/codex/sku-sheet-tabs-numbering",
+      "commit": "735ddd9651c80d26afadd65bc3b188f09dc41ac1",
+      "included": true
+    },
+    {
+      "ref": "refs/remotes/origin/codex/wireless-mouse-rating",
+      "commit": "d2c56e0e40f75199c24998cc70a24664eface5df",
+      "included": true
+    },
+    {
+      "ref": "refs/remotes/origin/feat/bounded-session-browser",
+      "commit": "885332dac69f07b2e54a89521e1c8336a32a6af5",
+      "included": true
+    },
+    {
+      "ref": "refs/remotes/origin/feature/hardware-rating-demo",
+      "commit": "b65547d651cec5b441886288dc33c2684fe82a76",
+      "included": true
+    },
+    {
+      "ref": "refs/remotes/origin/feature/image-pan-zoom",
+      "commit": "6ae9ee5b2d2ce42fe4532942e3e36dbaa1208fb8",
+      "included": true
+    },
+    {
+      "ref": "refs/remotes/origin/feature/local-build-test",
+      "commit": "0ef77125649f0d1e0eebe6fedc747fb0d52cb9d1",
+      "included": true
+    },
+    {
+      "ref": "refs/remotes/origin/feature/multi-folder-workspace",
+      "commit": "042aba5dcc8242aa013d36e9da2c12d5598d6b0d",
+      "included": true
+    },
+    {
+      "ref": "refs/remotes/origin/feature/production-bridge",
+      "commit": "247c172da7395dda2eda63e2648426f392a9de92",
+      "included": true
+    },
+    {
+      "ref": "refs/remotes/origin/feature/raw-thumbnail-priority",
+      "commit": "a254dee2b154aeca8fff5fca4c4974b5ab900bd8",
+      "included": true
+    },
+    {
+      "ref": "refs/remotes/origin/feature/remove-ai-selection",
+      "commit": "9d0370594e7823a726b880ff9ed9b89ce5dfb101",
+      "included": true
+    },
+    {
+      "ref": "refs/remotes/origin/feature/remove-burst-sidebar",
+      "commit": "01b6a159b1d978a4d7bab1550e457a6e7e99487d",
+      "included": true
+    },
+    {
+      "ref": "refs/remotes/origin/feature/tauri-desktop",
+      "commit": "8fded7add7b11d4c3d5a58d5c5c8463b83e7974d",
+      "included": true
+    },
+    {
+      "ref": "refs/remotes/origin/fix/no-source-recovery-folders",
+      "commit": "81395e15a4bddaf6cce1a2db10d8884742f87e5b",
+      "included": true
+    },
+    {
+      "ref": "refs/remotes/public/main",
+      "commit": "046800356496a40f1a38130aa7b08246c756e1b2",
+      "included": true
+    }
+  ],
+  "regression": {
+    "initial_full_suite": {
+      "run": 924,
+      "passed": 872,
+      "failed": 37,
+      "skipped": 15
+    },
+    "all_37_failed_cases_verified_after_repairs": true,
+    "final_covered": {
+      "passed": 909,
+      "skipped": 15,
+      "unresolved": 0
+    },
+    "verification_by_case": {
+      "test_archive_locations_browser.ArchiveLocationsBrowserTests.test_drive_buttons_folder_state_and_manual_network_path": "archive-compatibility-final.log",
+      "test_archive_pipeline.PipelineTests.test_browser_two_star_without_document_and_automatic_copy_sync": "archive-compatibility-final.log",
+      "test_archive_sync.ArchiveSyncTests.test_browser_add_destination_click_sync_without_switching_source": "failed-cases-rerun.log",
+      "test_asset_browser.AssetBrowserTests.test_confirmed_sku_autofills_selection_and_manual_batch_remains_editable": "failed-cases-rerun.log",
+      "test_asset_browser.AssetBrowserTests.test_shift_metadata_archive_lm_card_and_parallel_analysis": "failed-cases-rerun.log",
+      "test_component_browser.ComponentBrowserTests.test_ocr_pages_prepare_once_progress_retry_and_continue": "failed-cases-rerun.log",
+      "test_current_shooting_sidebar.CurrentShootingSidebarTests.test_controls_unique_rows_live_status_scroll_tabs_and_empty_state": "failed-cases-rerun.log",
+      "test_fast_path_index.FastPathIndexTests.test_background_migration_fallback_concurrent_write_and_clean_stop": "failed-cases-rerun.log",
+      "test_fast_path_index.FastPathIndexTests.test_cancel_rebuild_preserves_items_and_restart_rebuilds": "failed-cases-rerun.log",
+      "test_fast_path_index.FastPathIndexTests.test_read_snapshot_before_completed_migration_falls_back": "failed-cases-rerun.log",
+      "test_full_auto_browser.FullAutoBrowserTests.test_sidebar_import_shared_switch_and_common_skus_keep_real_scope": "failed-cases-rerun.log",
+      "test_image_cache.ImageCacheTests.test_all_small_previews_are_processed_before_large_and_rescan_deduplicates": "failed-cases-rerun.log",
+      "test_image_cache.ImageCacheTests.test_legacy_archive_previews_are_reused_when_warming_is_enabled": "failed-cases-rerun.log",
+      "test_image_cache.ImageCacheTests.test_parallel_workers_claim_distinct_records_and_generate_once": "failed-cases-rerun.log",
+      "test_image_cache.ImageCacheTests.test_restart_resumes_large_stage_without_rebuilding_small": "failed-cases-rerun.log",
+      "test_import_preview_browser.ImportPreviewBrowserTests.test_import_any_context_and_preview_rating": "failed-cases-rerun.log",
+      "test_index_progress_browser.IndexProgressBrowserTests.test_poll_keeps_directory_nodes_focus_scroll_and_shows_progress": "failed-cases-rerun.log",
+      "test_layout_audit.LayoutAuditTests.test_all_pages_dialogs_and_scroll_regions": "remaining-ui-rerun.log",
+      "test_live_layout.OrientationTests.test_jpeg_catalog_fallback_explicit_upright_and_cache_revision": "failed-cases-rerun.log",
+      "test_live_layout_browser.LiveLayoutBrowserTests.test_collapsible_monitor_thumbnails_arrows_reveal_and_follow": "failed-cases-rerun.log",
+      "test_mouse_activation_browser.MouseActivationBrowserTests.test_file_deployed_waits_for_reload_then_lists_and_reports_failures": "mouse-activation-verified.log",
+      "test_mouse_auto_enable.MouseAutoBrowserTests.test_immediate_enable_restart_pause_stop_and_themes": "failed-cases-rerun.log",
+      "test_mouse_fixed_browser.FixedMouseBrowserTests.test_fixed_assignment_repeat_undo_delayed_target_and_shared_archive": "failed-cases-rerun.log",
+      "test_mouse_options_browser.MouseOptionsBrowserTests.test_switches_decrease_wheel_order_and_delayed_targets": "failed-cases-rerun.log",
+      "test_mouse_profiles.ReceiverBrowserTests.test_receiver_dropdown_sends_selected_identity_and_refresh_preserves_choice": "failed-cases-rerun.log",
+      "test_mouse_remote.MouseBrowserTests.test_packets_to_browser_rating_save_switch_and_recovery": "failed-cases-rerun.log",
+      "test_ocr_metadata.OcrMetadataTests.test_full_auto_saves_ocr_without_committing_until_user_chooses": "failed-cases-rerun.log",
+      "test_preview_empty_browser.PreviewEmptyTests.test_empty_modes_fill_stage_and_first_capture_replaces_animation": "failed-cases-rerun.log",
+      "test_preview_histogram.PreviewHistogramTests.test_real_application_pixels_layout_themes_and_gestures": "histogram-recovery-tests.log",
+      "test_production.FormalHttpTests.test_preview_photo_route_and_no_raw_button_for_jpeg": "failed-cases-rerun.log",
+      "test_shift_pick_browser.ShiftPickTests.test_shift_hover_drag_cancel_filter_scroll_and_save": "failed-cases-rerun.log",
+      "test_sidebar_resize_browser.SidebarResizeTests.test_drag_adaptive_photos_limits_restore_and_virtual_scroll": "failed-cases-rerun.log",
+      "test_sku_browser.SkuBrowserTests.test_live_folder_two_clicks_frozen_sheet_review_and_export": "mouse-sku-last-tests.log",
+      "test_task_lights_browser.TaskLightsBrowserTests.test_queues_operation_lifetime_themes_and_connection_recovery": "remaining-ui-rerun.log",
+      "test_ui_motion.MotionBrowserTests.test_real_intermediate_frames_reversal_close_semantics_and_reduced_motion": "motion-histogram-rerun.log",
+      "test_workbench_integration.WorkbenchIntegrationTests.test_real_engine_theme_navigation_watch_rating_and_progress": "failed-cases-rerun.log",
+      "test_workbench_settings.WorkbenchSettingsTests.test_settings_single_type_history_preview_navigation_and_responsive": "last-controls-rerun.log"
+    }
+  },
+  "update_system_tests": {
+    "run": 62,
+    "passed": 62
+  },
+  "rust_tests": {
+    "production_passed": 11,
+    "development_passed": 11
+  },
+  "additional_mouse_regression_passed": 46,
+  "frozen_runtime": {
+    "engine_pid": 45424,
+    "ready": {
+      "application": "framekeep",
+      "process_id": 45424,
+      "ready": true
+    },
+    "ratings": [
+      0,
+      4,
+      4
+    ],
+    "tabs": [
+      "现场拍摄现场拍摄：空闲",
+      "资产检索",
+      "拍摄进度 · 0 已拍摄拍摄进度：空闲",
+      "资产归档资产归档：空闲",
+      "SKU 数据库SKU 数据库：空闲",
+      "解析任务解析任务：空闲",
+      "设置设置：空闲"
+    ],
+    "sku_api_rows": [
+      {
+        "id": "117b1ce01dae6a555b72f8026f8a0791",
+        "sku": "LC1234",
+        "name": "2.jpg"
+      },
+      {
+        "id": "452e4a2b1479e22db03f3aafc415babe",
+        "sku": "LC1234",
+        "name": "1.jpg"
+      },
+      {
+        "id": "430f061e2d3c5cbdc3b11ba4d9f3dbcc",
+        "sku": "LC5678",
+        "name": "3.jpg"
+      }
+    ],
+    "retrieval_count": 3,
+    "desktop_previews_loaded": true,
+    "quick_search": true,
+    "formal_auth_required": true,
+    "web_progress_readonly": true,
+    "web_previews_loaded": true,
+    "web_live_search": true,
+    "redundant_label_removed": true,
+    "page_errors": []
+  },
+  "production_identifier": "com.framekeep.culling",
+  "final_working_tree_validation_pending": false,
+  "protected_original_files_unchanged": 246,
+  "frozen_modules_match_source": 19,
+  "final_runtime": {
+    "engine_pid": 45424,
+    "ready": {
+      "application": "framekeep",
+      "process_id": 45424,
+      "ready": true
+    },
+    "ratings": [
+      0,
+      4,
+      4
+    ],
+    "tabs": [
+      "现场拍摄现场拍摄：空闲",
+      "资产检索",
+      "拍摄进度 · 0 已拍摄拍摄进度：空闲",
+      "资产归档资产归档：空闲",
+      "SKU 数据库SKU 数据库：空闲",
+      "解析任务解析任务：空闲",
+      "设置设置：空闲"
+    ],
+    "sku_api_rows": [
+      {
+        "id": "117b1ce01dae6a555b72f8026f8a0791",
+        "sku": "LC1234",
+        "name": "2.jpg"
+      },
+      {
+        "id": "452e4a2b1479e22db03f3aafc415babe",
+        "sku": "LC1234",
+        "name": "1.jpg"
+      },
+      {
+        "id": "430f061e2d3c5cbdc3b11ba4d9f3dbcc",
+        "sku": "LC5678",
+        "name": "3.jpg"
+      }
+    ],
+    "retrieval_count": 3,
+    "desktop_previews_loaded": true,
+    "quick_search": true,
+    "formal_auth_required": true,
+    "web_progress_readonly": true,
+    "web_previews_loaded": true,
+    "web_live_search": true,
+    "redundant_label_removed": true,
+    "page_errors": []
+  }
+}

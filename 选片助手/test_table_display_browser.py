@@ -32,7 +32,7 @@ class TableDisplayTests(unittest.TestCase):
                             page=browser.new_page(viewport={'width':1440,'height':900},reduced_motion='reduce');errors=[]
                             page.on('pageerror',lambda e:errors.append(str(e)))
                             out=ROOT/'build/table-display-acceptance';out.mkdir(parents=True,exist_ok=True)
-                            page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='networkidle')
+                            page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading')
                             page.locator('#sku-open').click();page.wait_for_selector('#sku-rows tbody td')
                             def grid():
                                 return page.evaluate('''()=>['#sku-rows','#sku-current-table','#table-display-preview'].map(selector=>{const table=document.querySelector(selector+' table'),cell=table.querySelector('tbody td'),style=getComputedStyle(cell),box=getComputedStyle(table);return {color:style.borderRightColor,bottom:style.borderBottomColor,width:style.borderRightWidth,layout:box.borderCollapse,background:style.backgroundColor,text:style.color,opacity:style.opacity}})''')
@@ -57,13 +57,13 @@ class TableDisplayTests(unittest.TestCase):
                             self.assertEqual(len(set(colors)),4)
                             page.locator('#table-lines-transparency').fill('65');page.locator('#table-lines-visible').uncheck()
                             self.assertEqual(grid()[0]['color'],colors[-1]);self.assertIn('已隐藏',page.locator('#table-display-summary').inner_text())
-                            page.reload(wait_until='networkidle');self.assertFalse(page.locator('#table-lines-visible').is_checked());self.assertEqual(page.locator('#table-lines-transparency').input_value(),'65')
+                            page.reload(wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading');self.assertFalse(page.locator('#table-lines-visible').is_checked());self.assertEqual(page.locator('#table-lines-transparency').input_value(),'65')
                             page.locator('#app-settings-open').click();page.locator('[data-settings-section="table"]').click();page.locator('#table-lines-visible').check()
                             page.locator('#table-lines-transparency').press('Home');page.locator('#table-lines-transparency').press('ArrowRight');self.assertEqual(page.locator('#table-lines-transparency-value').inner_text(),'1%')
                             # 真实拖动滑杆，随后确认重载后保存的是最终值。
                             box=page.locator('#table-lines-transparency').bounding_box();page.mouse.move(box['x']+box['width']*.55,box['y']+box['height']/2);page.mouse.down();page.mouse.move(box['x']+box['width']*.7,box['y']+box['height']/2,steps=4);page.mouse.up()
                             saved=page.locator('#table-lines-transparency').input_value();self.assertGreater(int(saved),60)
-                            page.reload(wait_until='networkidle');self.assertEqual(page.locator('#table-lines-transparency').input_value(),saved);self.assertTrue(page.locator('#table-lines-visible').is_checked())
+                            page.reload(wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading');self.assertEqual(page.locator('#table-lines-transparency').input_value(),saved);self.assertTrue(page.locator('#table-lines-visible').is_checked())
                             page.locator('#sku-open').click();page.wait_for_selector('#sku-rows tbody td')
                             for theme in ['dark','light','pure-white','hardcore']:
                                 page.evaluate('(t)=>FramekeepTheme.set(t)',theme)
@@ -79,10 +79,10 @@ class TableDisplayTests(unittest.TestCase):
                             page.set_viewport_size({'width':1440,'height':900});page.locator('#sku-rows [data-completion]').first.click()
                             page.wait_for_function('()=>!document.querySelector("#sku-image-stage img").hidden');page.keyboard.press('Escape');self.assertFalse(page.locator('.sku-image-dialog').evaluate('e=>e.open'))
                             for invalid in ['{broken',json.dumps({'visible':'false','transparency':101}),json.dumps({'visible':False,'transparency':'45'})]:
-                                page.evaluate('(value)=>localStorage.setItem("framekeep-table-display-v1",value)',invalid);page.reload(wait_until='networkidle')
+                                page.evaluate('(value)=>localStorage.setItem("framekeep-table-display-v1",value)',invalid);page.reload(wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading')
                                 self.assertEqual(page.locator('#table-lines-transparency').input_value(),'78')
                             self.assertFalse(page.locator('#table-lines-visible').is_checked())
-                            page.evaluate('localStorage.removeItem("framekeep-table-display-v1")');page.reload(wait_until='networkidle')
+                            page.evaluate('localStorage.removeItem("framekeep-table-display-v1")');page.reload(wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading')
                             self.assertTrue(page.locator('#table-lines-visible').is_checked());self.assertEqual(page.locator('#table-lines-transparency').input_value(),'78')
                             self.assertEqual(fixture.store.session(fixture.sid)['state']['overrides'],original);self.assertFalse(errors,errors)
                             (out/'browser-result.json').write_text(json.dumps({'passed':True,'errors':errors,'themes':4,'widths':[1440,1024,375],'checks':['grid and preview parity','line-only transparency','toggle and reload','slider mouse and keyboard','invalid storage fallback','image modal','ratings preserved']},ensure_ascii=False,indent=2),encoding='utf8')

@@ -1,6 +1,30 @@
 {
   "identifier": "main",
-  "windows": ["main"],
-  "remote": {"urls": ["http://127.0.0.1:*/*"]},
-  "permissions": ["core:default", "allow-choose-folders", "allow-save-manifest", "allow-save-sku-workbook", "allow-finish-close", "allow-desktop-ready", "allow-close-for-update"]
+  "windows": [
+    "main",
+    "asset-search"
+  ],
+  "remote": {
+    "urls": [
+      "http://127.0.0.1:*/*"
+    ]
+  },
+  "permissions": [
+    "core:default",
+    "allow-choose-folders",
+    "allow-save-manifest",
+    "allow-save-sku-workbook",
+    "allow-finish-close",
+    "allow-desktop-ready",
+    "allow-close-for-update",
+    "allow-search-show",
+    "allow-search-hide",
+    "allow-search-shortcut",
+    "allow-search-open-asset",
+    "allow-startup-status",
+    "allow-get-desktop-preferences",
+    "allow-set-desktop-preferences",
+    "allow-hide-to-tray",
+    "allow-startup-visible"
+  ]
 }

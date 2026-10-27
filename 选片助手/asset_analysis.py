@@ -60,7 +60,10 @@ def vision(provider,image,prompt,schema):
         url=api_endpoint(base,'responses')
         body={'model':provider['model'],'instructions':system,'input':[{'role':'user','content':[{'type':'input_text','text':prompt},{'type':'input_image','image_url':image_url}]}],'max_output_tokens':provider.get('max_tokens',2000)}
         if provider.get('json_mode',True):body['text']={'format':{'type':'json_object'}}
-    if provider.get('local_runtime'):body['temperature']=0
+    if provider.get('local_runtime'):
+        body['temperature']=0
+        if provider['protocol']=='chat' and provider.get('json_mode',True):
+            body['response_format']={'type':'json_schema','json_schema':{'name':'asset_analysis','schema':schema,'strict':True}}
     try:data=request_json(url,body,provider.get('key',''),provider.get('timeout',90))
     except ValueError as exc:
         if 'HTTP 400' not in str(exc) or not provider.get('json_mode',True):raise

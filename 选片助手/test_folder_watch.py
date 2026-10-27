@@ -181,7 +181,7 @@ class LiveBrowserTests(unittest.TestCase):
                         browser=pw.chromium.launch(executable_path=str(chrome),headless=True)
                         try:
                             page=browser.new_page(viewport={'width':1600,'height':1000});errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
-                            page.goto(url,wait_until='networkidle');page.evaluate('() => window.__samePage=true')
+                            page.goto(url,wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading');page.evaluate('() => window.__samePage=true')
                             page.locator('#folder-watch').click();page.locator('#watch-path').fill(str(photos));page.locator('#watch-start').click()
                             page.wait_for_function('() => !document.getElementById("watch-dialog").open && FRAMEKEEP_SESSION.id!==null')
                             page.locator('#app-settings-open').click();page.locator('[data-settings-section=remote]').click();page.locator('#mouse-remote').click();page.locator('#mouse-start').click()

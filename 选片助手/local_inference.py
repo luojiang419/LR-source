@@ -70,7 +70,7 @@ class LocalInference:
             if self.warm_request:self.warm_request[1].set()
             self.warm_generation+=1
             self.warm_request=(model,threading.Event(),self.warm_generation)
-            if model:self._publish('preparing',model,'正在后台准备 OCR 模型')
+            if model:self._publish('preparing',model,'正在后台准备 视觉模型')
             else:self._publish('idle','','内置模型已关闭')
             if not self.warm_thread or not self.warm_thread.is_alive():
                 self.warm_thread=threading.Thread(target=self._warm,name='ocr-model-preload',daemon=True);self.warm_thread.start()
@@ -124,8 +124,8 @@ class LocalInference:
             if self.closed or cancel and cancel.is_set():raise ValueError('模型预加载已取消')
         current()
         if self.active==model and self.process and self.process.poll() is None:
-            self._publish('ready',model,'OCR 模型已就绪');return
-        self._publish('preparing',model,'正在检查 OCR 模型组件')
+            self._publish('ready',model,'视觉模型已就绪');return
+        self._publish('preparing',model,'正在检查 视觉模型组件')
         if self.components:
             self.components.ensure([model]);self.config=self.components.root/'local-models.json'
         current()
@@ -155,7 +155,7 @@ class LocalInference:
         self.logs.mkdir(parents=True,exist_ok=True);self.log=(self.logs/(model+'.log')).open('ab')
         env=os.environ.copy();env['LLAMA_API_KEY']=key
         try:
-            current();self._publish('loading',model,'正在将 OCR 模型加载到内存，服务未提供加载百分比')
+            current();self._publish('loading',model,'正在将 视觉模型加载到内存，服务未提供加载百分比')
             self.process=subprocess.Popen(command,stdout=self.log,stderr=self.log,env=env,creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
             self.release_job=own_process(self.process)
             endpoint={'url':f'http://127.0.0.1:{port}','key':key,'protocol':'chat','gpu_layers':gpu_layers,'mmproj_offload':offload,'local_runtime':True,'timeout':300}
@@ -167,7 +167,7 @@ class LocalInference:
                     req=urllib.request.Request(endpoint['url']+'/health',headers={'Authorization':'Bearer '+key})
                     with urllib.request.urlopen(req,timeout=2) as response:
                         if response.status==200:
-                            current();self.active=model;self.endpoint=endpoint;self._publish('ready',model,'OCR 模型已就绪');return
+                            current();self.active=model;self.endpoint=endpoint;self._publish('ready',model,'视觉模型已就绪');return
                 except OSError:time.sleep(.25)
             raise ValueError('内置模型加载超时，请查看本地推理日志')
         except Exception as exc:
@@ -194,7 +194,7 @@ def configure(root,data,components=None):
         # 项目内发行程序沿用项目级模型包；便携部署优先程序旁 runtime。
         candidates+=[Path(root).parent.parent/'.runtime/local-inference/local-models.json']
         config=next((p for p in candidates if p.is_file()),candidates[0])
-    _runtime=LocalInference(config,Path(data)/'local-inference-logs',components)
+    _runtime=LocalInference(config,Path(data)/'local-inference-logs',None if os.environ.get('FRAMEKEEP_LOCAL_MODELS') else components)
     return _runtime
 
 def runtime():

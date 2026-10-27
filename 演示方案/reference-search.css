@@ -1,0 +1,19 @@
+/* 与软件主题共用的固定参考图工作区。 */
+.reference-search {flex:none;padding:14px 12px;border-bottom:1px solid var(--theme-border);background:var(--glass-panel,var(--theme-panel));min-width:0;}
+.reference-search>header {display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;}
+.reference-search>header strong {font-size:12px;font-weight:600;}.reference-search>header span {font-size:10px;color:var(--theme-muted);}
+html[data-hardcore-layout] .reference-search .reference-dropzone {display:grid;place-items:center;width:100%;height:146px;min-height:146px;padding:8px;border:1px dashed var(--theme-border-strong);border-radius:6px;background:var(--theme-control);color:var(--theme-text-soft);cursor:pointer;overflow:hidden;}
+html[data-hardcore-layout] .reference-search .reference-dropzone:hover,.reference-search.is-dragging .reference-dropzone {border-color:var(--theme-emphasis);background:var(--theme-selected);}
+.reference-empty {display:flex;align-items:center;flex-direction:column;gap:8px;pointer-events:none;}
+.reference-empty svg {width:30px;height:30px;color:var(--theme-emphasis);}.reference-empty strong {font-size:12px;font-weight:500;}.reference-empty small {font-size:10px;color:var(--theme-muted);white-space:normal;}
+.reference-search .reference-preview {display:block;width:100%;height:128px;object-fit:contain;pointer-events:none;}
+.reference-search .reference-name {margin:8px 0;font-size:10px;line-height:1.5;color:var(--theme-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.reference-actions {display:grid;grid-template-columns:1fr 1fr auto;gap:5px;}
+html[data-hardcore-layout] .reference-search .reference-actions button {min-width:0;min-height:29px;padding:5px 6px;font-size:11px;white-space:nowrap;}
+html[data-hardcore-layout] .reference-search [data-reference=generate] {display:block;width:100%;min-height:32px;margin-top:8px;padding:7px;font-size:11px;border-radius:6px;}
+.reference-search .reference-threshold-label {display:grid;grid-template-columns:1fr auto;gap:8px;margin:14px 0 6px;font-size:11px;color:var(--theme-text-soft);}
+.reference-search output {font-weight:600;color:var(--theme-text);font-variant-numeric:tabular-nums;}
+html[data-hardcore-layout] .reference-search .reference-threshold {grid-column:1/-1;display:block;width:100%;min-height:18px;height:18px;margin:0;padding:0;border:0;box-shadow:none;background:transparent;accent-color:var(--theme-emphasis);cursor:pointer;}
+.reference-search .reference-help {min-height:30px;margin:4px 0 0;font-size:10px;color:var(--theme-muted);line-height:1.5;}
+.reference-search [hidden] {display:none!important;}
+.reference-score {display:inline-block;margin-top:6px;font-size:10px;color:var(--theme-emphasis);font-weight:600;font-variant-numeric:tabular-nums;}

@@ -1,5 +1,6 @@
 """持久预览索引和有界磁盘缓存；所有删除操作仅针对本目录中的哈希缓存文件。"""
 from contextlib import contextmanager,ExitStack
+from collections import OrderedDict
 from itertools import islice
 import hashlib
 import json
@@ -521,18 +522,53 @@ class PreviewWarmer:
     def __init__(self,cache,exiftool,*,autostart=True,catalog=None):
         self.cache=cache;self.exiftool=exiftool;self.closed=threading.Event();self.wake=threading.Event()
         self.catalog=catalog;self.sessions=set();self.lock=threading.RLock();self.active=set()
+        self.requests=OrderedDict();self.request_lock=threading.Lock();self.request_wake=threading.Event()
+        self.request_thread=threading.Thread(target=self._requests_run,name='foreground-preview-queue',daemon=True)
         self.reconcile_lock=threading.Lock();self.reconcile_requested=threading.Event();self.reconcile_videos=True;self.reconciling=False
         self.reconcile_thread=threading.Thread(target=self._reconcile,name='archive-preview-reconcile',daemon=True)
-        with cache.lock,cache.connect() as c:
-            # 迁移既有两阶段任务；保留重试次数，取消全库小图阻挡清晰图的旧排序。
-            c.execute('UPDATE pending SET edge=2048 WHERE edge>2048')
+        # 旧队列的 edge 仅用于领取结果的版本校验；实际生成尺寸统一在
+        # process_one 中使用 MAX_PREVIEW_EDGE，无需启动时扫描、改写全库。
         self.threads=[threading.Thread(target=self._run,name=f'preview-cache-{i}',daemon=True) for i in range(WARM_WORKERS)]
         self.thread=self.threads[0]
         if autostart:self.start()
 
     def start(self):
-        for thread in self.threads:
-            if thread.ident is None:thread.start()
+        with self.request_lock:
+            if self.closed.is_set():return
+            for thread in [self.request_thread,*self.threads]:
+                if thread.ident is None:thread.start()
+
+    def request(self,root,records):
+        """前台只递交可再生预览请求，不等待缓存写锁、磁盘检查或持久队列。"""
+        root=str(root);root_key=root.casefold()
+        with self.request_lock:
+            if self.closed.is_set():return
+            for record in records:
+                key=(root_key,record['id'])
+                self.requests[key]=(root,dict(record));self.requests.move_to_end(key)
+            # 保留最近浏览的页面；淘汰的只是预热意图，照片和持久缓存任务不受影响。
+            while len(self.requests)>4096:self.requests.popitem(last=False)
+        self.request_wake.set()
+
+    def _requests_run(self):
+        while not self.closed.is_set():
+            self.request_wake.wait(1);self.request_wake.clear()
+            with self.request_lock:
+                batch=[self.requests.popitem(last=False) for _ in range(min(128,len(self.requests)))]
+            if not batch:continue
+            grouped={}
+            for _,(root,record) in batch:grouped.setdefault(root,[]).append(record)
+            try:
+                for root,records in grouped.items():
+                    if self.closed.is_set():return
+                    self.enqueue(root,records)
+            except (OSError,sqlite3.Error):
+                with self.request_lock:
+                    for key,value in batch:
+                        if key not in self.requests:self.requests[key]=value
+                    while len(self.requests)>4096:self.requests.popitem(last=False)
+                self.closed.wait(.5)
+            self.request_wake.set()
 
     def enqueue(self,root,records):
         root_key=str(Path(root).absolute()).casefold()
@@ -687,8 +723,8 @@ class PreviewWarmer:
             except (OSError,sqlite3.Error):self.wake.wait(1)
 
     def close(self):
-        self.closed.set();self.wake.set();self.reconcile_requested.set()
+        self.closed.set();self.wake.set();self.reconcile_requested.set();self.request_wake.set()
         until=time.monotonic()+3
-        for thread in self.threads:
+        for thread in [self.request_thread,*self.threads]:
             if thread.is_alive():thread.join(timeout=max(0,until-time.monotonic()))
         if self.reconcile_thread.is_alive():self.reconcile_thread.join(timeout=max(0,until-time.monotonic()))

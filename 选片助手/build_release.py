@@ -7,11 +7,13 @@ import subprocess
 import sys
 import hashlib
 import json
+import types
 
 ROOT=Path(__file__).resolve().parents[1]
 TARGET=ROOT/'build/tauri-target'
-WORKBENCH_FILES=('asset-loading.js','preview-histogram.js','preview-histogram.css','session-paging.js','split-capture.js','split-capture.css','ocr-feedback.js','ocr-feedback.css','selection-folders.js','selection-folders.css','asset-workspace.css','workbench.css','classic-themes.css','view-menu.css','toolbar-layout.css','workbench-ui.js','sidebar-resize.js','update.js','component-ui.js','preview-empty.js','preview-empty.css','sku-media-pool.js','sku-media-pool.css')
+WORKBENCH_FILES=('reference-search.js','reference-search.css','lan-workspace.html','lan-workspace.js','lan-workspace.css','lan-sharing.js','asset-retrieval.js','asset-retrieval.css','quick-search.html','asset-loading.js','preview-histogram.js','preview-histogram.css','session-paging.js','split-capture.js','split-capture.css','ocr-feedback.js','ocr-feedback.css','selection-folders.js','selection-folders.css','asset-workspace.css','workbench.css','classic-themes.css','view-menu.css','toolbar-layout.css','workbench-ui.js','sidebar-resize.js','update.js','component-ui.js','preview-empty.js','preview-empty.css','sku-media-pool.js','sku-media-pool.css','desktop-lifecycle.css')
 CAMERA_ASSETS=('camera-iris.svg','camera-transfer.svg','camera-framing.svg','camera-iris-still.svg','camera-transfer-still.svg')
+STARTUP_ASSETS=('boot.js','startup.css','startup.svg','startup-visual.js')
 
 def build_engine():
     web=ROOT/'build/release-web/演示方案'
@@ -21,6 +23,7 @@ def build_engine():
     web.mkdir(parents=True,exist_ok=True)
     for name in ('index.html','style.css','theme.css','theme.js','motion.css','app.js','image-viewer.js','formal.js','task-status.js','assistant-settings.js','desktop.js','mouse-remote.js','folder-watch.js','sku-reconciliation.js','asset-metadata.js','asset-viewer.js','asset-library.js','asset-analysis.js','raw-reconcile.js','workbench-layout.js'):shutil.copy2(ROOT/'演示方案'/name,web/name)
     for name in WORKBENCH_FILES:shutil.copy2(ROOT/'演示方案'/name,web/name)
+    for name in STARTUP_ASSETS:shutil.copy2(ROOT/'演示方案'/name,web/name)
     (web/'assets').mkdir(exist_ok=True);(web/'assets/demo-data.js').write_text('window.DEMO_PHOTOS=[];',encoding='utf8')
     for name in CAMERA_ASSETS:shutil.copy2(ROOT/'演示方案/assets'/name,web/'assets'/name)
     command=[sys.executable,'-m','PyInstaller','--noconfirm','--log-level','WARN','--distpath',str(ROOT/'build/engine-dist'),'--onedir','--windowed','--name','framekeep-engine','--paths',str(ROOT/'选片助手'),'--paths',str(ROOT/'更新系统'),'--add-data',str(ROOT/'更新系统/update-config.json')+';更新系统','--collect-binaries','rawpy','--copy-metadata','rawpy','--copy-metadata','numpy','--copy-metadata','Pillow','--collect-data','jsonschema_specifications','--add-data',str(web)+';演示方案']
@@ -28,6 +31,7 @@ def build_engine():
         command+=['--exclude-module',module]
     command+=['--add-data',str(ROOT/'选片助手/component-manifest.json')+';.',
               '--add-data',str(ROOT/'选片助手/canon_probe.ps1')+';.',
+              '--add-data',str(ROOT/'选片助手/clip_worker.py')+';.',
               '--add-data',str(ROOT/'.runtime/component-seed')+';component-seed']
     from setup_ffmpeg import verify_runtime
     runtime=ROOT/'.runtime/ffmpeg'
@@ -71,8 +75,27 @@ def stage_release(engine,desktop):
     validate_release(release)
     return release
 
+def validate_metadata_engine(engine):
+    """拒绝旧元数据引擎，防止源码修复后仍分发旧恢复副本机制。"""
+    from PyInstaller.archive.readers import CArchiveReader
+    def normalize(code):
+        if not isinstance(code,types.CodeType):return code
+        return code.replace(co_filename='',co_consts=tuple(normalize(v) for v in code.co_consts))
+    try:
+        archive=CArchiveReader(str(engine)).open_embedded_archive('PYZ.pyz')
+        for name in ('file_safety','metadata_writer','asset_archive'):
+            source=ROOT/'选片助手'/(name+'.py')
+            expected=compile(source.read_bytes(),str(source),'exec')
+            if normalize(archive.extract(name))!=normalize(expected):
+                raise RuntimeError('发行包元数据引擎与当前源码不一致：'+name+'；请重新构建引擎，禁止分发旧恢复副本机制')
+    except (OSError,KeyError,ValueError) as exc:
+        raise RuntimeError('发行包元数据引擎无法校验，请重新构建引擎') from exc
+
+
 def validate_release(release):
+    validate_metadata_engine(release/'engine/framekeep-engine.exe')
     web=release/'engine/_internal/演示方案'
+    if not all((web/name).is_file() for name in STARTUP_ASSETS):raise RuntimeError('发行包缺少异步首屏或 SVG 启动资源')
     from setup_gpu import verify_runtime as verify_gpu
     from setup_gpu_video import verify_runtime as verify_gpu_video
     if not verify_gpu(release/'engine/_internal/runtime/gpu'):raise RuntimeError('发行包 GPU 图像组件缺失或校验失败')

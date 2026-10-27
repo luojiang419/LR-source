@@ -93,7 +93,7 @@ class LayoutAuditTests(unittest.TestCase):
                     browser=pw.chromium.launch(executable_path='C:/Program Files/Google/Chrome/Application/chrome.exe',headless=True)
                     try:
                         page=browser.new_page(viewport={'width':1366,'height':768},reduced_motion='reduce');page.on('pageerror',lambda e:errors.append(str(e)))
-                        page.goto(url,wait_until='networkidle')
+                        page.goto(url,wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading')
                         for theme in ('dark','light','pure-white','hardcore'):
                             page.evaluate('(t)=>FramekeepTheme.set(t)',theme)
                             for width,height in ((2560,1440),(1920,1080),(1366,768),(1000,680),(1000,480),(375,812)):
@@ -133,7 +133,7 @@ class LayoutAuditTests(unittest.TestCase):
                         action=page.locator('#asset-close-stream').bounding_box()
                         if action['y']+action['height']>page.locator('.workspace-bottom-bar').bounding_box()['y']:findings.append(['settings','last-action-under-navigation',action])
                         for opener,dialog in (('#assistant-settings','#assistant-settings-dialog'),('#mouse-remote','#mouse-dialog')):
-                            page.locator(opener).scroll_into_view_if_needed();page.locator(opener).click()
+                            page.locator('[data-settings-section='+('remote' if opener=='#mouse-remote' else 'models')+']').click();page.locator(opener).scroll_into_view_if_needed();page.locator(opener).click()
                             for width,height in ((1366,768),(1000,480),(375,812)):
                                 page.set_viewport_size({'width':width,'height':height})
                                 d=page.locator(dialog).evaluate('''e=>{const r=e.getBoundingClientRect(),c=getComputedStyle(e);return {x:r.x,y:r.y,right:r.right,bottom:r.bottom,height:r.height,scrollHeight:e.scrollHeight,clientHeight:e.clientHeight,overflow:c.overflowY}}''')
@@ -148,7 +148,8 @@ class LayoutAuditTests(unittest.TestCase):
                             page.locator(dialog).evaluate('e=>e.close()');page.set_viewport_size({'width':1000,'height':480})
                         page.locator('#selection-tab').click()
                         for opener,dialog in (('#folder-watch','#watch-dialog'),('#open-folder','#folder-dialog'),('#send-lr','#bridge-dialog')):
-                            page.locator(opener).click()
+                            if opener=='#open-folder':page.locator(opener).evaluate('(e)=>e.click()')
+                            else:page.locator(opener).click()
                             d=page.locator(dialog).bounding_box();checks.append({'case':[dialog,1000,480],**d})
                             if d['x']<0 or d['y']<0 or d['x']+d['width']>1001 or d['y']+d['height']>481:findings.append([dialog,'dialog-outside-viewport',d])
                             page.locator(dialog+' .dialog-actions button').last.scroll_into_view_if_needed()

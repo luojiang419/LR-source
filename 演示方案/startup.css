@@ -1,0 +1,25 @@
+.startup-host{margin:0;min-height:100vh;background:#111715;color:#e3e8dd;font-family:"Segoe UI","Microsoft YaHei",sans-serif}
+.startup-screen{position:fixed;inset:0;z-index:2147483000;display:grid;place-items:center;overflow:hidden;background:radial-gradient(ellipse at 50% 37%,#1b2820 0,transparent 54%),#111715;color:#e3e8dd;font-family:"Segoe UI","Microsoft YaHei",sans-serif;isolation:isolate;transition:opacity .3s ease,visibility .3s ease}
+.startup-screen::before{content:"";position:absolute;inset:22px;border:1px solid #a5bd8b0b;border-radius:5px;pointer-events:none}
+.startup-signature{position:absolute;top:40px;left:46px;display:flex;align-items:center;gap:12px;color:#a7b69e;font-size:10px;letter-spacing:3px;font-weight:500}
+.startup-signature b{font-size:24px;letter-spacing:-1px;color:#c5dda4;font-weight:600}
+.startup-composition{width:min(460px,90vw);display:flex;align-items:center;flex-direction:column;text-align:center;transform:translateY(-12px)}
+.startup-art{display:block;width:min(420px,86vw);height:auto;user-select:none;pointer-events:none}
+.startup-wordmark{margin:-2px 0 0;padding-left:.22em;color:#e7eddf;font-size:34px;line-height:1.6;font-weight:500;letter-spacing:.22em}
+.startup-subtitle{margin:5px 0 30px;color:#75816f;font-size:9px;letter-spacing:4px;font-weight:500}
+.startup-stage{display:flex;align-items:center;justify-content:center;gap:10px;min-height:23px;margin:0;color:#a5b29d;font-size:12px;line-height:1.8;letter-spacing:1px;font-weight:400}
+.startup-pulse{width:5px;height:5px;border-radius:50%;background:#bfd6a0;box-shadow:0 0 0 4px #b9d59909;animation:startup-breathe 1.9s ease-in-out infinite}
+.startup-steps{display:flex;gap:6px;margin-top:20px;height:3px}
+.startup-steps i{display:block;width:23px;height:2px;background:#c5dda41b;border-radius:2px;transition:background .3s ease}
+.startup-screen[data-step="0"] .startup-steps i:first-child,.startup-screen[data-step="1"] .startup-steps i:nth-child(-n+2),.startup-screen[data-step="2"] .startup-steps i:nth-child(-n+3),.startup-screen[data-step="3"] .startup-steps i{background:#c5dda4a6}
+.startup-note{position:absolute;bottom:35px;margin:0;color:#52614f;font-size:10px;letter-spacing:2px}
+.startup-error{max-width:340px;min-height:0;margin:14px 0 0;color:#ddad98;font-size:12px;line-height:1.7;letter-spacing:.5px}
+.startup-error:empty{display:none}
+.startup-screen .startup-retry{margin-top:14px;padding:8px 21px;border:1px solid #91a78255;border-radius:5px;background:#b4cc9c0c;color:#c5dda4;font:12px "Segoe UI","Microsoft YaHei",sans-serif;cursor:pointer}
+.startup-screen .startup-retry:hover{background:#b4cc9c19;border-color:#91a78299}
+.startup-screen .startup-retry[hidden]{display:none}
+.startup-screen.is-leaving{opacity:0;visibility:hidden;pointer-events:none}
+body[data-boot-loading]>.workbench{visibility:hidden}
+@keyframes startup-breathe{0%,100%{opacity:.35;transform:scale(.8)}50%{opacity:1;transform:scale(1)}}
+@media(max-height:570px){.startup-composition{transform:translateY(0)}.startup-art{width:280px}.startup-wordmark{font-size:27px}.startup-subtitle{margin-bottom:16px}.startup-signature{top:25px;left:30px}.startup-note{bottom:23px}}
+@media(prefers-reduced-motion:reduce){.startup-screen,.startup-steps i{transition:none}.startup-pulse{animation:none}}

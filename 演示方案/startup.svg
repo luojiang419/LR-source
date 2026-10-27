@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="420" height="280" viewBox="0 0 420 280" fill="none">
+  <title>叠帧，对焦，留下最后一帧</title>
+  <defs>
+    <linearGradient id="fk-startup-paper" x1="135" y1="40" x2="290" y2="220" gradientUnits="userSpaceOnUse"><stop stop-color="#EDF0E7"/><stop offset="1" stop-color="#B8C6AB"/></linearGradient>
+    <linearGradient id="fk-startup-land" x1="150" y1="80" x2="270" y2="178" gradientUnits="userSpaceOnUse"><stop stop-color="#75907A"/><stop offset="1" stop-color="#2F4A40"/></linearGradient>
+    <radialGradient id="fk-startup-halo"><stop stop-color="#A9CA91" stop-opacity=".075"/><stop offset="1" stop-color="#A9CA91" stop-opacity="0"/></radialGradient>
+    <clipPath id="fk-startup-image"><rect x="150" y="63" width="120" height="112" rx="3"/></clipPath>
+    <style>
+       .fk-startup-back-left{animation:fk-startup-left 7.2s cubic-bezier(.4,0,.2,1) infinite;transform-origin:210px 138px}
+       .fk-startup-back-right{animation:fk-startup-right 7.2s cubic-bezier(.4,0,.2,1) infinite;transform-origin:210px 138px}
+       .fk-startup-frame{animation:fk-startup-float 7.2s ease-in-out infinite;transform-origin:210px 136px}
+       .fk-startup-shutter{animation:fk-startup-shutter 7.2s cubic-bezier(.4,0,.2,1) infinite;transform-origin:210px 119px}
+       .fk-startup-landscape{animation:fk-startup-reveal 7.2s ease-in-out infinite}
+       .fk-startup-focus{stroke-dasharray:28;stroke-dashoffset:28;animation:fk-startup-focus 7.2s ease-in-out infinite}
+       .fk-startup-seal{animation:fk-startup-seal 7.2s ease-in-out infinite;transform-origin:275px 181px}
+       .fk-startup-tick{stroke-dasharray:22;stroke-dashoffset:22;animation:fk-startup-tick 7.2s ease-in-out infinite}
+       .fk-startup-orbit{animation:fk-startup-orbit 14.4s linear infinite;transform-origin:210px 136px}
+      @keyframes fk-startup-left{0%,100%{transform:translate(5px,3px) rotate(-3deg);opacity:.3}32%,78%{transform:translate(-31px,0) rotate(-13deg);opacity:.75}}
+      @keyframes fk-startup-right{0%,100%{transform:translate(-5px,3px) rotate(3deg);opacity:.3}32%,78%{transform:translate(31px,0) rotate(13deg);opacity:.65}}
+      @keyframes fk-startup-float{0%,100%{transform:translateY(4px)}40%,75%{transform:translateY(-4px)}}
+      @keyframes fk-startup-shutter{0%,14%{opacity:.9;transform:rotate(-20deg) scale(.86)}40%{opacity:.7;transform:rotate(10deg) scale(1)}55%,82%{opacity:0;transform:rotate(32deg) scale(1.12)}100%{opacity:.9;transform:rotate(-20deg) scale(.86)}}
+      @keyframes fk-startup-reveal{0%,12%,100%{opacity:.18}48%,84%{opacity:1}}
+      @keyframes fk-startup-focus{0%,20%,100%{stroke-dashoffset:28;opacity:0}42%,80%{stroke-dashoffset:0;opacity:1}}
+      @keyframes fk-startup-seal{0%,43%,100%{opacity:0;transform:scale(.8)}55%,82%{opacity:1;transform:scale(1)}}
+      @keyframes fk-startup-tick{0%,48%,100%{stroke-dashoffset:22}61%,82%{stroke-dashoffset:0}}
+      @keyframes fk-startup-orbit{to{transform:rotate(360deg)}}
+      @media(prefers-reduced-motion:reduce){svg.startup-art *{animation:none!important} .fk-startup-back-left{transform:translate(-26px,0) rotate(-11deg);opacity:.6} .fk-startup-back-right{transform:translate(26px,0) rotate(11deg);opacity:.5} .fk-startup-shutter{opacity:0} .fk-startup-landscape, .fk-startup-seal{opacity:1} .fk-startup-focus, .fk-startup-tick{stroke-dashoffset:0}}
+    </style>
+  </defs>
+  <ellipse cx="210" cy="142" rx="193" ry="126" fill="url(#fk-startup-halo)"/>
+  <g stroke="#B3C6AC" stroke-opacity=".09">
+    <circle cx="210" cy="136" r="104" stroke-dasharray="1 9"/>
+    <path d="M43 136h38m258 0h38M210 7v20m0 218v21"/>
+    <path d="M71 113v-7h7m271 7v-7h-7M71 159v7h7m271-7v7h-7"/>
+  </g>
+  <g class="fk-startup-orbit"><path d="M210 32a104 104 0 0 1 90 52" stroke="#B8D69D" stroke-opacity=".28" stroke-linecap="round"/><circle cx="300" cy="84" r="2" fill="#BDD9A6"/></g>
+  <ellipse cx="210" cy="237" rx="73" ry="4" fill="#020806" opacity=".32"/>
+  <g class="fk-startup-back-left"><rect x="139" y="48" width="142" height="177" rx="8" fill="#1C2923" stroke="#6D826B" stroke-opacity=".55"/><path d="M150 62h120v117H150z" fill="#2C3E32"/><path d="m150 159 45-48 35 30 20-13 20 34v17H150z" fill="#4B6350" opacity=".5"/><path d="M152 196h65m-65 8h42" stroke="#7A9074" stroke-opacity=".5" stroke-linecap="round"/></g>
+  <g class="fk-startup-back-right"><rect x="139" y="48" width="142" height="177" rx="8" fill="#1B2923" stroke="#6D826B" stroke-opacity=".5"/><path d="M150 62h120v117H150z" fill="#324439"/><circle cx="235" cy="102" r="18" fill="#849777" opacity=".35"/><path d="m150 162 30-23 27 15 31-28 32 26v27H150z" fill="#5C745C" opacity=".5"/><path d="M152 196h65m-65 8h42" stroke="#7A9074" stroke-opacity=".45" stroke-linecap="round"/></g>
+  <g class="fk-startup-frame">
+    <rect x="136" y="45" width="148" height="179" rx="9" fill="#050B08" fill-opacity=".2"/>
+    <rect x="139" y="43" width="142" height="177" rx="7" fill="url(#fk-startup-paper)"/>
+    <rect x="150" y="63" width="120" height="112" rx="3" fill="#344C40"/>
+    <g class="fk-startup-landscape" clip-path="url(#fk-startup-image)"><path d="M150 63h120v112H150z" fill="#BDCBB4"/><circle cx="237" cy="91" r="15" fill="#EFF0D9"/><path d="m127 155 62-72 36 45 28-17 45 63-158 24z" fill="#839C80"/><path d="m149 173 48-48 34 26 28-33 37 62H149z" fill="url(#fk-startup-land)"/><path d="m210 175 18-25 4 5-12 20" fill="#B7CB9D" opacity=".48"/></g>
+    <g class="fk-startup-shutter" fill="#13271E" fill-opacity=".93" stroke="#9FBA91" stroke-opacity=".65" stroke-width=".7">
+      <circle cx="210" cy="119" r="35" fill="#1A2F24" fill-opacity=".8"/>
+      <path id="fk-startup-blade" d="m210 84 25 16-13 20-21-8z"/><use href="#fk-startup-blade" transform="rotate(60 210 119)"/><use href="#fk-startup-blade" transform="rotate(120 210 119)"/><use href="#fk-startup-blade" transform="rotate(180 210 119)"/><use href="#fk-startup-blade" transform="rotate(240 210 119)"/><use href="#fk-startup-blade" transform="rotate(300 210 119)"/>
+    </g>
+    <path d="M151 191h53m-53 8h32" stroke="#6D8265" stroke-width="2" stroke-linecap="round" opacity=".7"/>
+    <path d="M250 194h9m-4.5-4.5v9" stroke="#6D8265" stroke-width="1.2" stroke-linecap="round"/>
+    <path class="fk-startup-focus" d="M133 77V52a15 15 0 0 1 15-15h16m92 0h16a15 15 0 0 1 15 15v25M133 184v25a15 15 0 0 0 15 15h16m92 0h16a15 15 0 0 0 15-15v-25" stroke="#C5DDA4" stroke-width="1.3" stroke-linecap="round"/>
+    <g class="fk-startup-seal"><circle cx="275" cy="181" r="16" fill="#C5DDA4"/><circle cx="275" cy="181" r="20" stroke="#C5DDA4" stroke-opacity=".18"/><path class="fk-startup-tick" d="m268 181 5 5 9-10" stroke="#24392B" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></g>
+  </g>
+</svg>

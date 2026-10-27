@@ -69,7 +69,7 @@ class OcrFeedbackTests(unittest.TestCase):
                     try:
                         page=browser.new_page(viewport={'width':1440,'height':950});errors=[]
                         page.on('pageerror',lambda error:errors.append(str(error)))
-                        page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='networkidle')
+                        page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading')
                         page.evaluate('(id)=>Framekeep.browsePhoto(id)',self.cids[0]);page.evaluate('()=>FramekeepIO.flush()')
                         pending=[]
                         def hold_save(route):
@@ -130,7 +130,7 @@ class OcrFeedbackTests(unittest.TestCase):
                         self.assertLessEqual(box['y']+box['height'],stars['y'])
                         self.assertEqual(page.locator('#preview-ocr-feedback').evaluate('e=>getComputedStyle(e).opacity'),'0.4')
                         self.assertEqual(page.locator('#asset-ocr-feedback').evaluate('e=>getComputedStyle(e).opacity'),'1')
-                        page.reload(wait_until='networkidle')
+                        page.reload(wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading')
                         self.assertEqual(page.locator('#preview-ocr-position').input_value(),'bottom-left')
                         self.assertEqual(page.locator('#preview-ocr-transparency').input_value(),'60')
                         page.locator('#app-settings-open').click();page.locator('[data-settings-section="preview"]').click()

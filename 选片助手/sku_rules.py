@@ -1,4 +1,4 @@
-"""公司款号规则：确定前后缀自动应用，模糊包含仅推荐。"""
+"""公司款号规则：OCR 款号包含配置文字时，唯一有效命中自动应用。"""
 import json
 import re
 import unicodedata
@@ -6,6 +6,11 @@ import unicodedata
 
 DEFAULT_RULES=[{'kind':'prefix','value':'LC'}]
 DEFAULT_LENGTH_FILTER={'min_exclusive':None,'max_exclusive':None}
+DASHES=str.maketrans({ch:'-' for ch in '‐‑‒–—−'})
+
+
+def normalized_text(value):
+    return unicodedata.normalize('NFKC',str(value)).upper().translate(DASHES).replace('\u200b','').replace('\ufeff','')
 
 
 def validate_length_filter(value):
@@ -30,8 +35,8 @@ def validate_rules(rules):
         if not isinstance(rule,dict) or rule.get('kind') not in ('prefix','suffix','contains'):raise ValueError('无效的款号规则类型')
         value=rule.get('value')
         if not isinstance(value,str):raise ValueError('请填写匹配文字')
-        value=unicodedata.normalize('NFKC',value).strip().upper()
-        if not re.fullmatch(r'[A-Z0-9][A-Z0-9._/-]{0,39}',value):raise ValueError('匹配文字需为 1–40 位字母、数字或 . _ / -，以字母数字开头')
+        value=normalized_text(value).strip()
+        if not re.fullmatch(r'[A-Z0-9._/-]{1,40}',value) or not re.search(r'[A-Z0-9]',value):raise ValueError('匹配文字需为 1–40 位字母、数字或 . _ / -，且至少包含一个字母或数字')
         item={'kind':rule['kind'],'value':value}
         if item not in result:result.append(item)
     return result
@@ -42,21 +47,27 @@ def reading_tokens(readings):
     for reading in readings:
         sources=[reading.get('text',''),*(reading.get('codes') or []),*(reading.get('ocr_candidates') or [])]
         for source in sources:
-            for token in re.findall(r'[A-Z0-9]+(?:[._/-][A-Z0-9]+)*',unicodedata.normalize('NFKC',str(source)).upper()):
+            source=normalized_text(source)
+            # 保留完整款号：OCR 常在连字符或字母数字之间插入横向空白。
+            source=re.sub(r'(?<=[A-Z0-9])[ \t]*(-)[ \t]*(?=[A-Z0-9])',r'\1',source)
+            source=re.sub(r'(?<=[A-Z])[ \t]+(?=\d)','',source)
+            for token in re.findall(r'[A-Z0-9]+(?:[._/-][A-Z0-9]+)*',source):
                 if len(token)<=80 and re.search(r'\d',token) and token not in tokens:tokens.append(token)
     return tokens
 
 
 def match_rules(readings,rules):
-    tokens=reading_tokens(readings);exact=[];suggested=[]
-    for token in tokens:
-        for rule in rules:
-            value=rule['value'];kind=rule['kind']
-            hit=token.startswith(value) if kind=='prefix' else token.endswith(value) if kind=='suffix' else value in token
-            if hit and len(token)>len(value):
-                target=suggested if kind=='contains' else exact
-                if token not in target:target.append(token)
-    return {'exact':exact,'suggested':list(dict.fromkeys(exact+suggested))}
+    def hits(tokens):
+        result=[]
+        for token in tokens:
+            for rule in rules:
+                # 兼容已有三种配置；按用户要求，均采用原文款号中的文字包含匹配。
+                if normalized_text(rule['value']) in token and token not in result:result.append(token)
+        return result
+    # 可见 OCR 原文已经匹配时，模型附带的错误/截短 codes 不应制造人工核对。
+    exact=hits(reading_tokens([{'text':reading.get('text','')} for reading in readings]))
+    if not exact:exact=hits(reading_tokens(readings))
+    return {'exact':exact,'suggested':list(exact)}
 
 
 class SkuRules:
@@ -85,12 +96,12 @@ class SkuRules:
     def apply_sku_rules(self,sid,cid,readings):
         with self.lock:
             config=self.sku_rules();matches=match_rules(readings,config['rules'])
-            if len(matches['exact'])!=1 or not self.archive:return None
-            if not length_allowed(matches['exact'][0],config['length_filter']):return None
+            eligible=[code for code in matches['exact'] if length_allowed(code,config['length_filter'])]
+            if len(eligible)!=1 or not self.archive:return None
             details=self.ocr_details(sid,cid)
             if details['selected_sku'] or details['target_capture_id']!=cid:return None
             with self.archive.connect() as c:
                 # 人工归属优先；自动规则不能覆盖先前编辑。
                 assigned=c.execute('SELECT a.sku FROM assets a JOIN catalog_links l ON l.asset=a.id WHERE l.session=? AND l.capture=?',(sid,cid)).fetchone()
             if assigned and assigned['sku']:return None
-            return self.choose_ocr_sku(sid,cid,matches['exact'][0],details['reading_key'],details['image_key'],automatic=True)
+            return self.choose_ocr_sku(sid,cid,eligible[0],details['reading_key'],details['image_key'],automatic=True)

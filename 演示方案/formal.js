@@ -16,7 +16,7 @@
     }
     return result;
   }
-  let token=null,revision=session.revision,timer=null,conflicted=false,lastSaved=canonical(sharedState(session.saved,session.sharedRatings)),saving=Promise.resolve(),bridgeTimer=null;
+  let token=session.requestToken||null,revision=session.revision,timer=null,conflicted=false,lastSaved=canonical(sharedState(session.saved,session.sharedRatings)),saving=Promise.resolve(),bridgeTimer=null;
   async function api(path,body,timeout=20000,signal=null){
     const finish=window.FramekeepTaskStatus?.begin(path,body);
     try{

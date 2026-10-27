@@ -25,8 +25,10 @@
     <span class="settings-nav-heading">数据与迁移</span>
     <button type="button" data-settings-section="library" aria-controls="settings-library">文件数据库与 API</button>
     <button type="button" data-settings-section="database" aria-controls="settings-database">数据库管理</button>
+    <button type="button" data-settings-section="general" aria-controls="settings-general">启动与关闭</button>
   </nav><div class="app-settings-grid">
   <section id="settings-library" class="app-settings-section" aria-label="文件数据库与 API"></section>
+  <section id="settings-general" class="app-settings-section" aria-labelledby="settings-general-title"><div class="settings-section-heading"><h3 id="settings-general-title">启动与关闭</h3><p>设置关闭窗口后的行为与开机启动方式。</p></div><div class="workspace-card"><h4>关闭行为</h4><div class="workspace-fields"><label for="desktop-close-behavior">点击窗口关闭按钮时<select id="desktop-close-behavior" disabled><option value="ask">每次询问（默认）</option><option value="tray">最小化到托盘</option><option value="exit">退出程序</option></select></label></div><p class="workspace-caption">最小化到托盘后继续处理后台任务，点击托盘图标恢复窗口；托盘菜单可随时退出程序。</p></div><div class="workspace-card"><h4>开机启动</h4><div class="workspace-fields"><label for="desktop-startup-mode">登录 Windows 后<select id="desktop-startup-mode" disabled><option value="disabled">不启动（默认）</option><option value="window">自动启动并显示窗口</option><option value="tray">自动启动并静默到托盘</option></select></label></div><p class="workspace-caption">静默启动不弹出主窗口，后台任务正常运行。手动打开软件时始终显示窗口。</p></div><p id="desktop-preferences-message" class="workspace-caption" role="status">请在 Windows 桌面版中修改启动与关闭设置。</p></section>
   <section id="settings-models" class="app-settings-section" aria-labelledby="settings-models-title"><div class="settings-section-heading"><h3 id="settings-models-title">AI 与模型</h3><p>管理识别能力与模型服务连接。</p></div>
     <div id="full-auto-ocr-card" class="mouse-auto-card"><div class="mouse-auto-heading"><div><span class="mouse-auto-eyebrow">逐图识别与入库</span><h4 id="full-auto-ocr-title">全自动 OCR 模式</h4></div><input id="full-auto-ocr" class="toggle-switch" type="checkbox" role="switch" aria-labelledby="full-auto-ocr-title" aria-describedby="full-auto-ocr-help" disabled></div><p id="full-auto-ocr-help">无需导入文档，打开照片目录即可启用。</p><div class="mouse-auto-footer"><span id="full-auto-ocr-status" role="status">正在读取配置…</span></div></div>
     <div class="workspace-card settings-service-card"><div class="settings-service-copy"><h4>AI 助手配置</h4><p>分别配置 OCR、多模态与文本模型，管理接口、密钥和当前选用的模型。</p><div class="settings-category-tags"><span>OCR</span><span>多模态</span><span>文本</span></div></div><div id="settings-models-action" class="settings-service-action"></div></div>
@@ -58,8 +60,9 @@
   <section id="settings-database" class="app-settings-section" aria-labelledby="settings-database-title"><div class="settings-section-heading"><h3 id="settings-database-title">数据库管理</h3><p>换机时先导入资产归档，再导入 SKU 数据库，自动同步元数据。</p></div>
     <div class="workspace-card sku-metadata-card"><p class="workspace-caption">包含全部款号、分组、已移除记录、OCR 资料、拍摄区间、照片索引、人工星级及拍摄文档，不受搜索和分页影响。原照片与同目录 XMP 文件请一起迁移；照片离线时仍保留款号、星级和元数据。更新星级后自动同步 XMP，JPG 同时写入内嵌评级。</p><div class="asset-actions"><button id="sku-metadata-import" type="button" class="bordered">导入元数据</button><button id="sku-metadata-export" type="button" class="bordered">导出元数据</button><input id="sku-metadata-file" type="file" accept=".json,application/json" hidden></div><p class="workspace-caption">在“资产归档”添加新机器照片目录，再导入备份。系统自动匹配照片，恢复款号、拍摄类型、项目、区间、星级和 OCR 资料，并同步写入照片。盘符和目录可以变化；不可靠匹配、不同人工修改和缺少的照片会列为异常。重复导入不重复添加，可继续同步新增归档。</p><p id="sku-metadata-message" class="workspace-caption" role="status" aria-live="polite"></p><p id="sku-metadata-sync-status" class="workspace-caption" role="status" aria-live="polite"></p><ul id="sku-metadata-sync-issues" class="workspace-caption"></ul></div>
   </section>
-  <section id="settings-sku-rules" class="app-settings-section" aria-labelledby="settings-sku-rules-title"><div class="settings-section-heading"><h3 id="settings-sku-rules-title">款号匹配规则</h3><p>自动识别当前公司的款号，默认使用 LC 前缀。</p></div><div class="workspace-card"><p class="workspace-caption">前缀、后缀唯一命中后直接应用，无需点击款号。模糊包含用于快捷推荐；多个款号命中时保留人工选择。忽略大小写及全半角差异，款号需含数字；已有确认不会被覆盖。</p><div id="sku-rules-list"></div><div class="asset-actions"><button id="sku-rule-add" type="button">添加规则</button><button id="sku-rule-default" type="button">恢复 LC 默认规则</button><button id="sku-rule-save" type="button" class="primary">保存规则</button></div><p id="sku-rule-message" role="status" class="workspace-caption">正在读取规则…</p></div></section></div></div>`;
+  <section id="settings-sku-rules" class="app-settings-section" aria-labelledby="settings-sku-rules-title"><div class="settings-section-heading"><h3 id="settings-sku-rules-title">款号匹配规则</h3><p>自动识别当前公司的款号，默认使用 LC 前缀。</p></div><div class="workspace-card"><p class="workspace-caption">OCR 款号包含配置的前缀、后缀或文字时，唯一有效命中直接应用，无需点击款号；多个不同款号命中时保留人工选择。忽略大小写及全半角差异，款号需含数字；已有确认不会被覆盖。</p><div id="sku-rules-list"></div><div class="asset-actions"><button id="sku-rule-add" type="button">添加规则</button><button id="sku-rule-default" type="button">恢复 LC 默认规则</button><button id="sku-rule-save" type="button" class="primary">保存规则</button></div><p id="sku-rule-message" role="status" class="workspace-caption">正在读取规则…</p></div></section></div></div>`;
   document.querySelector('.workbench > .statusbar').before(settings);
+  window.FramekeepDesktop?.initSettings();
   const lengthSettings=document.createElement('div');lengthSettings.className='sku-length-settings';
   lengthSettings.innerHTML='<h4>推荐款号字符数</h4><p class="workspace-caption">只推荐符合长度的款号。启用后，原文中的含数字编码也参与筛选；不符合的内容仅留在原文，可手动点击应用，也不会通过前后缀自动应用。</p><div class="workspace-fields"><label>字符数大于<input id="sku-length-min" type="number" min="0" max="79" step="1" placeholder="不限"></label><label>字符数小于<input id="sku-length-max" type="number" min="2" max="81" step="1" placeholder="不限"></label></div><p class="workspace-caption">两项同时填写时需同时满足。例：大于 5、小于 12，即 6–11 个字符。去除首尾空白、统一全半角后计数，内部连字符计入；留空表示不限。</p><button id="sku-length-clear" type="button" class="bordered">清除长度限制</button>';
   $('sku-rules-list').before(lengthSettings);
@@ -72,7 +75,7 @@
   }
   function addSkuRule(rule={kind:'prefix',value:''}){
     const row=document.createElement('div');row.className='workspace-fields';
-    row.innerHTML='<label>匹配方式<select aria-label="款号匹配方式"><option value="prefix">前缀 · 自动应用</option><option value="suffix">后缀 · 自动应用</option><option value="contains">模糊包含 · 推荐</option></select></label><label>匹配文字<input aria-label="款号匹配文字" maxlength="40" placeholder="例如 LC、P905"></label><button type="button" class="bordered">删除规则</button>';
+    row.innerHTML='<label>匹配方式<select aria-label="款号匹配方式"><option value="prefix">前缀 · 自动应用</option><option value="suffix">后缀 · 自动应用</option><option value="contains">包含文字 · 自动应用</option></select></label><label>匹配文字<input aria-label="款号匹配文字" maxlength="40" placeholder="例如 LC、P905"></label><button type="button" class="bordered">删除规则</button>';
     row.querySelector('select').value=rule.kind;row.querySelector('input').value=rule.value;
     row.querySelector('button').onclick=()=>{row.remove();$('sku-rule-message').textContent='规则已修改，请保存'};
     row.oninput=()=>{$('sku-rule-message').textContent='规则已修改，请保存'};$('sku-rules-list').append(row);
@@ -81,7 +84,7 @@
   $('sku-rule-default').onclick=()=>{renderSkuRules([{kind:'prefix',value:'LC'}]);$('sku-rule-message').textContent='已恢复默认草稿，请保存'};
   $('sku-rule-save').onclick=async()=>{
     const controls=[...$('settings-sku-rules').querySelectorAll('button,input,select')];controls.forEach(e=>e.disabled=true);
-    try{const rules=[...$('sku-rules-list').children].map(row=>({kind:row.querySelector('select').value,value:row.querySelector('input').value}));const limit=id=>{const input=$(id);if(input.validity.badInput||input.validity.stepMismatch)throw new Error('字符数须为整数');return input.value===''?null:Number(input.value)};const length_filter={min_exclusive:limit('sku-length-min'),max_exclusive:limit('sku-length-max')};const result=await api('/api/sku/rules',{rules,length_filter});renderSkuRules(result.rules);renderLengthFilter(result.length_filter);$('sku-rule-message').textContent='已保存；推荐立即按长度筛选，符合长度的前后缀唯一命中自动应用';try{await refreshOcrRecommendations()}catch(error){$('sku-rule-message').textContent='规则已保存；当前推荐刷新失败，请重新解析或打开 OCR 资料：'+error.message}}
+    try{const rules=[...$('sku-rules-list').children].map(row=>({kind:row.querySelector('select').value,value:row.querySelector('input').value}));const limit=id=>{const input=$(id);if(input.validity.badInput||input.validity.stepMismatch)throw new Error('字符数须为整数');return input.value===''?null:Number(input.value)};const length_filter={min_exclusive:limit('sku-length-min'),max_exclusive:limit('sku-length-max')};const result=await api('/api/sku/rules',{rules,length_filter});renderSkuRules(result.rules);renderLengthFilter(result.length_filter);$('sku-rule-message').textContent='已保存；推荐立即按长度筛选，包含匹配文字的唯一有效款号自动应用';try{await refreshOcrRecommendations()}catch(error){$('sku-rule-message').textContent='规则已保存；当前推荐刷新失败，请重新解析或打开 OCR 资料：'+error.message}}
     catch(error){$('sku-rule-message').textContent='保存失败：'+error.message}
     finally{controls.forEach(e=>e.disabled=false)}
   };
@@ -453,7 +456,7 @@
         if(context===parseContext()&&ocrSnapshot===data){
           ocrSnapshot.selected_sku=result.sku;markOcrCode(result.sku);
           const edited=edit!==skuEditVersion;if(!edited)useOcrCode(result.sku);
-          msg('已应用 SKU '+result.sku+`，整款 ${result.capture_count||1} 张`+(edited?'；保留应用期间手动修改的输入':'，元数据写入已提交，其他 OCR 资料保留供搜索'));
+          msg('已应用 SKU '+result.sku+`，整款 ${result.capture_count||1} 张`+((result.warnings||[]).length?'；'+result.warnings.join('；'):edited?'；保留应用期间手动修改的输入':'，元数据写入已提交，其他 OCR 资料保留供搜索'));
         }
       }finally{ocrApplying=false;buttons.forEach(b=>b.disabled=false);$('asset-ocr-result').removeAttribute('aria-busy');if(context===parseContext()&&ocrSnapshot===data)markOcrCode(data.selected_sku)}
     });
@@ -469,6 +472,7 @@
     parsing=true;readSequence++;paint();msg('正在用已选模型解析当前图的 SKU 款号…');$('asset-ocr-result').hidden=true;
     try{
       const result=await api('/api/sku/parse',{session_id:sid,capture_id:cid},660000);
+      if(result.auto_applied)document.dispatchEvent(new CustomEvent('framekeep:ocr-choice',{detail:result.auto_applied}));
       document.dispatchEvent(new CustomEvent('framekeep:ocr-result',{detail:{session_id:sid,capture_id:cid}}));
       if(context!==parseContext()||result.session_id!==sid||result.capture_id!==cid){msg('图片选择已变化，本次结果未填入，请重新解析');return}
       const snapshot=await api('/api/sku/ocr/details?'+new URLSearchParams({session_id:sid,capture_id:cid}));

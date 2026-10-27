@@ -10,6 +10,38 @@ from asset_catalog import AssetCatalog,archive_path
 
 
 class AssetCatalogTests(unittest.TestCase):
+    def test_media_migration_runs_once_and_only_changes_legacy_classification(self):
+        import sqlite3
+        with tempfile.TemporaryDirectory() as folder:
+            data=Path(folder)/'data';catalog=AssetCatalog(data)
+            with catalog.connect() as c:
+                c.execute("INSERT INTO roots(id,path,created) VALUES ('root','photos',0)")
+                for name,extension,kind,format in (
+                    ('video','.mov','image',''),('design','.psd','image','PSD'),
+                    ('blank','.jpg','image',''),('ready','.jpg','image','JPEG'),
+                ):
+                    c.execute('''INSERT INTO items(id,root,path,relative,folder,name,extension,size,modified,fingerprint,last_seen,media_type,media_format)
+                        VALUES (?,'root',?,?,'',?,?,1,0,'fingerprint',0,?,?)''',
+                        (name,name,name,name,extension,kind,format))
+                c.execute('CREATE TABLE migration_updates(id TEXT)')
+                c.execute('CREATE TRIGGER track_media AFTER UPDATE OF media_type,media_format ON items BEGIN INSERT INTO migration_updates VALUES(new.id); END')
+                c.execute('PRAGMA user_version=1')
+            catalog.close()
+            migrated=AssetCatalog(data)
+            with migrated.connect() as c:
+                rows={r['id']:(r['media_type'],r['media_format']) for r in c.execute('SELECT * FROM items')}
+                self.assertEqual(rows,{'video':('video','MOV'),'design':('design','PSD'),'blank':('image','JPG'),'ready':('image','JPEG')})
+                self.assertEqual({r[0] for r in c.execute('SELECT id FROM migration_updates')},{'video','design','blank'})
+                self.assertEqual(c.execute('PRAGMA user_version').fetchone()[0],2)
+            migrated.close()
+            statements=[];connect=sqlite3.connect
+            def traced(*args,**kwargs):
+                connection=connect(*args,**kwargs);connection.set_trace_callback(statements.append);return connection
+            with patch('asset_catalog.sqlite3.connect',side_effect=traced):
+                reopened=AssetCatalog(data)
+                reopened.close()
+            self.assertFalse(any(sql.lstrip().upper().startswith('UPDATE ITEMS SET MEDIA_') for sql in statements),'重启不能重新全表分类')
+
     def test_raw_direction_is_read_once_per_file_version_for_both_preview_sizes(self):
         import io
         import media_engine as media

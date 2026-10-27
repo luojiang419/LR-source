@@ -109,7 +109,7 @@ class MouseAutoBrowserTests(unittest.TestCase):
                     try:
                         page = browser.new_page(viewport={'width':1680,'height':1050});errors = []
                         page.on('pageerror', lambda e:errors.append(str(e)))
-                        url = f'http://127.0.0.1:{http.server_port}';page.goto(url, wait_until='networkidle')
+                        url = f'http://127.0.0.1:{http.server_port}';page.goto(url, wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading')
                         self.assertIsNone(remote.bridge)
                         page.locator('#app-settings-open').click();page.locator('[data-settings-section=remote]').click()
                         switch = page.get_by_role('switch', name='全自动切换');switch.click()
@@ -135,7 +135,7 @@ class MouseAutoBrowserTests(unittest.TestCase):
                         # 模拟真实进程重启：重新读取磁盘设置，再由新浏览器窗口自动建立新会话。
                         page.close();remote.close();transport = FakeTransport();remote = remote_for(transport, path);server.MOUSE = remote
                         page = browser.new_page();page.on('pageerror', lambda e:errors.append(str(e)))
-                        page.goto(url, wait_until='domcontentloaded')
+                        page.goto(url, wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading')
                         page.wait_for_function('()=>document.getElementById("mouse-remote").getAttribute("aria-pressed")==="true"')
                         self.assertTrue(remote.state()['active'])
                         transport.feed(1,2);page.wait_for_function('()=>document.querySelectorAll("#stars .on").length===2')
@@ -148,7 +148,7 @@ class MouseAutoBrowserTests(unittest.TestCase):
                         switch.click();page.wait_for_function('()=>document.getElementById("mouse-remote").getAttribute("aria-pressed")==="true"')
                         switch.click();page.wait_for_function('()=>document.getElementById("mouse-remote").getAttribute("aria-pressed")==="false"')
                         self.assertEqual(transport.filters[-1],0)
-                        page.reload(wait_until='networkidle');self.assertFalse(remote.state()['active'])
+                        page.reload(wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading');self.assertFalse(remote.state()['active'])
                         self.assertFalse(errors, errors)
                     finally:browser.close()
             finally:

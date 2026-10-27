@@ -49,4 +49,13 @@ class ReleaseComponentTests(unittest.TestCase):
         api.upload_file.assert_called_once();remote.assert_called_once_with(self.url)
 
 
+    def test_package_build_rejects_stale_engine_before_creating_output(self):
+        output=self.root/'package'
+        with patch('build_release.validate_release',side_effect=RuntimeError('旧元数据引擎')) as validate:
+            with self.assertRaisesRegex(RuntimeError,'旧元数据引擎'):
+                release.build(output=output)
+        validate.assert_called_once_with(self.root/'build/tauri-release/末帧选片')
+        self.assertFalse(output.exists())
+
+
 if __name__=='__main__':unittest.main()

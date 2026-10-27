@@ -32,22 +32,22 @@ class ArchiveLocationsBrowserTests(unittest.TestCase):
                     browser=pw.chromium.launch(executable_path='C:/Program Files/Google/Chrome/Application/chrome.exe',headless=True)
                     try:
                         page=browser.new_page(viewport={'width':1440,'height':900},reduced_motion='reduce');errors=[];page.on('pageerror',lambda error:errors.append(str(error)))
-                        page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='networkidle');page.locator('#asset-archive-open').click()
+                        page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading');page.locator('#asset-archive-open').click()
                         page.locator('#catalog-add-root').click();page.locator('#catalog-location-path').fill(str(photos));page.locator('#catalog-location-submit').click()
                         page.wait_for_selector('#catalog-grid .catalog-card');self.assertFalse(page.locator('#catalog-location-dialog').evaluate('e=>e.open'))
                         button=page.locator('.catalog-drive-button').first;self.assertEqual(button.evaluate('e=>e.tagName'),'BUTTON');self.assertIn(':',button.inner_text())
                         button.press('Enter');self.assertEqual(button.get_attribute('aria-expanded'),'false');self.assertTrue(page.locator('.catalog-drive-folders').first.is_hidden())
                         button.press('Space');self.assertEqual(button.get_attribute('aria-expanded'),'true')
-                        page.locator('.catalog-root>summary').first.click();page.wait_for_load_state('networkidle');self.assertFalse(page.locator('.catalog-root').first.evaluate('e=>e.open'))
-                        page.locator('#catalog-search').fill('nothing');page.wait_for_load_state('networkidle');self.assertFalse(page.locator('.catalog-root').first.evaluate('e=>e.open'))
-                        page.locator('#catalog-search').fill('');page.locator('.catalog-root>summary').first.click();page.wait_for_load_state('networkidle')
+                        page.locator('.catalog-root>summary').first.click();self.assertFalse(page.locator('.catalog-root').first.evaluate('e=>e.open'))
+                        page.locator('#catalog-search').fill('nothing');page.wait_for_function('()=>document.querySelectorAll("#catalog-grid .catalog-card").length===0')
+                        page.locator('#catalog-search').fill('');page.wait_for_selector('.catalog-root>summary');page.wait_for_function('()=>document.querySelectorAll("#catalog-grid .catalog-card").length>0');self.assertFalse(page.locator('.catalog-root').first.evaluate('e=>e.open'));page.locator('.catalog-root>summary').first.click()
                         self.assertTrue(page.locator('[data-folder="v1.2"]').is_visible());self.assertEqual(page.locator('[data-folder="v1.2/child"]').count(),1)
                         long_name='用于检查长路径完整显示的文件夹名称'*3
                         roots=catalog.tree()['roots']+[
                             {'id':'mapped','path':'x:\\'+long_name,'folders':[{'folder':long_name+'/child','count':2}]},
                             {'id':'ip','path':r'\\192.168.0.181\新摄影\照片','folders':[{'folder':'nested/child','count':2}]},
                             {'id':'extended','path':r'\\?\UNC\192.168.0.181\新摄影\更多','folders':[]}]
-                        page.route('**/api/catalog/tree',lambda route:route.fulfill(json={'roots':roots}))
+                        page.route('**/api/catalog/tree*',lambda route:route.fulfill(json={'roots':roots}))
                         page.locator('#selection-tab').click();page.locator('#asset-archive-open').click();page.wait_for_function('()=>document.querySelectorAll(".catalog-drive-button").length===3')
                         labels=page.locator('.catalog-drive-button span').all_text_contents()
                         self.assertIn('X:',labels);self.assertIn(r'\\192.168.0.181\新摄影',labels);self.assertNotIn('其他位置',labels)

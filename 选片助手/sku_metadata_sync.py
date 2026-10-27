@@ -242,10 +242,10 @@ class MetadataArchiveSync:
         if self.thread.is_alive():self.thread.join(timeout=3)
 
 
-def attach(sku,catalog,rawlink):
+def attach(sku,catalog,rawlink,*,autostart=True):
     if not catalog or not rawlink:return None
     with sku.lock:
-        if not getattr(sku,'metadata_sync',None):sku.metadata_sync=MetadataArchiveSync(sku,catalog,rawlink)
+        if not getattr(sku,'metadata_sync',None):sku.metadata_sync=MetadataArchiveSync(sku,catalog,rawlink,autostart=autostart)
     return sku.metadata_sync
 
 

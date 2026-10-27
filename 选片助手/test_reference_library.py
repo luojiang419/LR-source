@@ -172,7 +172,8 @@ class ReferenceTests(unittest.TestCase):
         self.assertEqual(self.library._root(self.root)['count'], 2)
         self.assertEqual(self.library.items(self.root)['total'], 1)
         self.assertEqual(self.library.folders(self.root)['folders'][0]['folder'], 'sub')
-        with patch('media_engine.find_exiftool', side_effect=AssertionError('配对 JPG 无需 RAW 工具')):
+        # 当前策略先尝试 RAW 内嵌 JPEG；不可用时回退配对 JPG，仍禁止解包 RAW 像素。
+        with patch('media_engine.find_exiftool',return_value=None),patch('media_engine.raw_embedded_metadata',return_value=(1,None)),patch('media_engine._raw_preview',side_effect=AssertionError('配对预览不得 RAW 解包')):
             raw = self.library.preview(self.root, 'one.JPG', 240)
         with Image.open(io.BytesIO(raw)) as image:
             self.assertEqual(image.size, (240, 150))
@@ -403,8 +404,9 @@ class ReferenceTests(unittest.TestCase):
             self.assertTrue(response.read().startswith(b'\xff\xd8'))
             self.assertEqual(response.headers.get_content_type(),'image/jpeg')
         with request('preview?'+urlencode({'root':self.root,'file':'one.JPG'}),accept='image/webp,image/jpeg') as response:
-            self.assertEqual(response.headers.get_content_type(),'image/webp')
-            self.assertTrue(response.read().startswith(b'RIFF'))
+            # JPEG 默认预览不会因浏览器同时接受 WebP 而重新编码。
+            self.assertEqual(response.headers.get_content_type(),'image/jpeg')
+            self.assertTrue(response.read().startswith(b'\xff\xd8'))
         for route, token, method, status in [('roots', 'bad', 'GET', 401), ('config', key['api_key'], 'GET', 404), ('roots', key['api_key'], 'POST', 405)]:
             with self.assertRaises(HTTPError) as error:
                 request(route, token, method)

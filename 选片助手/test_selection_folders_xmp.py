@@ -113,7 +113,7 @@ class SelectionFoldersXmpTests(unittest.TestCase):
                 browser=pw.chromium.launch(executable_path='C:/Program Files/Google/Chrome/Application/chrome.exe',headless=True)
                 try:
                     page=browser.new_page(viewport={'width':1680,'height':1000});errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
-                    page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='networkidle')
+                    page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading')
                     toggle=page.locator('#selection-folders-toggle');self.assertEqual(toggle.get_attribute('aria-expanded'),'false')
                     toggle.click();page.wait_for_function('()=>document.querySelectorAll("#selection-folder-tree details").length===3')
                     self.assertEqual(page.locator('#selection-folder-tree .catalog-drive-folders > details').count(),1)
@@ -137,7 +137,7 @@ class SelectionFoldersXmpTests(unittest.TestCase):
                             self.assertFalse(page.evaluate('()=>document.documentElement.scrollWidth>innerWidth'),(theme,width))
                         page.set_viewport_size({'width':1680,'height':1000});page.screenshot(path=str(out/(theme+'.png')))
                     toggle.click();self.assertFalse(page.locator('#selection-folders').is_visible())
-                    page.reload(wait_until='networkidle');self.assertEqual(toggle.get_attribute('aria-expanded'),'false')
+                    page.reload(wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading');self.assertEqual(toggle.get_attribute('aria-expanded'),'false')
                     self.assertEqual(page.evaluate('()=>Framekeep.getSnapshot().count'),1)
                     self.assertFalse(errors,errors)
                 finally:browser.close()

@@ -32,7 +32,7 @@ class LiveLayoutBrowserTests(unittest.TestCase):
                     browser=pw.chromium.launch(executable_path='C:/Program Files/Google/Chrome/Application/chrome.exe',headless=True)
                     try:
                         page=browser.new_page(viewport={'width':1680,'height':1050});errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
-                        page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='networkidle')
+                        page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading')
                         page.locator('#folder-watch').click();page.locator('#watch-path').fill(str(photos));page.locator('#watch-start').click();page.wait_for_function('()=>window.FramekeepLayout?.isMonitoring()')
                         self.assertTrue(page.locator('#sku-asset-panel').evaluate('(el)=>el.open&&el.previousElementSibling.classList.contains("rating-section")'))
                         self.assertEqual(page.locator('.film-panel,#filmstrip,#layout-film').count(),0);self.assertFalse(page.locator('#selection-tools').evaluate('(e)=>e.open'))
@@ -87,7 +87,7 @@ class LiveLayoutBrowserTests(unittest.TestCase):
                         self.assertEqual(page.locator('#photo-position').inner_text(),'2 / 4')
                         page.keyboard.press('ArrowDown');current('001.JPG');page.keyboard.press('ArrowLeft');current('004.JPG')
                         page.keyboard.press('0');page.locator('#sort').select_option('time-desc')
-                        page.evaluate('()=>FramekeepIO.flush()');page.reload(wait_until='domcontentloaded')
+                        page.evaluate('()=>FramekeepIO.flush()');page.reload(wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading')
                         page.wait_for_function('()=>FramekeepLayout.isMonitoring()');current('004.JPG')
                         self.assertEqual(page.locator('#sort').input_value(),'time-desc');order(['004.JPG','002.JPG','001.JPG','003.JPG'])
                         page.locator('#sort').select_option('time-asc');order(['001.JPG','002.JPG','004.JPG','003.JPG'])
@@ -105,7 +105,7 @@ class LiveLayoutBrowserTests(unittest.TestCase):
                         self.assertEqual(page.locator('.watch-thumb.active').inner_text(),'')
                         self.assertEqual(page.locator('.watch-thumb span:not(.watch-thumb-rating):not(.watch-sku-label),.watch-thumb small').count(),0)
                         page.locator('#view-open').hover();self.assertEqual(page.locator('#view-options #layout-film').count(),0)
-                        page.reload(wait_until='domcontentloaded');page.wait_for_function('()=>FramekeepLayout.isMonitoring()');self.assertEqual(page.locator('.film-panel,#filmstrip,#layout-film').count(),0)
+                        page.reload(wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading');page.wait_for_function('()=>FramekeepLayout.isMonitoring()');self.assertEqual(page.locator('.film-panel,#filmstrip,#layout-film').count(),0)
                         out=ROOT/'build/layout-acceptance';out.mkdir(exist_ok=True);page.screenshot(path=str(out/'live-layout-browser.png'));self.assertFalse(errors,errors)
                     finally:browser.close()
             finally:

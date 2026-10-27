@@ -33,9 +33,9 @@ class TaskLightsBrowserTests(TaskStatusFixture):
                 try:
                     page=browser.new_page(viewport={'width':1600,'height':1000});errors=[]
                     page.on('pageerror',lambda error:errors.append(str(error)))
-                    page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='domcontentloaded')
+                    page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading')
                     page.wait_for_function("()=>document.querySelectorAll('.workspace-task-light[data-state=idle]').length===6")
-                    self.assertEqual(page.locator('.workspace-bottom-bar [role=tab]').count(),6)
+                    self.assertEqual(page.locator('.workspace-bottom-bar [role=tab]').count(),7)
                     # GET 轮询以及鼠标输入轮询不应伪造工作状态。
                     page.evaluate("async()=>{await Promise.all([FramekeepIO.api('/api/sku'),FramekeepIO.api('/api/analysis')]);const end=FramekeepTaskStatus.begin('/api/mouse/poll',{});end()}")
                     self.assertEqual(page.locator('.workspace-task-light[data-state=busy]').count(),0)
@@ -53,7 +53,7 @@ class TaskLightsBrowserTests(TaskStatusFixture):
                         page.evaluate('(theme)=>FramekeepTheme.set(theme)',theme)
                         for width,height in ((1600,1000),(1000,680),(375,812),(320,568)):
                             page.set_viewport_size({'width':width,'height':height})
-                            geometry=page.locator('.workspace-bottom-bar').evaluate('''bar=>({bottom:bar.getBoundingClientRect().bottom,overflow:document.documentElement.scrollWidth>innerWidth,lamps:[...bar.querySelectorAll('[role=tab]')].map(tab=>{const lamp=tab.querySelector('.workspace-task-light'),r=lamp.getBoundingClientRect(),t=tab.getBoundingClientRect(),s=getComputedStyle(lamp);return {inside:r.left>=t.left&&r.right<=t.right&&r.top>=t.top&&r.bottom<=t.bottom,size:r.width,animation:s.animationName,duration:s.animationDuration,color:s.backgroundColor,description:!!document.getElementById(tab.getAttribute('aria-describedby'))}})})''')
+                            geometry=page.locator('.workspace-bottom-bar').evaluate('''bar=>({bottom:bar.getBoundingClientRect().bottom,overflow:document.documentElement.scrollWidth>innerWidth,lamps:[...bar.querySelectorAll('[role=tab]')].filter(tab=>tab.querySelector('.workspace-task-light')).map(tab=>{const lamp=tab.querySelector('.workspace-task-light'),r=lamp.getBoundingClientRect(),t=tab.getBoundingClientRect(),s=getComputedStyle(lamp);return {inside:r.left>=t.left&&r.right<=t.right&&r.top>=t.top&&r.bottom<=t.bottom,size:r.width,animation:s.animationName,duration:s.animationDuration,color:s.backgroundColor,description:!!document.getElementById(tab.getAttribute('aria-describedby'))}})})''')
                             self.assertAlmostEqual(geometry['bottom'],height,delta=1)
                             self.assertFalse(geometry['overflow'])
                             self.assertTrue(all(lamp['inside'] and lamp['size']==6 and lamp['description'] and lamp['animation']=='workspace-task-breathe' for lamp in geometry['lamps']),geometry)

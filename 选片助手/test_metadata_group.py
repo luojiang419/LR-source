@@ -89,7 +89,7 @@ class MetadataGroupTests(unittest.TestCase):
                     browser=pw.chromium.launch(executable_path='C:/Program Files/Google/Chrome/Application/chrome.exe',headless=True)
                     try:
                         page=browser.new_page(viewport={'width':1440,'height':1000},reduced_motion='reduce');errors=[];page.on('pageerror',lambda error:errors.append(str(error)))
-                        page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='networkidle')
+                        page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading')
                         page.locator('[data-watch-photo="'+f.ids[0]+'"]').click();page.locator('.asset-panel').evaluate('(el)=>el.open=true')
                         page.wait_for_function('(code)=>document.getElementById("asset-sku").value===code',arg=CODE)
                         page.locator('#asset-preview').click();page.wait_for_selector('#asset-preview-dialog[open]')

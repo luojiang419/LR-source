@@ -11,6 +11,7 @@ import zipfile
 
 ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT/'更新系统'))
+sys.path.insert(0,str(ROOT/'选片助手'))
 from updater import read_json,write_json,sha256,safe_path,verify_envelope,TRUST,version
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
@@ -28,6 +29,8 @@ def prepare():
 
 def build(notes=None, output=None, *, local_key=None):
     release=ROOT/'build/tauri-release/末帧选片'
+    from build_release import validate_release
+    validate_release(release)
     config=read_json(release/'update-config.json')
     output=Path(output) if output else ROOT/'build/updates'/f"{config['version']}-{config['releaseId']}"
     output.mkdir(parents=True,exist_ok=False)

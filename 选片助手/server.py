@@ -60,6 +60,8 @@ from catalog_store import Store,now,stable_json
 from asset_archive import AssetArchive
 from asset_catalog import AssetCatalog
 from asset_analysis import AssetAnalysis
+from asset_intelligence import AssetIntelligence
+from lan_workspace import LanWorkspace
 from vision_scheduler import VisionScheduler
 from raw_reconcile import RawReconcile
 from archive_pipeline import ArchivePipeline
@@ -72,6 +74,7 @@ from canon_link import CanonLink
 from reference_library import ReferenceLibrary
 import reference_api
 import session_browser
+from legacy_recovery_cleanup import LegacyRecoveryCleanup,configured_roots
 from preview_codec import image_mime
 
 ROOT=Path(os.environ['FRAMEKEEP_APP_ROOT']) if os.environ.get('FRAMEKEEP_APP_ROOT') else (Path(sys.executable).parent if getattr(sys,'frozen',False) else Path(__file__).resolve().parents[1])
@@ -95,6 +98,8 @@ MODELS=None
 SKU=None
 ARCHIVE=None
 ANALYSIS=None
+INTELLIGENCE=None
+LANWORKSPACE=None
 RAWLINK=None
 FILESEARCH=None
 UPDATES=None
@@ -105,6 +110,7 @@ PREVIEWS=None
 STORAGE=None
 CANON=None
 REFERENCES=None
+BOOT_TASKS=None
 
 
 def preparation_groups(path, body):
@@ -121,11 +127,8 @@ def ui_photos(sid=None,records=None):
     session=STORE.session(sid)
     if not session:return []
     result=[]
-    bounded=records is not None
     records=STORE.records(session['id']) if records is None else records
-    if PREVIEWS:
-        if bounded:PREVIEWS.enqueue(session['root'],records)
-        else:PREVIEWS.ensure_session(session,records)
+    if PREVIEWS:PREVIEWS.request(session['root'],records)
     for record in records:
         r=dict(record);r['preview']=f"/api/preview/{session['id']}/{r['id']}?size=480";r['previewLarge']=f"/api/preview/{session['id']}/{r['id']}?size=2048"
         if r.get('raw'):r['previewRaw']=r['previewLarge']
@@ -142,6 +145,15 @@ def browse_state(sid=None,query=None):
         session,records=session_browser.read(STORE,session['id'],query,ARCHIVE)
         return session,ui_photos(session['id'],records=records)
     return rated_session(session['id']),ui_photos(session['id'])
+
+
+def bootstrap_state():
+    session,rows=browse_state()
+    data={'id':session['id'],'name':session['name'],'root':session['root'],'snapshot':session['snapshot'],
+          'revision':session['revision'],'saved':session['state'],'sharedRatings':session.get('sharedRatings',{}),
+          'browser':session.get('browser'),'demo':False,'requestToken':TOKEN} if session else {
+          'id':None,'name':'未打开文件夹','root':'','snapshot':'','revision':0,'saved':{},'demo':False,'requestToken':TOKEN}
+    return {'session':data,'photos':rows,'request_token':TOKEN}
 
 def shooting_export_name(name):
     if __import__('re').fullmatch(r'\d{4}-\d{2}-\d{2}\.xlsx',str(name)):return Path(name).name
@@ -206,6 +218,9 @@ class Handler(SimpleHTTPRequestHandler):
         if not self.trusted():return self.reply({'error':'本机 Host 不匹配'},403)
         url=urlsplit(self.path);path=unquote(url.path)
         try:
+            # 桌面启动握手只证明本进程已提供服务，不读取数据库或等待业务锁。
+            if path=='/api/ready':return self.reply({'application':'framekeep','process_id':os.getpid(),'ready':True})
+            if path=='/api/bootstrap':return self.reply(bootstrap_state())
             if path.startswith('/api/reference/'):
                 query={key:values[0] for key,values in parse_qs(url.query,max_num_fields=16).items()}
                 result=reference_api.local_get(REFERENCES,path.removeprefix('/api/reference/'),query)
@@ -223,8 +238,8 @@ class Handler(SimpleHTTPRequestHandler):
                                 busy=busy or bool(c.execute(f"SELECT 1 FROM {table} WHERE status IN ('queued','running') LIMIT 1").fetchone())
                 return self.reply({'busy':busy or bool(STORAGE and STORAGE.job.get('status')=='running') or bool(REFERENCES and REFERENCES.storage.job.get('status')=='running')})
             if path=='/assets/demo-data.js':
-                session,rows=browse_state();data={'id':session['id'],'name':session['name'],'root':session['root'],'snapshot':session['snapshot'],'revision':session['revision'],'saved':session['state'],'sharedRatings':session.get('sharedRatings',{}),'browser':session.get('browser'),'demo':False} if session else {'id':None,'name':'未打开文件夹','root':'','snapshot':'','revision':0,'saved':{},'demo':False}
-                js='window.FRAMEKEEP_SESSION='+stable_json(data)+';window.DEMO_PHOTOS='+stable_json(rows)+';'
+                boot=bootstrap_state()
+                js='window.FRAMEKEEP_SESSION='+stable_json(boot['session'])+';window.DEMO_PHOTOS='+stable_json(boot['photos'])+';'
                 return self.reply(js.encode(),kind='text/javascript; charset=utf-8')
             if path=='/api/state':
                 params={key:values[0] for key,values in parse_qs(url.query,keep_blank_values=True).items()};sid=params.get('session_id');session,rows=browse_state(sid,params)
@@ -304,6 +319,18 @@ class Handler(SimpleHTTPRequestHandler):
             if path.startswith('/api/assets/'):
                 return self.reply(ARCHIVE.asset(path.rsplit('/',1)[-1]))
             if path=='/api/archive/streams':return self.reply(ARCHIVE.stream_state())
+            if path=='/api/lan-workspace':return self.reply(LANWORKSPACE.state() if LANWORKSPACE else {'enabled':False,'port':8780,'addresses':[],'error':'局域网工作台未启动'})
+            if path.startswith('/api/intelligence/'):
+                if INTELLIGENCE is None:return self.reply({'error':'多维检索服务未启动'},503)
+                q=parse_qs(url.query)
+                try:
+                    if path=='/api/intelligence/state':return self.reply({**INTELLIGENCE.state(),'request_token':TOKEN})
+                    if path=='/api/intelligence/item':
+                        item=CATALOG.item(q.get('item',[''])[0]);CATALOG._root(item['root']);item['preview']='/api/catalog/preview/'+item['id'];return self.reply(item)
+                    if path=='/api/intelligence/facets':return self.reply(INTELLIGENCE.facets(q.get('key',[''])[0]))
+                    if path=='/api/intelligence/details':return self.reply(INTELLIGENCE.details(q.get('item',[''])[0]))
+                    if path=='/api/intelligence/search':return self.reply(INTELLIGENCE.search(text=q.get('q',[''])[0],facets=json.loads(q.get('facets',['{}'])[0]),root=q.get('root',[''])[0],media=q.get('media',[''])[0],cursor=q.get('cursor',[''])[0],limit=q.get('limit',[60])[0]))
+                except (ValueError,TypeError) as exc:return self.reply({'error':str(exc)},400)
             if path=='/api/analysis':return self.reply(ANALYSIS.state())
             if path=='/api/parsing':return self.reply(parsing_state())
             if path=='/api/sku/library/labels':
@@ -431,9 +458,26 @@ class Handler(SimpleHTTPRequestHandler):
         elif self.headers.get('X-Framekeep-Token')!=TOKEN or self.headers.get('Origin',f'http://127.0.0.1:{self.server.server_port}')!=f'http://127.0.0.1:{self.server.server_port}':return self.reply({'error':'请从本机工作台发起操作'},403)
         try:
             length=int(self.headers.get('Content-Length','0'))
-            maximum=280_000_000 if path=='/api/sku/metadata/import' else 30_000_000 if path=='/api/sku/import' else 16_000_000
-            if not 0<length<=maximum:return self.reply({'error':'请求过大或为空'},400)
+            if path=='/api/intelligence/reference':
+                from reference_upload import receive
+                return self.reply(receive(self.rfile,length,self.headers.get('X-Reference-Name',''),ROOT))
+            maximum=None if path=='/api/intelligence/image' else 280_000_000 if path=='/api/sku/metadata/import' else 30_000_000 if path=='/api/sku/import' else 16_000_000
+            if length<=0 or maximum is not None and length>maximum:return self.reply({'error':'请求过大或为空'},400)
             body=json.loads(self.rfile.read(length))
+            if path=='/api/boot/complete':
+                if BOOT_TASKS:BOOT_TASKS.release()
+                return self.reply({'ok':True})
+            if path=='/api/lan-workspace':
+                if LANWORKSPACE is None:raise ValueError('局域网工作台未启动')
+                return self.reply(LANWORKSPACE.configure(body))
+            if path.startswith('/api/intelligence/'):
+                if INTELLIGENCE is None:raise ValueError('多维检索服务未启动')
+                if path=='/api/intelligence/config':return self.reply(INTELLIGENCE.configure(body))
+                if path=='/api/intelligence/backup':return self.reply(INTELLIGENCE.backup())
+                if path=='/api/intelligence/enqueue':return self.reply(INTELLIGENCE.enqueue(body.get('item_ids'),body.get('root',''),body.get('force',False)))
+                if path=='/api/intelligence/control':return self.reply(INTELLIGENCE.control(body['action'],body.get('job_id','')))
+                if path=='/api/intelligence/image':return self.reply(INTELLIGENCE.image_search(body))
+                if path=='/api/intelligence/group':return self.reply(INTELLIGENCE.confirm_group(body['id'],body['signature'],reject=body.get('reject',False),sku=body.get('sku','')))
             if path=='/api/reference/task':
                 if REFERENCES is None:raise ValueError('参考资源服务未启动')
                 project=SKU.project() if SKU else None
@@ -685,7 +729,11 @@ class Handler(SimpleHTTPRequestHandler):
             return self.reply({'error':'未知接口'},404)
         except (BrokenPipeError,ConnectionResetError,ConnectionAbortedError):return
         except (ValueError,KeyError) as e:return self.reply({'error':str(e)[:500]},409 if '其他窗口' in str(e) else 400)
-        except Exception:return self.reply({'error':'本机操作失败，已有会话保持不变'},500)
+        except Exception as exc:
+            from operation_errors import record_error
+            identity=record_error(DATA,path,exc)
+            message='SKU 应用未完成，详细错误已记录，请重试' if path=='/api/sku/ocr/choose' else '本机操作未完成，请重试'
+            return self.reply({'error':message+'（错误编号 '+identity+'）','error_id':identity},500)
 
 def watch_desktop_parent(http):
     """桌面主程序异常结束时也退出引擎，避免留下无窗口后台。"""
@@ -705,7 +753,13 @@ def watch_desktop_parent(http):
     threading.Thread(target=watch,daemon=True).start()
 
 def main():
-    global STORE,MOUSE,WATCH,MODELS,SKU,ARCHIVE,ANALYSIS,RAWLINK,FILESEARCH,UPDATES,CATALOG,COMPONENTS,DRIVER,PREVIEWS,CANON,STORAGE,REFERENCES
+    from startup_status import StartupProgress
+    with StartupProgress(DATA) as startup:_run_server(startup)
+
+
+def _run_server(startup):
+    global STORE,MOUSE,WATCH,MODELS,SKU,ARCHIVE,ANALYSIS,INTELLIGENCE,LANWORKSPACE,RAWLINK,FILESEARCH,UPDATES,CATALOG,COMPONENTS,DRIVER,PREVIEWS,CANON,STORAGE,REFERENCES,BOOT_TASKS
+    startup_checkpoint=startup.checkpoint
     parser=argparse.ArgumentParser();parser.add_argument('--port',type=int,default=8769);parser.add_argument('--folder');parser.add_argument('--browser',action='store_true');parser.add_argument('--no-browser',action='store_true');parser.add_argument('--install-bridge',action='store_true');args=parser.parse_args()
     if args.install_bridge:
         from install_bridge import install
@@ -721,53 +775,68 @@ def main():
     server.daemon_threads=True
     import gpu_media,gpu_video
     from video_preview import find_tool
-    gpu_media.warmup()
-    if find_tool('ffmpeg'):gpu_video.warmup(find_tool('ffmpeg'))
     STORE=Store(DATA,ROOT)
     CATALOG=AssetCatalog(DATA)
+    startup_checkpoint('catalog ready')
     STORAGE=CacheStorage(DATA,STORE,CATALOG)
     PREVIEWS=PreviewWarmer(cache_for(DATA/'previews'),lambda:media.find_exiftool(ROOT),catalog=CATALOG,autostart=False)
+    startup_checkpoint('preview queue ready')
     STORE.on_previews=PREVIEWS.enqueue
     CATALOG.on_previews=PREVIEWS.enqueue
     MOUSE=MouseRemote(settings_path=DATA/'mouse-remote.json')
-    WATCH=FolderWatch(STORE)
+    WATCH=FolderWatch(STORE,autostart=False)
     MODELS=Providers(DATA,legacy=assistant_config.load_config)
     COMPONENTS=ComponentManager(DATA,seeds=[ROOT/'runtime/components',ROOT/'.runtime/component-seed',ROOT/'.runtime',ROOT.parent.parent/'.runtime'])
     DRIVER=DriverSetup(COMPONENTS,DATA,activator=MOUSE.activate_driver)
     local_inference.configure(ROOT,DATA,COMPONENTS)
-    if MODELS.public().get('builtin_enabled'):local_inference.preload(MODELS.selected('ocr'))
     scheduler=VisionScheduler()
     ARCHIVE=AssetArchive(STORE,autostart=False)
-    CATALOG.metadata.start()
     # 后台归档可能长时间持锁读取照片，须先完成共享评级初始化。
     for session in STORE.sessions():ARCHIVE.ratings.seed_session(session['id'])
+    startup_checkpoint('ratings ready')
     FILESEARCH=EverythingSearch(ARCHIVE)
     STORE.discovery=FILESEARCH
     CATALOG.discovery=FILESEARCH
-    REFERENCES=ReferenceLibrary(DATA,FILESEARCH,PREVIEWS,catalog=CATALOG)
-    PREVIEWS.reconcile_archive()
-    SKU=SkuService(STORE,MODELS,archive=ARCHIVE,scheduler=scheduler,require_sku_choice=True)
+    REFERENCES=ReferenceLibrary(DATA,FILESEARCH,PREVIEWS,catalog=CATALOG,autostart=False)
+    startup_checkpoint('reference library ready')
+    SKU=SkuService(STORE,MODELS,archive=ARCHIVE,scheduler=scheduler,require_sku_choice=True,autostart=False)
     ARCHIVE.sku=SKU
-    ANALYSIS=AssetAnalysis(ARCHIVE,MODELS,scheduler)
-    RAWLINK=RawReconcile(ARCHIVE)
+    ANALYSIS=AssetAnalysis(ARCHIVE,MODELS,scheduler,autostart=False)
+    INTELLIGENCE=AssetIntelligence(CATALOG,MODELS,SKU,autostart=False)
+    LANWORKSPACE=LanWorkspace(CATALOG,SKU,INTELLIGENCE,WEB,
+                              require_access_code=getattr(sys,'frozen',False) or os.environ.get('FRAMEKEEP_DEV_WEB_NO_CODE')!='1')
+    RAWLINK=RawReconcile(ARCHIVE,autostart=False)
     UPDATES=UpdateClient(ROOT,DATA,args.port)
     def catalog_changed(sid):
         ARCHIVE.ratings.seed_session(sid)
         RAWLINK.request(sid,discover=True);ANALYSIS.request_auto(sid);PIPELINE.changed(sid)
     PIPELINE=ArchivePipeline(CATALOG,ARCHIVE,SKU,RAWLINK,autostart=False)
     from sku_metadata_sync import attach
-    attach(SKU,CATALOG,RAWLINK)
+    metadata_sync=attach(SKU,CATALOG,RAWLINK,autostart=False)
     STORE.on_catalog=catalog_changed
     STORE.on_external_metadata=ARCHIVE.ratings.observe_sidecars
-    ARCHIVE.thread.start()
-    ARCHIVE.ratings.sync.thread.start()
-    PIPELINE.thread.start()
     CANON=CanonLink(STORE,WATCH,os.environ.get('FRAMEKEEP_DESKTOP_EXE',str(ROOT/'末帧选片.exe')),
                     allow_registration=bool(os.environ.get('FRAMEKEEP_DESKTOP_PID')) and os.environ.get('FRAMEKEEP_CANON_REGISTRATION','1')!='0')
     watch_desktop_parent(server)
     if args.folder:STORE.scan(args.folder)
-    # 完成评级恢复等初始化后再全速预热，避免 28 路缓存写入争抢启动磁盘。
-    PREVIEWS.start()
+    recovery_cleanup=LegacyRecoveryCleanup(DATA,lambda:configured_roots(STORE,CATALOG,WATCH,REFERENCES))
+    from startup_tasks import StartupTasks
+    def warm_video():
+        tool=find_tool('ffmpeg')
+        if tool:gpu_video.warmup(tool)
+    def warm_models():
+        if MODELS.public().get('builtin_enabled'):local_inference.preload(MODELS.selected('ocr'))
+    tasks=[('archive',ARCHIVE.thread.start),('ratings',ARCHIVE.ratings.sync.thread.start),
+           ('pipeline',PIPELINE.thread.start),('sku',SKU.thread.start),('rawlink',RAWLINK.thread.start),
+           *[(f'analysis-{i}',thread.start) for i,thread in enumerate((*ANALYSIS.threads,ANALYSIS.auto_thread))],
+           ('metadata',CATALOG.metadata.start),('previews',PREVIEWS.start),
+           ('preview-reconcile',PREVIEWS.reconcile_archive),('reference',REFERENCES.start),
+           ('watch',WATCH.thread.start),('gpu-images',gpu_media.warmup),('gpu-video',warm_video),
+           *[(f'intelligence-{i}',thread.start) for i,thread in enumerate((*INTELLIGENCE.threads,INTELLIGENCE.discovery))],
+           ('models',warm_models),('cleanup',recovery_cleanup.start)]
+    if metadata_sync:tasks.insert(5,('metadata-sync',metadata_sync.thread.start))
+    BOOT_TASKS=StartupTasks(tasks);BOOT_TASKS.start()
+    startup_checkpoint('http ready')
     url=f'http://127.0.0.1:{args.port}/';print('末帧工作台：'+url,flush=True)
     if not args.no_browser and (args.browser or getattr(sys,'frozen',False)):
         import webbrowser
@@ -775,11 +844,15 @@ def main():
     try:server.serve_forever()
     except KeyboardInterrupt:pass
     finally:
+        BOOT_TASKS.close()
+        LANWORKSPACE.close()
+        recovery_cleanup.close()
         REFERENCES.close()
         if getattr(SKU,'metadata_sync',None):SKU.metadata_sync.close()
         CANON.close()
         PIPELINE.close()
         RAWLINK.close()
+        INTELLIGENCE.close()
         ANALYSIS.close()
         SKU.close()
         local_inference.close()

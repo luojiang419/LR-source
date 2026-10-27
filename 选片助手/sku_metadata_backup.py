@@ -142,7 +142,7 @@ def _paused(table, row):
 def import_metadata(sku, content, *, sync=None):
     backup, documents = _decode(content)
     result = _import_records(sku, backup, documents, sync)
-    sku.archive.ratings.seed_versions.clear()
+    sku.archive.ratings.invalidate_seeds()
     for session in sku.store.sessions():sku.archive.ratings.seed_session(session['id'])
     if sync:result['sync'] = sync.start(backup['sha256'], backup['payload'])
     return result

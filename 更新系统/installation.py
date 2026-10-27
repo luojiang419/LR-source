@@ -194,9 +194,10 @@ def prepare_data_directory(root,source):
 
 class WindowsIntegration:
     """可注入测试注册项和快捷方式目录；生产只操作当前用户的 Framekeep。"""
-    def __init__(self,product_key=r'Software\Framekeep',uninstall_key=r'Software\Microsoft\Windows\CurrentVersion\Uninstall\Framekeep',desktop=None,programs=None,display_name='末帧选片'):
+    def __init__(self,product_key=r'Software\Framekeep',uninstall_key=r'Software\Microsoft\Windows\CurrentVersion\Uninstall\Framekeep',desktop=None,programs=None,display_name='末帧选片',startup_key=r'Software\Microsoft\Windows\CurrentVersion\Run',startup_name='Framekeep'):
         self.product_key=product_key;self.uninstall_key=uninstall_key;self.desktop=desktop;self.programs=programs
         self.display_name=display_name
+        self.startup_key=startup_key;self.startup_name=startup_name
 
     @staticmethod
     def shell(script,values):
@@ -263,6 +264,14 @@ class WindowsIntegration:
 
     def unregister(self,root):
         root=Path(root).absolute();prefs=self.values(self.product_key) or {};registered=prefs.get('InstallLocation',('',0))[0]
+        # 只移除指向本次卸载目录的启动项，保留其他安装副本及其他程序。
+        startup=(self.values(self.startup_key) or {}).get(self.startup_name,('',0))[0]
+        match=re.match(r'^"([^"]+)"(?:\s|$)',startup) if isinstance(startup,str) else None
+        if match and same_path(match.group(1),root/'末帧选片.exe'):
+            import winreg
+            with winreg.OpenKey(winreg.HKEY_CURRENT_USER,self.startup_key,0,winreg.KEY_SET_VALUE) as key:
+                try:winreg.DeleteValue(key,self.startup_name)
+                except FileNotFoundError:pass
         values=self.values(self.uninstall_key)
         if values and same_path(values.get('InstallLocation',('',0))[0],root):self.replace(self.uninstall_key,None)
         links=[{'path':str(p),'target':target} for p,target in self.shortcuts(root)]

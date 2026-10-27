@@ -38,7 +38,7 @@ class WatchPlanBrowserTests(unittest.TestCase):
                     browser=pw.chromium.launch(executable_path='C:/Program Files/Google/Chrome/Application/chrome.exe',headless=True)
                     try:
                         page=browser.new_page(viewport={'width':1100,'height':1000},reduced_motion='reduce');errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
-                        page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='networkidle');page.locator('#folder-watch').click()
+                        page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading');page.locator('#folder-watch').click()
                         self.assertTrue(page.locator('#watch-plan-import').is_visible());self.assertTrue(page.locator('#watch-plan-scope').is_disabled())
                         # 使用真实文件选择入口触发导入，不伪造导入结果。
                         with page.expect_file_chooser() as chooser:page.locator('#watch-plan-import').click()

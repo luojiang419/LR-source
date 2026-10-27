@@ -18,6 +18,27 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class CatalogMetadataTests(unittest.TestCase):
+    def test_start_returns_while_restart_recovery_waits_for_database_writer(self):
+        returned=threading.Event();processed=threading.Event()
+        metadata=self.catalog.metadata
+        with self.catalog.connect() as c:
+            c.execute("UPDATE catalog_metadata SET status='running' WHERE item=?",(self.item,))
+        def idle():
+            processed.set();return False
+        starter=threading.Thread(target=lambda:(metadata.start(),returned.set()),daemon=True)
+        with patch.object(metadata,'process_one',side_effect=idle):
+            try:
+                with self.catalog.connect() as writer:
+                    writer.execute('BEGIN IMMEDIATE')
+                    starter.start()
+                    self.assertTrue(returned.wait(1),'后台恢复等待写锁不能阻塞启动调用方')
+                    self.assertFalse(processed.is_set())
+                self.assertTrue(processed.wait(5),'释放写锁后应继续恢复历史任务')
+                with self.catalog.connect() as c:
+                    self.assertEqual(c.execute('SELECT status FROM catalog_metadata WHERE item=?',(self.item,)).fetchone()[0],'queued')
+            finally:
+                metadata.close();starter.join(5)
+
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.base = Path(self.temp.name)

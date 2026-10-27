@@ -95,7 +95,7 @@ class MonitorSourceSafetyTests(unittest.TestCase):
                                 page.locator('#watch-start').click()
                                 page.wait_for_function('()=>!document.getElementById("watch-dialog").open')
                             def loaded(count):
-                                page.wait_for_function('(count)=>DEMO_PHOTOS.length===count&&Framekeep.getSnapshot().count===count',arg=count,timeout=45000)
+                                page.wait_for_function('(count)=>window.FramekeepBoot?.loading===false&&window.DEMO_PHOTOS?.length===count&&window.Framekeep?.getSnapshot().count===count',arg=count,timeout=45000)
                             def unchanged():self.assertEqual(snapshot(photos),before)
                             monitor(photos);loaded(expected_count)
                             self.assertEqual(page.evaluate('Framekeep.browseContext().folderPrefix'),'')

@@ -45,8 +45,8 @@ class FixedMouseBrowserTests(unittest.TestCase):
                     browser=pw.chromium.launch(executable_path='C:/Program Files/Google/Chrome/Application/chrome.exe',headless=True)
                     try:
                         page=browser.new_page(viewport={'width':1680,'height':1050});errors=[];page.on('pageerror',lambda error:errors.append(str(error)))
-                        page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='networkidle')
-                        def panel():page.locator('#app-settings-open').click();page.locator('#mouse-remote').click()
+                        page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading')
+                        def panel():page.locator('#app-settings-open').click();page.locator('[data-settings-section=remote]').click();page.locator('#mouse-remote').click()
                         def mode(value):
                             page.locator('#mouse-rating-mode').select_option(value)
                             page.wait_for_function('(value)=>document.getElementById("mouse-rating-mode").value===value&&!document.getElementById("mouse-rating-mode").disabled',arg=value)
@@ -108,7 +108,7 @@ class FixedMouseBrowserTests(unittest.TestCase):
                         page.evaluate('()=>FramekeepIO.flush()');panel();page.locator('#mouse-stop').click()
                         page.wait_for_function('()=>document.getElementById("mouse-stop").disabled&&!document.getElementById("mouse-start").disabled')
                         self.assertEqual(transport.filters[-1],0)
-                        page.reload(wait_until='networkidle');panel();page.wait_for_function('()=>document.getElementById("mouse-rating-mode").value==="fixed"')
+                        page.reload(wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading');panel();page.wait_for_function('()=>document.getElementById("mouse-rating-mode").value==="fixed"')
                         self.assertFalse(remote.state()['active']);self.assertFalse(errors,errors)
                     finally:browser.close()
             finally:

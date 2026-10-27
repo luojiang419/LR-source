@@ -133,7 +133,7 @@ class PipelineTests(unittest.TestCase):
                 browser=pw.chromium.launch(executable_path='C:/Program Files/Google/Chrome/Application/chrome.exe',headless=True)
                 try:
                     page=browser.new_page(viewport={'width':1680,'height':1050});errors=[];page.on('pageerror',lambda error:errors.append(str(error)))
-                    page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='domcontentloaded')
+                    page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading')
                     page.locator('[data-focus="'+label+'"]').first.click();page.locator('#stars [data-rating="2"]').click()
                     page.wait_for_function('()=>document.querySelectorAll(".watch-sku-label").length===2')
                     self.assertEqual(len(self.calls),1)

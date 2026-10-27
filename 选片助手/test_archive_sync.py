@@ -157,7 +157,7 @@ class ArchiveSyncTests(unittest.TestCase):
                 browser=pw.chromium.launch(executable_path='C:/Program Files/Google/Chrome/Application/chrome.exe',headless=True)
                 try:
                     page=browser.new_page(viewport={'width':1440,'height':1000},reduced_motion='reduce');errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
-                    page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='networkidle')
+                    page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading')
                     page.once('dialog',lambda d:d.accept(str(self.destination)));page.locator('#raw-sync-browse').click()
                     page.wait_for_function('()=>!document.getElementById("raw-sync-start").disabled')
                     self.assertEqual(self.link.targets()[0]['status'],'ready');self.assertEqual(self.archive.writer.read(self.target).get('XMP-xmp:Rating'),None)
@@ -168,9 +168,9 @@ class ArchiveSyncTests(unittest.TestCase):
                     self.assertEqual(page.evaluate('FRAMEKEEP_SESSION.id'),self.sid);self.assertEqual(self.archive.writer.read(self.target)['XMP-xmp:Rating'],4)
                     out=ROOT/'build/archive-sync';out.mkdir(parents=True,exist_ok=True)
                     self.assertEqual(page.locator('#archive-sync-panel button').count(),2);self.assertTrue(page.locator('#raw-sync-open').is_hidden())
-                    page.screenshot(path=str(out/'metadata-tasks.png'));page.locator('#analysis-close').click()
+                    page.screenshot(path=str(out/'metadata-tasks.png'));page.locator('#selection-tab').click()
                     page.locator('#raw-sync-start').scroll_into_view_if_needed();page.screenshot(path=str(out/'workbench.png'))
-                    page.reload(wait_until='networkidle');self.assertEqual(page.locator('#raw-sync-path-display').inner_text(),str(self.destination))
+                    page.reload(wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading');self.assertEqual(page.locator('#raw-sync-path-display').inner_text(),str(self.destination))
                     self.assertFalse(errors,errors)
                 finally:browser.close()
         finally:

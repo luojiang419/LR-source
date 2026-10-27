@@ -84,9 +84,9 @@
     phase('loading','读取中…');
     const consume=image=>{
       if(ticket!==generation||identity!==next)return;
-      try{const result=sample(image);cache.set(next,result);if(cache.size>48)cache.delete(cache.keys().next().value);paint(result)}catch{phase('error','预览不可用')}
+      try{const result=sample(image);cache.set(next,result);if(cache.size>48)cache.delete(cache.keys().next().value);paint(result)}catch{identity='';phase('error','预览不可用')}
     };
-    const fail=()=>{if(ticket===generation&&identity===next)phase('error','预览不可用')};
+    const fail=()=>{if(ticket===generation&&identity===next){identity='';phase('error','预览不可用')}};
     const loaded=[...surface.querySelectorAll('#photos [data-loupe] img,[data-focus] img')].find(img=>(img.closest('[data-loupe]')?.dataset.loupe||img.closest('[data-focus]')?.dataset.focus)===photo.id&&img.complete&&img.naturalWidth);
     if(loaded){consume(loaded);return}
     // 复用正在加载的中央大图；网格中未加载的当前图只请求小预览。
@@ -101,11 +101,13 @@
     pendingImage=new Image();const image=pendingImage;image.decoding='async';image.onload=()=>{if(ticket!==generation)return;pendingImage=null;image.onload=image.onerror=null;consume(image)};image.onerror=()=>{if(ticket!==generation)return;clearRequest();fail()};image.src=source;
   }
   function schedule(){if(!queued){queued=true;requestAnimationFrame(refresh)}}
+  document.addEventListener('framekeep:boot-ready',schedule,{once:true});
+  const photoHost=document.getElementById('photos');photoHost?.addEventListener('load',schedule,true);
   document.addEventListener('framekeep:selection',schedule);document.addEventListener('framekeep:workspace',schedule);
   const resize=new ResizeObserver(queuePlace);for(const node of [surface,panel,document.getElementById('stars'),surface.querySelector('.thumbnail-control')])if(node)resize.observe(node);
   const observer=new MutationObserver(queuePlace);observer.observe(surface,{attributes:true,attributeFilter:['class','data-rating-position','data-zoom-position','data-rating-transparency','data-zoom-transparency']});
   const ocr=document.getElementById('preview-ocr-feedback');if(ocr){resize.observe(ocr);observer.observe(ocr,{attributes:true,attributeFilter:['hidden','style','data-position']})}
   window.addEventListener('framekeep:theme',queuePlace);window.addEventListener('resize',queuePlace);
-  window.addEventListener('pagehide',()=>{++generation;clearRequest();resize.disconnect();observer.disconnect();cache.clear()},{once:true});
+  window.addEventListener('pagehide',()=>{++generation;clearRequest();resize.disconnect();observer.disconnect();photoHost?.removeEventListener('load',schedule,true);cache.clear()},{once:true});
   applyPreferences();
 })();

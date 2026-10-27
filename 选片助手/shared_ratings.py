@@ -18,6 +18,7 @@ class SharedRatings:
                   path_key TEXT PRIMARY KEY, rating INTEGER NOT NULL, updated INTEGER NOT NULL);
                 CREATE TABLE IF NOT EXISTS rating_capture_paths(
                   session TEXT,capture TEXT,path_key TEXT,PRIMARY KEY(session,capture,path_key));
+                CREATE TABLE IF NOT EXISTS rating_seed_versions(session TEXT PRIMARY KEY,signature TEXT NOT NULL);
                 CREATE INDEX IF NOT EXISTS rating_capture_path ON rating_capture_paths(path_key);
                 CREATE INDEX IF NOT EXISTS rating_location_path ON locations(path COLLATE NOCASE);
                 CREATE INDEX IF NOT EXISTS rating_locations_file ON locations(file,path);
@@ -106,10 +107,14 @@ class SharedRatings:
         with self.store.connect() as db:structure=tuple(db.execute('SELECT generation,data_generation FROM browser_versions WHERE session=?',(sid,)).fetchone() or (0,0))
         version=(session['snapshot'],session['root'],structure,hashlib.sha256(json.dumps(session['state'].get('overrides',{}),sort_keys=True).encode()).digest())
         if self.seed_versions.get(sid)==version:return
+        signature=hashlib.sha256(('paths-v1:'+repr(version)).encode('utf8')).hexdigest()
+        with self.archive.connect() as c:cached=c.execute('SELECT signature FROM rating_seed_versions WHERE session=?',(sid,)).fetchone()
+        if cached and cached[0]==signature:
+            self.seed_versions[sid]=version;return
         import session_browser
         if session_browser.count(self.store,sid)>session_browser.LARGE_SESSION:
             self._seed_large(session)
-            self.seed_versions[sid]=version
+            self._seeded(sid,version,signature)
             return
         overrides = session['state'].get('overrides', {})
         with self.store.connect() as catalog:
@@ -130,7 +135,16 @@ class SharedRatings:
                 value=self.get(paths,c)
                 # 接管其他软件的拍摄目录只读取已有星级；主动标星由 saved/set 排队写入。
                 if value is not None and not shooting:self.sync.enqueue(c,paths,value,time.time_ns(),initial=True)
+        self._seeded(sid,version,signature)
+
+    def _seeded(self,sid,version,signature):
+        # 只在映射完整提交后记录签名；中断时宁可重建，不能跳过未完成的评级恢复。
+        with self.archive.connect() as c:c.execute('INSERT OR REPLACE INTO rating_seed_versions VALUES (?,?)',(sid,signature))
         self.seed_versions[sid]=version
+
+    def invalidate_seeds(self):
+        self.seed_versions.clear()
+        with self.archive.connect() as c:c.execute('DELETE FROM rating_seed_versions')
 
     def seed_records(self,session,records):
         """局部同步只登记涉及的路径，不清空其他照片的映射。"""

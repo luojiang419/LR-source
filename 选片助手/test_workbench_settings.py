@@ -30,15 +30,15 @@ class WorkbenchSettingsTests(unittest.TestCase):
                 with sync_playwright() as pw:
                     browser=pw.chromium.launch(executable_path='C:/Program Files/Google/Chrome/Application/chrome.exe',headless=True)
                     page=browser.new_page(viewport={'width':1680,'height':1050},reduced_motion='reduce');errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
-                    page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='domcontentloaded');page.wait_for_function('()=>!!window.FramekeepSidebar')
+                    page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading');page.wait_for_function('()=>!!window.FramekeepSidebar')
                     self.assertEqual(page.locator('#asset-scope,#asset-custom-scope').count(),0)
                     page.locator('#current-shooting-tab').click();page.locator('#shooting-manual-type').fill('棚拍');page.locator('#photo-settings-tab').click()
                     page.locator('#asset-sku').fill('DRAFT123');selected=page.evaluate('FramekeepAssets.selection()')
                     page.locator('#app-settings-open').click();self.assertTrue(page.locator('#app-settings-page').is_visible())
                     self.assertEqual(page.locator('#app-settings-page #assistant-settings,#app-settings-page #mouse-remote').count(),2)
                     self.assertEqual(page.locator('.app-header #assistant-settings,.app-header #mouse-remote').count(),0)
-                    self.assertEqual(page.locator('.app-settings-nav button').all_text_contents(),['AI 与模型','款号匹配规则','文件与备案','SKU 自动区间','鼠标遥控','预览显示','表格显示','文件数据库与 API','数据库管理'])
-                    for section in ('models','sku-rules','files','streams','remote','preview','table','library','database'):
+                    self.assertEqual(page.locator('.app-settings-nav button').all_text_contents(),['AI 与模型','款号匹配规则','文件与备案','SKU 自动区间','鼠标遥控','预览显示','表格显示','文件数据库与 API','数据库管理','启动与关闭'])
+                    for section in ('models','sku-rules','files','streams','remote','preview','table','library','database','general'):
                         page.locator(f'[data-settings-section="{section}"]').click()
                         self.assertEqual(page.locator(f'[data-settings-section="{section}"]').get_attribute('aria-current'),'location')
                         self.assertEqual(page.locator('.app-settings-section:visible').count(),1)
@@ -55,7 +55,7 @@ class WorkbenchSettingsTests(unittest.TestCase):
                     page.wait_for_function('()=>document.querySelector("[data-settings-section=database]").getAttribute("aria-current")==="location"')
                     for control in ('asset-mode','asset-overwrite','asset-read','asset-start','asset-close-stream'):
                         self.assertEqual(page.locator('#app-settings-page #'+control).count(),1);self.assertEqual(page.locator('.right-panel #'+control).count(),0)
-                    self.assertEqual(page.locator('#asset-mode').input_value(),'embedded');self.assertEqual(page.locator('#asset-mode option').count(),1)
+                    self.assertEqual(page.locator('#asset-mode').input_value(),'sidecar');self.assertEqual(page.locator('#asset-mode option').count(),1)
                     page.locator('[data-settings-section=files]').click();page.locator('#asset-overwrite').check();page.locator('#app-settings-title').click();page.keyboard.press('5')
                     self.assertEqual(page.evaluate('Framekeep.persistedState().overrides'),{})
                     page.locator('#app-settings-close').click();self.assertEqual(page.locator('#asset-sku').input_value(),'DRAFT123');self.assertEqual(page.evaluate('FramekeepAssets.selection()'),selected)
@@ -68,7 +68,7 @@ class WorkbenchSettingsTests(unittest.TestCase):
                     with page.expect_response(lambda r:'/api/metadata/group/preview' in r.url) as response:page.locator('#asset-preview').click()
                     self.assertEqual(response.value.json()['scope'],'棚拍');page.wait_for_selector('#asset-preview-dialog[open]');page.locator('#asset-preview-dialog [data-close]').first.click()
                     page.locator('#sku-open').click();page.locator('#sku-file').set_input_files({'name':'plan.xlsx','mimeType':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','buffer':fixture_book()})
-                    page.wait_for_function('()=>document.querySelectorAll("#sku-panel-scope option").length===3');page.locator('#sku-panel-scope').select_option('模特图')
+                    page.wait_for_function('()=>document.querySelectorAll("#sku-panel-scope option").length===4');page.locator('#sku-panel-scope').select_option('模特图')
                     page.wait_for_function('()=>FramekeepSku.currentType()==="模特图"');page.locator('#sku-close').click()
                     page.locator('#app-settings-open').click();page.locator('#settings-current-shooting').click()
                     self.assertTrue(page.locator('#current-shooting-panel').is_visible());self.assertTrue(page.locator('#shooting-manual-field').is_hidden())
@@ -93,15 +93,15 @@ class WorkbenchSettingsTests(unittest.TestCase):
                         page.evaluate('(t)=>FramekeepTheme.set(t)',theme)
                         for width in (1680,1024,375,320):
                             page.set_viewport_size({'width':width,'height':1050})
-                            for section in ('models','sku-rules','files','streams','remote','preview','table','library','database'):
+                            for section in ('models','sku-rules','files','streams','remote','preview','table','library','database','general'):
                                 page.locator(f'[data-settings-section="{section}"]').click()
                                 self.assertEqual(page.locator('.app-settings-section:visible').count(),1)
                                 self.assertFalse(page.evaluate('document.documentElement.scrollWidth>innerWidth'),(theme,width,section))
                         page.set_viewport_size({'width':1680,'height':1050});page.locator('[data-settings-section=sku-rules]').click();out=ROOT/'build/workbench-settings';out.mkdir(exist_ok=True);page.screenshot(path=str(out/f'{theme}.png'))
                     page.locator('#app-settings-close').click();page.locator('#selection-tab').press('End');self.assertTrue(page.locator('#app-settings-page').is_visible());page.locator('#app-settings-open').press('ArrowLeft');self.assertTrue(page.locator('#analysis-dialog').is_visible())
                     page.locator('#app-settings-open').click();page.locator('#app-settings-close').click();self.assertTrue(page.locator('#analysis-dialog').is_visible())
-                    self.assertEqual(page.locator('.workspace-tabs [role=tab]').count(),6)
-                    page.reload();page.wait_for_function('()=>!!window.FramekeepSidebar');page.locator('#app-settings-open').click()
+                    self.assertEqual(page.locator('.workspace-tabs [role=tab]').count(),7)
+                    page.reload();page.wait_for_function('()=>!window.FramekeepBoot?.loading');page.wait_for_function('()=>!!window.FramekeepSidebar');page.locator('#app-settings-open').click()
                     self.assertTrue(page.locator('#settings-sku-rules').is_visible());self.assertEqual(page.locator('.app-settings-section:visible').count(),1)
                     page.set_viewport_size({'width':320,'height':800});page.locator('#settings-tab-sku-rules').scroll_into_view_if_needed()
                     page.screenshot(path=str(out/'narrow-category.png'))

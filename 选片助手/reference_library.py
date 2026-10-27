@@ -217,7 +217,7 @@ class ReferenceCatalog(AssetCatalog):
 
 
 class ReferenceLibrary:
-    def __init__(self, data, search=None, warmer=None, *, catalog=None):
+    def __init__(self, data, search=None, warmer=None, *, catalog=None, autostart=True):
         self.data = Path(data).absolute()
         self.home = self.data / 'reference-library'
         self.home.mkdir(parents=True, exist_ok=True)
@@ -240,10 +240,17 @@ class ReferenceLibrary:
         self.pool = ThreadPoolExecutor(max_workers=4, thread_name_prefix='reference-peer')
         self.shared = None
         self.sharing_error = ''
+        self.started=False
         if self.shared_catalog is not None:self._adopt_shared_catalog_roots()
         self.thread = threading.Thread(target=self._run, name='reference-index', daemon=True)
-        self.thread.start()
         self.watch_thread=threading.Thread(target=self._watch_changes,name='reference-changes',daemon=True)
+        if autostart:self.start()
+
+    def start(self):
+        with self.condition:
+            if self.started or self.stopping.is_set():return
+            self.started=True
+        self.thread.start()
         self.watch_thread.start()
         for root in self.config['roots']:
             if not root.get('removed') and (self.shared_catalog is None or not root.get('native_complete') or not self._shared_root_exists(root['id'])):
@@ -258,7 +265,11 @@ class ReferenceLibrary:
         changed=False
         with self.shared_catalog.connect() as connection:
             roots=[dict(row) for row in connection.execute('SELECT id,path,status FROM roots WHERE removed=0')]
-            counts={row['root']:row['count'] for row in connection.execute('SELECT root,count(*) AS count FROM capture_items WHERE online=1 GROUP BY root')}
+            known={row['id'] for row in self.config['roots']}
+            missing=[row['id'] for row in roots if row['id'] not in known]
+            # 已接管的目录沿用已有进度，不在每次启动重新统计整个配对视图。
+            counts={row['root']:row['count'] for row in connection.execute(
+                'SELECT root,count(*) AS count FROM capture_items WHERE root IN ('+','.join('?' for _ in missing)+') GROUP BY root',missing)} if missing else {}
         with self.lock:
             known={row['id']:row for row in self.config['roots']}
             for root in roots:
@@ -1022,8 +1033,8 @@ class ReferenceLibrary:
             self.shared.shutdown()
             self.shared.server_close()
             self.shared = None
-        self.thread.join(timeout=5)
-        self.watch_thread.join(timeout=5)
+        if self.thread.is_alive():self.thread.join(timeout=5)
+        if self.watch_thread.is_alive():self.watch_thread.join(timeout=5)
         self.index_pool.shutdown(wait=True,cancel_futures=True)
         self.delta_pool.shutdown(wait=True,cancel_futures=True)
         for catalog in set(self.catalogs.values()):catalog.close()

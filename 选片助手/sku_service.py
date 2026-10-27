@@ -266,7 +266,7 @@ class SkuService(ConcurrentLabels,FullAutoOCR,OcrMetadata,SkuRules):
             if self.archive and start_stream:self.archive.start_stream(sid,pid,'现场记录')
             self.export(pid);return self.project(pid)
 
-    def _record_unplanned(self,job,readings,result,*,accept_observed=False):
+    def _record_unplanned(self,job,readings,result,*,accept_observed=False,connection=None):
         codes={}
         for reading in readings:
             if reading.get('confidence',0)<.9 and not reading.get('unscored'):return result
@@ -281,7 +281,7 @@ class SkuService(ConcurrentLabels,FullAutoOCR,OcrMetadata,SkuRules):
         if exact:
             if exact[0]['baseline']=='待核对' and not accept_observed:return dict(result,status='review',row_ids=[],reason='插拍款号与原计划近似，请核对后确认')
             return dict(result,status='matched',row_ids=[exact[0]['id']],reason='OCR 唯一款号精确匹配')
-        with self.lock,self.connect() as c:
+        with self.lock,self.connect() if connection is None else nullcontext(connection) as c:
             project=self.project(job['project']);metadata=project['metadata'];sheet=metadata.get('managed_sheet')
             if not sheet:
                 sheet='临时插拍';names={s['name'] for s in metadata['sheets']}

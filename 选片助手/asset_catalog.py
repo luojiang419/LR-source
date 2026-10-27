@@ -142,11 +142,15 @@ class AssetCatalog:
             ):
                 if name not in item_columns:
                     c.execute(f'ALTER TABLE items ADD COLUMN {name} {definition}')
-            for extension in VIDEO_EXTENSIONS:
-                c.execute("UPDATE items SET media_type='video',media_format=? WHERE extension=?", (media_format(extension), extension))
-            for extension in ADOBE_EXTENSIONS:
-                c.execute("UPDATE items SET media_type='design',media_format=? WHERE extension=?", (media_format(extension), extension))
-            c.execute("UPDATE items SET media_format=upper(ltrim(extension,'.')) WHERE media_format='' OR media_format IS NULL")
+            if c.execute('PRAGMA user_version').fetchone()[0]<2:
+                # 分类是旧库迁移，不能每次启动按每个扩展名全表扫描、重写索引。
+                # 一次扫描只更新确有差异的行；新扫描已有完整的媒体分类。
+                videos=','.join("'"+ext+"'" for ext in sorted(VIDEO_EXTENSIONS))
+                designs=','.join("'"+ext+"'" for ext in sorted(ADOBE_EXTENSIONS))
+                kind=f"CASE WHEN extension IN ({videos}) THEN 'video' WHEN extension IN ({designs}) THEN 'design' ELSE media_type END"
+                format=f"CASE WHEN extension IN ({videos},{designs}) OR media_format='' OR media_format IS NULL THEN upper(ltrim(extension,'.')) ELSE media_format END"
+                c.execute(f'UPDATE items SET media_type={kind},media_format={format} WHERE media_type IS NOT ({kind}) OR media_format IS NOT ({format})')
+                c.execute('PRAGMA user_version=2')
             c.executescript('''
                 BEGIN IMMEDIATE;
                 CREATE INDEX IF NOT EXISTS catalog_pair ON items(pair_key, online);
@@ -304,10 +308,10 @@ class AssetCatalog:
                     ON CONFLICT(path) DO UPDATE SET root=excluded.root,relative=excluded.relative,folder=excluded.folder,name=excluded.name,extension=excluded.extension,
                     size=excluded.size,modified=excluded.modified,fingerprint=excluded.fingerprint,pair_key=excluded.pair_key,
                     media_type=excluded.media_type,media_format=excluded.media_format,
-                    sku=CASE WHEN items.source='manual' THEN items.sku ELSE excluded.sku END,
-                    normalized=CASE WHEN items.source='manual' THEN items.normalized ELSE excluded.normalized END,
-                    source=CASE WHEN items.source='manual' THEN items.source ELSE excluded.source END,
-                    confidence=CASE WHEN items.source='manual' THEN items.confidence ELSE excluded.confidence END,
+                    sku=CASE WHEN items.source='manual' OR (items.source='vlm_group' AND items.fingerprint=excluded.fingerprint) THEN items.sku ELSE excluded.sku END,
+                    normalized=CASE WHEN items.source='manual' OR (items.source='vlm_group' AND items.fingerprint=excluded.fingerprint) THEN items.normalized ELSE excluded.normalized END,
+                    source=CASE WHEN items.source='manual' OR (items.source='vlm_group' AND items.fingerprint=excluded.fingerprint) THEN items.source ELSE excluded.source END,
+                    confidence=CASE WHEN items.source='manual' OR (items.source='vlm_group' AND items.fingerprint=excluded.fingerprint) THEN items.confidence ELSE excluded.confidence END,
                     scan_revision=items.scan_revision+1,last_seen=excluded.last_seen,online=1,scan_epoch=excluded.scan_epoch''', accepted)
             if self.on_previews:self.queue_previews({row[-3] for row in accepted})
             batch.clear()
@@ -398,7 +402,11 @@ class AssetCatalog:
         key = normalize(text)
         # 中文和标点不可变成 LIKE '%%'，否则任意中文搜索都会命中整库。
         sku = 'normalized LIKE ? OR ' if key else ''
-        return '('+sku+path+' OR '+metadata+')', (['%'+key+'%'] if key else [])+path_args+metadata_args
+        visual,visual_args=('0',[])
+        if getattr(self,'intelligence',None):
+            from retrieval_store import condition
+            visual,visual_args=condition(connection,text)
+        return '('+sku+path+' OR '+metadata+' OR '+visual+')', (['%'+key+'%'] if key else [])+path_args+metadata_args+visual_args
 
     def tree(self,text='',media=''):
         result = []

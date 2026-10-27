@@ -154,7 +154,7 @@ class DocumentTests(unittest.TestCase):
                     browser=pw.chromium.launch(executable_path='C:/Program Files/Google/Chrome/Application/chrome.exe',headless=True)
                     try:
                         page=browser.new_page(viewport={'width':1680,'height':1050},reduced_motion='reduce');errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
-                        page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='networkidle');page.locator('[data-watch-photo="'+self.ids[1]+'"]').click();page.locator('.asset-panel').evaluate('(el)=>el.open=true')
+                        page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading');page.locator('[data-watch-photo="'+self.ids[1]+'"]').click();page.locator('.asset-panel').evaluate('(el)=>el.open=true')
                         page.locator('#asset-parse-sku').click();page.wait_for_selector('#asset-ocr-codes [data-ocr-code="'+fixture.CODE+'"]');page.locator('#asset-ocr-codes [data-ocr-code="'+fixture.CODE+'"]').click()
                         page.wait_for_function('async()=>{const s=await(await fetch("/api/sku")).json();return s.rows.some(r=>r.sheet==="模特图"&&r.status==="已拍摄")}',timeout=15000)
                         self.drain();page.locator('#sku-open').click();page.wait_for_selector('#sku-rows [data-sku-row] .sku-product-images img')

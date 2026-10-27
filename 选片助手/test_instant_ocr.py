@@ -109,7 +109,7 @@ class InstantOcrTests(unittest.TestCase):
                     browser=pw.chromium.launch(executable_path='C:/Program Files/Google/Chrome/Application/chrome.exe',headless=True)
                     try:
                         page=browser.new_page(viewport={'width':1440,'height':1000});errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
-                        page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='networkidle')
+                        page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading')
                         page.locator('[data-watch-photo="'+self.cids[0]+'"]').click()
                         page.evaluate('()=>FramekeepIO.flush()')
                         page.clock.install();page.clock.pause_at(int(time.time()*1000))

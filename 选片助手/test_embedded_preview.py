@@ -122,7 +122,8 @@ class EmbeddedPreviewTests(unittest.TestCase):
         catalog.on_previews=worker.enqueue;catalog.queue_all_previews()
         with cache.connect() as c:c.execute('UPDATE pending SET edge=4096')
         worker=PreviewWarmer(cache,None,catalog=catalog,autostart=False);self.addCleanup(worker.close)
-        with cache.connect() as c:self.assertEqual({r[0] for r in c.execute('SELECT edge FROM pending')},{2048})
+        # 启动保留旧任务及重试版本，领取后仍只生成 2048 JPEG。
+        with cache.connect() as c:self.assertEqual({r[0] for r in c.execute('SELECT edge FROM pending')},{4096})
         self.assertTrue(worker.process_one());state=worker.archive_state([root])
         self.assertEqual((state['ready'],state['thumbnails_ready'],state['pending']),(1,1,2))
         with cache_for(catalog.previews).connect() as c:self.assertEqual({r[0] for r in c.execute('SELECT edge FROM previews')},{420,2048})

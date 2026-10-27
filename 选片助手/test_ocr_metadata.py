@@ -1,3 +1,4 @@
+import time
 import copy
 from contextlib import ExitStack
 from http.server import ThreadingHTTPServer
@@ -72,6 +73,10 @@ class OcrMetadataTests(unittest.TestCase):
 
     def test_full_auto_saves_ocr_without_committing_until_user_chooses(self):
         self.sku.set_full_auto(True,self.sid);self.sku.tick()
+        deadline=time.monotonic()+3
+        while time.monotonic()<deadline:
+            if any(j['capture_id']==self.ids[1] and j['status']=='review' for j in self.sku.state()['jobs']):break
+            time.sleep(.01);self.sku.tick()
         job=next(j for j in self.sku.state()['jobs'] if j['capture_id']==self.ids[1]);self.assertEqual(job['status'],'review');self.assertTrue(job['result']['requires_sku_choice'])
         self.assertEqual(self.archive.query(CODE)['total'],0);self.assertEqual(labels(self.sku,self.sid)['labels'],{})
         self.choose();self.assertEqual(self.archive.query(CODE)['total'],2)
@@ -127,7 +132,7 @@ class OcrMetadataTests(unittest.TestCase):
     def test_persisted_choice_event_recovers_after_interrupted_delivery(self):
         self.parse()
         with patch.object(self.sku,'deliver_events',side_effect=RuntimeError('interrupted')):
-            with self.assertRaisesRegex(RuntimeError,'interrupted'):self.choose()
+            result=self.choose();self.assertTrue(result['saved']);self.assertTrue(result['warnings'])
         self.assertEqual(self.archive.query(CODE)['total'],0)
         reopened=SkuService(self.store,self.providers,autostart=False,archive=self.archive,require_sku_choice=True)
         try:
@@ -164,7 +169,7 @@ class OcrMetadataTests(unittest.TestCase):
                     browser=pw.chromium.launch(executable_path='C:/Program Files/Google/Chrome/Application/chrome.exe',headless=True)
                     try:
                         page=browser.new_page(viewport={'width':1440,'height':1000});errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
-                        page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='domcontentloaded');page.wait_for_function('()=>window.FramekeepOcrDetails')
+                        page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading');page.wait_for_function('()=>window.FramekeepOcrDetails')
                         page.locator('[data-watch-photo="'+self.ids[1]+'"]').click()
                         page.locator('.asset-panel').evaluate('e=>e.open=true')
                         def parse():
@@ -228,7 +233,7 @@ class OcrMetadataTests(unittest.TestCase):
                     browser=pw.chromium.launch(executable_path='C:/Program Files/Google/Chrome/Application/chrome.exe',headless=True)
                     try:
                         page=browser.new_page(viewport={'width':1440,'height':1000});errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
-                        page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='domcontentloaded');page.wait_for_function('()=>window.FramekeepOcrDetails')
+                        page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading');page.wait_for_function('()=>window.FramekeepOcrDetails')
                         page.locator('[data-watch-photo="'+self.ids[1]+'"]').click()
                         page.locator('#asset-ocr-details').evaluate("e=>{for(let p=e.parentElement;p;p=p.parentElement)if(p.tagName==='DETAILS')p.open=true}")
                         page.locator('#asset-ocr-details').click();page.wait_for_selector('[data-ocr-pick="261009 G82"]')

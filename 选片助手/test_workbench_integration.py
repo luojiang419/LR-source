@@ -54,7 +54,7 @@ class WorkbenchIntegrationTests(unittest.TestCase):
                             page=context.new_page();errors=[];failed=[]
                             page.on('pageerror',lambda e:errors.append(str(e)))
                             page.on('response',lambda r:failed.append(f'{r.status} {r.url}') if r.status>=400 else None)
-                            page.goto(url,wait_until='networkidle')
+                            page.goto(url,wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading')
                             self.assertEqual(page.locator('.workspace-bottom-bar .workspace-tabs').count(),1)
                             self.assertEqual(page.locator('.app-header>#selection-tools').count(),1)
                             self.assertEqual(page.locator('.workspace-navigation').count(),0)
@@ -94,11 +94,11 @@ class WorkbenchIntegrationTests(unittest.TestCase):
                                 page.screenshot(path=str(out/f'{mode}.png'))
 
                             # 刷新及跨窗口主题同步不会重置评级或制造多个入口。
-                            choose('hardcore');page.reload(wait_until='domcontentloaded')
+                            choose('hardcore');page.reload(wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading')
                             page.wait_for_function('()=>window.FramekeepLayout?.isMonitoring()')
                             self.assertEqual(page.evaluate('()=>FramekeepTheme.get()'),'hardcore')
                             self.assertEqual(page.locator('#view-open').count(),1)
-                            other=context.new_page();other.goto(url,wait_until='domcontentloaded')
+                            other=context.new_page();other.goto(url,wait_until='domcontentloaded');other.wait_for_function('()=>!window.FramekeepBoot?.loading')
                             other.wait_for_function('()=>!!window.FramekeepLayout')
                             choose('light');other.wait_for_function('()=>FramekeepTheme.get()==="light"')
                             self.assertEqual(other.locator('.library-main>.film-panel').count(),0);other.close()
@@ -131,7 +131,7 @@ class WorkbenchIntegrationTests(unittest.TestCase):
                             page.locator('[data-theme-done]').click()
                             page.locator('#sku-open').click()
                             page.locator('#sku-file').set_input_files({'name':'拍摄清单.xlsx','mimeType':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','buffer':fixture_book()})
-                            page.wait_for_function('()=>document.querySelectorAll("#sku-panel-scope option").length===3')
+                            page.wait_for_function('()=>document.querySelectorAll("#sku-panel-scope option").length===4')
                             page.locator('#sku-panel-scope').select_option('模特图')
                             page.wait_for_function('()=>document.querySelectorAll("#sku-rows tbody tr").length===2')
                             self.assertEqual(page.locator('#sku-sheet-tabs [data-progress-sheet]').count(),2)

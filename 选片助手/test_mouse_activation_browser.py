@@ -54,8 +54,8 @@ class MouseActivationBrowserTests(unittest.TestCase):
                     try:
                         page=browser.new_page(viewport={'width':1400,'height':1000});errors=[]
                         page.on('pageerror',lambda error:errors.append(str(error)))
-                        page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='networkidle')
-                        page.locator('#app-settings-open').click();page.locator('#mouse-remote').click()
+                        page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading')
+                        page.locator('#app-settings-open').click();page.locator('[data-settings-section=remote]').click();page.locator('#mouse-remote').click()
                         page.locator('#component-progress').wait_for(state='visible')
                         self.assertTrue(page.locator('#mouse-start').is_disabled())
                         page.wait_for_function('()=>document.querySelectorAll("#mouse-device option").length===1')

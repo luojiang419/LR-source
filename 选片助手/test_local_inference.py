@@ -34,15 +34,15 @@ class LocalIntegrationTests(unittest.TestCase):
             p.save({'name':'外部 OCR','category':'ocr','protocol':'chat','url':'https://example.com/v1','model':'remote-ocr','select':True})
             original=p.public();enabled=p.set_builtin(True)
             self.assertTrue(enabled['builtin_enabled']);self.assertEqual(p.selected('ocr')['model'],'glm-ocr-local')
-            self.assertIsNone(p.purpose('asset_analysis'));self.assertIsNone(p.purpose('sku_label'));self.assertIsNone(p.selected('multimodal'))
-            self.assertEqual(set(enabled['selected']),{'ocr'});self.assertEqual(enabled['bindings'],{})
+            self.assertEqual(p.purpose('asset_analysis')['model'],'qwen2.5-vl-7b-q4');self.assertEqual(p.purpose('sku_label')['model'],'qwen2.5-vl-7b-q4');self.assertEqual(p.selected('multimodal')['model'],'qwen2.5-vl-7b-q4')
+            self.assertEqual(set(enabled['selected']),{'ocr','multimodal'});self.assertEqual(enabled['bindings'],{})
             for operation in [lambda:p.select(remote),lambda:p.delete(remote),lambda:p.bind('asset_analysis',remote),lambda:p.save({'name':'attempt'}),lambda:p.models({'id':remote}),lambda:p.check_inference(p.by_id(remote))]:
                 with self.assertRaisesRegex(ValueError,'内置模型'):operation()
             self.assertTrue(Providers(folder).public()['builtin_enabled'])
             restored=Providers(folder).set_builtin(False)
             self.assertEqual(restored['selected'],original['selected']);self.assertEqual(restored['bindings'],original['bindings'])
             self.assertEqual(p.data['selected'],original['selected'])
-            self.assertEqual(len(restored['providers']),3)
+            self.assertEqual(len(restored['providers']),4)
             with self.assertRaises(ValueError):p.set_builtin('false')
 
     def test_cards_keep_external_selection_and_local_has_no_secret_or_endpoint(self):
@@ -54,25 +54,27 @@ class LocalIntegrationTests(unittest.TestCase):
             self.assertEqual(p.public()['selected'],selected)
             local=p.public()['providers'][-1]
             self.assertFalse(local['key_set']);self.assertNotIn('must-not-persist',p.path.read_text(encoding='utf8'))
-            self.assertEqual(p.models({'protocol':'local'})['models'],['glm-ocr-local'])
+            self.assertEqual(set(p.models({'protocol':'local'})['models']),{'glm-ocr-local','qwen2.5-vl-7b-q4'})
             with self.assertRaises(ValueError):p.save({'name':'错误','category':'ocr','protocol':'local','model':'qwen2.5-vl-7b-q4'})
 
-    def test_legacy_qwen_is_preserved_but_never_selected_prepared_or_run(self):
-        from unittest.mock import patch
+    def test_existing_qwen_card_is_reenabled_without_rewriting_credentials(self):
         import server
+        from unittest.mock import patch
         with tempfile.TemporaryDirectory() as folder:
             p=Providers(folder)
             old={'name':'原内置 Qwen','category':'multimodal','protocol':'local','model':'qwen2.5-vl-7b-q4'}
-            saved=p.save(old);pid=saved['providers'][0]['id'];p.data['selected']['multimodal']=pid;p.data['bindings']={'sku_label':pid,'asset_analysis':pid};p._persist()
-            p=Providers(folder);original=p.path.read_bytes();self.assertTrue(p.public()['providers'][0]['reserved'])
-            self.assertEqual(p.public()['selected'],{});self.assertEqual(p.public()['bindings'],{})
-            self.assertIsNone(p.selected('multimodal'));self.assertIsNone(p.purpose('asset_analysis'));self.assertEqual(p.path.read_bytes(),original)
-            for action in (lambda:p.select(pid),lambda:p.bind('asset_analysis',pid),lambda:p.check_inference(p.by_id(pid)),lambda:p.save({**old,'select':True})):
-                with self.assertRaisesRegex(ValueError,'预留'):action()
+            saved=p.save(old);pid=saved['providers'][0]['id'];p.select(pid);p.bind('asset_analysis',pid)
+            p=Providers(folder);original=p.path.read_bytes()
+            self.assertFalse(p.public()['providers'][0]['reserved'])
+            self.assertEqual(p.selected('multimodal')['id'],pid)
+            self.assertEqual(p.purpose('asset_analysis')['id'],pid)
+            self.assertEqual(p.path.read_bytes(),original)
             with patch.object(server,'MODELS',p):
-                with self.assertRaisesRegex(ValueError,'预留'):server.preparation_groups('/api/providers/test',{'id':pid})
-                self.assertEqual(server.preparation_groups('/api/analysis/batches',{}),[])
-            p.set_builtin(True);self.assertEqual(p.selected('ocr')['model'],'glm-ocr-local');self.assertIsNone(p.selected('multimodal'))
+                self.assertEqual(server.preparation_groups('/api/providers/test',{'id':pid}),['qwen2.5-vl-7b-q4'])
+                self.assertEqual(server.preparation_groups('/api/analysis/batches',{}),['qwen2.5-vl-7b-q4'])
+            p.set_builtin(True)
+            self.assertEqual(p.selected('ocr')['model'],'glm-ocr-local')
+            self.assertEqual(p.selected('multimodal')['id'],pid)
             self.assertEqual(len(p.public()['providers']),2)
 
     def test_model_switch_cannot_unload_during_another_request(self):

@@ -175,7 +175,7 @@
     const active = selection.item?.id === item.id;
     const thumbnail=item.offline?'<span class="sku-offline-preview">原照片离线 · 元数据已保留</span>':`<img data-preview-src="${esc(previewUrl(item,420))}" alt="${esc(item.name)}">${FramekeepAssetLoading.markup()}`;
     const format=item.has_jpg && item.has_raw?'J/R':item.media_type==='image'?'':item.media_format||item.extension?.slice(1).toUpperCase()||'';
-    return `<button class="catalog-card ${active?'active':''}" data-catalog-item="${esc(item.id)}"><span class="catalog-thumb" data-preview-state="${item.offline?'offline':'loading'}">${thumbnail}${format?`<span class="photo-format-badge">${esc(format)}</span>`:''}${item.rating>0&&item.media_type==='image'?`<span class="photo-rating-badge" aria-label="${item.rating} 星">${'★'.repeat(item.rating)}</span>`:''}</span><span class="catalog-card-name">${esc(item.name)}</span></button>`;
+    return `<button class="catalog-card ${active?'active':''}" data-catalog-item="${esc(item.id)}" data-provenance="${esc(item.provenance||'')}" title="${esc(item.provenance_label||item.name)}"><span class="catalog-thumb" data-preview-state="${item.offline?'offline':'loading'}">${thumbnail}${format?`<span class="photo-format-badge">${esc(format)}</span>`:''}${item.rating>0&&item.media_type==='image'?`<span class="photo-rating-badge" aria-label="${item.rating} 星">${'★'.repeat(item.rating)}</span>`:''}</span><span class="catalog-card-name">${esc(item.name)}</span></button>`;
   }
   async function items({ preserve = false } = {}) {
     const query = new URLSearchParams({ root: selection.root, folder: selection.folder, q: $('catalog-search').value, media: $('catalog-media').value, cursor: cursors[page], limit: 120 });

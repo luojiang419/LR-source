@@ -147,6 +147,19 @@ class WindowsRegistrationTests(unittest.TestCase):
         ManagedUninstallTests.setUp(self);identity=uuid.uuid4().hex
         self.backend=i.WindowsIntegration(product_key='Software\\FramekeepInstallerTests\\'+identity,uninstall_key='Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Framekeep-Test-'+identity,desktop=self.base/'桌面',programs=self.base/'开始菜单',display_name='末帧选片安装测试 '+identity)
         self.addCleanup(self.backend.replace,self.backend.product_key,None);self.addCleanup(self.backend.replace,self.backend.uninstall_key,None)
+        self.backend.startup_key=self.backend.product_key+'\\Startup'
+        self.addCleanup(self.backend.replace,self.backend.startup_key,None)
+
+    def test_uninstall_removes_only_its_own_startup_entry(self):
+        import winreg
+        own='"'+str(self.root/'末帧选片.exe')+'" --startup --silent'
+        foreign='"'+str(self.base/'other/末帧选片.exe')+'" --startup'
+        self.backend.replace(self.backend.startup_key,{'Framekeep':(foreign,winreg.REG_SZ),'OtherApp':('keep',winreg.REG_SZ)})
+        self.backend.unregister(self.root)
+        self.assertEqual(self.backend.values(self.backend.startup_key)['Framekeep'][0],foreign)
+        self.backend.replace(self.backend.startup_key,{'Framekeep':(own,winreg.REG_SZ),'OtherApp':('keep',winreg.REG_SZ)})
+        self.backend.unregister(self.root)
+        self.assertEqual(self.backend.values(self.backend.startup_key),{'OtherApp':('keep',winreg.REG_SZ)})
 
     def test_real_registry_shortcuts_repair_and_uninstall(self):
         i.complete_registration(self.root,i.prepare_marker(self.root,self.data,self.manifest,True),self.backend)

@@ -1,5 +1,5 @@
 /* 分屏拍摄：正式选片组件、持久参考集合与只读局域网资源。 */
-document.addEventListener('DOMContentLoaded', async () => {
+const startSplitCapture= async () => {
   'use strict';
   const $ = id => document.getElementById(id);
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -485,4 +485,5 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     if(!layoutTouched)toggleSplit(saved.split_enabled===true);paintImage();lastReferenceTask=referenceTaskKey();preferencesReady=true;saveReferences();syncResourceControls();
   }catch(error){report(error);}
-});
+};
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',startSplitCapture,{once:true});else startSplitCapture();

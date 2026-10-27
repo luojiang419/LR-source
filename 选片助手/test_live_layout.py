@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from PIL import Image
+from PIL import Image,ImageOps
 from catalog_store import Store
 import media_engine as media
 from file_reveal import reveal_capture
@@ -30,7 +30,7 @@ class OrientationTests(unittest.TestCase):
             base=Path(folder);file=base/'入库.JPG';Image.new('RGB',(120,80),'red').save(file)
             record={'jpg':file.name,'raw':None,'fingerprint':'same-file','orientation':6}
             rotated=media.preview(record,base,base/'cache',Path('unused'))
-            with Image.open(rotated) as image:self.assertEqual(image.size,(80,120));self.assertNotIn(274,image.getexif())
+            with Image.open(rotated) as image:self.assertEqual(ImageOps.exif_transpose(image).size,(80,120));self.assertEqual(image.getexif().get(274),6)
             record['orientation']=1;upright=media.preview(record,base,base/'cache',Path('unused'));self.assertNotEqual(rotated,upright)
             with Image.open(upright) as image:self.assertEqual(image.size,(120,80))
             exif=Image.Exif();exif[274]=1;Image.new('RGB',(120,80),'red').save(file,exif=exif)

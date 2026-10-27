@@ -1,4 +1,5 @@
 Pillow>=12.2,<13
+numpy>=2.2,<3
 rawpy>=0.27,<0.28
 jsonschema==4.25.1
 cryptography>=46,<49

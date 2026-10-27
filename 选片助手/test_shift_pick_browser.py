@@ -36,7 +36,7 @@ class ShiftPickTests(unittest.TestCase):
                     try:
                         page=browser.new_page(viewport={'width':1920,'height':1080},reduced_motion='reduce');errors=[]
                         page.on('pageerror',lambda e:errors.append(str(e)))
-                        page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='networkidle')
+                        page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading')
                         def ratings():return page.evaluate('()=>Framekeep.photoItems().map(i=>i.rating)')
                         def point(i,cover=False):
                             box=page.locator(f'#photo-grid [data-focus="{ids[i]}"]' if cover else f'[data-pick="{ids[i]}"]').bounding_box()
@@ -109,7 +109,7 @@ class ShiftPickTests(unittest.TestCase):
                         page.locator('#asset-archive-open').click();page.keyboard.down('Shift');page.mouse.move(500,250);page.mouse.move(700,350);page.keyboard.up('Shift')
                         self.assertEqual(ratings(),original);page.locator('#selection-tab').click()
                         page.locator('[data-view="grid"]').click();page.locator('[data-pick]').first.check()
-                        page.evaluate('()=>FramekeepIO.flush()');page.reload(wait_until='networkidle')
+                        page.evaluate('()=>FramekeepIO.flush()');page.reload(wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading')
                         self.assertEqual(ratings()[:4],[1,4,0,2]);self.assertFalse(errors,errors)
                         out=ROOT/'build/shift-pick';out.mkdir(parents=True,exist_ok=True)
                         start(2);slide(3);page.screenshot(path=str(out/'shift-pick.png'));end()

@@ -10,7 +10,7 @@
   const autoCard=document.createElement('div');autoCard.id='mouse-auto-card';autoCard.className='mouse-auto-card';
   autoCard.innerHTML='<div class="mouse-auto-heading"><div><span class="mouse-auto-eyebrow">自动连接</span><h4 id="mouse-auto-title">全自动切换</h4></div><button id="mouse-auto-enable" class="mouse-auto-switch" type="button" role="switch" aria-checked="false" aria-labelledby="mouse-auto-title" aria-describedby="mouse-auto-help" disabled><span aria-hidden="true"></span></button></div><p id="mouse-auto-help">开启即启用鼠标遥控，以后每次运行自动连接上次使用的接收器。</p><div class="mouse-auto-footer"><span id="mouse-auto-badge">手动启用</span><span id="mouse-auto-status" role="status">正在读取设置…</span></div>';
   dialog.before(autoCard);
-  let generation=null,after=0,timer=null,running=false,starting=false;
+  let generation=null,after=0,timer=null,running=false,starting=false,refreshing=false;
   let lastFixed=null;
   let timeline=[],effects=[],remoteApplying=false,options={right_decrease:false,wheel_browse:false,rating_mode:'incremental',auto_enable:false},savingOptions=false,otherActive=false;
   const timestamp=()=>performance.timeOrigin+performance.now();
@@ -66,16 +66,20 @@
     finally{savingOptions=false;paintOptions()}
   };
   async function refresh(){
+    if(refreshing)return;refreshing=true;$('mouse-start').disabled=true;$('mouse-refresh').disabled=true;$('mouse-device').disabled=true;
+    try{
     await window.FramekeepComponents?.driver();
     const previous=$('mouse-device').selectedOptions[0]?.dataset.hardware;
     let state=await api('/api/mouse'),activation=null;
-    if(!state.active&&!state.devices.length&&!state.error){activation=await window.FramekeepComponents?.driver(true);state=await api('/api/mouse')}
+    if(!state.active&&!state.devices.length){activation=await window.FramekeepComponents?.driver(true);state=await api('/api/mouse')}
     paintOptions(state.options,state.active);$('mouse-device').replaceChildren();
     for(const device of state.devices){const option=document.createElement('option');option.value=device.driver_id;option.dataset.hardware=device.hardware;option.dataset.profile=device.profile||'';option.textContent=`${device.label||'原无线鼠标'} · ${device.hardware} · ${device.id}`;option.selected=device.hardware===previous;$('mouse-device').append(option)}
     $('mouse-status').textContent=state.error||state.message||'未找到目标接收器，请插入后刷新。';
     if(!state.devices.length&&!state.error)$('mouse-status').textContent=activation?.message||'未找到可用接收器，请检查是否插入或被其他工具占用。首次安装驱动后，请重新插入接收器；仍未识别时请重启电脑。';
     $('mouse-start').disabled=state.active||state.devices.length===0||starting;$('mouse-stop').disabled=!state.active;
     label(state.active);
+    }catch(error){$('mouse-device').replaceChildren();$('mouse-start').disabled=true;throw error}
+    finally{refreshing=false;$('mouse-refresh').disabled=false;$('mouse-device').disabled=false}
   }
   async function poll(){
     if(!generation||running)return;

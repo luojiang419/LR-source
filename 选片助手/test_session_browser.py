@@ -11,6 +11,27 @@ from session_browser import count,patch_state,read
 
 
 class SessionBrowserTests(unittest.TestCase):
+    def test_rating_seed_checkpoint_survives_restart_and_invalidates_changed_paths(self):
+        from asset_archive import AssetArchive
+        from asset_catalog import pair_key
+        self.store.save(self.sid,0,{'overrides':{'P00003':4}})
+        archive=AssetArchive(self.store,autostart=False);self.addCleanup(archive.close)
+        archive.ratings.seed_session(self.sid)
+        resumed=AssetArchive(self.store,autostart=False);self.addCleanup(resumed.close)
+        with patch.object(self.store,'iter_records',side_effect=AssertionError('未变化的历史评级不能每次启动全量恢复')):
+            resumed.ratings.seed_session(self.sid)
+        self.assertEqual(resumed.ratings.get([self.photos/'P00003.JPG']),4)
+        changed=dict(self.records[3],jpg='新位置/P00003.JPG')
+        with self.store.connect() as c:c.execute('UPDATE captures SET data=? WHERE session=? AND id=?',(stable_json(changed),self.sid,'P00003'))
+        resumed.ratings.seed_session(self.sid)
+        with resumed.connect() as c:
+            paths=[r[0] for r in c.execute('SELECT path_key FROM rating_capture_paths WHERE session=? AND capture=?',(self.sid,'P00003'))]
+        self.assertEqual(paths,[pair_key(self.photos/changed['jpg'])])
+        self.assertEqual(resumed.ratings.get([self.photos/changed['jpg']]),4)
+        resumed.ratings.invalidate_seeds()
+        with patch.object(resumed.ratings,'_seed_large',wraps=resumed.ratings._seed_large) as seed:
+            resumed.ratings.seed_session(self.sid);seed.assert_called_once()
+
     def setUp(self):
         self.temp=tempfile.TemporaryDirectory();self.addCleanup(self.temp.cleanup)
         self.root=Path(self.temp.name);self.photos=self.root/'photos';self.photos.mkdir()

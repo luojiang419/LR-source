@@ -38,7 +38,7 @@ class AssetBrowserTests(unittest.TestCase):
                     browser=pw.chromium.launch(executable_path='C:/Program Files/Google/Chrome/Application/chrome.exe',headless=True)
                     try:
                         page=browser.new_page(viewport={'width':1680,'height':1050});errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
-                        page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='networkidle')
+                        page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading')
                         page.locator('#photo-grid [data-focus]').nth(0).click()
                         page.locator('#photo-grid [data-focus]').nth(1).click(modifiers=['Shift'])
                         page.locator('#asset-sku').fill('REVIEW-123')
@@ -87,7 +87,7 @@ class AssetBrowserTests(unittest.TestCase):
                     browser=pw.chromium.launch(executable_path='C:/Program Files/Google/Chrome/Application/chrome.exe',headless=True)
                     try:
                         page=browser.new_page(viewport={'width':1680,'height':1050});errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
-                        page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='domcontentloaded')
+                        page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading')
                         covers=page.locator('#photo-grid [data-focus]');covers.nth(0).click()
                         self.assertEqual(page.locator('#asset-auto').count(),0)
                         self.assertEqual(page.locator('#asset-from-current').count(),0)
@@ -105,7 +105,7 @@ class AssetBrowserTests(unittest.TestCase):
                         # 改变区间状态，强制下一次轮询出现新版本；不能覆盖手工输入。
                         with archive.connect() as c:c.execute("UPDATE segments SET reason='刷新',status='needs_review'")
                         page.wait_for_timeout(2100);self.assertEqual(page.locator('#asset-sku').input_value(),'MANUAL123')
-                        page.locator('#app-settings-open').click();page.locator('#asset-overwrite').check();page.locator('#app-settings-close').click();page.locator('#asset-preview').click()
+                        page.locator('#app-settings-open').click();page.locator('[data-settings-section=files]').click();page.locator('#asset-overwrite').check();page.locator('#app-settings-close').click();page.locator('#asset-preview').click()
                         page.wait_for_selector('#asset-preview-dialog[open]');page.locator('#asset-apply').click()
                         page.wait_for_function('()=>!document.getElementById("asset-preview-dialog").open')
                         for cid in ids:
@@ -117,7 +117,7 @@ class AssetBrowserTests(unittest.TestCase):
                         page.wait_for_function('()=>document.getElementById("asset-sku").placeholder.includes("所选款号不同")')
                         self.assertEqual(page.locator('#asset-sku').input_value(),'')
                         page.screenshot(path=str(out/'sku-auto-fill.png'));self.assertFalse(errors,errors)
-                        page.reload(wait_until='domcontentloaded');covers=page.locator('#photo-grid [data-focus]');covers.nth(2).click()
+                        page.reload(wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading');covers=page.locator('#photo-grid [data-focus]');covers.nth(2).click()
                         page.wait_for_function('()=>document.getElementById("asset-sku").value==="OTHER123"')
                     finally:browser.close()
             finally:
@@ -142,7 +142,7 @@ class AssetBrowserTests(unittest.TestCase):
                     browser=pw.chromium.launch(executable_path='C:/Program Files/Google/Chrome/Application/chrome.exe',headless=True)
                     try:
                         page=browser.new_page(viewport={'width':1680,'height':1050});errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
-                        page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='networkidle')
+                        page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading')
                         covers=page.locator('#photo-grid [data-focus]');covers.nth(0).click();covers.nth(2).click(modifiers=['Shift'])
                         self.assertEqual(page.locator('#asset-count').inner_text(),'3 张');self.assertEqual(page.locator('#photo-grid .asset-selected').count(),3)
                         self.assertEqual(store.session(sid)['state'].get('overrides',{}),{})
@@ -181,7 +181,7 @@ class AssetBrowserTests(unittest.TestCase):
                                 page.set_viewport_size({'width':1680,'height':1050})
                                 page.screenshot(path=str(out/f'{theme}-{target}.png'))
                         page.locator('#asset-analysis-open').click()
-                        self.assertEqual(page.locator('.workspace-tabs [role=tab]').count(),6)
+                        self.assertEqual(page.locator('.workspace-tabs [role=tab]').count(),7)
                         self.assertEqual(page.locator('.workspace-tabs [aria-selected=true]').count(),1)
                         self.assertEqual(page.locator('#analysis-schema-name').input_value(),'颜色测试')
                         self.assertEqual(page.locator('#catalog-search').input_value(),'SKU-中文123')
@@ -198,7 +198,7 @@ class AssetBrowserTests(unittest.TestCase):
                         self.assertEqual(page.evaluate('()=>Framekeep.remoteTarget()'),prior)
                         self.assertEqual(store.session(sid)['state'].get('overrides',{}),{})
                         self.assertFalse(errors,errors)
-                        page.reload(wait_until='networkidle');page.locator('#asset-analysis-open').click();page.wait_for_function('()=>document.getElementById("analysis-stats").textContent.includes("已完成 3")')
+                        page.reload(wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading');page.locator('#asset-analysis-open').click();page.wait_for_function('()=>document.getElementById("analysis-stats").textContent.includes("已完成 3")')
                     finally:browser.close()
             finally:
                 analysis.close();archive.close();http.shutdown();http.server_close();upstream.shutdown();upstream.server_close()

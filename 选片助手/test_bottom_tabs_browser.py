@@ -48,9 +48,9 @@ class BottomTabsTests(unittest.TestCase):
                     try:
                         page=browser.new_page(viewport={'width':1680,'height':1050},reduced_motion='reduce');errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
                         page.add_init_script("localStorage.setItem('framekeep-layout-v1',JSON.stringify({selection:{header:true,left:false,right:false,tools:true,film:true,sections:{}},monitor:{header:true,left:false,right:false,tools:false,film:true,sections:{}}}))")
-                        page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='networkidle')
-                        tabs=['selection-tab','sku-open','asset-archive-open','sku-database-open','asset-analysis-open','app-settings-open']
-                        panels=['selection-page','sku-dialog','asset-archive-dialog','sku-database-page','analysis-dialog','app-settings-page']
+                        page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='domcontentloaded');page.wait_for_function('()=>window.FramekeepBoot?.loading===false')
+                        tabs=['selection-tab','asset-retrieval-open','sku-open','asset-archive-open','sku-database-open','asset-analysis-open','app-settings-open']
+                        panels=['selection-page','asset-retrieval-page','sku-dialog','asset-archive-dialog','sku-database-page','analysis-dialog','app-settings-page']
                         self.assertEqual(page.locator('.workspace-bottom-bar [role=tab]').evaluate_all('(nodes)=>nodes.map(n=>n.id)'),tabs)
                         self.assertEqual(page.locator('.app-header .workspace-tabs,.film-panel,#filmstrip,#layout-film').count(),0)
                         self.assertTrue(page.locator('#watch-thumbnails').is_visible());self.assertTrue(page.locator('#watch-follow-toggle').is_hidden())

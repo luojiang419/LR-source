@@ -306,6 +306,6 @@
   $('sku-jobs').addEventListener('click',e=>{const b=e.target.closest('[data-sku-action]');if(!b)return;const card=b.closest('[data-job]');action(async()=>{const row=card.querySelector('[data-sku-target]').value;if(b.dataset.skuAction==='confirm'&&!row)throw new Error('请先选择本工作表中的准确款号');state=await api('/api/sku/review',{job_id:card.dataset.job,action:b.dataset.skuAction,row_id:row});lastJobs='';render()})});
   $('sku-search').addEventListener('input',renderRows);$('sku-filter').addEventListener('change',renderRows);
   document.addEventListener('framekeep:selection',render);
-  document.addEventListener('framekeep:ratings-saved',()=>{mutation++;load().catch(()=>{})});
+  for(const event of ['framekeep:ratings-saved','framekeep:ocr-choice'])document.addEventListener(event,()=>{mutation++;load().catch(()=>{})});
   poll();
 })();

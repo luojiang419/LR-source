@@ -1,0 +1,316 @@
+{
+  "implementation_commit": "ad4e01a",
+  "branch": "feat/multimodal-sku-search",
+  "date": "2026-10-26",
+  "regression_tests": 82,
+  "latest_targeted_tests": 35,
+  "final_catalog_tests": 6,
+  "final_group_migration_tests": 3,
+  "rust_tests": 5,
+  "desktop_document_ready_ms": 7620,
+  "native_visual_acceptance": "未执行：本会话缺少 node_repl/sky 交互工具",
+  "million_row_benchmark": {
+    "rows": 1000000,
+    "generation_seconds": 190.12,
+    "database_mb": 2556.52,
+    "queries": {
+      "sku_exact": {
+        "p50_ms": 5.69,
+        "max_ms": 6.39,
+        "returned": 10,
+        "error": ""
+      },
+      "chinese_keyword": {
+        "p50_ms": 18.65,
+        "max_ms": 20.16,
+        "returned": 60,
+        "error": ""
+      },
+      "multiple_dimensions": {
+        "p50_ms": 4.25,
+        "max_ms": 4.76,
+        "returned": 60,
+        "error": ""
+      },
+      "missing": {
+        "p50_ms": 2.38,
+        "max_ms": 3.74,
+        "returned": 0,
+        "error": ""
+      }
+    },
+    "quick_check": "ok",
+    "conditions": "合成数据库、五次新连接查询、OS 缓存未清空；每次最多 60 项；不含图片解码、模型解析或网络盘性能。"
+  },
+  "clip_runtime": {
+    "backend": "Chinese-CLIP",
+    "device": "cpu",
+    "dimensions": 768,
+    "image_norm": 1.0000000000000002,
+    "text_norm": 0.9999999999999999,
+    "elapsed_seconds": 10.52
+  },
+  "real_http_integration": {
+    "elapsed_seconds": 26.67,
+    "jobs": {
+      "completed": 1
+    },
+    "keyword_results": 1,
+    "image_backend": "chinese-clip-large-336:768",
+    "image_score": 1.0,
+    "semantic_results": 1,
+    "source_sha_unchanged": true
+  },
+  "vlm": {
+    "model": "qwen2.5-vl-7b-q4",
+    "input": "自建服装示意图",
+    "elapsed_seconds": 6.3,
+    "visible_text": "LC1234",
+    "schema_valid": true,
+    "business_accuracy_evaluated": false
+  },
+  "upstream_sync": {
+    "upstream_commit": "5c00050e70ee1aa8985fbe745fe925da21563884",
+    "merge_commit": "fd8386d",
+    "regression_tests": 106,
+    "regression_seconds": 87.04,
+    "browser_retest": 2,
+    "rust_tests": 5,
+    "native_rebuilt": true,
+    "original_worktree_unchanged": true,
+    "runtime": {
+      "startup_ms": 531.0,
+      "health_application": "framekeep",
+      "preview_mime": "image/jpeg",
+      "preview_max_edge": 2048,
+      "browser_errors": [],
+      "sku_search": true,
+      "image_search": true,
+      "selection_survives_input_debounce": true,
+      "source_unchanged": true,
+      "upstream": "5c00050"
+    },
+    "compatibility_tests": 35,
+    "compatibility_seconds": 105.115
+  },
+  "ui_theme_unification": {
+    "browser_regressions": 3,
+    "browser_seconds": 16.369,
+    "themes": [
+      {
+        "theme": "dark",
+        "queryBackground": "rgba(255, 255, 255, 0.043)",
+        "archiveQueryBackground": "rgba(255, 255, 255, 0.043)",
+        "queryFont": "11px",
+        "archiveQueryFont": "11px",
+        "headingInAppHeader": true,
+        "overflow": false,
+        "selectedStyle": {
+          "background": "rgb(54, 55, 58)",
+          "text": "rgb(244, 238, 229)"
+        }
+      },
+      {
+        "theme": "light",
+        "queryBackground": "rgba(255, 253, 249, 0.7)",
+        "archiveQueryBackground": "rgba(255, 253, 249, 0.7)",
+        "queryFont": "11px",
+        "archiveQueryFont": "11px",
+        "headingInAppHeader": true,
+        "overflow": false,
+        "selectedStyle": {
+          "background": "rgb(240, 231, 217)",
+          "text": "rgb(79, 56, 40)"
+        }
+      },
+      {
+        "theme": "pure-white",
+        "queryBackground": "rgba(255, 255, 255, 0.76)",
+        "archiveQueryBackground": "rgba(255, 255, 255, 0.76)",
+        "queryFont": "11px",
+        "archiveQueryFont": "11px",
+        "headingInAppHeader": true,
+        "overflow": false,
+        "selectedStyle": {
+          "background": "rgb(237, 240, 244)",
+          "text": "rgb(41, 52, 66)"
+        }
+      },
+      {
+        "theme": "hardcore",
+        "queryBackground": "rgb(26, 26, 26)",
+        "archiveQueryBackground": "rgb(26, 26, 26)",
+        "queryFont": "11px",
+        "archiveQueryFont": "11px",
+        "headingInAppHeader": true,
+        "overflow": false,
+        "selectedStyle": {
+          "background": "rgb(40, 56, 47)",
+          "text": "rgb(240, 238, 233)"
+        }
+      }
+    ],
+    "cross_window_theme_sync": true,
+    "compact_no_overflow": true,
+    "page_errors": []
+  },
+  "lan_workspace": {
+    "regression_tests": 32,
+    "regression_seconds": 47.965,
+    "final_retests": 3,
+    "final_retest_seconds": 4.126,
+    "desktop_and_lan_services_separate": true,
+    "runtime": {
+      "health": "framekeep",
+      "lan_listener": "0.0.0.0",
+      "private_interface_browser": true,
+      "tabs": [
+        "拍摄进度",
+        "资产检索",
+        "资产归档"
+      ],
+      "desktop_http_assignment_visible_on_web": true,
+      "themes": [
+        "dark",
+        "light",
+        "pure-white",
+        "hardcore"
+      ],
+      "source_images_unchanged": true,
+      "page_errors": [],
+      "elapsed_seconds": 3.55
+    },
+    "mobile_viewport": "390x844",
+    "read_only_boundary_tests": true,
+    "session_rotation_and_restart": true,
+    "corrupt_config_recovery": true
+  },
+  "reference_panel_layout": {
+    "regression_tests": 14,
+    "regression_seconds": 49.2,
+    "web_title_retest": 1,
+    "web_title_retest_seconds": 9.039,
+    "upload_drop_paste_auto_search": true,
+    "slider_does_not_send_image_requests": true,
+    "default_similarity_percent": 50,
+    "threshold_range": [
+      0,
+      100
+    ],
+    "candidate_limit": 100,
+    "no_duplicate_web_page_titles": true,
+    "themes": [
+      "dark",
+      "light",
+      "pure-white",
+      "hardcore"
+    ],
+    "layout": [
+      {
+        "desktop_reference_fixed_while_results_scroll": true
+      },
+      {
+        "web_reference_sticky_while_results_scroll": true
+      }
+    ],
+    "mobile_no_horizontal_overflow": true,
+    "mobile_reference_sticky": true,
+    "page_errors": []
+  },
+  "large_raw_reference": {
+    "regression_tests": 19,
+    "regression_seconds": 38.084,
+    "final_unit_retests": 5,
+    "file_byte_limit": null,
+    "stream_chunk_bytes": 1048576,
+    "temporary_cleanup_tested": true,
+    "live_browser_updated": true,
+    "source_format": "Canon CR2",
+    "real_camera_source_bytes": 38267939,
+    "large_test_container": "real CR2 copied and padded to 128 MiB; source untouched",
+    "binary_uploads": [
+      {
+        "endpoint": "desktop",
+        "uploaded_bytes": 134217728,
+        "preview_pixels": [
+          1067,
+          1600
+        ],
+        "preview_data_url_bytes": 306683,
+        "seconds": 0.691
+      },
+      {
+        "endpoint": "lan",
+        "uploaded_bytes": 134217728,
+        "preview_pixels": [
+          1067,
+          1600
+        ],
+        "preview_data_url_bytes": 306683,
+        "seconds": 0.653
+      }
+    ],
+    "desktop_and_web_browser_raw_upload": true,
+    "auto_image_search_http_status": 200,
+    "source_sha_unchanged": true,
+    "page_errors": []
+  },
+  "web_compact_header": {
+    "regression_tests": 11,
+    "regression_seconds": 39.07,
+    "filter_selects_in_search_form": 3,
+    "duplicate_image_button_removed": true,
+    "tabs_in_brand_header": true,
+    "hover_keyboard_escape_and_touch_menu": true,
+    "checked_widths": [
+      855,
+      700,
+      390,
+      340
+    ],
+    "horizontal_overflow": false,
+    "page_errors": [],
+    "live_browser_refreshed": true,
+    "search_button_adjacent_to_input": {
+      "checked_widths": [
+        855,
+        700,
+        390,
+        340
+      ],
+      "gap_px": 8,
+      "same_row": true,
+      "regression_tests": 1,
+      "regression_seconds": 4.527
+    }
+  },
+  "web_shooting_progress_layout": {
+    "implementation_commit": "c974171",
+    "date": "2026-10-26",
+    "regression_tests": 31,
+    "regression_seconds": 64.591,
+    "themes": [
+      "dark",
+      "light",
+      "pure-white",
+      "hardcore"
+    ],
+    "widths": [
+      1680,
+      1100,
+      760,
+      390,
+      340
+    ],
+    "page_errors": 0,
+    "readonly_context_preserved": true,
+    "source_workbook_images": true,
+    "completion_label_evidence": true,
+    "desktop_import_only": true,
+    "source_engine_restarted": true,
+    "live_development_rows": 0,
+    "original_version_unchanged": true,
+    "evidence": "build/lan-progress-layout/",
+    "regression_log": "build/lan-progress-final.log"
+  }
+}

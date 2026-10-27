@@ -39,8 +39,8 @@ class SessionBrowserUiTests(unittest.TestCase):
                 browser=pw.chromium.launch(channel='msedge',headless=True)
                 try:
                     page=browser.new_page(viewport={'width':1440,'height':960});errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
-                    page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='networkidle')
-                    page.wait_for_function('()=>window.FramekeepIO&&FRAMEKEEP_SESSION.browser?.total===2500')
+                    page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='domcontentloaded');page.wait_for_function('()=>window.FramekeepBoot?.loading===false')
+                    page.wait_for_function('()=>window.FramekeepBoot?.loading===false&&window.FramekeepIO&&FRAMEKEEP_SESSION.browser?.total===2500')
                     self.assertEqual(page.evaluate('DEMO_PHOTOS.length'),240)
                     self.assertEqual(page.locator('#filter-all-count').inner_text(),'2500')
                     self.assertLess(page.locator('#photo-grid [data-photo]').count(),100)
@@ -83,7 +83,9 @@ class SessionBrowserUiTests(unittest.TestCase):
                     page.evaluate('()=>FramekeepIO.flush()')
                     self.assertEqual(store.session(fixture.sid)['state']['overrides']['P00240'],0)
                     self.assertEqual(store.session(fixture.sid)['state']['overrides']['P00003'],4)
-                    page.keyboard.press('c')
+                    # 撤销会触发延迟的全目录重排；等待页面完成，而非仅等保存请求返回。
+                    page.wait_for_function('()=>!FramekeepPaging.busy&&!FramekeepPaging.pending')
+                    page.locator('#photos [data-loupe]').first.focus();page.keyboard.press('c')
                     page.wait_for_function('()=>document.querySelectorAll("#photos [data-loupe]").length===2')
                     self.assertEqual(page.locator('#photos [data-loupe]').evaluate_all('(nodes)=>nodes.map(n=>n.dataset.loupe)'),['P02498','P02499'])
                     output=ROOT/'build/session-browser';output.mkdir(parents=True,exist_ok=True)
@@ -110,7 +112,7 @@ class SessionBrowserUiTests(unittest.TestCase):
                 browser=pw.chromium.launch(channel='msedge',headless=True)
                 try:
                     page=browser.new_page(viewport={'width':1440,'height':960});errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
-                    page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='networkidle')
+                    page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='domcontentloaded');page.wait_for_function('()=>window.FramekeepBoot?.loading===false')
                     for offset in (240,480,720):
                         page.locator('[data-batch-next]').click()
                         page.wait_for_function('(offset)=>FRAMEKEEP_SESSION.browser.offset===offset&&!FramekeepPaging.busy',arg=offset)

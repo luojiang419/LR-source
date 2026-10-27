@@ -75,10 +75,6 @@ class CatalogMetadata:
         with self.start_lock:
             if self.thread is not None:
                 return
-            with self.catalog.connect() as c:
-                c.execute("UPDATE catalog_metadata SET status='queued' WHERE status='running'")
-                # 重启后低优先级核对文件/XMP 身份；未变化则复用资料，不再次提取。
-                c.execute("UPDATE catalog_metadata SET status='queued',priority=-1 WHERE status='ready'")
             self.thread = threading.Thread(target=self._run, name='catalog-metadata', daemon=True)
             self.thread.start()
 
@@ -255,8 +251,16 @@ class CatalogMetadata:
         return True
 
     def _run(self):
+        recovered=False
         while not self.stop.is_set():
             try:
+                if not recovered:
+                    # 全库重启核对属于后台恢复，不能阻塞引擎的 HTTP 就绪。
+                    # 同一事务恢复，异常时回滚并由本线程重试。
+                    with self.catalog.connect() as c:
+                        c.execute("UPDATE catalog_metadata SET status='queued' WHERE status='running'")
+                        c.execute("UPDATE catalog_metadata SET status='queued',priority=-1 WHERE status='ready'")
+                    recovered=True
                 if self.process_one():
                     self.error = ''
                     self.stop.wait(.03)

@@ -1,0 +1,186 @@
+/* 局域网工作台沿用桌面主题，页面只提供查阅控件。 */
+.lan-page {min-height:100dvh;background:var(--glass-canvas,var(--theme-bg));color:var(--theme-text);font:12px 'Segoe UI','Microsoft YaHei',sans-serif;}
+.lan-page [hidden] {display:none!important;}
+.lan-page button {min-height:34px;padding:7px 12px;font:inherit;}
+.lan-page button:not(.primary):not([role=tab]):not(.lan-card) {border:1px solid var(--theme-border);border-radius:6px;background:var(--glass-button,var(--theme-control));}
+.lan-page input:not([type=file]),.lan-page select {min-height:35px;padding:8px 10px;border:1px solid var(--theme-border);border-radius:6px;background:var(--glass-field,var(--theme-control));color:var(--theme-text);font:inherit;min-width:0;}
+.lan-page label {display:flex;flex-direction:column;gap:6px;font-size:11px;color:var(--theme-text-soft);}
+.lan-login {min-height:100dvh;display:grid;place-items:center;padding:24px;}
+.lan-login-card {width:min(400px,100%);padding:32px;border:1px solid var(--theme-border);border-radius:14px;background:var(--glass-panel,var(--theme-panel));box-shadow:0 12px 42px var(--theme-shadow);}
+.lan-brand {font-size:23px;font-weight:650;letter-spacing:-.5px;color:var(--theme-text);white-space:nowrap;}
+.lan-login h1 {font-size:22px;margin:24px 0 8px;}.lan-login p {color:var(--theme-muted);line-height:1.8;margin:8px 0 20px;}
+.lan-login label {margin-top:26px;}.lan-login input,.lan-login button {width:100%;margin-top:10px;}.lan-login #login-message {min-height:24px;margin:18px 0 0;font-size:11px;}
+.lan-app {max-width:1800px;min-height:100dvh;margin:auto;display:flex;flex-direction:column;}
+.lan-header {display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 24px;border-bottom:1px solid var(--theme-border);background:var(--glass-panel,var(--theme-panel));}
+.lan-identity {display:flex;align-items:center;gap:16px;}.lan-identity>strong {font-size:15px;font-weight:500;}.lan-readonly {padding:4px 8px;border:1px solid var(--theme-border);border-radius:5px;font-size:10px;color:var(--theme-muted);}
+
+.lan-tabs {display:flex;gap:8px;padding:12px 24px 0;border-bottom:1px solid var(--theme-border);background:var(--glass-panel,var(--theme-panel));}
+.lan-tabs button {border-radius:0;border-bottom:2px solid transparent;padding:11px 20px;color:var(--theme-muted);}
+.lan-tabs button[aria-selected=true] {color:var(--theme-text);border-bottom-color:var(--theme-emphasis);background:var(--theme-soft);}
+.lan-main {padding:24px;flex:1;min-width:0;}.lan-heading {display:flex;justify-content:space-between;align-items:center;gap:18px;margin-bottom:20px;}.lan-heading h1 {font-size:21px;font-weight:600;margin:0 0 6px;}.lan-heading p {font-size:12px;color:var(--theme-muted);line-height:1.7;}.lan-heading select {min-width:200px;max-width:45vw;}
+.lan-metrics {display:grid;grid-template-columns:repeat(3,minmax(100px,1fr)) minmax(200px,1.5fr);gap:12px;margin-bottom:20px;}
+.lan-metrics>div {display:flex;flex-direction:column;justify-content:center;gap:12px;padding:18px;border:1px solid var(--theme-border);border-radius:8px;background:var(--glass-panel,var(--theme-panel));}.lan-metrics span {font-size:11px;color:var(--theme-muted);}.lan-metrics strong {font-size:29px;font-weight:550;font-variant-numeric:tabular-nums;}
+.lan-progress-meter progress {width:100%;height:9px;accent-color:var(--theme-emphasis);}
+.lan-toolbar,.lan-searchbar {display:flex;align-items:end;gap:10px;flex-wrap:wrap;padding:12px;border:1px solid var(--theme-border);background:var(--glass-panel,var(--theme-panel));}
+.lan-toolbar input,.lan-searchbar input {flex:1;min-width:160px;}.lan-toolbar>span {font-size:11px;color:var(--theme-muted);align-self:center;margin-left:auto;}.lan-toolbar select {min-width:130px;}
+.lan-table-wrap {overflow:auto;border:1px solid var(--theme-border);border-top:0;}.lan-progress-table {width:100%;border-collapse:collapse;min-width:660px;text-align:left;background:var(--glass-panel,var(--theme-panel));}
+.lan-progress-table th {padding:12px 16px;font-size:11px;font-weight:500;color:var(--theme-muted);background:var(--theme-soft);}.lan-progress-table td {padding:10px 16px;border-top:1px solid var(--theme-border);font-size:12px;}.lan-progress-table img {width:54px;height:64px;object-fit:contain;background:var(--theme-control);border-radius:4px;}.lan-progress-table td:first-child {width:90px;}
+.lan-shot,.lan-pending {display:inline-block;padding:4px 8px;border-radius:5px;font-size:11px;}.lan-shot {background:var(--theme-success-soft);color:var(--theme-success);}.lan-pending {background:var(--theme-warning-soft);color:var(--theme-warning);}
+.lan-searchbar {align-items:center;}.lan-search-layout {display:grid;grid-template-columns:220px minmax(0,1fr);border:1px solid var(--theme-border);margin-top:14px;min-height:480px;}.lan-filters {padding:16px;border-right:1px solid var(--theme-border);background:var(--glass-panel,var(--theme-panel));}.lan-filters h3 {font-size:12px;margin:0 0 12px;}.lan-filters h3:not(:first-child) {margin-top:24px;}.lan-filters label {margin-bottom:14px;}.lan-filters select {width:100%;}.lan-filters p {font-size:11px;line-height:1.8;color:var(--theme-muted);margin-top:20px;}
+.lan-results {min-width:0;background:var(--theme-soft);}.lan-result-status {padding:12px;font-size:11px;min-height:38px;color:var(--theme-muted);line-height:1.6;}.lan-result-status.error,#login-message.error {color:var(--theme-danger);}
+.lan-grid {display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:1px;background:var(--theme-border);align-content:start;}
+html[data-hardcore-layout] .lan-grid .lan-card {display:block;min-width:0;border:0;border-radius:0;padding:10px;text-align:left;background:var(--glass-panel,var(--theme-panel));color:var(--theme-text);white-space:normal;}
+.lan-grid .lan-card:hover,.lan-grid .lan-card:focus-visible {background:var(--theme-selected);color:var(--theme-selected-text);}.lan-card img {width:100%;aspect-ratio:1;display:block;object-fit:contain;background:var(--theme-control);}.lan-card strong,.lan-card small {display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:7px;}.lan-card strong {font-size:12px;font-weight:600;}.lan-card small {font-size:10px;color:var(--theme-muted);}.lan-empty {grid-column:1/-1;padding:55px 20px;text-align:center;color:var(--theme-muted);line-height:1.9;background:var(--glass-panel,var(--theme-panel));}
+.lan-chips {display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;}.lan-chips button {min-height:28px;padding:5px 8px;font-size:11px;max-width:100%;overflow-wrap:anywhere;white-space:normal;}.lan-chips button[aria-pressed=true] {border-color:var(--theme-selected-edge)!important;background:var(--theme-selected)!important;color:var(--theme-selected-text);}
+.lan-more {display:block;margin:16px 0 0 auto;}.lan-reference {display:flex;align-items:center;gap:10px;margin:12px 0;color:var(--theme-muted);font-size:11px;}.lan-reference img {width:42px;height:42px;object-fit:contain;border:1px solid var(--theme-border);border-radius:5px;}
+.lan-breadcrumbs {display:flex;gap:6px;flex-wrap:wrap;margin-top:14px;}.lan-folders {padding-bottom:10px;}
+.lan-footer {display:flex;justify-content:space-between;gap:12px;padding:12px 24px;border-top:1px solid var(--theme-border);font-size:10px;color:var(--theme-muted);background:var(--glass-panel,var(--theme-panel));}
+#asset-detail {padding:20px;width:min(1100px,94vw);max-height:92dvh;color:var(--theme-text);overflow:auto;}#asset-detail::backdrop {background:var(--theme-backdrop);backdrop-filter:blur(12px);}#asset-detail>header {display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;}#asset-detail h2 {font-size:16px;margin:0;}
+.lan-detail-body {display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:20px;}.lan-detail-stage {display:grid;place-items:center;min-height:300px;background:var(--theme-control);}.lan-detail-stage img {width:100%;max-height:65dvh;object-fit:contain;}.lan-detail-body aside {min-width:0;max-height:70dvh;overflow:auto;}.lan-detail-body h3 {font-size:14px;margin:12px 0;}.lan-detail-body h4 {font-size:12px;margin:18px 0 8px;}.lan-detail-body p {font-size:11px;color:var(--theme-muted);line-height:1.8;overflow-wrap:anywhere;}.lan-detail-body dl {display:grid;grid-template-columns:72px 1fr;gap:7px;font-size:11px;}.lan-detail-body dt {color:var(--theme-muted);}.lan-detail-body dd {margin:0;overflow-wrap:anywhere;}.lan-detail-actions {display:flex;flex-wrap:wrap;gap:8px;margin-top:20px;}
+@media(max-width:800px) {.lan-header {align-items:flex-start;padding:14px 16px;}.lan-identity {gap:8px;flex-wrap:wrap;}.lan-identity>strong,.lan-readonly {display:none;}.lan-header-actions {flex-wrap:wrap;justify-content:flex-end;}.lan-header-actions>span {flex-basis:100%;text-align:right;}.lan-tabs {padding:8px 12px 0;}.lan-tabs button {flex:1;padding:10px 8px;}.lan-main {padding:16px;}.lan-metrics {grid-template-columns:repeat(3,1fr);}.lan-metrics .lan-progress-meter {grid-column:1/-1;padding:12px;}.lan-search-layout {grid-template-columns:1fr;}.lan-filters {border-right:0;border-bottom:1px solid var(--theme-border);display:flex;flex-wrap:wrap;gap:10px;}.lan-filters h3,.lan-filters p {display:none;}.lan-filters label {flex:1 1 130px;margin:0;}.lan-filters>select {width:150px;}.lan-filters .lan-chips {flex-basis:100%;}.lan-detail-body {grid-template-columns:1fr;}.lan-detail-body aside {max-height:none;}.lan-detail-stage {min-height:180px;}.lan-detail-stage img {max-height:42dvh;}.lan-heading {align-items:flex-start;}.lan-heading p {max-width:230px;}.lan-heading select {min-width:100px;}.lan-grid {grid-template-columns:repeat(auto-fill,minmax(125px,1fr));}}
+@media(max-width:480px) {.lan-main {padding:12px;}.lan-heading {flex-direction:column;gap:12px;}.lan-heading label,.lan-heading select {width:100%;max-width:none;}.lan-metrics {gap:6px;}.lan-metrics>div {padding:12px;}.lan-metrics strong {font-size:25px;}.lan-toolbar label {flex:1;}.lan-toolbar select {min-width:100px;width:100%;}.lan-toolbar input {flex-basis:100%;}.lan-footer {padding:12px;}.lan-footer span:first-child {max-width:180px;}.lan-brand {font-size:21px;}.lan-header-actions button {padding:5px 8px;font-size:11px;}}
+
+/* 参考图独立停靠，结果滚动时仍能上传并调整相似度。 */
+.lan-search-layout {grid-template-columns:270px minmax(0,1fr);align-items:start;}
+.lan-reference-sidebar {position:sticky;top:12px;max-height:calc(100dvh - 24px);display:flex;flex-direction:column;min-height:0;min-width:0;border-right:1px solid var(--theme-border);background:var(--glass-panel,var(--theme-panel));}
+.lan-reference-sidebar .lan-filters {overflow:auto;min-height:0;border-right:0;scrollbar-width:thin;}
+.lan-results {min-height:600px;}
+@media(max-width:800px){
+  .lan-search-layout {display:flex;flex-direction:column;align-items:stretch;}
+  .lan-reference-sidebar {display:contents;}
+  .lan-reference-panel {position:sticky;top:0;z-index:5;background:var(--theme-panel);}
+  .lan-reference-sidebar .lan-filters {overflow:visible;flex:none;}
+  .lan-reference-panel.reference-search {display:grid;grid-template-columns:112px minmax(0,1fr);gap:6px 10px;padding:10px;}
+  .lan-reference-panel.reference-search>header {grid-column:1/-1;margin-bottom:0;}
+  html[data-hardcore-layout] .lan-page .reference-search .reference-dropzone {grid-column:1;grid-row:2/span 3;height:108px;min-height:108px;}
+  .lan-reference-panel .reference-preview {height:90px;}.lan-reference-panel .reference-empty small {display:none;}
+  .lan-reference-panel .reference-empty strong {font-size:11px;}.lan-reference-panel .reference-empty svg {width:24px;height:24px;}
+  .lan-reference-panel .reference-name {grid-column:2;margin:0;}.lan-reference-panel .reference-actions {grid-column:2;align-self:start;}
+  .lan-reference-panel [data-reference=generate] {grid-column:2;margin:0;align-self:start;}
+  .lan-reference-panel .reference-threshold-label {grid-column:1/-1;margin:4px 0 0;}
+  .lan-reference-panel .reference-help {grid-column:1/-1;min-height:0;margin:0;}
+}
+
+/* 标签页已标明位置，不再用内容区标题重复占位。 */
+#panel-progress>.lan-metrics {margin-top:0;}
+
+
+/* 品牌、页签和设置保持一条紧凑顶栏，检索范围并入搜索工具行。 */
+.lan-header {justify-content:flex-start;gap:16px;padding:12px 24px;min-width:0;}
+.lan-identity {flex:none;gap:12px;min-width:0;}
+.lan-header .lan-tabs {flex:1;min-width:0;align-items:center;gap:6px;margin:0;padding:0;border:0;background:transparent;}
+.lan-header .lan-tabs button {flex:none;white-space:nowrap;min-height:34px;padding:7px 12px;font-size:12px;}
+.lan-header .lan-readonly {display:inline-block;}
+.lan-settings {position:relative;flex:none;margin-left:auto;}
+#lan-settings-trigger {display:grid;place-items:center;width:35px;height:35px;padding:7px;color:var(--theme-text-soft);}
+#lan-settings-trigger[aria-expanded=true] {border-color:var(--theme-border-strong);background:var(--theme-hover);}
+.lan-settings-menu {position:absolute;right:0;top:calc(100% + 6px);z-index:100;min-width:180px;padding:6px;border:1px solid var(--theme-border-strong);border-radius:8px;background:var(--theme-raised);box-shadow:0 8px 28px var(--theme-shadow);}
+.lan-settings-menu::before {content:'';position:absolute;left:0;right:0;top:-8px;height:8px;}
+.lan-settings-menu>p {padding:8px 10px 10px;border-bottom:1px solid var(--theme-border);margin:0 0 4px;font-size:10px;color:var(--theme-muted);white-space:nowrap;}
+html[data-hardcore-layout] .lan-page .lan-settings-menu button[role=menuitem] {display:block;width:100%;min-height:34px;padding:8px 10px;border:0;border-radius:5px;background:transparent;box-shadow:none;color:var(--theme-text);text-align:left;font-size:12px;}
+html[data-hardcore-layout] .lan-page .lan-settings-menu button[role=menuitem]:hover {background:var(--theme-hover);}
+#search-form.lan-searchbar {display:grid;grid-template-columns:minmax(180px,1fr) auto minmax(120px,170px) minmax(105px,130px) minmax(140px,170px);align-items:center;gap:8px;}
+#search-form>input {width:100%;min-width:0;}
+#search-form>label {min-width:0;margin:0;}
+#search-form select {width:100%;min-width:0;text-overflow:ellipsis;}
+.lan-sr-only {position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;}
+@media(max-width:800px){
+  .lan-header {align-items:center;gap:10px;padding:12px 16px;}
+  .lan-header .lan-identity {gap:8px;flex-wrap:nowrap;}
+  .lan-header .lan-tabs {gap:3px;}
+  .lan-header .lan-tabs button {padding:7px 10px;font-size:11px;}
+}
+@media(max-width:700px){
+  #search-form.lan-searchbar {grid-template-columns:repeat(3,minmax(0,1fr));}
+  #search-query {grid-column:1/3;grid-row:1;}
+  #search-form>.primary {grid-column:3;grid-row:1;}
+  #search-form>.lan-filter-root {grid-column:1;grid-row:2;}
+  #search-form>.lan-filter-media {grid-column:2;grid-row:2;}
+  #search-form>.lan-filter-mode {grid-column:3;grid-row:2;}
+}
+@media(max-width:600px){
+  .lan-header .lan-readonly {display:none;}
+  .lan-header {padding:10px 12px;gap:8px;}
+  .lan-header .lan-brand {font-size:21px;}
+  .lan-header .lan-tabs button {padding:7px 8px;}
+}
+@media(max-width:360px){
+  .lan-header {padding-inline:8px;gap:5px;}.lan-header .lan-brand {font-size:18px;}
+  .lan-header .lan-tabs {gap:0;}.lan-header .lan-tabs button {font-size:10px;padding-inline:5px;}
+  #lan-settings-trigger {width:31px;height:31px;min-height:31px;padding:5px;}
+}
+
+/* 按参考图匹配搜索按钮的中性灰渐变，保持可操作状态。 */
+#search-submit {background:linear-gradient(180deg,#909090,#848382);border-color:#848382;color:#242527;}
+
+/* 拍摄进度与软件端同为左侧清单、右侧查阅栏，表格自行滚动。 */
+html[data-lan-page=progress] .lan-app {height:100dvh;min-height:0;max-width:none;}
+html[data-lan-page=progress] .lan-header,html[data-lan-page=progress] .lan-footer {flex-shrink:0;}
+html[data-lan-page=progress] .lan-main {display:flex;min-height:0;overflow:hidden;padding:12px;}
+.lan-progress-page {flex:1;min-width:0;min-height:0;}
+.lan-progress-workspace {display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:14px;height:100%;min-height:0;position:relative;}
+.lan-progress-main {min-width:0;min-height:0;display:flex;flex-direction:column;}
+.lan-progress-list {flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;border:1px solid var(--theme-border);border-radius:12px;background:var(--glass-panel,var(--theme-panel));}
+.lan-progress-list>h3 {display:flex;align-items:center;gap:12px;margin:0;padding:12px 16px;min-height:44px;border-bottom:1px solid var(--theme-border);font-size:13px;flex-shrink:0;}
+#progress-search-summary {flex:1;text-align:center;font-size:11px;font-weight:400;color:var(--theme-muted);overflow-wrap:anywhere;}
+.lan-progress-note {margin:0;padding:10px 16px;font-size:10px;line-height:1.7;color:var(--theme-muted);border-bottom:1px solid var(--theme-border);flex-shrink:0;}
+.lan-progress-list .lan-table-wrap {flex:1;min-height:0;border:0;overflow:auto;scrollbar-width:thin;}
+.lan-progress-table {min-width:850px;}
+.lan-progress-table th {position:sticky;top:0;z-index:1;background:var(--theme-bg);font-weight:600;color:var(--theme-text-soft);}
+.lan-progress-table th,.lan-progress-table td {padding:10px 12px;border-right:1px solid var(--theme-border);border-bottom:1px solid var(--theme-border);vertical-align:middle;}
+.lan-progress-table td:first-child {width:52px;}
+.lan-progress-table .lan-row-shot {background:var(--theme-success-soft);}
+.lan-progress-table .lan-sequence {width:52px;text-align:center;color:var(--theme-success);font-weight:600;font-variant-numeric:tabular-nums;}
+.lan-progress-table .lan-original-row {color:var(--theme-muted);font-size:11px;}
+html[data-hardcore-layout] .lan-page .lan-progress-picture,.lan-page .lan-progress-picture {display:inline-grid;place-items:center;width:76px;height:96px;min-height:96px;padding:3px;border:1px solid var(--theme-border);border-radius:7px;background:var(--theme-bg);color:var(--theme-muted);font-size:10px;}
+.lan-progress-table .lan-progress-picture img {display:block;width:68px;height:88px;object-fit:contain;border-radius:3px;background:transparent;}
+.lan-progress-picture:has(img[hidden]) {pointer-events:none;}
+.lan-progress-picture .lan-picture-missing {overflow-wrap:anywhere;}
+.lan-progress-code {display:inline-flex;align-items:center;gap:10px;}
+.lan-progress-memberships,.lan-source-rows {font-size:11px;}
+.lan-source-rows>span {display:block;white-space:nowrap;line-height:1.8;}
+.lan-page .lan-progress-source {display:flex;align-items:center;justify-content:space-between;gap:12px;min-width:100px;max-width:240px;margin:4px 0;padding:5px 8px;white-space:nowrap;}
+.lan-progress-table .lan-completed-at {min-width:220px;font-size:11px;white-space:nowrap;}
+.lan-page .lan-completed-at>button {border:0;background:transparent;padding:0;min-height:32px;text-decoration:underline;text-underline-offset:4px;color:var(--theme-text-soft);}
+.lan-progress-sidebar {display:flex;flex-direction:column;gap:12px;min-width:0;min-height:0;overflow:hidden;padding:14px;border:1px solid var(--theme-border);border-radius:12px;background:var(--glass-panel,var(--theme-panel));}
+.lan-progress-sidebar>* {flex-shrink:0;min-width:0;}
+.lan-progress-heading h2 {margin:0 0 8px;text-align:center;font-size:18px;}
+.lan-progress-heading p {margin:0;font-size:11px;line-height:1.7;color:var(--theme-muted);}
+.lan-progress-search {display:grid;gap:8px;padding:12px;border:1px solid var(--theme-border);border-radius:8px;}
+.lan-progress-search input,.lan-progress-search select {width:100%;}
+.lan-progress-sidebar .lan-progress-sidebar-scroll {flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:12px;scrollbar-width:thin;scrollbar-gutter:stable;}
+.lan-progress-sidebar-scroll>* {flex-shrink:0;min-width:0;}
+.lan-progress-sheets {display:flex;flex-wrap:wrap;gap:2px;padding-bottom:6px;border-bottom:1px solid var(--theme-border);}
+.lan-page .lan-progress-sheets [role=tab] {border:0;border-bottom:2px solid transparent;background:transparent;border-radius:5px;min-height:34px;padding:7px 10px;white-space:nowrap;color:var(--theme-text-soft);font-size:11px;}
+.lan-page .lan-progress-sheets [role=tab][aria-selected=true] {background:var(--theme-selected);border-bottom-color:var(--theme-emphasis);color:var(--theme-selected-text);}
+.lan-progress-sheets [role=tab]>span {margin-left:7px;color:var(--theme-muted);font-size:10px;}
+.lan-progress-card {border:1px solid var(--theme-border);border-radius:10px;overflow:hidden;background:var(--theme-soft);}
+.lan-progress-card>summary {padding:10px 12px;background:var(--theme-bg);font-size:12px;font-weight:600;cursor:pointer;}
+.lan-progress-fields {display:grid;gap:12px;padding:12px;}
+.lan-progress-fields select {width:100%;}
+#progress-project-info {font-size:10px;color:var(--theme-muted);line-height:1.8;margin:0;overflow-wrap:anywhere;}
+.lan-progress-sidebar .lan-metrics {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:12px;}
+.lan-progress-sidebar .lan-metrics>div {min-width:0;padding:9px;gap:8px;background:var(--glass-field,var(--theme-control));}
+.lan-progress-sidebar .lan-metrics strong {font-size:25px;}
+.lan-progress-sidebar #count-shot {color:var(--theme-success);}
+.lan-progress-sidebar .lan-progress-meter {grid-column:1/-1;}
+#progress-message {font-size:11px;line-height:1.7;color:var(--theme-muted);overflow-wrap:anywhere;}
+#progress-message.error {color:var(--theme-danger);}
+#progress-sidebar-toggle,#progress-sidebar-close {display:none;}
+#progress-image {width:min(1000px,94vw);padding:16px;max-height:94dvh;overflow:auto;}
+#progress-image::backdrop {background:var(--theme-backdrop);backdrop-filter:blur(10px);}
+#progress-image>header {display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;}
+#progress-image-title {margin:0;font-size:14px;overflow-wrap:anywhere;}
+.lan-progress-image-stage {display:grid;place-items:center;min-height:200px;background:var(--theme-bg);}
+#progress-image-content {max-width:100%;max-height:76dvh;object-fit:contain;}
+#progress-image-status {font-size:12px;color:var(--theme-muted);}
+@media(max-width:1000px){.lan-progress-workspace {grid-template-columns:minmax(0,1fr) 300px;gap:10px;}.lan-progress-sidebar {padding:10px;}}
+@media(max-width:760px){
+  html[data-lan-page=progress] .lan-main {padding:8px;}
+  .lan-progress-workspace {grid-template-columns:minmax(0,1fr);}
+  #progress-sidebar-toggle {display:block;align-self:flex-end;flex-shrink:0;margin-bottom:8px;}
+  .lan-progress-sidebar {display:none;position:absolute;right:0;top:0;bottom:0;width:min(330px,calc(100% - 24px));z-index:5;box-shadow:-10px 0 25px var(--theme-shadow);background:var(--theme-panel);}
+  .sidebar-open .lan-progress-sidebar {display:flex;}
+  #progress-sidebar-close {display:block;align-self:flex-end;}
+  .lan-progress-list>h3 {padding:10px 12px;}.lan-progress-note {padding:8px 12px;}
+}

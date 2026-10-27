@@ -42,7 +42,7 @@ class PreviewSizeTests(unittest.TestCase):
                         preview_requests=[]
                         page.on('request',lambda request: preview_requests.append(request.url) if '/api/preview/' in request.url else None)
                         page.on('pageerror',lambda e:errors.append(str(e)))
-                        page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='networkidle')
+                        page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading')
                         slider=page.locator('#thumb-size');output=page.locator('#thumb-size-value')
                         def set_size(value):slider.fill(str(value));slider.dispatch_event('input')
                         def dimensions():return page.locator('#photos img').first.bounding_box()

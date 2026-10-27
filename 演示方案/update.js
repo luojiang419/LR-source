@@ -1,5 +1,5 @@
 /* 启动检查与原生独立更新器交接。保存成功且后台空闲后才退出。 */
-document.addEventListener('DOMContentLoaded',()=>{
+const startUpdater=()=>{
   'use strict';
   if(!window.FramekeepIO)return;
   const api=(path,body)=>window.FramekeepIO.api(path,body);
@@ -32,4 +32,5 @@ document.addEventListener('DOMContentLoaded',()=>{
   }
   button.addEventListener('click',check);
   if(window.FramekeepDesktop)setTimeout(check,2500);
-});
+};
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',startUpdater,{once:true});else startUpdater();

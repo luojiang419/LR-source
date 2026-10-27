@@ -18,9 +18,29 @@ class RuleTests(unittest.TestCase):
     def test_tokens_and_conflicts(self):
         result=match_rules([{'text':'款号：ｌｃ１２３－Ａ\nSIZE S\nLC456 / LC123-A'}],DEFAULT_RULES)
         self.assertEqual(result['exact'],['LC123-A','LC456'])
-        self.assertFalse(match_rules([{'text':'XLC123 LC COTTON'}],DEFAULT_RULES)['exact'])
+        self.assertEqual(match_rules([{'text':'XLC123 LC COTTON'}],DEFAULT_RULES)['exact'],['XLC123'])
         self.assertEqual(match_rules([{'text':'AB123-P905'}],[{'kind':'suffix','value':'P905'}])['exact'],['AB123-P905'])
-        self.assertEqual(match_rules([{'text':'XLC123'}],[{'kind':'contains','value':'LC'}]),{'exact':[],'suggested':['XLC123']})
+        self.assertEqual(match_rules([{'text':'XLC123'}],[{'kind':'contains','value':'LC'}]),{'exact':['XLC123'],'suggested':['XLC123']})
+
+    def test_customer_label_raw_text_contains_rule_even_when_model_codes_miss_it(self):
+        code='LC7877529-P105'
+        reading={'text':'SIZE:S\n'+code+'\n261020 G93\n71% COTTON\n27.5% POLYESTER\n1.5% ELASTANE\nMADE IN CHINA','codes':['261020','G93']}
+        for kind,value in [('prefix','LC'),('suffix','P105'),('suffix','-P105'),('contains','7877529'),('prefix',code)]:
+            with self.subTest(kind=kind,value=value):
+                self.assertEqual(match_rules([reading],validate_rules([{'kind':kind,'value':value}]))['exact'],[code])
+        screenshot={'text':'SIZE:s\nLC7877847-P520\n261016 G123\n98% COTTON\n2% ELASTANE\nMADE IN CHINA'}
+        self.assertEqual(match_rules([screenshot],DEFAULT_RULES)['exact'],['LC7877847-P520'])
+
+    def test_ocr_spaces_unicode_hyphens_and_repeated_candidates_collapse(self):
+        reading={'text':'SIZE:S\nｌｃ ７８７７５２９ — Ｐ １０５\n261020 G93','codes':['LC7877529-P105'],'ocr_candidates':['LC7877529－P105']}
+        self.assertEqual(match_rules([reading],DEFAULT_RULES)['exact'],['LC7877529-P105'])
+        self.assertEqual(match_rules([{'text':'LC COTTON'}],DEFAULT_RULES)['exact'],[])
+
+    def test_clear_raw_text_beats_truncated_model_codes_but_two_raw_skus_need_choice(self):
+        code='LC7877529-P105'
+        self.assertEqual(match_rules([{'text':code,'codes':['LC7877529','LC0000000-P000']}],DEFAULT_RULES)['exact'],[code])
+        self.assertEqual(match_rules([{'text':code+'\nLC7877847-P520','codes':[code]}],DEFAULT_RULES)['exact'],[code,'LC7877847-P520'])
+        self.assertEqual(match_rules([{'codes':[code]}],DEFAULT_RULES)['exact'],[code])
 
     def test_validation(self):
         self.assertEqual(validate_rules([{'kind':'prefix','value':' lc '}]),DEFAULT_RULES)
@@ -47,12 +67,30 @@ class RuleIntegrationTests(unittest.TestCase):
         self.choose('CORRECT-100');self.assertIsNone(self.parse()['auto_applied'])
         self.assertEqual(self.sku.ocr_details(self.sid,self.ids[1])['selected_sku'],'CORRECT-100')
 
-    def test_conflicts_fuzzy_and_no_match_require_choice(self):
-        self.reading['codes'].append('LC999');self.assertIsNone(self.parse()['auto_applied'])
+    def test_conflicts_require_choice_but_contains_unique_match_applies(self):
+        self.reading['codes'].append('LC999');self.reading['text']+='\nLC999';self.assertIsNone(self.parse()['auto_applied'])
         self.assertEqual(labels(self.sku,self.sid)['labels'],{})
-        self.sku.set_sku_rules([{'kind':'contains','value':'LC'}]);self.reading['codes']=[CODE]
-        self.assertIsNone(self.parse()['auto_applied'])
+        self.sku.set_sku_rules([{'kind':'contains','value':'LC'}]);self.reading['codes']=[CODE];self.reading['text']=self.reading['text'].removesuffix('\nLC999')
+        self.assertEqual(self.parse()['auto_applied']['sku'],CODE)
         self.sku.set_sku_rules([]);self.assertIsNone(self.parse()['auto_applied'])
+
+    def test_manual_parse_with_full_auto_off_applies_customer_rule_and_confirms_feedback(self):
+        code='LC7877529-P105'
+        self.sku.set_sku_rules([{'kind':'contains','value':'LC'}])
+        self.sku.configure_tasks(mode='manual');self.assertFalse(self.sku.full_auto_state()['enabled'])
+        self.reading.update(text='SIZE:S\n'+code+'\n261020 G93\n71% COTTON',codes=['G93'],ocr_candidates=[])
+        result=self.parse();self.assertEqual(result['auto_applied']['sku'],code)
+        self.assertEqual(self.archive.query(code)['total'],2)
+        from capture_parsing import capture_status
+        feedback=capture_status(self.store,self.sku,self.archive,None,self.sid,self.ids[1])['ocr']
+        self.assertEqual(feedback['status'],'confirmed');self.assertEqual(feedback['codes'],[code])
+        row=next(r for r in self.sku.state()['rows'] if r['sku']==code)
+        self.assertEqual(row['status'],'已拍摄');self.assertTrue(row['sku_image']);self.assertTrue(row['completed_at'])
+
+    def test_length_filter_runs_before_counting_unique_rule_hits(self):
+        code='LC7877529-P105';self.sku.set_sku_rules([{'kind':'contains','value':'LC'}],{'min_exclusive':10,'max_exclusive':20})
+        self.reading.update(text=code+'\nLC99',codes=[code,'LC99'],ocr_candidates=[])
+        self.assertEqual(self.parse()['auto_applied']['sku'],code)
 
     def test_suffix_persists_and_single_photo_without_document(self):
         rules=[{'kind':'suffix','value':'P905'}];self.sku.set_sku_rules(rules)

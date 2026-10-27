@@ -59,7 +59,7 @@ class NoDocumentTests(unittest.TestCase):
                     browser=pw.chromium.launch(executable_path='C:/Program Files/Google/Chrome/Application/chrome.exe',headless=True)
                     try:
                         page=browser.new_page(viewport={'width':1440,'height':1000});errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
-                        page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='networkidle')
+                        page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading')
                         self.assertTrue(page.locator('#shooting-full-auto').is_enabled());page.locator('#shooting-full-auto').check()
                         page.wait_for_function('()=>document.getElementById("shooting-auto-status").textContent.includes("全自动已开启")')
                         self.tick(3);self.assertEqual(len(self.calls),3)

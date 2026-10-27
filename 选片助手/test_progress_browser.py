@@ -44,7 +44,7 @@ class ProgressBrowserTests(unittest.TestCase):
                         page=browser.new_page(viewport={'width':1680,'height':1050},accept_downloads=True);errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
                         page.add_init_script("localStorage.setItem('framekeep-layout-v1',JSON.stringify({selection:{sections:{'progress-table':false}},monitor:{sections:{'progress-table':false}}}))")
                         out=ROOT/'build/shooting-grid-acceptance';out.mkdir(exist_ok=True)
-                        page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='networkidle')
+                        page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading')
                         page.wait_for_function('()=>FramekeepSku.currentType()==="模特图"')
                         self.assertEqual(page.locator('#asset-scope,#asset-custom-scope').count(),0)
                         page.locator('#current-shooting-tab').click();page.locator('#sku-live-scope').select_option('细节图');page.wait_for_timeout(1200)
@@ -132,7 +132,7 @@ class ProgressBrowserTests(unittest.TestCase):
                         page.evaluate('()=>window.FramekeepDesktop={saveSkuWorkbook:async(projectId,name)=>{window.__recordExport={projectId,name};return true}}');page.locator('#sku-export').click();page.wait_for_function('()=>document.getElementById("sku-message").textContent.startsWith("拍摄记录已导出")')
                         self.assertEqual(page.evaluate('()=>window.__recordExport.projectId'),pid);self.assertRegex(page.evaluate('()=>window.__recordExport.name'),r'拍摄记录-\d{8}-\d{6}\.xlsx$')
                         page.evaluate('()=>window.FramekeepDesktop.saveSkuWorkbook=async()=>false');page.locator('#sku-export').click();page.wait_for_function('()=>document.getElementById("sku-message").textContent==="已取消导出"');self.assertFalse(page.locator('#sku-export').is_disabled())
-                        page.reload(wait_until='networkidle');page.locator('#sku-open').click();page.wait_for_function('()=>document.getElementById("progress-shot")?.textContent==="1"')
+                        page.reload(wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading');page.locator('#sku-open').click();page.wait_for_function('()=>document.getElementById("progress-shot")?.textContent==="1"')
                         # 宽屏模块只在右侧；窄屏从右侧展开设置，清单不被顶部模块挤占。
                         page.locator('#progress-controls').evaluate('(el)=>el.open=true')
                         page.emulate_media(reduced_motion='reduce')

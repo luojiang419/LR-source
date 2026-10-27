@@ -47,7 +47,7 @@ class IndexProgressBrowserTests(unittest.TestCase):
                         page.on('pageerror',lambda error:errors.append(str(error)))
                         page.route('**/api/reference/config',config);page.route('**/api/reference/sources',sources)
                         page.route('**/api/reference/library/folders?*',lambda route:route.fulfill(json={'folders':[]}) if 'device=remote-progress' in route.request.url else route.fulfill(status=503,json={'error':'模拟目录离线'}) if offline[0] else route.continue_())
-                        page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='domcontentloaded')
+                        page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading')
                         page.locator('#view-open').click();page.locator('#layout-split').click();page.keyboard.press('Escape')
                         page.wait_for_selector('[data-resource-folder]');page.wait_for_function('()=>document.getElementById("split-index-percent").textContent==="25%"')
                         page.locator('[data-resource-folder]').nth(10).focus()
@@ -89,7 +89,7 @@ class IndexProgressBrowserTests(unittest.TestCase):
                         self.assertTrue(page.evaluate('()=>indexRoot===document.querySelector("[data-resource-group]")'))
                         remote.extend([{'id':'first','name':'共享 A','status':'scanning','progress':{'done':20,'total':100,'percent':20}},
                                        {'id':'second','name':'共享 B','status':'scanning','progress':{'done':60,'total':100,'percent':60}}])
-                        page.reload();page.wait_for_function('()=>document.getElementById("split-index-overview-percent").textContent==="40%"')
+                        page.reload();page.wait_for_function('()=>!window.FramekeepBoot?.loading');page.wait_for_function('()=>document.getElementById("split-index-overview-percent").textContent==="40%"')
                         remote[0].update(status='ready',progress={'phase':'completed','done':100,'total':100,'percent':100})
                         page.wait_for_function('()=>document.getElementById("split-index-overview-percent").textContent==="80%"')
                         remote[1]['progress'].update(done=80,percent=80)

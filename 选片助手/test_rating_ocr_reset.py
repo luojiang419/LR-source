@@ -128,7 +128,7 @@ class RatingOcrResetTests(unittest.TestCase):
                     browser=pw.chromium.launch(executable_path='C:/Program Files/Google/Chrome/Application/chrome.exe',headless=True)
                     try:
                         page=browser.new_page(viewport={'width':1600,'height':1000});errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
-                        page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='networkidle')
+                        page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading')
                         page.evaluate('(id)=>Framekeep.browsePhoto(id)',self.ids[1]);page.evaluate('()=>FramekeepIO.flush()')
                         self.parse();self.choose()
                         page.locator('#sku-open').click();page.wait_for_function('()=>document.querySelector("#sku-rows tbody tr")?.textContent.includes("已拍摄")')

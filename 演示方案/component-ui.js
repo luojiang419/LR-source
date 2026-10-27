@@ -33,11 +33,13 @@
     driverBusy=true;dismissed=false;
     try{
     let state=await api('/api/mouse/driver/prepare',{activate});
+    // 只准备文件时 installed 已满足；idle 表示尚未激活，不能在此无限等待。
+    if(state.installed&&!activate){box.hidden=true;return state}
     retry=()=>driver(activate);
     while(state.status==='working'||state.status==='idle'){
       paint(state,'正在准备鼠标遥控');await pause();state=await api('/api/mouse/driver');
     }
-    if(!state.installed||state.status==='error'){paint({...state,status:'error'},'鼠标驱动需要处理');throw new Error(state.message||'鼠标驱动尚未就绪')}
+    if(!state.installed||state.status==='error'||activate&&state.usable===false){paint({...state,status:'error'},'鼠标驱动需要处理');throw new Error(state.message||'鼠标驱动尚未就绪')}
     box.hidden=true;return state;
     }finally{driverBusy=false}
   }

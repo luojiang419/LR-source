@@ -172,7 +172,7 @@ class MetadataBackupTests(unittest.TestCase):
                     try:
                         page = browser.new_page(viewport={'width':1680,'height':1050}, accept_downloads=True, reduced_motion='reduce')
                         errors = [];page.on('pageerror', lambda e:errors.append(str(e)))
-                        url = f'http://127.0.0.1:{http.server_port}';page.goto(url, wait_until='networkidle')
+                        url = f'http://127.0.0.1:{http.server_port}';page.goto(url, wait_until='domcontentloaded');page.wait_for_function('()=>window.FramekeepBoot?.loading===false')
                         self.assertEqual(page.request.post(url+'/api/sku/metadata/import', data={'content_base64':base64.b64encode(self.content).decode()}).status, 403)
                         page.locator('#app-settings-open').click();page.locator('[data-settings-section=database]').click()
                         page.locator('#sku-metadata-file').set_input_files(str(fixture))
@@ -196,7 +196,7 @@ class MetadataBackupTests(unittest.TestCase):
                         for kind in ('bins','list'):
                             page.locator('#sku-toggle-'+kind).click();self.assertEqual(page.locator('#sku-toggle-'+kind).get_attribute('aria-expanded'), 'false')
                         self.assertGreater(page.locator('#sku-database-grid').bounding_box()['width'], expanded+300)
-                        page.reload(wait_until='networkidle');page.locator('#sku-database-open').click()
+                        page.reload(wait_until='domcontentloaded');page.wait_for_function('()=>window.FramekeepBoot?.loading===false');page.locator('#sku-database-open').click()
                         self.assertEqual(page.locator('#sku-toggle-list').get_attribute('aria-expanded'), 'false')
                         page.locator('#sku-toggle-bins').focus();page.keyboard.press('Enter');page.locator('#sku-toggle-list').click()
                         page.locator('[data-db-sku]').first.click()

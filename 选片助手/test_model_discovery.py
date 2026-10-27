@@ -137,7 +137,7 @@ class DiscoveryBrowserTests(unittest.TestCase):
                     browser=pw.chromium.launch(executable_path='C:/Program Files/Google/Chrome/Application/chrome.exe',headless=True)
                     try:
                         page=browser.new_page(viewport={'width':1440,'height':1100});errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
-                        page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='networkidle');page.locator('#app-settings-open').click();page.locator('#assistant-settings').click();page.locator('#model-add').click()
+                        page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='domcontentloaded');page.wait_for_function('()=>window.FramekeepBoot?.loading===false');page.locator('#app-settings-open').click();page.locator('#assistant-settings').click();page.locator('#model-add').click()
                         self.assertEqual(page.locator('#model-concurrency').input_value(),'4');page.locator('#model-concurrency').fill('8')
                         page.locator('#model-url').fill(service.url.removeprefix('http://'));page.locator('#model-key').fill('private-browser-key');page.locator('#model-id').focus()
                         page.wait_for_function('()=>document.getElementById("model-discovered").options.length===2');page.locator('#model-search').fill('QWEN');self.assertEqual(page.locator('#model-discovered option').count(),1)
@@ -157,7 +157,7 @@ class DiscoveryBrowserTests(unittest.TestCase):
                         page.locator('#model-cancel').click();page.locator('#model-add').click();page.locator('#model-category').select_option('text');page.locator('#model-url').fill(service.url.replace('127.0.0.1','localhost').removeprefix('http://'));page.locator('#model-fetch').click();page.wait_for_function('()=>document.getElementById("model-discovered").options.length===2');page.locator('#model-discovered').select_option('text-mini')
                         out=root/'build/model-discovery-acceptance';out.mkdir(exist_ok=True);page.locator('#model-discovery-message').scroll_into_view_if_needed();page.screenshot(path=str(out/'model-picker.png'))
                         page.locator('#model-save-select').click();page.wait_for_function('()=>document.querySelectorAll("[data-model-card]").length===2');self.assertEqual(providers.public()['selected']['multimodal'],pid);self.assertIn('text',providers.public()['selected'])
-                        page.reload(wait_until='networkidle');page.locator('#app-settings-open').click();page.locator('#assistant-settings').click();page.wait_for_function('()=>document.querySelectorAll("[data-model-card][aria-pressed=true]").length===2');self.assertFalse(errors,errors)
+                        page.reload(wait_until='domcontentloaded');page.wait_for_function('()=>window.FramekeepBoot?.loading===false');page.locator('#app-settings-open').click();page.locator('#assistant-settings').click();page.wait_for_function('()=>document.querySelectorAll("[data-model-card][aria-pressed=true]").length===2');self.assertFalse(errors,errors)
                         # 保存会等待补全；等待期间取消不能创建卡片。
                         def cancel_pending(route):
                             response=route.fetch();page.locator('#model-cancel').click();route.fulfill(response=response)

@@ -101,7 +101,7 @@ class MediaPoolTests(unittest.TestCase):
                     browser=pw.chromium.launch(executable_path='C:/Program Files/Google/Chrome/Application/chrome.exe',headless=True)
                     try:
                         page=browser.new_page(viewport={'width':1680,'height':1050},reduced_motion='reduce');errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
-                        page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='networkidle');page.locator('#sku-database-open').click()
+                        page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading');page.locator('#sku-database-open').click()
                         page.wait_for_selector('#sku-database-list [data-db-sku="A100"]')
                         page.locator('#sku-bin-create').click();page.locator('#sku-pool-name').fill('秋季拍摄');page.locator('#sku-pool-submit').click()
                         page.wait_for_function('()=>document.getElementById("sku-pool-status").textContent.includes("已创建组")')
@@ -132,7 +132,7 @@ class MediaPoolTests(unittest.TestCase):
                         self.assertEqual(after,self.hashes());page.locator('[data-sku-bin="trash"]').click();page.wait_for_selector('#sku-database-list [data-db-sku="A900"]')
                         page.locator('#sku-database-list [data-db-sku="A900"]').click(button='right');page.locator('#sku-pool-menu [data-pool-action="restore"]').click()
                         page.wait_for_function('()=>document.getElementById("sku-pool-status").textContent.includes("已恢复")')
-                        self.assertEqual(after,self.hashes());page.reload(wait_until='networkidle');page.locator('#sku-database-open').click()
+                        self.assertEqual(after,self.hashes());page.reload(wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading');page.locator('#sku-database-open').click()
                         page.locator('[data-sku-bin="'+folder+'"]').click();page.wait_for_selector('#sku-database-list [data-db-sku="A900"]')
                         self.assertFalse(errors,errors)
                     finally:browser.close()

@@ -42,7 +42,7 @@ class PreviewEmptyTests(unittest.TestCase):
                         page = browser.new_page(viewport={'width': 1680, 'height': 1050}, reduced_motion='reduce')
                         errors = []
                         page.on('pageerror', lambda e: errors.append(str(e)))
-                        page.goto(f'http://127.0.0.1:{http.server_port}', wait_until='networkidle')
+                        page.goto(f'http://127.0.0.1:{http.server_port}', wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading')
                         self.assertTrue(page.locator('#sku-asset-panel').evaluate('(el)=>el.open&&el.previousElementSibling.classList.contains("rating-section")'))
                         self.assertIsNone(page.locator('#photo-stage').get_attribute('title'))
                         for theme in ['dark', 'light', 'pure-white', 'hardcore']:
@@ -88,7 +88,7 @@ class PreviewEmptyTests(unittest.TestCase):
                         self.assertEqual(page.locator('#photos .preview-empty').count(), 0)
                         page.locator('.preview-surface').hover()
                         self.assertEqual(page.locator('#photo-stage [title]').count(),0)
-                        self.assertTrue(page.locator('.thumbnail-control').is_visible())
+                        self.assertTrue(page.locator('.thumbnail-control').is_hidden());page.locator('#app-settings-open').click();page.locator('[data-settings-section=preview]').click();page.locator('#preview-zoom-position').select_option('top-left');page.locator('#app-settings-close').click();page.locator('.preview-surface').hover();self.assertTrue(page.locator('.thumbnail-control').is_visible())
                         page.screenshot(path=str(out / 'first-photo.png'))
                         # 带筛选的非空目录应提供恢复操作，不能误报联机等待。
                         page.evaluate('Framekeep.setMonitoring(false)')
@@ -104,7 +104,7 @@ class PreviewEmptyTests(unittest.TestCase):
                         response = page.request.get(f'http://127.0.0.1:{http.server_port}/assets/camera-transfer.svg')
                         self.assertTrue(response.ok)
                         svg_page = browser.new_page(reduced_motion='reduce')
-                        svg_page.goto(f'http://127.0.0.1:{http.server_port}/assets/camera-transfer.svg')
+                        svg_page.goto(f'http://127.0.0.1:{http.server_port}/assets/camera-transfer.svg');svg_page.wait_for_function('()=>!window.FramekeepBoot?.loading')
                         self.assertEqual(svg_page.locator('.packet').first.evaluate('(el)=>getComputedStyle(el).animationName'), 'none')
                         svg_page.close()
                         self.assertFalse(errors, errors)

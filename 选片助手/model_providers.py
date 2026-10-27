@@ -40,7 +40,7 @@ def seal(value,decode=False):
 
 class Providers(ProviderConcurrency):
     @staticmethod
-    def reserved(provider):return bool(provider and provider.get('protocol')=='local' and provider.get('category')=='multimodal')
+    def reserved(provider):return False
 
     def __init__(self,data,legacy=None):
         self.path=Path(data)/'model-providers.json';self.lock=threading.RLock()
@@ -51,6 +51,13 @@ class Providers(ProviderConcurrency):
             try:
                 c=legacy();saved=self.save({'name':'原 AI 助手','category':'multimodal','protocol':'responses','url':c['url'],'model':c['model'],'key':c['key']});self.select(saved['providers'][0]['id'])
             except (ValueError,OSError):pass
+        # 旧版内置模式只有 OCR。升级保留开关与外部卡片，补齐按需使用的视觉卡片。
+        if self.data.get('builtin_enabled') and not self._builtin('multimodal'):
+            self.data['providers'].append({'id':uuid.uuid4().hex,'name':'内置 Qwen2.5-VL 7B Q4',
+                'category':'multimodal','protocol':'local','url':'http://127.0.0.1',
+                'model':'qwen2.5-vl-7b-q4','timeout':300,'max_tokens':4096,'image_size':1600,
+                'json_mode':True,'concurrency':1})
+            self._persist()
 
     def _persist(self):
         self.path.parent.mkdir(parents=True,exist_ok=True);temp=self.path.with_suffix('.tmp')
@@ -71,15 +78,15 @@ class Providers(ProviderConcurrency):
         if self.data.get('builtin_enabled',False):raise ValueError('请先关闭“使用内置模型”，再切换或修改 API 配置')
 
     def _builtin(self,category):
-        model={'ocr':'glm-ocr-local'}.get(category)
+        model={'ocr':'glm-ocr-local','multimodal':'qwen2.5-vl-7b-q4'}.get(category)
         return next((p for p in self.data['providers'] if p['category']==category and p['protocol']=='local' and p['model']==model),None)
 
     def set_builtin(self,enabled):
         if type(enabled) is not bool:raise ValueError('内置模型开关必须为布尔值')
         with self.lock:
             if enabled and not self.data.get('builtin_enabled',False):
-                for category,model,name in [('ocr','glm-ocr-local','内置 GLM-OCR')]:
-                    if not self._builtin(category):self.save({'name':name,'category':category,'protocol':'local','model':model,'timeout':300,'max_tokens':1200,'image_size':1600,'json_mode':category!='ocr'})
+                for category,model,name in [('ocr','glm-ocr-local','内置 GLM-OCR'),('multimodal','qwen2.5-vl-7b-q4','内置 Qwen2.5-VL 7B Q4')]:
+                    if not self._builtin(category):self.save({'name':name,'category':category,'protocol':'local','model':model,'timeout':300,'max_tokens':4096 if category=='multimodal' else 1200,'image_size':1600,'json_mode':category!='ocr'})
             self.data['builtin_enabled']=enabled;self._persist();return self.public()
 
     def check_inference(self,provider):
@@ -122,7 +129,7 @@ class Providers(ProviderConcurrency):
         protocol=body.get('protocol',old.get('protocol') if old else None)
         if protocol=='local':
             from local_inference import MODEL_IDS
-            return {'models':[model for model,category in MODEL_IDS.items() if category=='ocr'],'message':'当前启用内置 OCR，多模态作为后续开发预留'}
+            return {'models':list(MODEL_IDS),'message':'支持内置 OCR 与多模态视觉模型，按需加载'}
         if protocol not in ('chat','responses'):raise ValueError('该协议未提供统一模型列表，请手动填写模型标识')
         groups=model_bases(body.get('url',old.get('url','') if old else ''))
         key=str(body.get('key','')).strip() or (old.get('key','') if old else '')

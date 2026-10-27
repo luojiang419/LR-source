@@ -39,7 +39,7 @@ class ImportPreviewBrowserTests(unittest.TestCase):
                     try:
                         page=browser.new_page(viewport={'width':1440,'height':940},reduced_motion='reduce')
                         errors=[];page.on('pageerror',lambda error:errors.append(str(error)))
-                        page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='networkidle')
+                        page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading')
                         document=page.evaluate('performance.timeOrigin')
                         def upload(selector,name,content=None):
                             page.locator(selector).set_input_files({'name':name,'mimeType':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','buffer':fixture_book() if content is None else content})
@@ -115,7 +115,7 @@ class ImportPreviewBrowserTests(unittest.TestCase):
                         self.assertNotEqual(other,selected);self.assertEqual(store.session(sid)['state']['overrides'][other],5)
                         self.assertEqual(store.session(sid)['state']['overrides'][selected],3)
                         self.assertEqual(page.evaluate('performance.timeOrigin'),document)
-                        page.reload(wait_until='domcontentloaded')
+                        page.reload(wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading')
                         page.wait_for_function('()=>document.getElementById("shooting-document").textContent.includes("监控中.xlsx")')
                         page.wait_for_function('()=>FramekeepLayout.isMonitoring()')
                         page.evaluate('(id)=>Framekeep.browsePhoto(id)',other)

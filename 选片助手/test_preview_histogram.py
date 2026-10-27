@@ -62,7 +62,7 @@ class PreviewHistogramTests(unittest.TestCase):
                         page = browser.new_page(viewport={'width':1680,'height':1050}, reduced_motion='reduce')
                         errors = []; page.on('pageerror', lambda e:errors.append(str(e)))
                         page.add_init_script('window.histogramReads=0;const original=CanvasRenderingContext2D.prototype.getImageData;CanvasRenderingContext2D.prototype.getImageData=function(...args){window.histogramReads++;return original.apply(this,args)}')
-                        page.goto(f'http://127.0.0.1:{http.server_port}', wait_until='domcontentloaded')
+                        page.goto(f'http://127.0.0.1:{http.server_port}', wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading')
                         self.ready(page)
                         panel = page.locator('#preview-histogram')
                         self.assertEqual(panel.get_attribute('data-photo-id'), page.evaluate('Framekeep.remoteTarget().photoId'))
@@ -162,7 +162,7 @@ class PreviewHistogramTests(unittest.TestCase):
                         histogram_settings('hidden',0);self.assertTrue(panel.is_hidden())
                         histogram_settings('top-left',100);self.assertTrue(panel.is_hidden())
                         histogram_settings('top-left',42);self.ready(page)
-                        page.reload(wait_until='domcontentloaded');self.ready(page)
+                        page.reload(wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading');self.ready(page)
                         self.assertEqual(page.locator('#preview-histogram-position').input_value(),'top-left')
                         self.assertEqual(page.locator('#preview-histogram-transparency').input_value(),'42')
                         self.assertAlmostEqual(float(panel.evaluate('e=>getComputedStyle(e).opacity')),.58)
@@ -194,7 +194,7 @@ class PreviewHistogramTests(unittest.TestCase):
                         page.locator('#app-settings-close').click()
                         # 非法旧偏好回退默认位置和原始半透明外观。
                         page.evaluate('()=>{localStorage.setItem("framekeep-preview-histogram-position-v1","invalid");localStorage.setItem("framekeep-preview-histogram-transparency-v1","101")}')
-                        page.reload(wait_until='domcontentloaded'); self.ready(page)
+                        page.reload(wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading'); self.ready(page)
                         self.assertEqual(page.locator('#preview-histogram-position').input_value(),'bottom-right')
                         self.assertEqual(page.locator('#preview-histogram-transparency').input_value(),'0')
                         page.screenshot(path=str(OUT/'application.png'))
@@ -214,7 +214,7 @@ class PreviewHistogramTests(unittest.TestCase):
                 errors = []; page.on('pageerror', lambda e:errors.append(str(e)))
                 pending = {}
                 page.route('http://histogram.test/**', lambda route:route.fulfill(body='<html></html>', content_type='text/html') if route.request.url=='http://histogram.test/' else pending.update({route.request.url:route}))
-                page.goto('http://histogram.test/', wait_until='domcontentloaded')
+                page.goto('http://histogram.test/', wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading')
                 page.set_content('<style>*{box-sizing:border-box}:root{--theme-panel:#222;--theme-text:#eee;--theme-text-soft:#ddd;--theme-muted:#999;--theme-border:#444;--theme-shadow:#0008}.preview-surface{position:relative;width:760px;height:550px}</style><div class="preview-surface"><div id="loupe-view" class="hidden"></div></div>')
                 page.add_style_tag(path=str(ROOT/'演示方案/preview-histogram.css'))
                 page.evaluate('''()=>{

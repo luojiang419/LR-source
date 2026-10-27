@@ -19,7 +19,7 @@ class RawBrowserTests(_RawFixture):
             with sync_playwright() as pw:
                 browser=pw.chromium.launch(executable_path='C:/Program Files/Google/Chrome/Application/chrome.exe',headless=True)
                 try:
-                    page=browser.new_page(viewport={'width':1680,'height':1050});errors=[];page.on('pageerror',lambda e:errors.append(str(e)));page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='networkidle')
+                    page=browser.new_page(viewport={'width':1680,'height':1050});errors=[];page.on('pageerror',lambda e:errors.append(str(e)));page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading')
                     (self.jpg/'IMG_0346.JPG').unlink()
                     page.once('dialog',lambda d:d.accept(str(self.raw)));page.locator('#raw-sync-browse').click()
                     page.wait_for_function('()=>!document.getElementById("raw-sync-start").disabled');page.locator('#raw-sync-start').click()
@@ -28,7 +28,7 @@ class RawBrowserTests(_RawFixture):
                     fields=self.archive.writer.read_asset(self.target);self.assertEqual(fields['XMP-fk:SKU'],'SKU-远程123');self.assertEqual(fields['XMP-xmp:Rating'],4)
                     self.assertTrue(page.locator('#raw-sync-open').is_hidden())
                     out=ROOT/'build/raw-reconcile';page.screenshot(path=str(out/'raw-sync-browser.png'));self.assertFalse(errors,errors)
-                    page.reload(wait_until='networkidle');page.wait_for_function('()=>document.getElementById("raw-sync-summary").textContent==="已同步 1"')
+                    page.reload(wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading');page.wait_for_function('()=>document.getElementById("raw-sync-summary").textContent==="已同步 1"')
                 finally:browser.close()
         finally:
             http.shutdown();http.server_close()

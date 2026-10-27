@@ -40,7 +40,7 @@ class SidebarResizeTests(unittest.TestCase):
                     try:
                         page=browser.new_page(viewport={'width':1680,'height':1050},reduced_motion='reduce');errors=[]
                         page.on('pageerror',lambda e:errors.append(str(e)))
-                        page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='domcontentloaded')
+                        page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading')
                         page.wait_for_function('()=>window.FramekeepLayout?.isMonitoring()')
                         def size(side):return page.locator('.'+side+'-panel').bounding_box()['width']
                         def drag(side,delta,release=True):
@@ -98,7 +98,7 @@ class SidebarResizeTests(unittest.TestCase):
                             page.screenshot(path=str(out/f'{theme}.png'))
                             # 刷新、主题切换和窄屏只改变显示，不丢失保存的宽度。
                             saved=(size('left'),size('right'))
-                            page.reload(wait_until='domcontentloaded');page.wait_for_function('()=>FramekeepLayout.isMonitoring()')
+                            page.reload(wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading');page.wait_for_function('()=>FramekeepLayout.isMonitoring()')
                             self.assertAlmostEqual(size('left'),saved[0],delta=1);self.assertAlmostEqual(size('right'),saved[1],delta=1)
                             page.set_viewport_size({'width':375,'height':1000});page.wait_for_timeout(100)
                             self.assertTrue(page.locator('#left-sidebar-resizer').is_hidden());self.assertTrue(page.locator('#right-sidebar-resizer').is_hidden())

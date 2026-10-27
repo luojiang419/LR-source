@@ -44,7 +44,7 @@ class ComponentBrowserTests(unittest.TestCase):
                     browser=pw.chromium.launch(executable_path='C:/Program Files/Google/Chrome/Application/chrome.exe',headless=True)
                     try:
                         page=browser.new_page(viewport={'width':1400,'height':1000});errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
-                        page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='domcontentloaded')
+                        page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading')
                         def accepted(route):
                             self.assertIn('glm-ocr-local',manager.snapshot()['ready'])
                             route.fulfill(status=200,content_type='application/json',body='{"prepared":true}')
@@ -59,12 +59,12 @@ class ComponentBrowserTests(unittest.TestCase):
                             self.assertFalse(page.locator('#component-progress').evaluate('(e)=>e.scrollWidth>e.clientWidth'))
                         page.set_viewport_size({'width':1400,'height':1000});page.screenshot(path=str(out/'component-progress.png'))
                         page.wait_for_function('()=>document.getElementById("component-progress").hidden')
-                        self.assertEqual(len(calls),3)
+                        self.assertEqual(len(calls),5);self.assertEqual(set(calls),set(files))
                         for path in paths:
                             body={'capture_id':cid,'capture_ids':[cid],'asset_ids':[],'id':providers.selected('ocr')['id'],'mode':'auto','channel':'ocr','action':'retry'}
                             self.assertTrue(page.evaluate('async(v)=>await FramekeepIO.api(v[0],v[1])',[path,body])['prepared'])
-                        self.assertEqual(len(calls),3)
-                        self.assertFalse((manager.root/'models/qwen/model.gguf').exists())
+                        self.assertEqual(len(calls),5);self.assertEqual(set(calls),set(files))
+                        self.assertTrue((manager.root/'models/qwen/model.gguf').exists())
                         # 删除组件且镜像尚未可用：显示错误与重试，不悄悄发出识别。
                         target=manager.root/'models/ocr/model.gguf';target.unlink();saved=(seed/'models/ocr/model.gguf').read_bytes();(seed/'models/ocr/model.gguf').unlink()
                         failed=page.evaluate('async()=>{try{await FramekeepIO.api("/api/sku/parse",{});return "unexpected"}catch(e){return e.message}}')
