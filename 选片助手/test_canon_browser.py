@@ -20,6 +20,60 @@ ROOT=Path(__file__).resolve().parents[1]
 
 
 class CanonBrowserTests(unittest.TestCase):
+    def test_live_directory_keeps_monitoring_after_stale_profile_ticks(self):
+        import server
+        import xml.etree.ElementTree as ET
+        from test_canon_link import CanonLinkTests
+        fixture=CanonLinkTests();fixture.setUp()
+        out=ROOT/'build/eos-live-destination';out.mkdir(parents=True,exist_ok=True)
+        try:
+            fixture.registered_profile();fixture.running=True;fixture.watch.close()
+            watch=FolderWatch(fixture.store)
+            service=CanonLink(fixture.store,watch,fixture.app,discover=lambda:fixture.install,running=lambda:True,autostart=False)
+            try:
+                service.tick()  # 曾经读取到已关联状态。
+                fixture.existing_config();stale=fixture.config.read_bytes()
+                with ExitStack() as patches:
+                    for name,value in dict(STORE=fixture.store,DATA=fixture.store.data,WATCH=watch,CANON=service,
+                                           PREVIEWS=None,MOUSE=None,MODELS=None,SKU=None,ARCHIVE=None,
+                                           ANALYSIS=None,RAWLINK=None,FILESEARCH=None).items():
+                        patches.enter_context(patch.object(server,name,value))
+                    patches.enter_context(patch.dict(os.environ,FRAMEKEEP_DESKTOP_TOKEN='live-directory-test'))
+                    http=ThreadingHTTPServer(('127.0.0.1',0),server.Handler);http.daemon_threads=True
+                    threading.Thread(target=http.serve_forever,daemon=True).start();url=f'http://127.0.0.1:{http.server_port}'
+                    try:
+                        with sync_playwright() as pw:
+                            browser=pw.chromium.launch(channel='msedge',headless=True)
+                            try:
+                                page=browser.new_page(viewport={'width':1440,'height':900});errors=[]
+                                page.on('pageerror',lambda error:errors.append(str(error)))
+                                page.goto(url,wait_until='domcontentloaded')
+                                page.wait_for_function('()=>window.FramekeepWorkspace&&window.FramekeepWatch')
+                                page.locator('#asset-retrieval-open').click()
+                                fixture.picture(fixture.photos/'历史日期','OLD_0001.JPG')
+                                photo=fixture.picture(fixture.photos/'2026-10-27','LIVE_0001.JPG')
+                                request=urllib.request.Request(url+'/api/desktop/canon',data=json.dumps({'paths':[str(photo)]}).encode(),
+                                    headers={'Content-Type':'application/json','X-Framekeep-Desktop':'live-directory-test'})
+                                with urllib.request.urlopen(request,timeout=10) as response:received=json.load(response)
+                                for _ in range(4):service.tick()
+                                page.wait_for_function('(sid)=>FRAMEKEEP_SESSION.id===sid&&DEMO_PHOTOS.length===1&&FramekeepWorkspace.current()==="selection"',arg=received['session_id'])
+                                generation=watch.state()['generation']
+                                # 后续磁盘配置保存到无关的离线路径，后续照片只有文件写入，没有再次通知。
+                                root=ET.parse(fixture.config);root.find('.//setting[@name="SaveFolder"]/value').text=str(fixture.base/'离线旧目录')
+                                root.write(fixture.config,encoding='utf-8');changed=fixture.config.read_bytes()
+                                second=fixture.picture(photo.parent,'LIVE_0002.JPG')
+                                for _ in range(4):service.tick()
+                                page.wait_for_function('()=>DEMO_PHOTOS.length===2&&document.getElementById("filename").textContent==="LIVE_0002.JPG"')
+                                self.assertTrue(watch.state()['enabled']);self.assertEqual(watch.state()['generation'],generation)
+                                self.assertEqual(Path(watch.state()['folder']),second.parent)
+                                self.assertEqual(fixture.config.read_bytes(),changed);self.assertNotEqual(stale,changed)
+                                self.assertFalse(errors,errors);page.screenshot(path=str(out/'source-monitoring.png'))
+                                (out/'source-acceptance.json').write_text(json.dumps({'passed':True,'staleDppDoesNotStop':True,'conflictingOfflineRootIgnored':True,'nextPhotoWithoutNotification':True,'sameGeneration':True,'pageErrors':errors}),encoding='utf8')
+                            finally:browser.close()
+                    finally:http.shutdown();http.server_close()
+            finally:service.close();watch.close()
+        finally:fixture.tearDown()
+
     def test_tether_save_dialog_network_paths_pending_profile_and_original_file(self):
         import server
         from datetime import date

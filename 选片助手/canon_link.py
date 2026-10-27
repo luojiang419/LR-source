@@ -130,7 +130,7 @@ class CanonLink:
         self.folder=store.data/'canon-link';self.preferences=self.folder/'preferences.json'
         # 历史保存目录只供手动回填；只有 EOS 已选中本软件才自动只读跟随。
         self.enabled=False;self.activated=False
-        self.destination='';self.follow_eos=False;self.read_only_follow=False;self.auto_follow=True;self.awaiting_profile=False
+        self.destination='';self.follow_eos=False;self.read_only_follow=False;self.auto_follow=True;self.notification_link=None
         preference_error=''
         if self.preferences.is_file():
             try:
@@ -153,6 +153,10 @@ class CanonLink:
         linked=settings.get('LinkedApp','').strip().strip('"')
         return bool(linked) and os.path.normpath(linked).casefold()==os.path.normpath(str(self.application)).casefold() and settings.get('IsLinkedAppOther','').casefold()=='true'
 
+    def _link_selection(self,settings):
+        return (os.path.normpath(settings.get('LinkedApp','').strip().strip('"')).casefold(),
+                *(settings.get(key,'').casefold() for key in LINK_FLAGS))
+
     def configure_destination(self,folder):
         if not self.allow_registration:raise ValueError('请在桌面版中设置联机保存目录')
         if not isinstance(folder,str) or not folder.strip():raise ValueError('请选择联机保存根目录')
@@ -168,7 +172,7 @@ class CanonLink:
         if not installation:raise ValueError('未检测到 EOS Utility，请安装后进入联机拍摄')
         if not SAVE_REQUIRED<=read_settings(installation['defaults']).keys():raise ValueError('当前 EOS Utility 版本不支持所需的保存命名设置')
         with self.lock:
-            self.destination=str(root);self.enabled=True;self.activated=True;self.manual_pause=False;self.actual_folder=None
+            self.destination=str(root);self.enabled=True;self.activated=True;self.manual_pause=False;self.actual_folder=None;self.notification_link=None
             self.follow_eos=False;self.read_only_follow=False;self.auto_follow=True;self._persist()
             self._update(enabled=True,destination_pending=True,destination_ready=False,error='')
             self.tick()
@@ -184,7 +188,7 @@ class CanonLink:
             self.enabled=enabled;self.activated=True;self.manual_pause=False
             self.auto_follow=enabled;self.read_only_follow=False
             if enabled:
-                self.follow_eos=follow_eos;self.actual_folder=None;self.base_folder=None
+                self.follow_eos=follow_eos;self.actual_folder=None;self.base_folder=None;self.notification_link=None
             self._persist();self.info.update(enabled=enabled,error='')
             if not enabled and self.watch.state().get('source')=='canon':self.watch.stop()
         self.wake.set();return self.state()
@@ -257,12 +261,22 @@ class CanonLink:
             if not self.activated and not self.manual_pause:
                 photo_directory(files[-1].parent,self.store.data)
                 self.enabled=True;self.activated=True;self.follow_eos=True;self.read_only_follow=True
-                self.auto_follow=True;self.awaiting_profile=True
+                self.auto_follow=True
                 self.info.update(enabled=True)
             if not self.enabled or self.manual_pause:return {'accepted':False,'reason':'自动接入已关闭或暂停'}
+            # 记录通知到达时的磁盘基线：EOS 内存中的链接选择可能尚未落盘。
+            # 配置读取失败不能使已认证的真实照片通知失效。
+            self.notification_link=None
+            if self.follow_eos and self.allow_registration:
+                try:
+                    installation=self.discover()
+                    if installation:
+                        settings={**read_settings(installation['defaults']),**read_settings(installation['config'])}
+                        self.notification_link=self._link_selection(settings)
+                except (OSError,ValueError,RuntimeError,ET.ParseError):pass
             last=files[-1];self.actual_folder=last.parent
-            folder=self.base_folder if self.follow_eos and self.base_folder and last.is_relative_to(self.base_folder) else last.parent
-            state=self._attach(folder)
+            # 通知定位的是当前拍摄会话，不能提升到包含多日历史照片的保存根。
+            state=self._attach(last.parent)
             self.watch.notify_canon()
             self.info.update(last_file=str(last),event=self.info['event']+1,error='',message='Canon 联机照片已自动接入')
             return {'accepted':True,'session_id':state['session_id'],'folder':state['folder']}
@@ -343,27 +357,33 @@ class CanonLink:
 
     def _follow(self,installation,settings,running):
         registered=self._linked_to_us(settings)
-        if registered:self.awaiting_profile=False
+        selection=self._link_selection(settings)
+        live_notification=bool(running and self.actual_folder)
+        selection_changed=self.notification_link is not None and selection!=self.notification_link
+        if registered:self.notification_link=selection
         if not registered and not self.read_only_follow and not running:
             registered=self._register(installation) is True
             settings={**read_settings(installation['defaults']),**read_settings(installation['config'])}
-        # EOS 回调可能早于首选项落盘；EOS 运行中继续采用可信回调目录。
-        if not registered and self.read_only_follow and not (running and self.awaiting_profile and self.actual_folder):
+        # 与本次回调基线相同的旧 DPP/未关联配置不是用户刚刚关闭了联机。
+        # 通知后确实改用其他软件，或 EOS 已退出时，才释放这次回调的优先权。
+        if not registered and self.read_only_follow and not (live_notification and not selection_changed):
             if self.watch.state().get('source')=='canon':self.watch.stop()
-            self.enabled=False;self.activated=False;self.base_folder=None;self.actual_folder=None
+            self.enabled=False;self.activated=False;self.base_folder=None;self.actual_folder=None;self.notification_link=None
             self._update(enabled=False,registered=False,pending=False,save_folder='',message='等待 EOS Utility 重新关联本软件',error='');return
         message='正在跟随 EOS 保存目录，自动监控拍摄子文件夹'
         self._update(registered=registered,pending=not registered,error='',destination_pending=False,destination_ready=False)
         base=settings.get('SaveFolder','').strip().strip('"')
-        if base and Path(base).is_absolute():
-            folder=Path(base).resolve();photo_directory(folder,self.store.data)
+        folder=Path(base).resolve() if base and Path(base).is_absolute() else None
+        if folder is not None:self.base_folder=folder
+        # 收到通知后只监控实际日期/自定义目录；避免历史根扫描拖住新照片。
+        if live_notification:
+            conflicting=folder is None or not self.actual_folder.is_relative_to(folder)
+            folder=self.actual_folder
+            message='正在监控 EOS 实际照片目录'+('，保存配置尚未同步' if conflicting else '')
+        if folder is not None:
+            photo_directory(folder,self.store.data)
             self._update(save_folder=str(folder))
-            if self.base_folder!=folder:
-                # 回调给出了 EOS 内存中的新目录时，不用旧磁盘设置覆盖。
-                if self.base_folder is not None:self.actual_folder=None
-                self.base_folder=folder
-            if not self.manual_pause and (self.actual_folder is None or self.actual_folder.is_relative_to(folder)):
-                self._attach(folder,True)
+            if not self.manual_pause:self._attach(folder,True)
         elif self.actual_folder is None:
             self._update(save_folder='');message='EOS 已关联，等待其保存目录或首张联机照片'
         if self.manual_pause:message='Canon 自动接入已暂停，点击跟随 EOS 保存目录恢复'

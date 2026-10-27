@@ -89,15 +89,19 @@ class CanonLinkTests(unittest.TestCase):
 
     def test_auto_follow_ignores_old_destination_and_catches_nested_and_new_date_folders(self):
         self.service.destination=str(self.base/'不存在的旧路径');self.service._persist()
-        self.registered_profile();before=self.config.read_bytes();idle=self.auto_service()
+        self.running=True;self.registered_profile();before=self.config.read_bytes();idle=self.auto_service()
         idle.tick();self.assertTrue(idle.state()['follow_eos']);generation=self.watch.state()['generation']
         first=self.picture(self.photos/'存储/2026-10-23');idle.receive([str(first)])
+        self.assertNotEqual(self.watch.state()['generation'],generation)
+        first_generation=self.watch.state()['generation'];idle.receive([str(first)]);idle.tick()
+        self.assertEqual(self.watch.state()['generation'],first_generation)
         second=self.picture(self.photos/'存储/2026-10-24');idle.receive([str(second)]);idle.tick()
-        self.assertEqual(self.watch.state()['generation'],generation)
-        self.assertEqual(Path(self.watch.state()['folder']),self.photos);self.assertTrue(self.watch.state()['recursive'])
+        self.assertNotEqual(self.watch.state()['generation'],first_generation)
+        self.assertEqual(Path(self.watch.state()['folder']),second.parent);self.assertTrue(self.watch.state()['recursive'])
         target=self.base/'新的EOS保存';target.mkdir();root=ET.parse(self.config)
         root.find('.//setting[@name="SaveFolder"]/value').text=str(target);root.write(self.config,encoding='utf-8')
-        changed=self.config.read_bytes();idle.tick();self.assertEqual(Path(self.watch.state()['folder']),target)
+        changed=self.config.read_bytes();idle.tick();self.assertEqual(Path(self.watch.state()['folder']),second.parent)
+        new=self.picture(target);idle.receive([str(new)]);idle.tick();self.assertEqual(Path(self.watch.state()['folder']),target)
         self.assertEqual(self.config.read_bytes(),changed);self.assertNotEqual(changed,before)
         self.assertEqual(read_settings(self.config)['FileCustomizeIndex'],'3')
 
@@ -138,8 +142,8 @@ class CanonLinkTests(unittest.TestCase):
         self.existing_config();before=self.config.read_bytes();self.running=True;idle=self.auto_service();idle.tick()
         self.assertFalse(idle.state()['enabled']);photo=self.picture(self.photos/'存储/即时拍摄')
         self.assertTrue(idle.receive([str(photo)])['accepted']);idle.tick()
-        self.assertTrue(idle.state()['enabled']);self.assertEqual(Path(self.watch.state()['folder']),self.photos)
-        self.assertTrue(self.watch.state()['canon_event'])  # 日期目录提升到 EOS 根目录后通知仍可被界面接收。
+        self.assertTrue(idle.state()['enabled']);self.assertEqual(Path(self.watch.state()['folder']),photo.parent)
+        self.assertTrue(self.watch.state()['canon_event'])
         self.assertEqual(self.config.read_bytes(),before)
 
     def test_auto_follow_stops_when_eos_selects_another_application(self):
@@ -148,6 +152,55 @@ class CanonLinkTests(unittest.TestCase):
         root=ET.parse(self.config);root.find('.//setting[@name="LinkedApp"]/value').text='D:/Other.exe';root.write(self.config,encoding='utf-8')
         before=self.config.read_bytes();idle.tick();self.assertFalse(self.watch.state()['enabled']);self.assertFalse(idle.state()['enabled'])
         self.assertEqual(self.config.read_bytes(),before)
+
+    def test_notification_survives_stale_dpp_profile_after_previously_registered(self):
+        self.registered_profile();self.running=True;idle=self.auto_service();idle.tick()
+        root=ET.parse(self.config)
+        root.find('.//setting[@name="IsLinkedAppOther"]/value').text='False'
+        root.find('.//setting[@name="IsLinkedAppDPP"]/value').text='True'
+        root.write(self.config,encoding='utf-8');before=self.config.read_bytes()
+        photo=self.picture(self.photos/'实际拍摄');idle.receive([str(photo)])
+        generation=self.watch.state()['generation']
+        for _ in range(4):idle.tick()
+        self.assertTrue(idle.state()['enabled']);self.assertTrue(self.watch.state()['enabled'])
+        self.assertEqual(Path(self.watch.state()['folder']),photo.parent)
+        self.assertEqual(self.watch.state()['generation'],generation)
+        self.assertEqual(self.config.read_bytes(),before)
+
+    def test_live_notification_directory_wins_conflicting_and_offline_disk_root(self):
+        self.registered_profile();self.running=True;idle=self.auto_service();idle.tick()
+        photo=self.picture(self.base/'内存中实际保存/日期');idle.receive([str(photo)])
+        generation=self.watch.state()['generation']
+        for target in (self.photos,self.base/'配置中的离线共享'):
+            root=ET.parse(self.config);root.find('.//setting[@name="SaveFolder"]/value').text=str(target)
+            root.write(self.config,encoding='utf-8');before=self.config.read_bytes()
+            for _ in range(3):idle.tick()
+            self.assertTrue(self.watch.state()['enabled'])
+            self.assertEqual(Path(self.watch.state()['folder']),photo.parent)
+            self.assertEqual(self.watch.state()['generation'],generation)
+            self.assertEqual(Path(idle.state()['save_folder']),photo.parent)
+            self.assertEqual(self.config.read_bytes(),before)
+        second=self.picture(self.base/'再次切换/日期');idle.receive([str(second)]);idle.tick()
+        self.assertEqual(Path(self.watch.state()['folder']),second.parent)
+
+    def test_profile_directory_change_without_live_notification_still_follows_disk(self):
+        self.registered_profile();self.running=True;idle=self.auto_service();idle.tick()
+        target=self.base/'新设置目录';target.mkdir()
+        self.registered_profile(target);idle.tick()
+        self.assertEqual(Path(self.watch.state()['folder']),target)
+
+    def test_stale_profile_authority_ends_when_eos_exits(self):
+        self.existing_config();self.running=True;idle=self.auto_service()
+        idle.receive([str(self.picture())]);idle.tick();self.assertTrue(self.watch.state()['enabled'])
+        self.running=False;idle.tick();self.assertFalse(self.watch.state()['enabled'])
+
+    def test_later_link_selection_change_stops_after_stale_profile_notification(self):
+        self.existing_config();self.running=True;idle=self.auto_service()
+        idle.receive([str(self.picture())]);idle.tick();self.assertTrue(self.watch.state()['enabled'])
+        self.registered_profile();idle.tick()
+        root=ET.parse(self.config);root.find('.//setting[@name="IsLinkedAppOther"]/value').text='False'
+        root.write(self.config,encoding='utf-8');idle.tick()
+        self.assertFalse(self.watch.state()['enabled'])
 
     def test_auto_follow_recovers_after_offline_root_and_uses_default_subfolder_settings(self):
         missing=self.base/'稍后上线';self.registered_profile(missing);idle=self.auto_service();before=self.config.read_bytes()
