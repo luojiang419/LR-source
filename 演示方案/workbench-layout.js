@@ -233,10 +233,10 @@
   menu.addEventListener('click',async e=>{const button=e.target.closest('[data-reveal]');if(!button||!context)return;const chosen={...context,component:button.dataset.reveal||null};closeMenu();try{await FramekeepIO.api('/api/reveal-file',{session_id:chosen.sid,capture_id:chosen.cid,component:chosen.component})}catch(err){Framekeep.notify(err.message)}});
   document.addEventListener('pointerdown',e=>{if(!menu.contains(e.target))closeMenu()},true);document.addEventListener('keydown',e=>{if(!menu.hidden&&e.key==='Escape'){e.preventDefault();e.stopImmediatePropagation();closeMenu()}},true);window.addEventListener('blur',closeMenu);
   window.FramekeepLayout={setMonitoring:state=>{watch=state;syncMode();paintWatch();renderThumbs()},isMonitoring:()=>active,refresh:resize};
-  async function loadSkuLabels(){
+  async function loadSkuLabels(force=false){
     if(document.hidden||page.classList.contains('hidden'))return;
     const sid=FRAMEKEEP_SESSION.id;if(!sid)return;
-    const batch=batchLabelKey();if(labelRequest&&labelRequest.sid===sid&&labelRequest.batch===batch)return;
+    const batch=batchLabelKey();if(force!==true&&labelRequest&&labelRequest.sid===sid&&labelRequest.batch===batch)return;
     labelRequest?.controller.abort();const controller=new AbortController(),sequence=++labelSequence;labelRequest={sid,batch,controller};
     try{
       const result=await FramekeepIO.api('/api/sku/library/labels?'+new URLSearchParams({session_id:sid,...(FRAMEKEEP_SESSION.browser?.paged?{ids:DEMO_PHOTOS.map(p=>p.id).join(',')}:{})}),undefined,8000,controller.signal);
@@ -248,7 +248,13 @@
   }
   document.addEventListener('framekeep:selection',()=>{if(labelsSession!==FRAMEKEEP_SESSION.id||labelsBatch!==batchLabelKey())loadSkuLabels()});
   document.addEventListener('framekeep:workspace',loadSkuLabels);
-  document.addEventListener('framekeep:ocr-result',loadSkuLabels);
+  for(const event of ['framekeep:ocr-result','framekeep:ocr-choice','framekeep:ratings-saved'])document.addEventListener(event,()=>loadSkuLabels(true));
+  let confirmedLabel='';
+  document.addEventListener('framekeep:capture-status',event=>{
+    const data=event.detail;if(data.session_id!==FRAMEKEEP_SESSION.id||data.capture_id!==Framekeep.remoteTarget().photoId)return;
+    const next=data.ocr?.status==='confirmed'?JSON.stringify([data.session_id,data.capture_id,data.ocr.job_key,data.ocr.codes]):'';
+    if(next&&next!==confirmedLabel)loadSkuLabels(true);confirmedLabel=next;
+  });
   const labelTimer=setInterval(loadSkuLabels,2000);
   window.addEventListener('pagehide',()=>{clearInterval(labelTimer);labelRequest?.controller.abort()},{once:true});
   apply();paintWatch();renderThumbs();loadSkuLabels();

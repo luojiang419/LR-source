@@ -32,6 +32,71 @@ class RatingOcrResetTests(unittest.TestCase):
     def own(self):
         return next(r for r in self.sku.state()['rows'] if r['sheet']=='模特图' and r['excel_row']==2)
 
+    def test_confirmed_single_image_first_two_star_applies_entire_interval_without_model(self):
+        self.rate(0);self.sku.deliver_events(self.archive)
+        self.parse();self.choose()
+        self.assertEqual(self.archive.query(fixture.CODE)['total'],1)
+        self.sku.configure_tasks(mode='manual',paused=True)
+        with patch.object(self.providers,'check_inference',side_effect=AssertionError('已确认款号不应重复识别')):
+            self.rate(2);self.sku.deliver_events(self.archive)
+        self.assertEqual(self.archive.query(fixture.CODE)['total'],2)
+
+    def test_recover_existing_confirmed_two_star_without_new_rating_or_duplicate_interval(self):
+        self.rate(0);self.sku.deliver_events(self.archive);self.parse();self.choose()
+        session=self.store.session(self.sid);state=copy.deepcopy(session['state']);state['overrides'][self.ids[1]]=2
+        self.store.save(self.sid,session['revision'],state)
+        self.sku.configure_tasks(mode='manual',paused=True)
+        with patch.object(self.providers,'check_inference',side_effect=AssertionError('恢复不应调用模型')):
+            self.sku.tick();self.sku.deliver_events(self.archive)
+        self.assertEqual(self.archive.query(fixture.CODE)['total'],2)
+        with self.sku.connect() as c:before=c.execute('SELECT count(*) FROM archive_events').fetchone()[0]
+        self.sku._recover_confirmed_intervals();self.sku.deliver_events(self.archive)
+        with self.sku.connect() as c:self.assertEqual(c.execute('SELECT count(*) FROM archive_events').fetchone()[0],before)
+
+    def test_browser_one_two_star_refreshes_interval_despite_inflight_old_label_request(self):
+        from contextlib import suppress
+        from playwright.sync_api import Error
+        from sku_library import labels
+        self.rate(0);self.sku.deliver_events(self.archive);self.parse();self.choose()
+        stale=labels(self.sku,self.sid);held=[]
+        http=ThreadingHTTPServer(('127.0.0.1',0),server.Handler);http.daemon_threads=True
+        values=dict(STORE=self.store,DATA=self.store.data,MODELS=self.providers,SKU=self.sku,ARCHIVE=self.archive,
+                    CATALOG=None,ANALYSIS=None,WATCH=None,MOUSE=None,CANON=None,RAWLINK=None,FILESEARCH=None,
+                    UPDATES=None,COMPONENTS=None,DRIVER=None)
+        with ExitStack() as stack:
+            for key,value in values.items():stack.enter_context(patch.object(server,key,value))
+            threading.Thread(target=http.serve_forever,daemon=True).start()
+            try:
+                with sync_playwright() as pw:
+                    browser=pw.chromium.launch(channel='msedge',headless=True)
+                    try:
+                        page=browser.new_page(viewport={'width':1580,'height':1000});errors=[]
+                        page.on('pageerror',lambda e:errors.append(str(e)))
+                        def delayed(route):
+                            if not held:held.append(route)
+                            else:route.continue_()
+                        page.route('**/api/sku/library/labels?**',delayed)
+                        page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='domcontentloaded')
+                        page.wait_for_function('()=>!window.FramekeepBoot?.loading')
+                        page.evaluate('(cid)=>Framekeep.browsePhoto(cid)',self.ids[1]);page.evaluate('()=>FramekeepIO.flush()')
+                        self.assertTrue(held)
+                        page.clock.install();page.clock.pause_at(int(time.time()*1000))
+                        page.evaluate('(sid)=>FramekeepLayout.setMonitoring({enabled:true,session_id:sid,message:"正在监控"})',self.sid)
+                        page.evaluate('(cid)=>{Framekeep.assignRemoteRating(cid,2);return FramekeepIO.flush()}',self.ids[1])
+                        self.sku.deliver_events(self.archive)
+                        self.assertEqual(self.archive.query(fixture.CODE)['total'],2)
+                        # 暂停了定时器；只能由本次保存事件驱动刷新，不能靠两秒轮询蒙混通过。
+                        first=page.locator('[data-watch-photo="'+self.ids[0]+'"] .watch-sku-label')
+                        page.wait_for_function('(cid)=>document.querySelector(`[data-watch-photo="${cid}"] .watch-sku-label`)?.textContent.includes("LC")',arg=self.ids[0])
+                        self.assertEqual(first.inner_text(),'SKU:'+fixture.CODE)
+                        with suppress(Error):held[0].fulfill(json=stale)
+                        self.assertEqual(first.inner_text(),'SKU:'+fixture.CODE)
+                        out=ROOT/'build/two-star-confirmed-interval';out.mkdir(parents=True,exist_ok=True)
+                        page.screenshot(path=str(out/'source-one-two-star.png'))
+                        self.assertFalse(errors,errors)
+                    finally:browser.close()
+            finally:http.shutdown();http.server_close()
+
     def test_clear_choice_search_and_progress_then_restar_restores_image_time_and_archive(self):
         self.parse();self.choose();before=self.own()
         self.assertEqual(before['status'],'已拍摄');self.assertTrue(before['sku_image']);self.assertTrue(before['completed_at'])

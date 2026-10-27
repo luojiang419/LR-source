@@ -262,6 +262,7 @@ class SkuService(ConcurrentLabels,FullAutoOCR,OcrMetadata,SkuRules):
                 self._wake_label()
         for cid,value in current.items():
             if value!=2 or previous.get(cid)==2:continue
+            if self._queue_confirmed_interval(sid,cid):continue
             if self._prioritize_full_label(sid,cid):continue
             if self.task_mode!='auto':continue
             context=state.get('skuMarkers',{}).get(cid)
@@ -274,6 +275,42 @@ class SkuService(ConcurrentLabels,FullAutoOCR,OcrMetadata,SkuRules):
 
     def _rating(self,sid,record):
         return self.store.session(sid)['state'].get('overrides',{}).get(record['id'],record.get('existingRating',0))
+
+    def _queue_confirmed_interval(self,sid,cid,*,only_missing=False):
+        """单张已确认后才标二星：复用确切款号，补齐区间事件，不再请求模型。"""
+        if not self.archive:return False
+        with self.lock,self.connect() as c:
+            choice=c.execute('SELECT sku FROM ocr_choices WHERE session_id=? AND capture_id=?',(sid,cid)).fetchone()
+            if not choice:return False
+            job=c.execute("SELECT * FROM jobs WHERE session_id=? AND capture_id=? AND status='confirmed' ORDER BY updated DESC,created DESC LIMIT 1",(sid,cid)).fetchone()
+            if not job:return False
+            job=dict(job);project=self.project(job['project'])
+            if not project or project['metadata'].get('removed_at'):return False
+            with self.archive.connect() as archive:
+                applied=archive.execute("""SELECT 1 FROM segments g JOIN streams s ON s.id=g.stream
+                    JOIN bindings b ON b.stream=g.stream AND b.asset=g.label
+                    WHERE s.session=? AND b.capture=? AND g.sku=? AND g.status NOT IN ('cancelled','superseded') LIMIT 1""",(sid,cid,choice['sku'])).fetchone()
+            if applied and only_missing:return True
+            record=self._valid(job)
+            if not record or self._rating(sid,record)!=2:return False
+            identity='choice:'+sid+':'+cid
+            reset=c.execute("SELECT COALESCE(MAX(rowid),0) FROM archive_events WHERE json_extract(payload,'$.kind')='ocr_reset' AND json_extract(payload,'$.session_id')=? AND json_extract(payload,'$.capture_id')=?",(sid,cid)).fetchone()[0]
+            if not c.execute('SELECT 1 FROM archive_events WHERE job=? AND delivered=0 AND rowid>?',(identity,reset)).fetchone():
+                payload={'id':identity,'kind':'ocr_choice','session_id':sid,'capture_id':cid,'project':job['project'],
+                         'scope':job['scope'],'status':'confirmed','sku':choice['sku']}
+                c.execute('INSERT INTO archive_events(id,job,payload) VALUES (?,?,?)',(uuid.uuid4().hex,identity,json.dumps(payload,ensure_ascii=False)))
+        self._wake_label();return True
+
+    def _recover_confirmed_intervals(self):
+        # 只补当前现场的已确认二星；历史目录和普通单张识别不在本次恢复范围。
+        if not self.archive:return
+        session=self.store.session()
+        if not session:return
+        overrides=session['state'].get('overrides',{})
+        ratings={r['id']:overrides.get(r['id'],r.get('existingRating',0)) for r in self.store.records(session['id'])}
+        with self.connect() as c:choices=c.execute('SELECT capture_id FROM ocr_choices WHERE session_id=?',(session['id'],)).fetchall()
+        for choice in choices:
+            if ratings.get(choice['capture_id'])==2:self._queue_confirmed_interval(session['id'],choice['capture_id'],only_missing=True)
 
     def _automatic_project(self,sid,*,start_stream=True):
         from sku_workbook_auto import create_book
@@ -516,6 +553,9 @@ class SkuService(ConcurrentLabels,FullAutoOCR,OcrMetadata,SkuRules):
         return record if fingerprint==record['fingerprint'] else None
 
     def tick(self):
+        if self.clock()>=getattr(self,'interval_recovery_at',0):
+            self.interval_recovery_at=self.clock()+10
+            self._recover_confirmed_intervals()
         self._queue_full_auto()
         if self.task_mode=='auto':
             with self.lock:
