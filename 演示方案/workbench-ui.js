@@ -64,6 +64,7 @@ const startWorkbenchUi=()=>{
   }
   function syncPageHeading(){
     const name=FramekeepWorkspace.current();let visible=false;
+    workbench.classList.toggle('workspace-retrieval-active',name==='retrieval');
     for(const [key,heading] of headings){if(!heading)continue;heading.hidden=key!==name;visible ||= key===name;}
     pageHeading.hidden=!visible;
     document.querySelector('.identity>span:last-child').hidden=visible;

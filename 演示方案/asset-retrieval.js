@@ -27,12 +27,22 @@
   const labels = {queued:'等待',running:'解析中',completed:'已完成',failed:'失败',stale:'已失效',cancelled:'已取消',ready:'可归组',review:'待复核',confirmed:'已确认'};
   function shell(host, {compact=false,close=null}={}) {
     host.classList.add(compact?'quick-search-shell':'retrieval-workspace');
-    host.innerHTML = `<header class="retrieval-heading catalog-heading"><div><h2>${compact?'快捷资产搜索':'资产检索'}</h2><p>SKU · 画面描述 · 多维筛选 · 以图搜图</p></div><div class="retrieval-tools catalog-heading-actions"><button data-action="quick" ${compact?'hidden':''}>快捷搜索 <kbd>Ctrl ⇧ Space</kbd></button><button data-action="index">多维解析</button><button data-action="settings">检索设置</button>${close?'<button data-action="close" aria-label="关闭快捷搜索">Esc ×</button>':''}</div></header>
-      <div class="retrieval-searchbar"><input class="retrieval-query" type="search" aria-label="搜索 SKU 或画面关键词" placeholder="输入 LC 款号，或描述：红色 翻领 衬衫…" autocomplete="off" maxlength="300"><button data-action="search" class="primary">搜索</button><button data-action="image">以图搜图</button></div>
+    const scopeFilters=`<label class="retrieval-scope"><span>归档位置</span><select class="retrieval-root" aria-label="归档位置"><option value="">全部归档</option></select></label><label class="retrieval-scope"><span>素材类型</span><select class="retrieval-media" aria-label="素材类型"><option value="">全部素材</option><option value="image">图片 / RAW</option><option value="video">视频帧</option><option value="design">设计文件</option></select></label><label class="retrieval-scope"><span>搜索方式</span><select class="retrieval-mode" aria-label="搜索方式"><option value="index">SKU / 关键词</option><option value="semantic">CLIP 语义搜索</option></select></label>`;
+    host.innerHTML = `<header class="retrieval-heading catalog-heading ${compact?'':'retrieval-desktop-heading'}"><div class="retrieval-heading-title"><h2>${compact?'快捷资产搜索':'资产检索'}</h2><p>SKU · 画面描述 · 多维筛选 · 以图搜图</p></div>${compact?'':'<nav class="retrieval-navigation" aria-label="工作台导航"><button data-workspace-target="sku-open">拍摄进度</button><button aria-current="page" data-workspace-target="asset-retrieval-open">资产检索</button><button data-workspace-target="asset-archive-open">资产归档</button></nav><details class="retrieval-actions-menu"><summary aria-label="工作台设置" title="工作台设置"><svg viewBox="0 0 24 24" width="19" height="19" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m9.5 3-.6 2.3-2 .9-2.2-.6-2.5 4.3 1.6 1.7v2.3l-1.6 1.7 2.5 4.3 2.2-.6 2 .9.6 2.3h5l.6-2.3 2-.9 2.2.6 2.5-4.3-1.6-1.7v-2.3l1.6-1.7-2.5-4.3-2.2.6-2-.9L14.5 3z"/><circle cx="12" cy="12.8" r="3.3"/></svg></summary>'}<div class="retrieval-tools catalog-heading-actions"><button data-action="quick" ${compact?'hidden':''}>快捷搜索 <kbd>Ctrl ⇧ Space</kbd></button><button data-action="index">多维解析</button><button data-action="settings">检索设置</button>${compact?'':'<button data-action="image">以图搜图</button><button data-workspace-target="selection-tab">现场拍摄</button><button data-workspace-target="sku-database-open">SKU 数据库</button><button data-workspace-target="asset-analysis-open">解析任务</button><button data-workspace-target="app-settings-open">软件设置</button><button data-action="theme">切换主题</button>'}${close?'<button data-action="close" aria-label="关闭快捷搜索">Esc ×</button>':''}</div>${compact?'':'</details>'}</header>
+      <div class="retrieval-searchbar"><input class="retrieval-query" type="search" aria-label="搜索 SKU 或画面关键词" placeholder="输入 SKU，或描述画面内容…" autocomplete="off" maxlength="300"><button data-action="search" class="primary">搜索</button>${compact?'<button data-action="image">以图搜图</button>':scopeFilters}</div>
       <div class="retrieval-reference-note"></div>
-      <div class="retrieval-body"><aside class="retrieval-filters"><section class="retrieval-reference"></section><div class="retrieval-filter-scroll"><h3>检索范围</h3><label>归档位置<select class="retrieval-root"><option value="">全部归档</option></select></label><label>素材类型<select class="retrieval-media"><option value="">全部素材</option><option value="image">图片 / RAW</option><option value="video">视频帧</option><option value="design">设计文件</option></select></label><label>搜索方式<select class="retrieval-mode"><option value="index">SKU / 关键词 / 维度</option><option value="semantic">CLIP 语义搜索</option></select></label><h3>已解析维度</h3><label>筛选维度<select class="retrieval-facet-key"><option value="">常用维度</option></select></label><div class="retrieval-filter-chips"></div><button data-action="clear-facets" hidden>清除筛选</button><h3>本机资产索引</h3><p class="retrieval-coverage">正在连接…</p><p>↑↓ 选择 · Enter 预览<br>Ctrl+V 粘贴参考图<br>也可将图片拖入窗口</p></div></aside><main class="retrieval-results-area"><div class="retrieval-result-status" role="status" aria-live="polite">正在连接资产数据库…</div><div class="retrieval-grid catalog-grid" role="listbox" aria-label="资产搜索结果"></div><button class="retrieval-more" hidden>加载更多</button></main><aside class="retrieval-detail"><div class="retrieval-empty">选择一项资产<br>查看 SKU、多维资料与来源路径</div></aside></div>${compact?'<footer class="quick-search-footer"><span><kbd>↑ ↓</kbd>选择</span><span><kbd>Enter</kbd>查看</span><span><kbd>Esc</kbd>关闭</span><span>原片保持只读</span></footer>':''}`;
+      <div class="retrieval-body"><aside class="retrieval-filters"><section class="retrieval-reference"></section><div class="retrieval-filter-scroll">${compact?'<h3>检索范围</h3>'+scopeFilters:''}<h3>多维筛选</h3><label>筛选维度<select class="retrieval-facet-key"><option value="">常用维度</option></select></label><div class="retrieval-filter-chips"></div><button data-action="clear-facets" hidden>清除筛选</button><details class="retrieval-index-info"><summary>索引状态与快捷键</summary><p class="retrieval-coverage">正在连接…</p><p>↑↓ 选择 · Enter 预览<br>Ctrl+V 粘贴参考图<br>也可将图片拖入窗口</p></details></div></aside><main class="retrieval-results-area"><div class="retrieval-result-status" role="status" aria-live="polite">正在连接资产数据库…</div><div class="retrieval-grid catalog-grid" role="listbox" aria-label="资产搜索结果"></div><button class="retrieval-more" hidden>加载更多</button></main><aside class="retrieval-detail" aria-label="资产详情" ${compact?'':'hidden'}><div class="retrieval-empty">选择一项资产<br>查看 SKU、多维资料与来源路径</div></aside></div>${compact?'<footer class="quick-search-footer"><span><kbd>↑ ↓</kbd>选择</span><span><kbd>Enter</kbd>查看</span><span><kbd>Esc</kbd>关闭</span><span>原片保持只读</span></footer>':''}`;
     const find = selector => host.querySelector(selector), action = name => find(`[data-action="${name}"]`);
     const input = find('.retrieval-query'), grid = find('.retrieval-grid'), status = find('.retrieval-result-status'), detail = find('.retrieval-detail');
+    const menu=find('.retrieval-actions-menu');
+    if(menu){
+      for(const button of host.querySelectorAll('[data-workspace-target]'))button.onclick=()=>{$(button.dataset.workspaceTarget)?.click();menu.open=false};
+      action('theme').onclick=()=>$('theme-open')?.click();
+      menu.addEventListener('click',event=>{if(event.target.closest('button'))menu.open=false});
+      menu.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();menu.open=false;menu.querySelector('summary').focus()}});
+      document.addEventListener('pointerdown',event=>{if(!menu.contains(event.target))menu.open=false});
+    }
+    function closeDetail(){if(compact)return;detail.hidden=true;grid.querySelector(`[data-result="${selected}"]`)?.focus()}
     let imageData=null;
     let rows = [], selected = -1, cursor = '', image = '', imageItem = '', facets = {}, sequence = 0, controller=null, debounce=null, detailSequence=0;
     const active = () => native || (host.matches('dialog') ? host.open : !host.classList.contains('hidden'));
@@ -46,7 +56,7 @@
     async function search(append=false) {
       clearTimeout(debounce);debounce=null;
       const current=++sequence;controller?.abort();controller=new AbortController();
-      if(!append){imageData=null;rows=[];selected=-1;cursor='';grid.innerHTML='<div class="retrieval-empty">正在查询资产索引…</div>';detail.innerHTML='<div class="retrieval-empty">选择资产查看资料</div>';detailSequence++}
+      if(!append){imageData=null;rows=[];selected=-1;cursor='';grid.innerHTML='<div class="retrieval-empty">正在查询资产索引…</div>';detail.hidden=!compact;detail.innerHTML='<div class="retrieval-empty">选择资产查看资料</div>';detailSequence++}
       message('正在搜索…');find('.retrieval-more').hidden=true;referencePanel.setBusy(!!(image||imageItem));
       try {
         let data;
@@ -64,9 +74,11 @@
       selected=index;const row=rows[index];if(!row)return;const ticket=++detailSequence;
       for(const card of grid.querySelectorAll('[data-result]')){const active=Number(card.dataset.result)===index;card.setAttribute('aria-selected',String(active));card.classList.toggle('active',active)}
       grid.querySelector(`[data-result="${index}"]`)?.scrollIntoView({block:'nearest'});
-      detail.innerHTML=`<img src="/api/catalog/preview/${esc(row.id)}?size=900" alt="资产预览"><h3>${esc(row.sku||'未确认 SKU')}</h3><strong>${esc(row.name)}</strong><p class="path">${esc(row.path)}</p><div><button data-detail="preview">预览</button><button data-detail="folder">打开所在目录</button><button data-detail="similar">查找相似图片</button><button data-detail="parse">解析此素材</button><button data-detail="copy">复制路径</button></div><p class="retrieval-detail-message" role="status"></p><label>确认 SKU<input data-detail="sku-value" value="${esc(row.sku)}" maxlength="80"></label><button data-detail="assign">保存人工 SKU</button><div class="retrieval-attributes">正在读取已解析资料…</div>`;
+      detail.hidden=false;
+      detail.innerHTML=`${compact?'':'<button data-detail="close" class="retrieval-detail-close" aria-label="关闭资产详情">关闭 ×</button>'}<img src="/api/catalog/preview/${esc(row.id)}?size=900" alt="资产预览"><h3>${esc(row.sku||'未确认 SKU')}</h3><strong>${esc(row.name)}</strong><p class="path">${esc(row.path)}</p><div><button data-detail="preview">预览</button><button data-detail="folder">打开所在目录</button><button data-detail="similar">查找相似图片</button><button data-detail="parse">解析此素材</button><button data-detail="copy">复制路径</button></div><p class="retrieval-detail-message" role="status"></p><label>确认 SKU<input data-detail="sku-value" value="${esc(row.sku)}" maxlength="80"></label><button data-detail="assign">保存人工 SKU</button><div class="retrieval-attributes">正在读取已解析资料…</div>`;
       detail.onclick=async event=>{
         const name=event.target.closest('[data-detail]')?.dataset.detail;if(!name)return;
+        if(name==='close'){closeDetail();return}
         const note=detail.querySelector('.retrieval-detail-message');
         try{
           if(name==='preview'){
@@ -97,6 +109,7 @@
     function paintImageResults(){
       if(!imageData)return;
       rows=referencePanel.filter(imageData.rows);selected=-1;detailSequence++;
+      detail.hidden=!compact;
       detail.innerHTML='<div class="retrieval-empty">选择相似素材查看详情</div>';renderResults();find('.retrieval-more').hidden=true;
       message(`${rows.length} / ${imageData.rows.length} 项候选 · 相似度 ≥ ${referencePanel.value.threshold}% · ${imageData.backend?.startsWith('chinese-clip')?'CLIP 语义相似':'布局与配色相似'} · ${imageData.elapsed_ms} ms${imageData.approximate?' · 近似召回':''}${imageData.incomplete?' · 已达查询预算':''}`);
     }
@@ -115,13 +128,14 @@
     action('clear-facets').onclick=()=>{facets={};for(const chip of find('.retrieval-filter-chips').children)chip.setAttribute('aria-pressed','false');action('clear-facets').hidden=true;search()};
     input.addEventListener('input',()=>{clearTimeout(debounce);if(find('.retrieval-mode').value==='index')debounce=setTimeout(()=>search(),240)});
     input.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();search()}});
-    for(const select of host.querySelectorAll('.retrieval-filters select'))select.onchange=()=>search();
+    for(const select of host.querySelectorAll('.retrieval-root,.retrieval-media,.retrieval-mode'))select.onchange=()=>search();
     grid.onclick=event=>{const card=event.target.closest('[data-result]');if(card)select(Number(card.dataset.result))};
     grid.ondblclick=event=>{if(event.target.closest('[data-result]'))detail.querySelector('[data-detail="preview"]')?.click()};
     find('.retrieval-more').onclick=()=>search(true);
     host.addEventListener('keydown',event=>{
+      if(event.key==='Escape'&&!compact&&!detail.hidden){event.preventDefault();event.stopPropagation();closeDetail();return}
       if(event.target.closest('.reference-search'))return;
-      if(event.target.closest('.retrieval-detail input')||!['ArrowDown','ArrowUp','Enter'].includes(event.key))return;
+      if(event.target.closest('select,textarea,.reference-actions,.retrieval-detail input,.retrieval-detail button')||!['ArrowDown','ArrowUp','Enter'].includes(event.key))return;
       if(event.key==='Enter'&&event.target===input)return;
       event.preventDefault();event.stopPropagation();
       if(event.key==='Enter')detail.querySelector('[data-detail="preview"]')?.click();
@@ -143,7 +157,7 @@
         await search();
       }catch(error){message(error.message,true)}
     }
-    return {refresh,focus:()=>input.focus(),searchText(text){input.value=text;search()},similar(item){imageItem=item;image='';reference('/api/catalog/preview/'+item+'?size=420','归档所选素材');search()},cancel(){controller?.abort();sequence++;detailSequence++}};
+    return {refresh,focus:()=>input.focus(),chooseReference:()=>referencePanel.choose(),searchText(text){input.value=text;search()},similar(item){imageItem=item;image='';reference('/api/catalog/preview/'+item+'?size=420','归档所选素材');search()},cancel(){controller?.abort();sequence++;detailSequence++;if(menu)menu.open=false}};
   }
 
   const configDialog=document.createElement('dialog');configDialog.className='retrieval-settings';configDialog.id='retrieval-settings';document.body.append(configDialog);
@@ -196,7 +210,7 @@
     const page=document.createElement('section');page.id='asset-retrieval-page';page.className='asset-workspace hidden';page.setAttribute('role','tabpanel');page.setAttribute('aria-labelledby',tab.id);document.querySelector('.workbench').append(page);pageView=shell(page);
     FramekeepWorkspace.register('retrieval',tab,page,()=>pageView.refresh());
     const archiveButton=document.createElement('button');archiveButton.id='catalog-image-search';archiveButton.textContent='以图搜图';archiveButton.className='bordered';document.querySelector('.catalog-toolbar')?.append(archiveButton);
-    archiveButton.onclick=()=>{const id=document.querySelector('#catalog-grid .catalog-card.active')?.dataset.catalogItem;FramekeepWorkspace.show('retrieval');if(id)pageView.similar(id);else page.querySelector('[data-action="image"]').click()};
+    archiveButton.onclick=()=>{const id=document.querySelector('#catalog-grid .catalog-card.active')?.dataset.catalogItem;FramekeepWorkspace.show('retrieval');if(id)pageView.similar(id);else pageView.chooseReference()};
     const settingsButton=document.createElement('button');settingsButton.id='intelligence-settings-open';settingsButton.textContent='多模态解析与快捷检索设置';settingsButton.onclick=()=>settings().catch(error=>Framekeep?.notify(error.message));$('model-catalog')?.append(settingsButton);
     document.addEventListener('keydown',event=>{if(event.ctrlKey&&event.shiftKey&&(event.code==='Space'||event.key===' ')){event.preventDefault();event.stopImmediatePropagation();openQuick().catch(error=>console.error(error.message))}},true);
     const original=window.FramekeepRetrieval.openAsset;

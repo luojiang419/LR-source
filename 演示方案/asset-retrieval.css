@@ -128,3 +128,62 @@ body.quick-search-native,html[data-hardcore-layout=false] body.quick-search-nati
   .retrieval-detail {grid-column:1/-1;min-height:180px;border-left:0;border-top:1px solid var(--theme-border);}
   .retrieval-filter-scroll {overflow:visible;}.reference-search>header span {display:none;}
 }
+
+/* 桌面检索与团队 Web 工作台采用同一工作面；快捷窗口继续保留独立三栏。 */
+.workspace-retrieval-active .app-header {gap:16px;flex-wrap:nowrap;min-height:60px;}
+.workspace-retrieval-active .app-header>.header-actions,
+.workspace-retrieval-active .workspace-bottom-bar {display:none!important;}
+.workspace-retrieval-active .workspace-header-heading {overflow:visible;}
+.workspace-retrieval-active .identity {flex:none;white-space:nowrap;}
+.retrieval-desktop-heading .retrieval-heading-title {position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;}
+.retrieval-navigation {display:flex;align-items:center;gap:6px;min-width:0;}
+html[data-hardcore-layout] .retrieval-navigation button,
+.retrieval-navigation button {flex:none;min-height:34px;padding:7px 12px;border:1px solid transparent;border-radius:18px;background:transparent;color:var(--theme-muted);font:inherit;font-size:12px;white-space:nowrap;}
+html[data-hardcore-layout] .retrieval-navigation button[aria-current=page],
+.retrieval-navigation button[aria-current=page] {background:var(--theme-hover);border-bottom-color:var(--theme-emphasis);color:var(--theme-text);}
+html[data-hardcore-layout] .retrieval-navigation button:hover,
+.retrieval-navigation button:hover {background:var(--theme-hover);color:var(--theme-text);}
+.retrieval-actions-menu {position:relative;flex:none;margin-left:auto;}
+.retrieval-actions-menu>summary {display:grid;place-items:center;width:35px;height:35px;padding:7px;list-style:none;cursor:pointer;border:1px solid var(--theme-border);border-radius:6px;color:var(--theme-text-soft);background:var(--glass-button,var(--theme-control));}
+.retrieval-actions-menu>summary::-webkit-details-marker {display:none;}
+.retrieval-actions-menu[open]>summary {background:var(--theme-hover);}
+.retrieval-actions-menu .retrieval-tools {position:absolute;right:0;top:calc(100% + 6px);z-index:100;display:flex;flex-direction:column;align-items:stretch;gap:2px;min-width:195px;padding:6px;border:1px solid var(--theme-border-strong);border-radius:8px;background:var(--theme-raised);box-shadow:0 8px 28px var(--theme-shadow);}
+.retrieval-actions-menu .retrieval-tools button {width:100%;min-height:34px;padding:8px 10px;border:0;background:transparent;color:var(--theme-text);text-align:left;font-size:12px;}
+.retrieval-actions-menu .retrieval-tools button:hover {background:var(--theme-hover);}
+#asset-retrieval-page.retrieval-workspace,
+html[data-hardcore-layout] .workbench>#asset-retrieval-page.retrieval-workspace {padding:24px;gap:14px;}
+#asset-retrieval-page .retrieval-searchbar {display:grid;grid-template-columns:minmax(180px,1fr) auto minmax(120px,170px) minmax(105px,130px) minmax(140px,170px);gap:8px;padding:12px;min-height:60px;}
+#asset-retrieval-page .retrieval-searchbar .retrieval-query {width:100%;min-width:0;}
+#asset-retrieval-page .retrieval-searchbar .retrieval-scope {min-width:0;margin:0;}
+#asset-retrieval-page .retrieval-searchbar .retrieval-scope>span {position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;}
+#asset-retrieval-page .retrieval-searchbar select {width:100%;min-width:0;min-height:35px;padding:8px 10px;border:1px solid var(--theme-border);border-radius:6px;background:var(--glass-field,var(--theme-control));color:var(--theme-text);font:inherit;text-overflow:ellipsis;}
+#asset-retrieval-page .retrieval-searchbar [data-action=search] {min-height:35px;padding:7px 14px;border:1px solid var(--theme-border-strong);border-radius:18px;background:var(--theme-text-soft);color:var(--theme-bg);font:inherit;}
+#asset-retrieval-page .retrieval-body {position:relative;grid-template-columns:264px minmax(0,1fr);}
+#asset-retrieval-page .retrieval-reference {padding:14px 12px;border-bottom:0;}
+#asset-retrieval-page .reference-dropzone {border-style:solid;}
+#asset-retrieval-page .retrieval-filter-scroll {border-top:1px solid var(--theme-border);}
+.retrieval-index-info {margin-top:18px;color:var(--theme-muted);font-size:11px;}
+.retrieval-index-info>summary {cursor:pointer;}
+#asset-retrieval-page .retrieval-grid {display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));align-content:start;gap:10px;padding:10px;}
+#asset-retrieval-page .retrieval-card {max-width:210px;}
+#asset-retrieval-page .retrieval-detail {position:absolute;inset:0 0 0 auto;z-index:5;width:min(340px,100%);padding:12px;box-shadow:-8px 0 24px var(--theme-shadow);background:var(--theme-panel);}
+#asset-retrieval-page .retrieval-detail-close {display:block;margin:0 0 10px auto;}
+@media(max-width:1000px){
+  #asset-retrieval-page.retrieval-workspace,html[data-hardcore-layout] .workbench>#asset-retrieval-page.retrieval-workspace {padding:16px;}
+  #asset-retrieval-page .retrieval-body {grid-template-columns:250px minmax(0,1fr);}
+}
+@media(max-width:700px){
+  .workspace-retrieval-active .app-header {gap:8px;padding:10px 12px;}
+  .retrieval-navigation {gap:3px;}
+  html[data-hardcore-layout] .retrieval-navigation button,.retrieval-navigation button {font-size:11px;padding:7px 8px;}
+  #asset-retrieval-page .retrieval-searchbar {grid-template-columns:repeat(3,minmax(0,1fr));}
+  #asset-retrieval-page .retrieval-query {grid-column:1/3;}
+  #asset-retrieval-page .retrieval-body {grid-template-columns:210px minmax(0,1fr);}
+}
+@media(max-width:480px){
+  #asset-retrieval-page .retrieval-body {display:flex;flex-direction:column;overflow:auto;}
+  #asset-retrieval-page .retrieval-filters {flex:none;overflow:visible;}
+  #asset-retrieval-page .retrieval-filter-scroll {overflow:visible;}
+  #asset-retrieval-page .retrieval-results-area {flex:none;overflow:visible;min-height:220px;}
+  #asset-retrieval-page .retrieval-detail {position:fixed;top:60px;bottom:0;}
+}

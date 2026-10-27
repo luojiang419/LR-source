@@ -92,9 +92,18 @@ def validate_metadata_engine(engine):
         raise RuntimeError('发行包元数据引擎无法校验，请重新构建引擎') from exc
 
 
+def validate_workbench_sources(web):
+    """阻止源码已更新而发行目录仍混用旧界面资源。"""
+    for name in (*WORKBENCH_FILES,*STARTUP_ASSETS):
+        packaged=web/name
+        if not packaged.is_file() or packaged.read_bytes()!=(ROOT/'演示方案'/name).read_bytes():
+            raise RuntimeError('发行包界面资源与当前源码不一致：'+name+'；请重新构建引擎')
+
+
 def validate_release(release):
     validate_metadata_engine(release/'engine/framekeep-engine.exe')
     web=release/'engine/_internal/演示方案'
+    validate_workbench_sources(web)
     if not all((web/name).is_file() for name in STARTUP_ASSETS):raise RuntimeError('发行包缺少异步首屏或 SVG 启动资源')
     from setup_gpu import verify_runtime as verify_gpu
     from setup_gpu_video import verify_runtime as verify_gpu_video
