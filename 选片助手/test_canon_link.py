@@ -101,27 +101,45 @@ class CanonLinkTests(unittest.TestCase):
         self.assertEqual(self.config.read_bytes(),changed);self.assertNotEqual(changed,before)
         self.assertEqual(read_settings(self.config)['FileCustomizeIndex'],'3')
 
-    def test_auto_follow_pause_disable_and_restart_remain_off_without_restoring_eos(self):
+    def test_disabled_restart_stays_idle_until_new_photo_notification(self):
         self.service.configure_destination(str(self.photos));before=self.config.read_bytes();idle=self.auto_service();idle.tick()
         idle.pause();self.watch.stop();idle.tick();self.assertFalse(self.watch.state()['enabled'])
         idle.configure(True,True);idle.tick();self.assertTrue(self.watch.state()['enabled'])
         idle.configure(False,True);idle.tick();self.assertFalse(self.watch.state()['enabled'])
         self.assertEqual(self.config.read_bytes(),before)
         restarted=self.auto_service();restarted.tick();self.assertFalse(restarted.state()['enabled'])
-        self.assertFalse(restarted.receive([str(self.picture())])['accepted']);self.assertEqual(self.config.read_bytes(),before)
+        self.assertTrue(restarted.receive([str(self.picture())])['accepted']);self.assertEqual(self.config.read_bytes(),before)
 
     def test_auto_follow_does_not_take_over_manual_watch(self):
         self.registered_profile();manual=self.base/'手动目录';manual.mkdir();self.watch.start(str(manual))
         generation=self.watch.state()['generation'];idle=self.auto_service();idle.tick()
-        self.assertFalse(idle.state()['enabled']);self.assertFalse(idle.receive([str(self.picture())])['accepted'])
+        self.assertFalse(idle.state()['enabled'])
         self.assertEqual(self.watch.state()['generation'],generation)
         self.watch.stop();idle.tick();self.assertTrue(idle.state()['enabled'])
+
+    def test_first_notification_overrides_historic_disable_and_restored_manual_watch(self):
+        self.existing_config();profile=self.config.read_bytes();self.service.configure(False,True)
+        manual=self.base/'旧手动监控';manual.mkdir();self.watch.start(str(manual))
+        idle=self.auto_service();preferences=idle.preferences.read_bytes();idle.tick()
+        self.assertFalse(idle.state()['enabled']);self.assertEqual(Path(self.watch.state()['folder']),manual)
+        photo=self.picture();result=idle.receive([str(photo)])
+        self.assertTrue(result['accepted']);self.assertEqual(Path(result['folder']),self.photos)
+        first=self.watch.state();self.assertEqual(first['source'],'canon');self.assertTrue(first['canon_event'])
+        self.assertTrue(idle.state()['follow_eos']);self.assertTrue(idle.state()['enabled'])
+        idle.receive([str(photo)]);second=self.watch.wait_state(first['event_id'],timeout=.01)
+        self.assertGreater(second['event_id'],first['event_id'])
+        self.assertNotEqual(second['canon_event'],first['canon_event'])
+        self.assertEqual(second['generation'],first['generation'])
+        self.assertEqual(self.config.read_bytes(),profile);self.assertEqual(idle.preferences.read_bytes(),preferences)
+        idle.configure(False,True);self.assertFalse(idle.receive([str(photo)])['accepted'])
+        self.assertFalse(self.watch.state()['enabled'])
 
     def test_notification_starts_auto_follow_before_eos_profile_is_flushed(self):
         self.existing_config();before=self.config.read_bytes();self.running=True;idle=self.auto_service();idle.tick()
         self.assertFalse(idle.state()['enabled']);photo=self.picture(self.photos/'存储/即时拍摄')
         self.assertTrue(idle.receive([str(photo)])['accepted']);idle.tick()
         self.assertTrue(idle.state()['enabled']);self.assertEqual(Path(self.watch.state()['folder']),self.photos)
+        self.assertTrue(self.watch.state()['canon_event'])  # 日期目录提升到 EOS 根目录后通知仍可被界面接收。
         self.assertEqual(self.config.read_bytes(),before)
 
     def test_auto_follow_stops_when_eos_selects_another_application(self):

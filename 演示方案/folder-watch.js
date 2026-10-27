@@ -43,7 +43,7 @@
   const canon=document.createElement('section');canon.className='watch-plan';canon.id='canon-link-panel';
   canon.innerHTML='<label class="watch-option"><input id="canon-link-enabled" type="checkbox"> Canon EOS 联机接入</label><p id="canon-link-status" class="dialog-copy" role="status" aria-live="polite">正在检测 EOS Utility…</p><p class="dialog-copy">在 EOS Utility 的「链接软件 → 记录…」中选择本软件后，自动跟随 EOS 的保存目录及新建拍摄子文件夹，无需重复添加。也可手动设置新的保存目录。</p><div class="dialog-actions"><button id="canon-link-resume" class="bordered">跟随 EOS 保存目录</button><button id="canon-link-save" class="bordered">设置联机保存目录</button></div>';
   dialog.querySelector('.dialog-heading').after(canon);
-  let canonCheckedAt=0,autoGeneration=null;
+  let canonCheckedAt=0,autoGeneration=null,lastCanonEvent=null;
   async function showCanon(){try{const state=await api('/api/canon'),folder=state.follow_eos?state.save_folder:state.destination||state.save_folder;$('canon-link-enabled').checked=!!state.enabled;$('canon-link-status').textContent=state.message+(state.error?'：'+state.error:'')+(folder?' · '+folder:'');tetherButton.textContent=state.enabled&&state.follow_eos?'联机拍摄 · 自动跟随':'联机拍摄';tetherButton.title=state.message+(folder?' · '+folder:'');
     if(tether.open&&canonSaveState?.destination_pending&&state.destination_ready){canonSaveState=state;$('canon-save-status').textContent='保存设置已生效，可重新打开 EOS Utility 开始联机拍摄。'}
   }catch(e){$('canon-link-status').textContent=e.message}}
@@ -114,6 +114,12 @@
       const state=await api('/api/watch'+(watchEnabled&&lastEvent!==null?'?after='+lastEvent+'&wait=15':''),undefined,20000,controller.signal);
       lastEvent=state.event_id??null;watchEnabled=!!state.enabled;window.FramekeepWatch.initializing=!!state.initializing&&state.session_id===window.FRAMEKEEP_SESSION.id;show(state);
       if(Date.now()-canonCheckedAt>3000){canonCheckedAt=Date.now();showCanon()}
+      if(state.enabled&&state.source==='canon'&&state.canon_event&&state.canon_event!==lastCanonEvent&&!document.querySelector('dialog[open]')&&!Framekeep.remoteTarget().paused){
+        await FramekeepIO.flush();
+        if(window.FramekeepWorkspace&&FramekeepWorkspace.current()!=='selection')FramekeepWorkspace.show('selection');
+        if(window.FRAMEKEEP_SESSION.id!==state.session_id)autoGeneration=null;
+        lastCanonEvent=state.canon_event;
+      }
       if(state.enabled&&state.source==='canon'&&autoGeneration!==state.generation&&!document.querySelector('dialog[open]')&&!Framekeep.remoteTarget().paused&&(!window.FramekeepWorkspace||FramekeepWorkspace.current()==='selection')){
         await FramekeepIO.flush();await FramekeepIO.refreshFolders();
         if(await FramekeepIO.refreshLive(state.session_id,null,true))autoGeneration=state.generation;

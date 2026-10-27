@@ -106,8 +106,9 @@ class CanonBrowserTests(unittest.TestCase):
         out=ROOT/'build/canon-link-acceptance';out.mkdir(parents=True,exist_ok=True)
         with tempfile.TemporaryDirectory() as temporary,ExitStack() as patches:
             base=Path(temporary);store=Store(base/'data',ROOT);watch=FolderWatch(store)
+            preferences=store.data/'canon-link/preferences.json';preferences.parent.mkdir()
+            preferences.write_text(json.dumps({'enabled':False,'auto_follow':False}),'utf8')
             service=CanonLink(store,watch,base/'末帧.exe',allow_registration=False,autostart=False)
-            service.configure(True)
             for name,value in dict(STORE=store,DATA=store.data,WATCH=watch,CANON=service,PREVIEWS=None,
                                    MOUSE=None,MODELS=None,SKU=None,ARCHIVE=None,ANALYSIS=None,RAWLINK=None,FILESEARCH=None).items():
                 patches.enter_context(patch.object(server,name,value))
@@ -126,15 +127,29 @@ class CanonBrowserTests(unittest.TestCase):
                         page=browser.new_page(viewport={'width':1440,'height':940},reduced_motion='reduce');errors=[]
                         page.on('pageerror',lambda error:errors.append(str(error)))
                         page.goto(url,wait_until='domcontentloaded');page.wait_for_function('()=>window.FramekeepWatch&&window.FramekeepLayout')
+                        self.assertFalse(service.state()['enabled'])
+                        page.locator('#asset-retrieval-open').click()
                         first=picture(base/'新电脑 拍摄/2026-10-22','001.JPG');received=send(first)
                         page.wait_for_function('(sid)=>FRAMEKEEP_SESSION.id===sid&&DEMO_PHOTOS.length===1',arg=received['session_id'])
+                        page.wait_for_function('()=>FramekeepWorkspace.current()==="selection"')
                         page.wait_for_function('()=>document.querySelector("#photos img")?.naturalWidth>0')
                         self.assertTrue(page.evaluate('FramekeepLayout.isMonitoring()'))
                         page.locator('#stars [data-rating="4"]').click();page.evaluate('FramekeepIO.flush()')
-                        before=watch.state()['generation'];second=picture(first.parent,'002.JPG');send(second)
+                        before=watch.state()['generation'];page.locator('#asset-retrieval-open').click()
+                        second=picture(first.parent,'002.JPG');send(second)
                         page.wait_for_function('()=>DEMO_PHOTOS.length===2&&document.getElementById("filename").textContent==="002.JPG"')
+                        page.wait_for_function('()=>FramekeepWorkspace.current()==="selection"')
                         self.assertEqual(watch.state()['generation'],before)
+                        # 重复照片通知也能从其他工作页返回，但不重复入库或重建监控。
+                        page.locator('#sku-open').click();send(second)
+                        page.wait_for_function('()=>FramekeepWorkspace.current()==="selection"')
+                        self.assertEqual(len(store.records(received['session_id'])),2)
+                        self.assertEqual(watch.state()['generation'],before)
+                        page.locator('#folder-watch').click()
                         third=picture(base/'另一个日期','003.JPG');new=send(third)
+                        self.assertTrue(page.locator('#watch-dialog').is_visible())
+                        self.assertEqual(page.evaluate('FRAMEKEEP_SESSION.id'),received['session_id'])
+                        page.locator('#watch-close').click()
                         page.wait_for_function('(sid)=>FRAMEKEEP_SESSION.id===sid&&document.getElementById("filename").textContent==="003.JPG"',arg=new['session_id'])
                         self.assertEqual(next(iter(store.session(received['session_id'])['state']['overrides'].values())),4)
                         for theme in ['dark','light','pure-white','hardcore']:

@@ -252,17 +252,18 @@ class CanonLink:
             if path.suffix.lower() not in media.IMAGE_EXTS|media.RAW_EXTS or not path.is_file():raise ValueError('不支持的联机照片类型')
             files.append(path)
         with self.lock:
-            # EOS 刚在内存中完成登记、首选项尚未落盘时，可信桌面照片通知也可启动跟随。
-            if not self.activated and self.allow_registration and self.auto_follow and not self.manual_pause:
-                watch=self.watch.state()
-                if watch['enabled'] and watch.get('source')!='canon':return {'accepted':False,'reason':'正在使用手动监控'}
+            # 本次首个可信照片通知表示开始联机，历史关闭偏好只限制后台自动探测。
+            # 本次运行主动关闭/暂停后 activated 或 manual_pause 会阻止再次接入。
+            if not self.activated and not self.manual_pause:
+                photo_directory(files[-1].parent,self.store.data)
                 self.enabled=True;self.activated=True;self.follow_eos=True;self.read_only_follow=True
-                self.awaiting_profile=True
+                self.auto_follow=True;self.awaiting_profile=True
                 self.info.update(enabled=True)
             if not self.enabled or self.manual_pause:return {'accepted':False,'reason':'自动接入已关闭或暂停'}
             last=files[-1];self.actual_folder=last.parent
             folder=self.base_folder if self.follow_eos and self.base_folder and last.is_relative_to(self.base_folder) else last.parent
             state=self._attach(folder)
+            self.watch.notify_canon()
             self.info.update(last_file=str(last),event=self.info['event']+1,error='',message='Canon 联机照片已自动接入')
             return {'accepted':True,'session_id':state['session_id'],'folder':state['folder']}
 

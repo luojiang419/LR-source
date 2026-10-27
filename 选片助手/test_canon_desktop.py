@@ -22,6 +22,8 @@ class CanonDesktopTests(unittest.TestCase):
         out=ROOT/'build/canon-link-acceptance';out.mkdir(parents=True,exist_ok=True)
         with tempfile.TemporaryDirectory(prefix='native-',dir=out) as temporary:
             base=Path(temporary);photos=base/'新电脑 传入';photos.mkdir();data=base/'data'
+            preferences=data/'canon-link/preferences.json';preferences.parent.mkdir(parents=True)
+            preferences.write_text(json.dumps({'enabled':False,'auto_follow':False}),'utf8')
             one=photos/'001.JPG';Image.new('RGB',(900,600),'blue').save(one)
             with socket.socket() as sock:sock.bind(('127.0.0.1',0));port=sock.getsockname()[1]
             env={key:value for key,value in os.environ.items() if not key.startswith('FRAMEKEEP_')}
@@ -55,12 +57,9 @@ class CanonDesktopTests(unittest.TestCase):
                 engine_handle=kernel.OpenProcess(0x100001,False,health['process_id'])
                 until(lambda:(data/'desktop-metrics.json').is_file())
                 until(lambda:not list((data/'canon-link/inbox').glob('*.json')))
-                self.assertFalse(api('/api/canon')['enabled']);self.assertEqual(api('/api/canon')['event'],0)
-                self.assertFalse(api('/api/watch')['enabled']);self.assertEqual(len(api('/api/state')['catalog']),0)
-                api('/api/canon',{'enabled':True})
-                subprocess.run([str(executable),str(one)],cwd=executable.parent,env=env,check=True,timeout=15,creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
                 until(lambda:api('/api/canon')['event']==1)
                 until(lambda:len(api('/api/state')['catalog'])==1)
+                self.assertTrue(api('/api/canon')['enabled']);self.assertTrue(api('/api/watch')['enabled'])
                 first=api('/api/watch');self.assertEqual(first['source'],'canon');self.assertEqual(Path(first['folder']),photos)
                 two=photos/'002.JPG';Image.new('RGB',(900,600),'green').save(two)
                 # 首次窗口的异步显示需先完成，避免将启动聚焦误判为照片通知抢焦点。

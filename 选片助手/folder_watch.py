@@ -79,7 +79,7 @@ class FolderWatch:
         self.closed=threading.Event();self.cancel=threading.Event();self.observed={};self.accepted={};self.retry_after={}
         self.config=store.data/'folder-watch.json'
         self.info={'enabled':False,'folder':'','recursive':True,'session_id':None,'generation':uuid.uuid4().hex,
-                   'version':0,'event_id':0,'arrivals':0,'last_photo_id':None,'pending':0,'initializing':False,'error':'','message':'未开启现场监控','source':'manual'}
+                   'version':0,'event_id':0,'canon_event':'','arrivals':0,'last_photo_id':None,'pending':0,'initializing':False,'error':'','message':'未开启现场监控','source':'manual'}
         if self.config.is_file():
             try:
                 saved=json.loads(self.config.read_text(encoding='utf8'))
@@ -114,6 +114,11 @@ class FolderWatch:
     def set_source(self,source):
         with self.lock:self._update(source=source);self._persist();return self.state()
 
+    def notify_canon(self):
+        # 即使照片已入库，也通知当前界面进入联机；不重建会话或持久化通知。
+        with self.lock:
+            if self.info['enabled'] and self.info['source']=='canon':self._update(canon_event=uuid.uuid4().hex)
+
     def start(self,folder,recursive=True,*,source='manual'):
         if not isinstance(folder,str) or not folder.strip():raise ValueError('请选择照片传入文件夹。')
         root=Path(folder.strip().strip('"')).resolve(strict=True)
@@ -126,7 +131,7 @@ class FolderWatch:
         with self.lock:
             self.cancel.set();self.cancel=threading.Event();self.observed={};self.accepted={};self.retry_after={};self.existing=None
             self._update(enabled=True,folder=str(root),recursive=bool(recursive),session_id=sid,source=source,
-                             generation=uuid.uuid4().hex,version=0,arrivals=0,last_photo_id=None,pending=0,initializing=True,error='',message='正在读取已有照片，原文件保留')
+                             generation=uuid.uuid4().hex,canon_event=self.info['canon_event'] if source=='canon' else '',version=0,arrivals=0,last_photo_id=None,pending=0,initializing=True,error='',message='正在读取已有照片，原文件保留')
             self._persist();self.wake.set()
             return self.state()
 
