@@ -83,7 +83,8 @@ class PresentationTests(unittest.TestCase):
         self.assertEqual(len(choices),1)
         key=choices[0]['key'];state=select_images(self.sku,self.pid,{normalize(fixture.CODE):key})
         own=[r for r in state['rows'] if r['sku']==fixture.CODE]
-        self.assertTrue(all(r['sku_image']['capture_id']==self.ids[2] for r in own))
+        self.assertTrue(all(r['sku_image']['capture_id']==self.ids[2] for r in own if r['status']=='已拍摄'))
+        self.assertTrue(all(r['sku_image'] is None for r in own if r['status']!='已拍摄'))
         self.assertEqual({r['id']:r['status'] for r in state['rows']},before)
         self.assertEqual(next(g for g in gallery(self.sku,self.pid)['groups'] if g['sku']==fixture.CODE)['selected_key'],key)
         out=self.sku.export(self.pid);plan=inspect_workbook(out)[0];image=next(im for im in plan['images'] if im['cell']=='D2')
@@ -105,6 +106,7 @@ class PresentationTests(unittest.TestCase):
         self.assertFalse(group['shot']);self.assertEqual(self.sku.project()['scope'],'模特图')
 
     def test_gallery_pages_include_entire_group_and_omit_label_if_products_exist(self):
+        self.parse();self.choose()
         rows=[{'session_id':self.sid,'capture_id':str(i),'normalized':normalize(fixture.CODE),'sku':fixture.CODE,'name':f'{i}.JPG','preview':'/api/preview/test/'+str(i),'source':'interval'} for i in range(135)]
         rows.append(dict(rows[0],capture_id='label',source='ocr'))
         with patch('sku_library.browse',return_value={'rows':rows}):

@@ -366,6 +366,7 @@ class Handler(SimpleHTTPRequestHandler):
                 if SKU is None:raise ValueError('SKU 服务未启动')
                 from sku_presentation import gallery
                 q=parse_qs(url.query)
+                if not q.get('sku',[''])[0].strip():raise ValueError('请选择需要查看的 SKU 款号')
                 return self.reply(gallery(SKU,q.get('project_id',[''])[0],q.get('sku',[''])[0],q.get('offset',[0])[0],q.get('limit',[60])[0]))
             if path=='/api/sku/image':
                 if SKU is None:raise ValueError('SKU 服务未启动')
@@ -636,7 +637,8 @@ class Handler(SimpleHTTPRequestHandler):
                     return self.reply(rename_header(SKU,body.get('project_id'),body.get('key'),body.get('title')))
                 if path=='/api/sku/cover':
                     from sku_presentation import select_images
-                    return self.reply(select_images(SKU,body.get('project_id'),body.get('choices')))
+                    if not str(body.get('sku','')).strip():raise ValueError('请选择需要设置图片的 SKU 款号')
+                    return self.reply(select_images(SKU,body.get('project_id'),body.get('choices'),body['sku']))
                 if path=='/api/sku/metadata/export':
                     from sku_metadata_backup import export_metadata
                     return self.reply(export_metadata(SKU))

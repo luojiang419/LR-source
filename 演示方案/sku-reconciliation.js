@@ -41,7 +41,8 @@
     const groups=new Map(),sheets=new Set(state.project?.metadata.sheets.filter(s=>!s.skipped).map(s=>s.name)||[]);
     for(const row of state.rows){
       if(!sheets.has(row.sheet))continue;const key=row.normalized||row.sku;
-      if(!groups.has(key))groups.set(key,{sku:row.sku,sheets:new Map()});const group=groups.get(key);
+      if(!groups.has(key))groups.set(key,{sku:row.sku,normalized:key,sheets:new Map(),has_shots:false});const group=groups.get(key);
+      group.has_shots ||= row.status==='已拍摄';
       group.sheets.set(row.sheet,group.sheets.get(row.sheet)||row.status==='已拍摄');if(!group.sku_image&&row.sku_image)group.sku_image=row.sku_image;
     }
     return [...groups.values()].filter(group=>group.sheets.size>1).map(group=>({...group,shot:[...group.sheets.values()].every(Boolean)}));
@@ -80,7 +81,7 @@
     const html=rows.length?'<table><thead><tr>'+header('seq','序号','class="sku-sequence"')+header('row','原表行')+columns.map(c=>header(columnKey(sheet,c),c.title)).join('')+header('status','拍摄状态')+header('photo','款号图片')+header('time','拍摄完成时间')+notes.map(c=>header(columnKey(sheet,c),c.title)).join('')+'</tr></thead><tbody>'+rows.map((r,index)=>`<tr data-sku-row="${esc(r.id)}" class="${r.status==='已拍摄'?'progress-shot':''}"><td class="sku-sequence" aria-label="序号 ${index+1}">${index+1}</td><td class="progress-row-number">${r.excel_row}</td>${columns.map(c=>{const imgs=(r.images||[]).filter(im=>im.cell.replace(/\d/g,'')===c.letter);return `<td class="${imgs.length?'sku-product-images':''}">${imgs.length?images(r,imgs):c.index===sheet.sku_col?skuText(r):esc(r.source_values?.[c.letter]||'')}</td>`}).join('')}<td><span class="sku-state ${r.status==='已拍摄'?'sku-shot':''}">${esc(r.status)}</span></td><td class="sku-product-images">${reconciliationImage(r)}</td><td class="progress-time">${r.completed_at?`${r.completion?`<button data-completion="${esc(r.id)}">${esc(r.completed_at.replace('T',' '))}</button>`:esc(r.completed_at.replace('T',' '))}`:r.status==='已拍摄'?'<span class="time-missing">拍摄时间缺失</span>':'—'}</td>${notes.map(c=>`<td>${esc(r.source_values?.[c.letter]||'')}</td>`).join('')}</tr>`).join('')+'</tbody></table>':`<p class="dialog-copy">${p?.scope?'没有符合条件的款号':'请选择当前拍摄工作表，各页分别统计进度。'}</p>`;
     if($('sku-rows').innerHTML!==html)$('sku-rows').innerHTML=html;
   }
-  function reconciliationImage(row){const image=row?.sku_image;return `<button class="sku-product-image sku-cover-picker" data-sku-cover="${esc(row.normalized||row.sku)}" data-sku-name="${esc(row.sku)}" title="选择 ${esc(row.sku)} 款号图片">${image?`<img src="${esc(image.url)}" alt="${esc(row.sku)} 款号图片" loading="lazy">`:'<span>选择图片</span>'}</button>`}
+  function reconciliationImage(row){const shot=typeof row?.status==='string'?row.status==='已拍摄':row?.has_shots||row?.shot;if(!shot)return '<span class="time-missing">—</span>';const image=row?.sku_image;return `<button class="sku-product-image sku-cover-picker" data-sku-cover="${esc(row.normalized||row.sku)}" data-sku-name="${esc(row.sku)}" title="选择 ${esc(row.sku)} 款号图片">${image?`<img src="${esc(image.url)}" alt="${esc(row.sku)} 款号图片" loading="lazy">`:'<span>选择图片</span>'}</button>`}
   function animateHeader(element){if(element&&!matchMedia('(prefers-reduced-motion: reduce)').matches)element.animate([{backgroundColor:'var(--theme-selected)',opacity:.65},{backgroundColor:'transparent',opacity:1}],{duration:200,easing:getComputedStyle(document.documentElement).getPropertyValue('--motion-ease').trim()||'cubic-bezier(.22,1,.36,1)'})}
   function editHeader(target){
     if(busy||target.querySelector('input')||!state.project)return;
@@ -99,9 +100,9 @@
   $('sku-rows').addEventListener('dblclick',event=>{if(event.target.closest('input,textarea,select'))return;const cell=event.target.closest('th'),target=cell?.querySelector('[data-header-key]');if(target)editHeader(target)});
   $('sku-rows').addEventListener('keydown',event=>{const target=event.target.closest('[data-header-key]');if(target&&event.target===target&&event.key==='Enter'){event.preventDefault();editHeader(target)}});
   const galleryDialog=document.createElement('dialog');galleryDialog.id='sku-cover-dialog';galleryDialog.setAttribute('aria-labelledby','sku-cover-title');
-  galleryDialog.innerHTML='<div class="dialog-heading"><div><h2 id="sku-cover-title">SKU 款号组图</h2><p id="sku-cover-context" class="dialog-copy"></p></div><button id="sku-cover-close" type="button">关闭 <kbd>Esc</kbd></button></div><div class="sku-cover-controls"><label>款号<select id="sku-cover-group" aria-label="查看 SKU 组图"><option value="">全部 SKU 款号</option></select></label><span id="sku-cover-count" role="status"></span></div><div id="sku-cover-groups"></div><p id="sku-cover-message" role="status"></p><footer class="sku-cover-footer"><div><button id="sku-cover-prev" type="button">上一页</button><button id="sku-cover-next" type="button">下一页</button></div><span>每款默认首张，可分别选择一张款号图片</span><div><button id="sku-cover-cancel" type="button">取消</button><button id="sku-cover-save" type="button" class="primary">保存选择</button></div></footer>';
+  galleryDialog.innerHTML='<div class="dialog-heading"><div><h2 id="sku-cover-title">SKU 款号组图</h2><p id="sku-cover-context" class="dialog-copy"></p></div><button id="sku-cover-close" type="button">关闭 <kbd>Esc</kbd></button></div><div class="sku-cover-controls"><label>款号<select id="sku-cover-group" aria-label="当前 SKU 组图" disabled></select></label><span id="sku-cover-count" role="status"></span></div><div id="sku-cover-groups"></div><p id="sku-cover-message" role="status"></p><footer class="sku-cover-footer"><div><button id="sku-cover-prev" type="button">上一页</button><button id="sku-cover-next" type="button">下一页</button></div><span>仅从当前款号区间内选择款号图片</span><div><button id="sku-cover-cancel" type="button">取消</button><button id="sku-cover-save" type="button" class="primary">保存选择</button></div></footer>';
   document.body.append(galleryDialog);
-  let galleryProject='',galleryOffset=0,galleryData=null,galleryChoices={},galleryRequest=0,galleryOrigin=null,gallerySaving=false;
+  let galleryProject='',gallerySku='',galleryOffset=0,galleryData=null,galleryChoices={},galleryRequest=0,galleryOrigin=null,gallerySaving=false;
   function paintGallery(){
     if(!galleryData)return;
     const grouped=new Map();for(const image of galleryData.images){if(!grouped.has(image.normalized))grouped.set(image.normalized,[]);grouped.get(image.normalized).push(image)}
@@ -112,11 +113,11 @@
   }
   async function loadGallery(){
     const request=++galleryRequest;$('sku-cover-message').textContent='正在加载 SKU 组图…';$('sku-cover-prev').disabled=$('sku-cover-next').disabled=$('sku-cover-save').disabled=true;
-    try{const data=await api('/api/sku/gallery?'+new URLSearchParams({project_id:galleryProject,sku:$('sku-cover-group').value,offset:galleryOffset,limit:60}));if(request!==galleryRequest||!galleryDialog.open)return;galleryData=data;const selected=$('sku-cover-group').value;options($('sku-cover-group'),data.groups.map(g=>[g.normalized,`${g.sku}（${g.count} 张）`]),selected,'全部 SKU 款号');paintGallery();$('sku-cover-message').textContent=''}
-    catch(error){if(request===galleryRequest){$('sku-cover-message').textContent=error.message;$('sku-cover-groups').innerHTML='';$('sku-cover-group').disabled=false}}
+    try{const data=await api('/api/sku/gallery?'+new URLSearchParams({project_id:galleryProject,sku:gallerySku,offset:galleryOffset,limit:60}));if(request!==galleryRequest||!galleryDialog.open)return;if(data.groups.some(g=>g.normalized!==gallerySku)||data.images.some(im=>im.normalized!==gallerySku))throw new Error('款号组图范围已变化，请关闭后重新打开');galleryData=data;options($('sku-cover-group'),data.groups.map(g=>[g.normalized,`${g.sku}（${g.count} 张）`]),gallerySku);paintGallery();$('sku-cover-message').textContent=''}
+    catch(error){if(request===galleryRequest){$('sku-cover-message').textContent=error.message;$('sku-cover-groups').innerHTML=''}}
   }
   function openSkuGallery(target){
-    if(!state.project)return;galleryProject=state.project.id;galleryOrigin=target;galleryOffset=0;galleryData=null;galleryChoices={};gallerySaving=false;$('sku-cover-group').value='';$('sku-cover-context').textContent='当前款号：'+target.dataset.skuName+' · 同款跨工作表共用所选图片';$('sku-cover-groups').innerHTML='';galleryDialog.showModal();$('sku-cover-close').focus();loadGallery();
+    if(!state.project||!target.dataset.skuCover)return;galleryProject=state.project.id;gallerySku=target.dataset.skuCover;galleryOrigin=target;galleryOffset=0;galleryData=null;galleryChoices={};gallerySaving=false;options($('sku-cover-group'),[[gallerySku,target.dataset.skuName]],gallerySku);$('sku-cover-context').textContent='当前款号：'+target.dataset.skuName+' · 仅显示该款号的拍摄区间图片';$('sku-cover-groups').innerHTML='';galleryDialog.showModal();$('sku-cover-close').focus();loadGallery();
   }
   function closeGallery(){if(!gallerySaving&&galleryDialog.open)galleryDialog.close()}
   for(const id of ['sku-cover-close','sku-cover-cancel'])$(id).onclick=closeGallery;
@@ -126,9 +127,9 @@
   $('sku-cover-save').onclick=async()=>{
     if(gallerySaving||!Object.keys(galleryChoices).length)return;
     gallerySaving=true;paintGallery();$('sku-cover-group').disabled=true;
-    try{if(galleryProject!==state.project?.id)throw new Error('拍摄任务已变化，请关闭后重新选择');await exclusive(async()=>{state=await api('/api/sku/cover',{project_id:galleryProject,choices:galleryChoices});render()});gallerySaving=false;closeGallery();message('款号图片已保存，各工作表、全部汇总和 Excel 已同步更新。')}
+    try{if(galleryProject!==state.project?.id)throw new Error('拍摄任务已变化，请关闭后重新选择');await exclusive(async()=>{state=await api('/api/sku/cover',{project_id:galleryProject,sku:gallerySku,choices:galleryChoices});render()});gallerySaving=false;closeGallery();message('款号图片已保存，各工作表、全部汇总和 Excel 已同步更新。')}
     catch(error){$('sku-cover-message').textContent=error.message;gallerySaving=false;paintGallery()}
-    finally{$('sku-cover-group').disabled=false}
+    finally{$('sku-cover-group').disabled=true}
   };
   document.addEventListener('framekeep:workspace',closeGallery);
   const imageDialog=document.createElement('dialog');imageDialog.className='sku-image-dialog';imageDialog.setAttribute('aria-labelledby','sku-image-title');

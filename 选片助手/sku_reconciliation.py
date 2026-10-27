@@ -21,6 +21,7 @@ def decorate_images(sku,rows):
     project=None
     for row in rows:
         row['sku_image']=None;evidence=row.get('completion')
+        if row['status']!='已拍摄':continue
         if evidence:
             sid=evidence['session_id'];label=evidence['capture_id']
             row['shoot_sku']=chosen.get((sid,label),row['sku'])

@@ -47,16 +47,19 @@ def grouped_rows(rows,sheets):
         group['rows'].append({'sheet':row['sheet'],'excel_row':row['excel_row'],'id':row['id']})
         group['memberships'][row['sheet']]=group['memberships'].get(row['sheet'],False) or row['status']=='已拍摄'
         if not group['sku_image'] and row.get('sku_image'):group['sku_image']=row['sku_image']
-    for group in groups.values():group['shot']=all(group['memberships'].values())
+    for group in groups.values():group['shot']=all(group['memberships'].values());group['has_shots']=any(group['memberships'].values())
     return list(groups.values())
 
 
-def gallery_items(sku,pid):
+def gallery_items(sku,pid,code=''):
     from sku_library import browse
     project=sku.project(pid)
     if not project:raise ValueError('拍摄任务不存在')
-    data=browse(sku,all_rows=True);groups={}
-    for row in sku.rows(pid):groups.setdefault(row['normalized'],{'sku':row['sku'],'normalized':row['normalized'],'images':[]})
+    groups={};requested=normalize(code)
+    for row in sku.rows(pid):
+        if row['status']=='已拍摄' and (not requested or row['normalized']==requested):groups.setdefault(row['normalized'],{'sku':row['sku'],'normalized':row['normalized'],'images':[]})
+    if not groups:return []
+    data=browse(sku,all_rows=True)
     with sku.connect() as c:versions={normalize(row['sku']):normalize(row['base_sku']) for row in c.execute('SELECT sku,base_sku FROM sku_shoot_versions')}
     sessions={};ratings={}
     for item in data['rows']:
@@ -66,47 +69,37 @@ def gallery_items(sku,pid):
             sessions[sid]=sku.store.session(sid) or {}
             ratings[sid]=sessions[sid].get('state',{}).get('overrides',{})
         key=versions.get(item['normalized'],item['normalized'])
-        group=groups.setdefault(key,{'sku':item['sku'],'normalized':key,'images':[]})
+        if key not in groups:continue
+        group=groups[key]
         group['images'].append({'key':'capture:'+item['session_id']+':'+item['capture_id'],
             'kind':'capture','session_id':item['session_id'],'capture_id':item['capture_id'],
             'name':item['name'],'url':item['preview']+('&' if '?' in item['preview'] else '?')+'size=240',
             'source':'ocr' if ratings[sid].get(item['capture_id'])==2 else item.get('source',''),'normalized':key,'sku':item['sku']})
-    # 商品图优先于标签；无现场组图的款号使用原文档图片。
+    # 只选择当前款的实际拍摄图片；原表参考图片保留在独立参考列。
     for group in groups.values():
         products=[im for im in group['images'] if im['source']!='ocr']
         if products:group['images']=products
-    sku._ensure_images(project)
-    live_codes={code for code,group in groups.items() if group['images']};imported_media={}
-    for row in sku.rows(pid):
-        group=groups[row['normalized']]
-        if row['normalized'] in live_codes:continue
-        sheet=next(s for s in project['metadata']['sheets'] if s['name']==row['sheet'])
-        entries=[im for im in sheet.get('images',[]) if int(''.join(filter(str.isdigit,im['cell'])))==row['excel_row']]
-        for index,im in enumerate(entries):
-            seen=imported_media.setdefault(row['normalized'],set())
-            if im['media'] in seen:continue
-            seen.add(im['media'])
-            group['images'].append({'key':f"imported:{row['id']}:{index}",'kind':'imported','row_id':row['id'],'index':index,
-                'name':row['sku']+' · 原表图片','url':f"/api/sku/image?row_id={row['id']}&index={index}",
-                'normalized':row['normalized'],'sku':row['sku']})
     selected=preferences(sku,pid)['images']
     for group in groups.values():
-        group['selected_key']=selected.get(group['normalized'],{}).get('key') or (group['images'][0]['key'] if group['images'] else '')
+        saved=selected.get(group['normalized'],{}).get('key')
+        group['selected_key']=saved if any(image['key']==saved for image in group['images']) else (group['images'][0]['key'] if group['images'] else '')
     return list(groups.values())
 
 
 def gallery(sku,pid,code='',offset=0,limit=60):
-    groups=gallery_items(sku,pid);key=normalize(code)
+    groups=gallery_items(sku,pid,code);key=normalize(code)
     images=[im for group in groups if not key or group['normalized']==key for im in group['images']]
     offset=max(0,int(offset));limit=max(1,min(120,int(limit)))
     return {'project_id':pid,'groups':[{k:v for k,v in group.items() if k!='images'}|{'count':len(group['images'])} for group in groups],
             'images':images[offset:offset+limit],'total':len(images),'offset':offset,'has_more':offset+limit<len(images)}
 
 
-def select_images(sku,pid,choices):
+def select_images(sku,pid,choices,code=''):
     if not isinstance(choices,dict) or len(choices)>2000:raise ValueError('款号图片选择无效')
     with sku.lock:
-        groups={g['normalized']:g for g in gallery_items(sku,pid)}
+        requested=normalize(code)
+        if requested and any(normalize(key)!=requested for key in choices):raise ValueError('只能选择当前款号区间中的图片')
+        groups={g['normalized']:g for g in gallery_items(sku,pid,code)}
         before=preferences(sku,pid);value=json.loads(json.dumps(before))
         for code,key in choices.items():
             code=normalize(code)
@@ -121,6 +114,24 @@ def select_images(sku,pid,choices):
         return sku.state()
 
 
+def _capture_cover_codes(sku,requested):
+    """只检查已保存封面当前的资产归属；改号后旧封面不能串到其他 SKU。"""
+    archive=getattr(sku,'archive',None)
+    if not archive:return {}
+    links={}
+    with archive.connect() as c:
+        for sid,ids in requested.items():
+            for cid in ids:
+                row=c.execute('SELECT a.id,a.normalized FROM catalog_links k JOIN assets a ON a.id=k.asset WHERE k.session=? AND k.capture=?',(sid,cid)).fetchone()
+                if row:links[(sid,cid)]=dict(row)
+    codes={key:{row['normalized']} for key,row in links.items()}
+    with sku.connect() as c:
+        for key,row in links.items():
+            for version in c.execute('SELECT sku,base_sku FROM sku_shoot_versions WHERE asset=?',(row['id'],)):
+                if normalize(version['sku'])==row['normalized']:codes[key].add(normalize(version['base_sku']))
+    return codes
+
+
 def decorate_selected(sku,rows):
     by_project={};sessions={};defaults={}
     requested={}
@@ -129,9 +140,14 @@ def decorate_selected(sku,rows):
         for choice in by_project[pid][0].values():
             if choice['kind']=='capture':requested.setdefault(choice['session_id'],set()).add(choice['capture_id'])
     for sid,ids in requested.items():sessions[sid]={r['id']:r for r in sku.store.records(sid,ids=ids)}
+    current_codes=_capture_cover_codes(sku,requested)
     for row in rows:
+        if row['status']!='已拍摄':row['sku_image']=None;continue
         pid=row['project']
         chosen,project=by_project[pid];choice=chosen.get(row['normalized'])
+        if choice and choice['kind']=='capture':
+            key=(choice['session_id'],choice['capture_id'])
+            if not sessions[key[0]].get(key[1]) or (key in current_codes and row['normalized'] not in current_codes[key]):choice=None
         if choice:
             if choice['kind']=='imported':
                 row['sku_image']={'imported':True,'row_id':choice['row_id'],'index':choice['index'],'key':choice['key'],
@@ -151,4 +167,4 @@ def decorate_selected(sku,rows):
             key=(pid,row['normalized']);prior=defaults.get(key)
             if not prior or prior.get('imported') and not image.get('imported'):defaults[key]=image
     for row in rows:
-        if row['normalized'] not in by_project[row['project']][0]:row['sku_image']=defaults.get((row['project'],row['normalized']))
+        if row['status']=='已拍摄' and (row['normalized'] not in by_project[row['project']][0] or not row.get('sku_image')):row['sku_image']=defaults.get((row['project'],row['normalized']))
