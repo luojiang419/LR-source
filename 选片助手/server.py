@@ -678,6 +678,11 @@ class Handler(SimpleHTTPRequestHandler):
                     except Exception:raise ValueError('Excel 文件内容无效') from None
                     return self.reply(SKU.import_file(body['name'],content,body.get('session_id'),body.get('preferred_scope')))
                 if path=='/api/sku/configure':return self.reply(SKU.configure(body['project_id'],body.get('session_id'),body['scope'],body.get('enabled',True)))
+                if path=='/api/sku/sync-progress':
+                    watch=WATCH.state() if WATCH else {};generation=body.get('watch_generation')
+                    if (watch.get('enabled') or generation) and (not watch.get('enabled') or body.get('session_id')!=watch.get('session_id') or generation!=watch.get('generation')):
+                        raise ValueError('监控目录已变化，请重新点击同步拍摄进度')
+                    return self.reply(SKU.sync_progress(body['project_id'],body.get('session_id')))
                 if path=='/api/sku/activate':return self.reply(SKU.activate(body['project_id']))
                 if path=='/api/sku/recognize':return self.reply(SKU.enqueue(body['session_id'],body['capture_id']))
                 if path=='/api/sku/review':return self.reply(SKU.review(body['job_id'],body['action'],body.get('row_id')))

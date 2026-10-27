@@ -86,6 +86,10 @@ dialog{width:670px;max-width:calc(100vw - 26px);max-height:88dvh;background:var(
 .shooting-progress .sku-toolbar{margin:0;gap:12px}
 .shooting-progress .progress-task-fields{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;align-items:end;padding:14px 16px 0}
 .shooting-progress .progress-task-fields label{display:flex;flex-direction:column;align-items:stretch;gap:7px;min-width:0;font-size:11px;color:var(--theme-text-soft)}
+.progress-task-actions{display:flex;align-items:center;flex-wrap:wrap;gap:8px}
+.shooting-sync-action{width:100%;min-height:32px;margin:0 0 8px}
+.shooting-sync-status{margin:0 0 8px;font-size:11px;line-height:1.6;color:var(--theme-text-soft);overflow-wrap:anywhere}
+.shooting-sync-status:empty{display:none}
 .shooting-progress #sku-projects,.shooting-progress #sku-panel-scope{width:100%;max-width:none;min-width:0;text-overflow:ellipsis}
 .shooting-progress select,.shooting-progress #sku-search,.shooting-progress #sku-recognize,.shooting-progress #sku-import{min-height:34px;box-sizing:border-box;padding:7px 10px}
 .shooting-progress #sku-project-info{margin:10px 16px 14px;font-size:11px;line-height:1.6;overflow-wrap:anywhere}

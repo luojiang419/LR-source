@@ -239,6 +239,35 @@ class SkuService(ConcurrentLabels,FullAutoOCR,OcrMetadata,SkuRules):
         if self.archive and session_id and (p['session_id']!=session_id or p['scope']!=scope):self.archive.start_stream(session_id,pid,scope)
         self._reconcile_full_context();return self.state()
 
+    def sync_progress(self,pid,session_id):
+        """显式复用指定拍摄目录的确认记录，不重新识别或接管识别上下文。"""
+        with self.lock:
+            project=self.project()
+            if not project or project['id']!=pid or project['metadata'].get('removed_at'):
+                raise ValueError('拍摄文档已切换或移除，请重新选择后同步')
+            if project['metadata'].get('automatic_day'):raise ValueError('请先导入需要同步的拍摄文档')
+            session=self.store.session(session_id) if session_id else None
+            if not session:raise ValueError('请先打开或监控拍摄文件夹，再同步拍摄进度')
+            before={r['id']:r['status'] for r in self.rows(pid)}
+            with self.connect() as c:
+                self._refresh_progress(c,pid,source_session_id=session_id)
+                summary=dict(self.folder_progress_summary.get(pid) or {})
+            updated=True;error=''
+            try:self.export(pid);self.dirty.discard(pid)
+            except (ValueError,OSError) as exc:
+                updated=False;error=str(exc)
+                if isinstance(exc,OSError):
+                    with self.connect() as c:c.execute('UPDATE projects SET export_error=? WHERE id=?',('Excel 工作副本更新失败：'+error[:160],pid))
+            result=self.state();p=result['project'];managed=p['metadata'].get('managed_sheet')
+            linked=[r for r in result['rows'] if r['status']=='已拍摄' and r.get('completion') and r['completion']['session_id']==session_id]
+            result['progress_sync']={'session_id':session_id,'folder':session['root'],
+                'matched_skus':len({r['normalized'] for r in linked if r['sheet']!=managed}),
+                'unplanned_skus':len({r['normalized'] for r in linked if r['sheet']==managed}),
+                'synced_rows':len(linked),'restored_rows':sum(before.get(r['id'])!='已拍摄' for r in linked),
+                'confirmed_labels':summary.get('confirmed_labels',0),'pending_labels':summary.get('pending_labels',0),
+                'workbook_updated':updated,'error':error}
+            return result
+
     def activate(self,pid):
         project=self.project(pid)
         if not project or project['metadata'].get('removed_at'):raise ValueError('对账任务不存在或已移除，请重新导入')
@@ -768,10 +797,11 @@ class SkuService(ConcurrentLabels,FullAutoOCR,OcrMetadata,SkuRules):
         if before==after:return
         with self.connect() as c:c.execute('INSERT OR REPLACE INTO metadata_versions VALUES (?,?,?,?)',(sid,cid,before,after))
 
-    def _refresh_progress(self,c,pid):
+    def _refresh_progress(self,c,pid,source_session_id=None):
         from sku_folder_progress import reconcile
         project=dict(c.execute('SELECT * FROM projects WHERE id=?',(pid,)).fetchone())
         project['metadata']=json.loads(project['metadata'])
+        if source_session_id is not None:project['session_id']=source_session_id
         rows=[dict(r) for r in c.execute('SELECT * FROM sku_rows WHERE project=?',(pid,))]
         targets,handled,summary,changed=reconcile(self,c,project,rows)
         if not hasattr(self,'folder_progress_summary'):self.folder_progress_summary={}

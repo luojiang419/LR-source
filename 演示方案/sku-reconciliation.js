@@ -26,17 +26,30 @@
   const dialog=document.createElement('section');dialog.id='sku-dialog';dialog.className='shooting-progress hidden';dialog.setAttribute('role','tabpanel');dialog.setAttribute('aria-labelledby','sku-open');
   dialog.innerHTML='<div class="progress-heading"><div><h2 id="sku-title">拍摄进度</h2><p class="dialog-copy">二星款号标签确认后自动记账，已拍摄款置顶；可导出全部工作表的当前拍摄记录。</p></div><div class="progress-heading-actions"><button id="sku-export" class="primary" title="导出全部工作表，包含当前已确认的拍摄状态与完成时间">导出拍摄记录</button><button id="sku-close" class="bordered">返回选片</button></div></div><div class="sku-toolbar"><button id="sku-import" class="primary">导入 Excel 建立任务</button><input id="sku-file" type="file" accept=".xlsx" hidden><select id="sku-projects" aria-label="拍摄对账任务"></select></div><div id="sku-project-info" class="dialog-copy"></div><nav id="sku-sheet-tabs" class="sku-sheet-tabs" role="tablist" aria-label="拍摄工作表"></nav><section id="sku-sheet-panel" role="tabpanel" tabindex="0" aria-label="当前拍摄工作表"><div id="sku-progress-summary" class="progress-summary" aria-live="polite"></div><div class="sku-toolbar"><label class="watch-option"><input id="sku-auto" type="checkbox"> 二星标签自动识别</label><button id="sku-recognize" class="bordered">识别当前二星标签</button><input id="sku-search" placeholder="搜索款号"><select id="sku-filter"><option value="all">全部款号</option><option value="pending">未拍摄</option><option value="shot">已拍摄</option></select></div><p id="sku-message" class="dialog-copy" role="status"></p><p class="progress-note">序号按当前列表从1连续排列，原表行号单独保留。完成时间取自标签照片拍摄信息，点击时间可查证标签；缺失拍摄时间时不使用文件时间代替。</p><div id="sku-rows" class="sku-table-wrap"></div></section><details id="sku-records"><summary>识别记录与待确认</summary><div id="sku-jobs"></div></details>';
   document.querySelector('.workbench > .statusbar').before(dialog);
+  const syncHint='将当前监控目录（未监控时为当前打开目录）内已确认的拍摄记录同步到文档各工作表，不重新识别照片';
+  const syncButton=document.createElement('button');syncButton.id='sku-sync-progress';syncButton.className='bordered';syncButton.type='button';syncButton.textContent='同步拍摄进度';syncButton.title=syncHint;
+  const quickSync=syncButton.cloneNode(true);quickSync.id='shooting-sync-progress';quickSync.classList.add('shooting-sync-action');$('shooting-document').after(quickSync);
+  const syncStatus=document.createElement('p');syncStatus.id='shooting-sync-status';syncStatus.className='shooting-sync-status';syncStatus.setAttribute('role','status');syncStatus.setAttribute('aria-live','polite');quickSync.after(syncStatus);
   $('sku-auto').classList.add('toggle-switch');$('sku-auto').setAttribute('role','switch');
   $('sku-auto').closest('label').before($('sku-recognize'));
   dialog.prepend($('sku-sheet-tabs'));
   const taskToolbar=$('sku-projects').closest('.sku-toolbar');taskToolbar.classList.add('progress-task-fields');
   const projectField=document.createElement('label');projectField.className='progress-task-project';projectField.textContent='拍摄任务';$('sku-projects').before(projectField);projectField.append($('sku-projects'));
   const scopeRow=document.createElement('label');scopeRow.className='sku-scope';scopeRow.innerHTML='当前工作表 <select id="sku-panel-scope" aria-label="对账面板拍摄工作表"></select>';taskToolbar.append(scopeRow);
-  taskToolbar.append(projectField,scopeRow,$('sku-import'),$('sku-file'));
+  const taskActions=document.createElement('div');taskActions.className='progress-task-actions';taskActions.append($('sku-import'),syncButton);
+  taskToolbar.append(projectField,scopeRow,taskActions,$('sku-file'));
   const recognitionToolbar=$('sku-recognize').parentElement;recognitionToolbar.classList.add('progress-tools');
   const recognition=document.createElement('div');recognition.className='progress-recognition';recognition.setAttribute('role','group');recognition.setAttribute('aria-label','标签识别');recognitionToolbar.prepend(recognition);recognition.append($('sku-recognize'),$('sku-auto').closest('label'));
   const filters=document.createElement('div');filters.className='progress-filters';filters.setAttribute('role','search');filters.setAttribute('aria-label','筛选款号');recognitionToolbar.append(filters);filters.append($('sku-search'),$('sku-filter'));$('sku-search').setAttribute('aria-label','搜索款号');$('sku-filter').setAttribute('aria-label','拍摄状态筛选');
   let state={project:null,projects:[],rows:[],jobs:[]},busy=false,timer=null,lastJobs='',lastContext='',lastProject='',lastSheet='',mutation=0,exporting=false,commonView=false,allView=false,displayProject=null;
+  let syncingProgress=false,syncWatch=null,syncMessageProject=null;
+  function syncButtons(){
+    const available=state.project&&!state.project.metadata.automatic_day;
+    const source=syncWatch?.enabled?syncWatch.session_id:window.FRAMEKEEP_SESSION.id;
+    for(const b of [syncButton,quickSync]){b.disabled=!available||!source||busy||!!window.FramekeepAutomation?.isSaving();b.textContent=syncingProgress?'正在同步…':'同步拍摄进度';b.title=!available?'请先导入拍摄文档':!source?'请先打开或监控拍摄文件夹':syncHint}
+    if(syncMessageProject!==state.project?.id){syncMessageProject=state.project?.id;syncStatus.textContent=''}
+  }
+  document.addEventListener('framekeep:watch',event=>{syncWatch=event.detail;syncButtons()});
   window.FramekeepSku={context:()=>window.FRAMEKEEP_SESSION.id&&state.project?.scope&&state.project.enabled&&state.project.session_id===window.FRAMEKEEP_SESSION.id?{project_id:state.project.id,scope:state.project.scope}:null,shootingTypes:()=>state.project?{project_id:state.project.id,name:state.project.name,scope:state.project.scope,sheets:state.project.metadata.sheets.filter(s=>!s.skipped).map(s=>s.name),counts:(state.progress||[]).map(s=>({sheet:s.sheet,total:s.total}))}:null,isBusy:()=>busy,importPlan,bindCurrent:(scope,projectId)=>exclusive(async()=>{if(state.project?.id!==projectId)throw new Error('拍摄计划已变化，请重新选择');await configure(scope,true)})};
   FramekeepSku.currentType=()=>state.project?state.project.scope||'':$('shooting-manual-type').value.trim();
   const status={queued:'等待二星稳定',waiting_model:'待配置模型',running:'识别中',matched:'已自动匹配',confirmed:'人工确认',review:'待确认',failed:'识别失败',cancelled:'已撤销',ignored:'已忽略'};
@@ -197,6 +210,7 @@
   }
   $('sku-rows').addEventListener('click',event=>{const cover=event.target.closest('[data-sku-cover]');if(cover){openSkuGallery(cover);return}const sheet=event.target.closest('[data-sku-sheet],[data-common-sheet]');if(sheet){const name=sheet.dataset.skuSheet||sheet.dataset.commonSheet;if(commonView||name!==state.project?.scope)action(()=>configure(name));return}const target=event.target.closest('[data-sku-image],[data-completion]');if(target)openSkuImage(target)});
   function render(){
+    syncButtons();
     const p=state.project;if(displayProject!==p?.id){displayProject=p?.id;commonView=false;allView=false}bar.classList.toggle('hidden',!p);manualType.hidden=!!p;const common=commonGroups(),commonShot=common.filter(r=>r.shot).length,allGroups=state.all_rows||[],allShot=allGroups.filter(r=>r.shot).length,count=allView?{total:allGroups.length,shot:allShot,pending:allGroups.length-allShot,rows:allGroups.length}:commonView?{total:common.length,shot:commonShot,pending:common.length-commonShot,rows:common.length}:state.progress?.find(s=>s.sheet===p?.scope),all=state.folder_progress?.session_id===window.FRAMEKEEP_SESSION.id?state.folder_progress.confirmed_skus:(state.progress||[]).reduce((sum,s)=>sum+s.shot,0);(button.querySelector('.workspace-tab-label')||button).textContent=p?`拍摄进度 · ${all} 已拍摄`:'拍摄进度';
     $('shooting-document').textContent=p&&!p.metadata.automatic_day?`${p.name}${p.scope?' · '+p.scope:''}`:'自由拍摄 · 无需导入表格';$('shooting-document').title=p&&!p.metadata.automatic_day?p.name:'';
     const context=JSON.stringify(FramekeepSku.context());if(context!==lastContext){lastContext=context;document.dispatchEvent(new CustomEvent('framekeep:sku-context'))}
@@ -241,7 +255,7 @@
   }
   let loadRequest=0;
   async function load(){const request=++loadRequest,version=mutation,next=await api('/api/sku');if(request===loadRequest&&version===mutation&&!busy){state=next;render()}}
-  async function exclusive(fn){if(busy)throw new Error('正在处理拍摄任务，请稍后重试');if(window.FramekeepAutomation?.isSaving())throw new Error('正在切换全自动 OCR，请稍后重试');busy=true;mutation++;window.FramekeepAutomation?.refresh();try{return await fn()}finally{busy=false;window.FramekeepAutomation?.refresh()}}
+  async function exclusive(fn){if(busy)throw new Error('正在处理拍摄任务，请稍后重试');if(window.FramekeepAutomation?.isSaving())throw new Error('正在切换全自动 OCR，请稍后重试');busy=true;mutation++;syncButtons();window.FramekeepAutomation?.refresh();try{return await fn()}finally{busy=false;syncButtons();window.FramekeepAutomation?.refresh()}}
   async function action(fn){if(busy)return;try{await exclusive(fn)}catch(e){message(e.message);Framekeep.notify(e.message)}}
   async function importPlan(file,bindCurrent=false){
     if(!file)return;
@@ -302,6 +316,20 @@
   $('sku-auto').addEventListener('change',e=>action(()=>configure(state.project?.scope,false,e.target.checked)));
   $('sku-projects').addEventListener('change',e=>action(async()=>{const projectId=e.target.value;await FramekeepIO.flush();state=await api('/api/sku/activate',{project_id:projectId});lastJobs='';render()}));
   $('sku-import').addEventListener('click',()=>$('sku-file').click());
+  async function syncProgress(){
+    const project=state.project;if(!project)throw new Error('请先导入拍摄文档');
+    syncingProgress=true;syncButtons();syncStatus.textContent='正在同步已有拍摄进度…';
+    try{
+      await FramekeepIO.flush();const watch=await api('/api/watch');
+      const sid=watch.enabled?watch.session_id:window.FRAMEKEEP_SESSION.id;
+      if(!sid)throw new Error('请先打开或监控拍摄文件夹');
+      const next=await api('/api/sku/sync-progress',{project_id:project.id,session_id:sid,watch_generation:watch.enabled?watch.generation:null},90000);
+      state=next;lastJobs='';render();const report=next.progress_sync;
+      const text=`已同步：文档匹配 ${report.matched_skus} 款，临时插拍 ${report.unplanned_skus} 款；${report.restored_rows?'补齐 '+report.restored_rows+' 项进度':'已有进度已核对'}。${report.pending_labels?'另有 '+report.pending_labels+' 张标签待确认，未计入进度。':''}${report.workbook_updated?'工作副本已更新。':'进度已保存，工作副本更新失败，请关闭占用文件后重试。'}`;
+      syncStatus.textContent=text;syncStatus.title=report.folder;message(text);Framekeep.notify(text);
+    }catch(error){syncStatus.textContent=error.message;throw error}finally{syncingProgress=false;syncButtons()}
+  }
+  for(const b of [syncButton,quickSync])b.addEventListener('click',()=>action(syncProgress));
   $('shooting-import').addEventListener('click',()=>$('shooting-plan-file').click());
   $('shooting-plan-file').addEventListener('change',async event=>{try{if(event.target.files[0]){const result=await importPlan(event.target.files[0],true);Framekeep.notify(result.reused?'该文件已导入，已复用原任务并保留拍摄进度':result.bound?'表格已导入，可在右栏开启全自动 OCR':'表格已导入，请选择工作表并绑定照片目录');window.FramekeepSidebar?.show('shooting')}}catch(error){Framekeep.notify(error.message);$('shooting-auto-status').textContent=error.message}finally{event.target.value=''}});
   $('sku-file').addEventListener('change',async e=>{try{await importPlan(e.target.files[0],true)}catch(error){message(error.message);Framekeep.notify(error.message)}finally{e.target.value=''}});
