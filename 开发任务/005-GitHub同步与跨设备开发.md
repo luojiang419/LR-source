@@ -2,12 +2,20 @@
 
 [CODEX_LONG_TASK_CONTINUE_V3]
 
-- 当前状态：2026-10-27 全部分支汇总后的完整源码已公开交付；追加桌面检索布局同步修复已完成编译验收，本轮完整快照以 luojiang419/LR-source 的 main 最终引用为准。
-- 下一步：其他设备直接 git clone https://github.com/luojiang419/LR-source.git 获取当前完整源码。
-- TODO：无本次源码交付遗留。
-- 最近验证：687 份受管文件的敏感路径和高置信度凭据模式扫描无命中；GitHub 仓库为 public、默认分支 main；首次快照 5ab299a 与源码 7ed1cec 文件树完全相同。合并与运行验证见任务 115。
-- branch/commit：主项目 feat/integrate-multimodal-main；公开独立快照 public/source-snapshot 跟踪 public/main，最终公开 hash 以 GitHub / Git 为准。
-- 阻塞：无。036 文档、厂商 SDK、错误样本及所有本机资料/密钥/缓存/构建产物保留本地，不混入源码快照。
+- 当前状态：2026-10-28 最新完整源码已推送至公开仓库 luojiang419/LR-source 的默认分支 main；本轮源码提交 ed765e5，交付记录另行提交。
+- 下一步：其他设备直接 git clone https://github.com/luojiang419/LR-source.git；已有检出按正常 Git 流程更新 main。
+- TODO：无本次源码同步遗留。
+- 最近验证：718 份受管文件的敏感路径及高置信度凭据模式扫描无命中；新增历史中的 156 个 blob 同类扫描无命中；main 从 c44e53d 快进至 ed765e5，git push 成功。
+- branch/commit：本地 codex/release-remove-photo-staging；远程 origin/main；本轮源码 ed765e5，最终交付记录 hash 以 Git 为准。
+- 阻塞：无。密钥、本机资料、缓存、依赖及构建产物继续排除；本次仅同步源码，不改变 ModelScope 发布状态。
+
+## 2026-10-28 最新完整源码同步
+
+- 用户明确要求立即推送全部源代码；已核对现有 origin 为公开仓库 https://github.com/luojiang419/LR-source.git，默认分支 main。
+- 推送前工作区干净，无遗漏的未提交或未跟踪文件；完整受管源码共 718 份，包含 Python 引擎、桌面程序、前端、Lightroom 插件、更新系统、测试及项目文档。
+- 远程 main 为当前分支祖先，本轮将 41 个本地提交正常快进推送至 main，git push 实际成功；未改写历史。
+- 扫描当前受管文件及本轮新增历史对象，敏感路径和常见高置信度凭据模式均无命中；忽略的桌面启动与生命周期资源由桌面程序/build.rs 从受管源文件复制生成。
+- 本次未修改程序代码、未重复构建或运行应用测试；验收为完整源码推送及远端提交、文件树一致。交付记录提交后再次推送并核对最终引用。
 
 ## 2026-10-27 桌面检索布局同步修复
 
