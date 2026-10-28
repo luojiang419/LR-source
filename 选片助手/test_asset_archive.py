@@ -136,11 +136,15 @@ class AssetTests(unittest.TestCase):
     def test_recovery_after_file_commit_before_database_commit(self):
         cid=self.add('001.JPG');preview=self.archive.preview(self.sid,[cid],CODE,'细节图');op=self.archive.apply(preview['preview_id'])['operation']['id']
         with self.archive.connect() as c:job=dict(c.execute('SELECT * FROM metadata_jobs WHERE operation=?',(op,)).fetchone())
-        temp,target,journal=self.archive.writer.write(job['path'],json.loads(job['fields']),job['expected_sha'])
+        fields=dict(json.loads(job['fields']),Title='重启后的中文标题')
+        temp,target,journal=self.archive.writer.write(job['path'],fields,job['expected_sha'])
+        self.assertNotIn('prepared',journal)
+        self.assertTrue(journal['sidecars'][0]['content'])
         with self.archive.connect() as c:c.execute("UPDATE metadata_jobs SET journal=?,status='running' WHERE id=?",(json.dumps(journal),job['id']))
-        temp.replace(target);self.archive.close();self.archive=AssetArchive(self.store,autostart=False)
+        self.archive.writer.commit(temp,target,journal);self.archive.close();self.archive=AssetArchive(self.store,autostart=False)
         with patch.object(self.archive.writer,'write',side_effect=AssertionError('不得重复写入')):result=self.process(op)
         self.assertEqual(result['jobs'][0]['status'],'applied')
+        self.assertEqual(self.archive.writer.read(Path(str(target)+'.xmp'))['XMP-dc:Title'],'重启后的中文标题')
     def test_pending_failed_label_is_still_a_separate_boundary(self):
         # 首款可先拍产品，启动时自动纳入未归组照片。
         old=self.add('old.JPG');stream=self.archive.start_stream(self.sid,'p','模特图')['streams'][0]['id']
@@ -287,10 +291,10 @@ class AssetTests(unittest.TestCase):
         fields={'SKU':CODE,'AssetId':uid(),'FileId':uid(),'ShootType':'细节图'}
         temp,target,journal=self.archive.writer.write(raw,fields,before)
         self.assertFalse([p for p in self.photos.iterdir() if p.is_dir()])
-        self.assertEqual(temp.parent,self.photos)
+        self.assertIsInstance(temp,bytes)
+        self.assertNotIn('prepared',journal)
         self.assertEqual(target,raw.with_suffix('.xmp'));self.assertEqual(journal['mode'],'sidecar')
-        from file_safety import replace_verified
-        replace_verified(temp,target,None);self.archive.writer.discard_prepared(temp)
+        self.archive.writer.commit(temp,target,journal)
         self.assertEqual(sha(raw),before);self.assertLess(target.stat().st_size,8000)
         self.assertEqual(self.archive.writer.read(target)['XMP-fk:SKU'],CODE)
 

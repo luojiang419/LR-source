@@ -261,7 +261,6 @@ PRAGMA user_version=1;''')
                 if not current or current[0]!=job['revision'] and not descriptive:
                     c.execute("UPDATE metadata_jobs SET status='cancelled',reason='归属版本已更新' WHERE id=?",(job['id'],));return
                 c.execute("UPDATE metadata_jobs SET status='running' WHERE id=?",(job['id'],))
-            temp=None
             try:
                 fields=json.loads(job['fields']);journal=json.loads(job['journal'])
                 if 'Rating' in fields and not journal.get('restore'):
@@ -278,17 +277,14 @@ PRAGMA user_version=1;''')
                         current_fields=self.writer.owned(self.writer.read_asset(job['path']))
                         fields={**current_fields,**fields,'AssetId':job['asset'],'FileId':job['file']}
                     with self.writer.exclusive(job['path']):
-                        temp,target,journal=self.writer.write(job['path'],fields,job['expected_sha'],mode=job['mode'],restore=journal.get('restore'),applied=journal.get('applied'),sidecars_restore=journal.get('sidecars_restore'))
+                        payload,target,journal=self.writer.write(job['path'],fields,job['expected_sha'],mode=job['mode'],restore=journal.get('restore'),applied=journal.get('applied'),sidecars_restore=journal.get('sidecars_restore'))
                         journal['history']=str(save_record(self.store.data,job['id'],journal,source=job['path']))
                         with self.connect() as c:c.execute('UPDATE metadata_jobs SET journal=? WHERE id=?',(dumps(journal),job['id']))
                         if sha(job['path'])!=job['expected_sha'] or (sha(target) if target.exists() else None)!=journal['before_hash']:raise ValueError('替换前文件已变化，未覆盖')
-                    # Windows MoveFileEx 无法替换仍由本进程读句柄持有的目标；
-                    # 结束保护句柄后立即复核并执行同卷替换；不创建源文件备份。
+                    # 内存结果完成校验后结束只读保护；提交用同一读写句柄再次核对版本。
                     if sha(job['path'])!=job['expected_sha'] or (sha(target) if target.exists() else None)!=journal['before_hash']:raise ValueError('提交前检测到外部修改')
                     self.writer.check_sidecars(journal)
-                    from file_safety import replace_verified
-                    replace_verified(temp,target,journal['before_hash'])
-                    self.writer.discard_prepared(temp);temp=None
+                    self.writer.commit(payload,target,journal)
                 if sha(journal['target'])!=journal['after_hash']:raise ValueError('提交后检测到外部修改，请核对文件')
                 self.writer.commit_sidecars(journal)
                 digest=sha(job['path'])
@@ -301,9 +297,6 @@ PRAGMA user_version=1;''')
                 save_record(self.store.data,job['id'],journal,source=job['path'],status='applied')
                 self._refresh_catalog(job['asset'])
             except Exception as exc:
-                if temp:
-                    try:self.writer.discard_prepared(temp)
-                    except OSError:pass
                 with self.connect() as c:c.execute("UPDATE metadata_jobs SET status='failed',reason=? WHERE id=?",(str(exc)[:350],job['id']))
             with self.connect() as c:
                 pending=c.execute("SELECT count(*) FROM metadata_jobs WHERE operation=? AND status IN ('queued','running')",(job['operation'],)).fetchone()[0]

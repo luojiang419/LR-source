@@ -166,7 +166,7 @@ class CanonLink:
             root=root.resolve(strict=True)
             if not root.is_dir():raise ValueError('请选择文件夹，不能选择文件')
             photo_directory(root,self.store.data)
-            with tempfile.TemporaryFile(prefix='.framekeep-write-',dir=root) as probe:probe.write(b'framekeep');probe.flush()
+            with tempfile.TemporaryFile(prefix='.framekeep-probe-',dir=root) as probe:probe.write(b'framekeep');probe.flush()
         except OSError as exc:raise ValueError('保存目录不可用或无法写入，请检查共享连接、网络驱动器和写入权限') from exc
         installation=self.discover()
         if not installation:raise ValueError('未检测到 EOS Utility，请安装后进入联机拍摄')

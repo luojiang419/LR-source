@@ -9,8 +9,8 @@ from unittest.mock import patch
 from PIL import Image
 from canon_link import atomic_write
 from preview_cache import PreviewCache,cache_name
-from file_safety import delete_verified,publish_new,replace_verified
-from metadata_writer import MetadataWriter,sha,volume_root
+from file_safety import delete_verified,publish_new,write_verified,overwrite_stream
+from metadata_writer import MetadataWriter,sha
 
 
 class PhotoFileSafetyTests(unittest.TestCase):
@@ -80,25 +80,26 @@ class PhotoFileSafetyTests(unittest.TestCase):
     def test_existing_sidecar_cannot_be_replaced_when_expected_missing(self):
         source=self.root/'prepared.xmp';source.write_bytes(b'new rating')
         target=self.root/'customer.xmp';target.write_bytes(b'customer edits')
-        with self.assertRaises(FileExistsError):replace_verified(source,target,None)
+        with self.assertRaises(FileExistsError):write_verified(source.read_bytes(),target,None)
         self.assertEqual(target.read_bytes(),b'customer edits');self.assertTrue(source.exists())
 
     @unittest.skipUnless(os.name=='nt','Windows 原子替换')
-    def test_metadata_commit_keeps_no_source_copy_and_refuses_stale_hash(self):
+    def test_direct_write_keeps_file_identity_and_refuses_stale_hash(self):
         target=self.root/'IMG_0001.JPG';target.write_bytes(b'original image')
         source=self.root/'prepared';source.write_bytes(b'edited image')
-        before=sha(target);replace_verified(source,target,before)
+        before=sha(target);identity=target.stat().st_ino;write_verified(source.read_bytes(),target,before)
+        self.assertEqual(target.stat().st_ino,identity)
         self.assertEqual(target.read_bytes(),b'edited image')
         self.assertFalse(list(self.root.glob('.framekeep-recovery-*')))
         source.write_bytes(b'stale edits')
-        with self.assertRaisesRegex(ValueError,'外部修改'):replace_verified(source,target,before)
+        with self.assertRaisesRegex(ValueError,'外部修改'):write_verified(source.read_bytes(),target,before)
         self.assertEqual(target.read_bytes(),b'edited image')
 
     @unittest.skipUnless(os.name=='nt','Windows 原子替换不创建恢复副本')
     def test_metadata_commit_never_creates_original_bin(self):
         target=self.root/'IMG_0001.JPG';target.write_bytes(b'original image')
         source=self.root/'prepared';source.write_bytes(b'edited image');before=sha(target)
-        replace_verified(source,target,before)
+        write_verified(source.read_bytes(),target,before)
         self.assertEqual(target.read_bytes(),b'edited image')
         self.assertFalse(list(self.root.rglob('original.bin')))
 
@@ -122,7 +123,7 @@ class PhotoFileSafetyTests(unittest.TestCase):
     @unittest.skipUnless(os.name=='nt','Windows 无源文件备份提交')
     def test_metadata_commit_uses_no_recovery_directory(self):
         target=self.root/'photo';target.write_bytes(b'before');source=self.root/'temp';source.write_bytes(b'after')
-        replace_verified(source,target,sha(target))
+        write_verified(source.read_bytes(),target,sha(target))
         self.assertEqual(target.read_bytes(),b'after')
         self.assertFalse(list(self.root.glob('.framekeep-recovery-*')))
 
@@ -131,55 +132,90 @@ class PhotoFileSafetyTests(unittest.TestCase):
         data=self.root/'data';data.mkdir();photos=self.root/'photos';photos.mkdir()
         writer=MetadataWriter(Path(__file__).resolve().parents[1],data)
         photo=photos/'IMG_0001.JPG';Image.new('RGB',(30,20),'green').save(photo)
-        run=writer.run
-        def check(*args):
+        run=writer.binary
+        def check(*args,**kwargs):
             self.assertFalse([p for p in photos.iterdir() if p.is_dir()])
             self.assertFalse(list(photos.glob('.framekeep-*')))
             self.assertFalse(list(photos.rglob('original.bin')))
-            return run(*args)
-        with patch.object(writer,'run',side_effect=check):writer.write_rating(photo,4)
+            self.assertFalse(list(data.rglob('*.JPG')))
+            self.assertFalse((data/'metadata-staging').exists())
+            return run(*args,**kwargs)
+        with patch.object(writer,'binary',side_effect=check):writer.write_rating(photo,4)
         before=sha(photo)
-        with patch.object(writer,'run',side_effect=check),patch('metadata_writer.replace_verified',side_effect=OSError('injected commit failure')):
+        with patch.object(writer,'binary',side_effect=check),patch('metadata_writer.write_verified',side_effect=OSError('injected commit failure')):
             with self.assertRaisesRegex(OSError,'injected'):writer.write_rating(photo,1)
         self.assertEqual(sha(photo),before)
         self.assertFalse(list(photos.glob('.framekeep-*')))
 
-    def test_prepared_cleanup_preserves_photo_directory_and_supports_legacy_journal(self):
-        data=self.root/'data';data.mkdir();writer=MetadataWriter(self.root,data)
+    def test_legacy_prepared_cleanup_preserves_originals(self):
         photo=self.root/'photo.JPG';photo.write_bytes(b'original')
-        temp=writer.prepare_file(photo)
-        self.assertEqual(temp.parent,data/'metadata-staging')
-        self.assertEqual(temp.stat().st_dev,photo.stat().st_dev)
-        MetadataWriter.discard_prepared(temp)
-        self.assertTrue(self.root.is_dir());self.assertEqual(photo.read_bytes(),b'original')
         legacy=self.root/'.framekeep-write-legacy';legacy.mkdir();old=legacy/'photo.JPG';old.write_bytes(b'prepared')
         MetadataWriter.discard_prepared(old);MetadataWriter.discard_prepared(old)
-        self.assertFalse(legacy.exists());self.assertTrue(photo.exists())
+        self.assertFalse(legacy.exists());self.assertEqual(photo.read_bytes(),b'original')
         old=self.root/'.framekeep-write-old.JPG';old.write_bytes(b'old temporary')
         MetadataWriter.discard_prepared(old);self.assertFalse(old.exists())
 
-    @unittest.skipUnless(os.name=='nt' and Path('D:/APP/WZ/build').is_dir(),'Windows 跨卷暂存')
-    def test_cross_volume_staging_keeps_atomic_commit_outside_photo_directory(self):
-        data=self.root/'data';data.mkdir();writer=MetadataWriter(self.root,data)
-        with tempfile.TemporaryDirectory(dir='D:/APP/WZ/build') as other:
-            other=Path(other);photos=other/'photos';photos.mkdir();photo=photos/'photo.xmp'
-            photo.write_bytes(b'before')
-            if data.stat().st_dev==photos.stat().st_dev:self.skipTest('临时目录与 D 盘属于同一卷')
-            self.assertEqual(volume_root(photos).stat().st_dev,photos.stat().st_dev)
-            with patch('metadata_writer.volume_root',return_value=other):temp=writer.prepare_file(photo)
-            self.assertTrue(temp.is_relative_to(other/'.framekeep-staging'))
-            self.assertFalse(list(photos.glob('.framekeep-*')))
-            self.assertEqual(temp.stat().st_dev,photo.stat().st_dev)
-            temp.write_bytes(b'after');replace_verified(temp,photo,hashlib.sha256(b'before').hexdigest())
-            writer.discard_prepared(temp);self.assertEqual(photo.read_bytes(),b'after')
+    def test_failed_direct_write_restores_original_from_memory(self):
+        target=self.root/'photo.JPG';target.write_bytes(b'original photo bytes')
+        original=target.read_bytes();calls=[]
+        def interrupted(stream,payload):
+            calls.append(payload)
+            if len(calls)==1:
+                stream.seek(0);stream.write(b'partial overwrite');raise OSError('injected interruption')
+            return overwrite_stream(stream,payload)
+        with patch('file_safety.overwrite_stream',side_effect=interrupted):
+            with self.assertRaisesRegex(OSError,'injected'):write_verified(b'new metadata bytes',target,sha(target))
+        self.assertEqual(target.read_bytes(),original);self.assertEqual(len(calls),2)
+        self.assertEqual(list(self.root.iterdir()),[target])
 
-    def test_unavailable_staging_never_falls_back_to_photo_directory(self):
-        data=self.root/'data';data.mkdir();writer=MetadataWriter(self.root,data)
-        (data/'metadata-staging').write_bytes(b'unrelated existing file')
-        photo=self.root/'photo.JPG';photo.write_bytes(b'original')
-        with self.assertRaises(FileExistsError):writer.prepare_file(photo)
-        self.assertFalse(list(self.root.glob('.framekeep-*')))
-        self.assertEqual(photo.read_bytes(),b'original')
+    def test_failed_new_sidecar_is_removed_without_leaving_partial_file(self):
+        target=self.root/'photo.xmp';calls=[]
+        def interrupted(stream,payload):
+            calls.append(payload)
+            if len(calls)==1:
+                stream.write(b'partial');raise OSError('injected sidecar failure')
+            return overwrite_stream(stream,payload)
+        with patch('file_safety.overwrite_stream',side_effect=interrupted):
+            with self.assertRaisesRegex(OSError,'injected'):write_verified(b'new sidecar',target,None)
+        self.assertFalse(target.exists());self.assertEqual(list(self.root.iterdir()),[])
+
+    def test_direct_write_blocks_concurrent_changes_on_same_handle(self):
+        target=self.root/'photo.JPG';target.write_bytes(b'original')
+        def concurrent(stream,payload):
+            with self.assertRaises(OSError):target.write_bytes(b'external writer')
+            other=self.root/'other.JPG';other.write_bytes(b'external replacement')
+            with self.assertRaises(OSError):os.replace(other,target)
+            return overwrite_stream(stream,payload)
+        with patch('file_safety.overwrite_stream',side_effect=concurrent):write_verified(b'new metadata',target,sha(target))
+        self.assertEqual(target.read_bytes(),b'new metadata')
+
+    def test_locked_photo_fails_without_any_full_image_files(self):
+        data=self.root/'data';data.mkdir();photos=self.root/'photos';photos.mkdir()
+        writer=MetadataWriter(Path(__file__).resolve().parents[1],data)
+        photo=photos/'IMG_0001.JPG';Image.new('RGB',(30,20),'green').save(photo);before=sha(photo)
+        with writer.exclusive(photo):
+            with self.assertRaises(OSError):writer.write_rating(photo,4)
+        self.assertEqual(sha(photo),before)
+        self.assertEqual(list(photos.glob('*.JPG')),[photo])
+        self.assertFalse(list(data.rglob('*.JPG')))
+        self.assertFalse((data/'metadata-staging').exists())
+
+    def test_open_preview_reader_does_not_require_replacing_original(self):
+        data=self.root/'data';data.mkdir();writer=MetadataWriter(Path(__file__).resolve().parents[1],data)
+        photo=self.root/'IMG_0001.JPG';Image.new('RGB',(30,20),'green').save(photo)
+        identity=photo.stat().st_ino
+        with photo.open('rb'):writer.write_rating(photo,4)
+        self.assertEqual(photo.stat().st_ino,identity)
+        self.assertEqual(writer.read(photo)['XMP-xmp:Rating'],4)
+        self.assertFalse(list(data.rglob('*.JPG')))
+
+    def test_readonly_photo_is_preserved_without_any_full_image_files(self):
+        target=self.root/'photo.JPG';target.write_bytes(b'original')
+        os.chmod(target,0o444)
+        try:
+            with self.assertRaises(OSError):write_verified(b'changed',target,sha(target))
+            self.assertEqual(target.read_bytes(),b'original')
+        finally:os.chmod(target,0o666)
 
     @unittest.skipUnless(os.name=='nt','Windows 元数据写入')
     def test_sku_and_sidecar_write_stay_outside_photo_directory(self):
@@ -187,18 +223,22 @@ class PhotoFileSafetyTests(unittest.TestCase):
         writer=MetadataWriter(Path(__file__).resolve().parents[1],data)
         photo=photos/'IMG_0001.JPG';Image.new('RGB',(30,20),'green').save(photo)
         with Image.open(photo) as im:pixels=im.tobytes()
-        run=writer.run
-        def check(*args):
+        run=writer.binary
+        def check(*args,**kwargs):
             self.assertFalse(list(photos.glob('.framekeep-*')))
-            return run(*args)
-        with patch.object(writer,'run',side_effect=check):
+            self.assertFalse(list(data.rglob('*.JPG')))
+            self.assertFalse((data/'metadata-staging').exists())
+            return run(*args,**kwargs)
+        with patch.object(writer,'binary',side_effect=check):
             temp,target,journal=writer.write(photo,{'SKU':'SKU123','Title':'中文商品名称'},sha(photo))
             self.assertFalse(list(photos.glob('.framekeep-*')))
-            replace_verified(temp,target,journal['before_hash'])
-            writer.commit_sidecars(journal);writer.discard_prepared(temp)
+            self.assertIsInstance(temp,bytes)
+            self.assertNotIn('prepared',journal)
+            writer.commit(temp,target,journal)
+            writer.commit_sidecars(journal)
         self.assertEqual(writer.read(photo)['XMP-fk:SKU'],'SKU123')
         self.assertEqual(writer.read(Path(str(photo)+'.xmp'))['XMP-dc:Title'],'中文商品名称')
-        self.assertFalse(list((data/'metadata-staging').iterdir()))
+        self.assertFalse((data/'metadata-staging').exists())
         self.assertFalse(list(photos.glob('.framekeep-*')))
         with Image.open(photo) as im:self.assertEqual(im.tobytes(),pixels)
 
@@ -212,11 +252,13 @@ class PhotoFileSafetyTests(unittest.TestCase):
             self.assertFalse(list(photos.glob('.framekeep-*')))
             self.assertTrue(list(data.glob('.framekeep-text-*')))
             raise OSError('injected text write failure')
-        run=writer.run
-        def checked(*args):
-            if '-overwrite_original' in args:return fail(*args)
-            return run(*args)
-        with patch.object(writer,'run',side_effect=checked):
+        run=writer.binary
+        def checked(*args,**kwargs):
+            if '-o' in args:return fail(*args)
+            self.assertFalse(list(data.rglob('*.JPG')))
+            self.assertFalse((data/'metadata-staging').exists())
+            return run(*args,**kwargs)
+        with patch.object(writer,'binary',side_effect=checked):
             with self.assertRaisesRegex(OSError,'injected'):
                 writer.write(photo,{'SKU':'SKU123','Title':'中文商品名称'},before)
         self.assertEqual(sha(photo),before)

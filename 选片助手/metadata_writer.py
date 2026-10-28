@@ -1,9 +1,10 @@
-"""受控 XMP 写入；同卷副本、读回、版本比较、字段级恢复。"""
+"""受控 XMP 写入；内存生成与校验、原文件直接写回、字段级恢复。"""
 import hashlib
 import json
 import os
 from pathlib import Path
-import shutil
+import base64
+import io
 import subprocess
 import threading
 import tempfile
@@ -11,7 +12,7 @@ import uuid
 from contextlib import contextmanager
 from PIL import Image
 import media_engine as media
-from file_safety import replace_verified
+from file_safety import write_verified
 from metadata_history import save_record
 from rating_xmp import sidecar_paths,load_sidecar
 
@@ -29,19 +30,19 @@ FIELDS=['AssetId','FileId','SKU','ShootType','ProjectId','SegmentId','MetadataRe
 DESCRIPTIVE={'Title':'XMP-dc:Title','Description':'XMP-dc:Description','Label':'XMP-xmp:Label'}
 EMBEDDED_RAW={'.cr3','.arw'}
 
-def raw_integrity(path):
+def raw_integrity(path,*,suffix=None):
     """校验感光数据和相机内嵌预览；CR3 另校验全部 mdat 负载。"""
     import rawpy
     try:
-        with rawpy.imread(str(path)) as raw:
+        with rawpy.imread(io.BytesIO(path) if isinstance(path,bytes) else str(path)) as raw:
             sensor=raw.raw_image
             result={'shape':list(sensor.shape),'dtype':str(sensor.dtype),'sensor':hashlib.sha256(sensor.tobytes()).hexdigest()}
             thumb=raw.extract_thumb();data=thumb.data if isinstance(thumb.data,bytes) else thumb.data.tobytes()
             result['preview']=hashlib.sha256(data).hexdigest()
     except Exception:raise ValueError('RAW 感光数据或内嵌预览无法验证，未写入') from None
-    if Path(path).suffix.lower()=='.cr3':
-        digest=hashlib.sha256();sizes=[];total=Path(path).stat().st_size
-        with open(path,'rb') as f:
+    if (suffix or ('' if isinstance(path,bytes) else Path(path).suffix)).lower()=='.cr3':
+        digest=hashlib.sha256();sizes=[];total=len(path) if isinstance(path,bytes) else Path(path).stat().st_size
+        with (io.BytesIO(path) if isinstance(path,bytes) else open(path,'rb')) as f:
             pos=0
             while pos<total:
                 f.seek(pos);header=f.read(8)
@@ -66,39 +67,10 @@ def sha(path):
         for chunk in iter(lambda:f.read(1024*1024),b''):h.update(chunk)
     return h.hexdigest()
 
-def volume_root(path):
-    """获取实际挂载卷根目录，兼容 Windows 挂载点和网络共享。"""
-    path=Path(path).resolve()
-    if os.name=='nt':
-        import ctypes as C
-        from ctypes import wintypes as W
-        kernel=C.WinDLL('kernel32',use_last_error=True)
-        kernel.GetVolumePathNameW.argtypes=[W.LPCWSTR,W.LPWSTR,W.DWORD]
-        kernel.GetVolumePathNameW.restype=W.BOOL
-        buffer=C.create_unicode_buffer(32768)
-        if not kernel.GetVolumePathNameW(str(path),buffer,len(buffer)):raise C.WinError(C.get_last_error())
-        return Path(buffer.value)
-    while path.parent!=path and path.parent.stat().st_dev==path.stat().st_dev:path=path.parent
-    return path
-
 class MetadataWriter:
     def __init__(self,root,data):
         self.root=Path(root);self.data=Path(data);self.config=self.data/'framekeep-exiftool.config'
         self.config.write_text(CONFIG,encoding='utf8');self.lock=threading.RLock()
-    def prepare_file(self,target):
-        """照片目录之外的同卷独占临时文件，避免资源管理器预览占用。"""
-        target=Path(target)
-        device=target.parent.stat().st_dev
-        folder=self.data/'metadata-staging'
-        if self.data.stat().st_dev!=device:
-            owner=hashlib.sha256(str(self.data.resolve()).casefold().encode('utf8')).hexdigest()[:16]
-            folder=volume_root(target.parent)/'.framekeep-staging'/owner/'metadata-staging'
-        folder.mkdir(parents=True,exist_ok=True)
-        if folder.is_symlink() or folder.is_junction() or folder.stat().st_dev!=device:
-            raise ValueError('照片所在卷的软件暂存目录不可用，未改写原文件')
-        fd,name=tempfile.mkstemp(dir=folder,prefix='.framekeep-write-',suffix=target.suffix)
-        os.close(fd)
-        return Path(name)
     @staticmethod
     def discard_prepared(temporary):
         """兼容旧 journal 的工作目录，只删除程序登记的临时路径。"""
@@ -116,10 +88,34 @@ class MetadataWriter:
         result=subprocess.run([str(media.find_exiftool(self.root)),'-config',str(self.config),'-charset','filename=UTF8','-@','-'],input=payload.encode('utf8'),capture_output=True,timeout=180,env=env,creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
         if result.returncode:raise ValueError('ExifTool 写入/读取失败：'+result.stderr.decode('utf8',errors='replace')[-240:])
         return result.stdout.decode('utf-8-sig')
+    def binary(self,*args,input_data):
+        """ExifTool 标准输入/输出只传内存图像；磁盘仅保存 UTF-8 参数文本。"""
+        payload='\n'.join(map(str,args))+'\n'
+        if any('\n' in str(a) or '\r' in str(a) for a in args):raise ValueError('元数据参数不能包含换行')
+        env=os.environ.copy()
+        for name in ['LANG','LC_ALL','LC_CTYPE']:env.pop(name,None)
+        with tempfile.NamedTemporaryFile(dir=self.data,prefix='.framekeep-args-',suffix='.txt',delete=False) as stream:
+            arguments=Path(stream.name);stream.write(payload.encode('utf8'))
+        try:
+            result=subprocess.run([str(media.find_exiftool(self.root)),'-config',str(self.config),'-charset','filename=UTF8','-@',str(arguments)],input=input_data,capture_output=True,timeout=180,env=env,creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
+            if result.returncode:raise ValueError('ExifTool 内存处理失败：'+result.stderr.decode('utf8',errors='replace')[-240:])
+            return result.stdout
+        finally:arguments.unlink(missing_ok=True)
     def read(self,path,full=False):
-        if Path(path).suffix.lower()=='.xmp':load_sidecar(path)
+        if not isinstance(path,bytes) and Path(path).suffix.lower()=='.xmp':load_sidecar(path)
         tags=['-all:all'] if full else ['-XMP-fk:all','-XMP-dc:all','-XMP-xmp:Rating','-XMP-xmp:Label','-DateTimeOriginal','-Orientation']
-        return json.loads(self.run('-G1','-s','-json',*tags,path))[0]
+        value=self.binary('-G1','-s','-json',*tags,'-',input_data=path).decode('utf-8-sig') if isinstance(path,bytes) else self.run('-G1','-s','-json',*tags,path)
+        return json.loads(value)[0]
+    def edit(self,target,args):
+        target=Path(target)
+        content=target.read_bytes() if target.exists() else b'<x:xmpmeta xmlns:x="adobe:ns:meta/"><rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description rdf:about=""/></rdf:RDF></x:xmpmeta>'
+        result=self.binary('-o','-',*args,'-',input_data=content)
+        if not result:raise ValueError('ExifTool 内存结果为空，未写回')
+        return result
+    @staticmethod
+    def commit(payload,target,journal):
+        if hashlib.sha256(payload).hexdigest()!=journal['after_hash']:raise ValueError('内存元数据结果已变化，未写回')
+        write_verified(payload,target,journal['before_hash'])
     def read_asset(self,path):
         path=Path(path);value=self.read(path)
         file_id=value.get('XMP-fk:FileId')
@@ -129,7 +125,7 @@ class MetadataWriter:
         if file_id and path.suffix.lower() in ('.jpg','.jpeg'):value['XMP-fk:FileId']=file_id
         return value
     def write_rating(self,path,rating):
-        """仅变更评级；同卷临时副本、读回及替换前指纹核对。"""
+        """评级结果在内存校验后直接写回，不创建临时整图。"""
         path=Path(path)
         if type(rating) is not int or rating not in range(6):raise ValueError('星级须为 0–5')
         if not path.is_file():raise ValueError('照片离线或不存在，星级已入库，等待文件恢复')
@@ -138,30 +134,23 @@ class MetadataWriter:
         with self.lock:
             for target in targets:
                 before_hash=sha(target) if target.exists() else None
-                if target.exists() and self.read(target).get('XMP-xmp:Rating')==rating:continue
-                old_rating=self.read(target).get('XMP-xmp:Rating') if target.exists() else None
-                temp=self.prepare_file(target)
-                try:
-                    if target.exists():shutil.copy2(target,temp)
-                    pixels=None
-                    if target==path:
-                        with Image.open(path) as im:pixels=hashlib.sha256(im.tobytes()).digest()
-                    self.run('-overwrite_original',f'-XMP-xmp:Rating={rating}',temp)
-                    if self.read(temp).get('XMP-xmp:Rating')!=rating:raise ValueError('星级写入读回不一致')
-                    if pixels is not None:
-                        with Image.open(temp) as im:
-                            if hashlib.sha256(im.tobytes()).digest()!=pixels:raise ValueError('图像数据发生变化，未提交星级')
-                    if (sha(target) if target.exists() else None)!=before_hash:raise ValueError('文件被其他程序修改，稍后重试星级同步')
-                    journal={'before':{'Rating':old_rating},'after':{'Rating':rating},
-                             'before_hash':before_hash,'after_hash':sha(temp),'target':str(target),
-                             'mode':'embedded' if target==path else 'sidecar'}
-                    identity=uuid.uuid4().hex
-                    save_record(self.data,identity,journal,source=path)
-                    replace_verified(temp,target,before_hash)
-                    if sha(target)!=journal['after_hash']:raise ValueError('星级提交后文件发生变化，恢复信息已保留')
-                    save_record(self.data,identity,journal,source=path,status='applied')
-                finally:
-                    self.discard_prepared(temp)
+                before=self.read(target) if target.exists() else {}
+                if before.get('XMP-xmp:Rating')==rating:continue
+                pixels=None
+                if target==path:
+                    with Image.open(path) as im:pixels=hashlib.sha256(im.tobytes()).digest()
+                payload=self.edit(target,[f'-XMP-xmp:Rating={rating}'])
+                if self.read(payload).get('XMP-xmp:Rating')!=rating:raise ValueError('星级写入读回不一致')
+                if pixels is not None:
+                    with Image.open(io.BytesIO(payload)) as im:
+                        if hashlib.sha256(im.tobytes()).digest()!=pixels:raise ValueError('图像数据发生变化，未写回星级')
+                journal={'before':{'Rating':before.get('XMP-xmp:Rating')},'after':{'Rating':rating},
+                         'before_hash':before_hash,'after_hash':hashlib.sha256(payload).hexdigest(),'target':str(target),
+                         'mode':'embedded' if target==path else 'sidecar','write_method':'direct-memory-v1'}
+                identity=uuid.uuid4().hex
+                save_record(self.data,identity,journal,source=path)
+                self.commit(payload,target,journal)
+                save_record(self.data,identity,journal,source=path,status='applied')
     @contextmanager
     def exclusive(self,path):
         if os.name!='nt':
@@ -218,14 +207,12 @@ class MetadataWriter:
             managed=[f'SKU:{old["SKU"]}' if old.get('SKU') else None,f'ShootType:{old["ShootType"]}' if old.get('ShootType') else None]
             subjects=list(new.get('Keywords') or []) if manages_keywords else [s for s in subjects if s not in managed]
             subjects+=([f'SKU:{new["SKU"]}'] if new.get('SKU') else [])+([f'ShootType:{new["ShootType"]}'] if new.get('ShootType') else [])
-            temp=self.prepare_file(target)
             journal={'before':old,'after':new,'before_hash':before_hash,'target':str(target),'mode':cap,
-                     'subjects_before':before.get('XMP-dc:Subject',[])}
+                     'subjects_before':before.get('XMP-dc:Subject',[]),'write_method':'direct-memory-v1'}
             if restore is not None:journal.update(restore=restore,applied=applied)
             try:
                 raw_before=raw_integrity(path) if cap=='embedded' and path.suffix.lower() in EMBEDDED_RAW else None
-                if target.exists():shutil.copy2(target,temp)
-                args=['-overwrite_original']
+                args=[]
                 args += [f'-XMP-fk:{k}={new.get(k) or ""}' for k in FIELDS]
                 if manages_rating:args.append('-XMP-xmp:Rating='+('' if new.get('Rating') is None else str(new['Rating'])))
                 args+=([f'-XMP-dc:Subject={s}' for s in dict.fromkeys(subjects)] or ['-XMP-dc:Subject='])
@@ -238,10 +225,10 @@ class MetadataWriter:
                                 text_file=Path(stream.name);text_files.append(text_file);stream.write(value.encode('utf8'))
                             args.append(f'-{tag}<={text_file}')
                         else:args.append(f'-{tag}=')
-                    self.run(*args,temp)
+                    payload=self.edit(target,args)
                 finally:
                     for text_file in text_files:text_file.unlink(missing_ok=True)
-                after=self.read(temp,full=True)
+                after=self.read(payload,full=True)
                 if any(str(after.get('XMP-fk:'+k) or '')!=str(new.get(k) or '') for k in FIELDS):raise ValueError('写入字段读回不一致')
                 if manages_rating and after.get('XMP-xmp:Rating')!=new.get('Rating'):raise ValueError('星级读回不一致')
                 for key in descriptive:
@@ -262,14 +249,13 @@ class MetadataWriter:
                     if after.get(key)!=value:raise ValueError('非目标字段发生变化，未提交：'+key)
                 if cap=='embedded':
                     if raw_before:
-                        if raw_integrity(temp)!=raw_before:raise ValueError('RAW 感光数据/内嵌预览/媒体负载变化，未提交')
+                        if raw_integrity(payload,suffix=path.suffix)!=raw_before:raise ValueError('RAW 感光数据/内嵌预览/媒体负载变化，未提交')
                         journal['raw_integrity']=raw_before
                     else:
-                        with Image.open(path) as a,Image.open(temp) as b:
+                        with Image.open(path) as a,Image.open(io.BytesIO(payload)) as b:
                             if a.size!=b.size or a.convert('RGB').tobytes()!=b.convert('RGB').tobytes():raise ValueError('图片像素验证失败，未提交')
                 if sha(path)!=expected_sha or (sha(target) if target.exists() else None)!=before_hash:raise ValueError('提交前检测到外部修改，未覆盖')
-                journal['after_hash']=sha(temp)
-                journal['prepared']=str(temp)
+                journal['after_hash']=hashlib.sha256(payload).hexdigest()
                 if _target is None:
                     journal['sidecars']=[]
                     previous={entry['target']:entry for entry in sidecars_restore or []}
@@ -285,16 +271,18 @@ class MetadataWriter:
                         restore_fields=dict(undo['before'],AssetId=mirror.get('AssetId'),FileId=mirror.get('FileId'),MetadataRevision=mirror.get('MetadataRevision')) if undo else restore
                         prepared,_,entry=self.write(path,mirror,expected_sha,mode=mode,restore=restore_fields,
                                                     applied=undo['after'] if undo else applied,_target=side)
+                        entry['content']=base64.b64encode(prepared).decode('ascii')
                         journal['sidecars'].append(entry)
-                return temp,target,journal
+                return payload,target,journal
             except BaseException:
                 self.discard_sidecars(journal)
-                self.discard_prepared(temp);raise
+                raise
 
     @staticmethod
     def discard_sidecars(journal):
         """仅清理本批登记、内容未变的临时副本。"""
         for entry in journal.get('sidecars',[]):
+            if not entry.get('prepared'):continue
             temporary=Path(entry['prepared'])
             if temporary.is_file() and sha(temporary)==entry['after_hash']:
                 MetadataWriter.discard_prepared(temporary)
@@ -308,14 +296,19 @@ class MetadataWriter:
 
     @staticmethod
     def commit_sidecars(journal):
-        """主文件提交后逐份提交已准备侧车；重启时跳过已提交项。"""
+        """侧车内容小型持久化，重启可继续；旧 journal 只读取既有准备文件。"""
         for entry in journal.get('sidecars',[]):
-            target=Path(entry['target']);temporary=Path(entry['prepared'])
-            current=sha(target) if target.exists() else None
+            target=Path(entry['target']);current=sha(target) if target.exists() else None
             if current!=entry['after_hash']:
                 if current!=entry['before_hash']:raise ValueError('侧车被其他程序修改，未覆盖：'+target.name)
-                if not temporary.is_file() or sha(temporary)!=entry['after_hash']:raise ValueError('侧车准备文件缺失或已变化，请重新提交元数据：'+target.name)
-                replace_verified(temporary,target,entry['before_hash'])
-            if sha(target)!=entry['after_hash']:raise ValueError('侧车提交后发生外部修改：'+target.name)
-            if not temporary.exists() or sha(temporary)==entry['after_hash']:
-                MetadataWriter.discard_prepared(temporary)
+                if entry.get('content'):
+                    if len(entry['content'])>11_000_000:raise ValueError('侧车内容超过限制，未写回')
+                    payload=base64.b64decode(entry['content'],validate=True)
+                elif entry.get('prepared') and Path(entry['prepared']).is_file():payload=Path(entry['prepared']).read_bytes()
+                else:raise ValueError('侧车内容缺失，请重新提交元数据：'+target.name)
+                if len(payload)>8_000_000 or hashlib.sha256(payload).hexdigest()!=entry['after_hash']:raise ValueError('侧车内容校验失败，未写回：'+target.name)
+                write_verified(payload,target,entry['before_hash'])
+            if sha(target)!=entry['after_hash']:raise ValueError('侧车写回后发生外部修改：'+target.name)
+            if entry.get('prepared'):
+                temporary=Path(entry['prepared'])
+                if not temporary.exists() or sha(temporary)==entry['after_hash']:MetadataWriter.discard_prepared(temporary)
