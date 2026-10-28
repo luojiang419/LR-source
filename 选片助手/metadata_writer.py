@@ -66,15 +66,37 @@ def sha(path):
         for chunk in iter(lambda:f.read(1024*1024),b''):h.update(chunk)
     return h.hexdigest()
 
+def volume_root(path):
+    """获取实际挂载卷根目录，兼容 Windows 挂载点和网络共享。"""
+    path=Path(path).resolve()
+    if os.name=='nt':
+        import ctypes as C
+        from ctypes import wintypes as W
+        kernel=C.WinDLL('kernel32',use_last_error=True)
+        kernel.GetVolumePathNameW.argtypes=[W.LPCWSTR,W.LPWSTR,W.DWORD]
+        kernel.GetVolumePathNameW.restype=W.BOOL
+        buffer=C.create_unicode_buffer(32768)
+        if not kernel.GetVolumePathNameW(str(path),buffer,len(buffer)):raise C.WinError(C.get_last_error())
+        return Path(buffer.value)
+    while path.parent!=path and path.parent.stat().st_dev==path.stat().st_dev:path=path.parent
+    return path
+
 class MetadataWriter:
     def __init__(self,root,data):
         self.root=Path(root);self.data=Path(data);self.config=self.data/'framekeep-exiftool.config'
         self.config.write_text(CONFIG,encoding='utf8');self.lock=threading.RLock()
-    @staticmethod
-    def prepare_file(target):
-        """同卷独占临时文件；源目录不创建工作文件夹，提交后不保留副本。"""
+    def prepare_file(self,target):
+        """照片目录之外的同卷独占临时文件，避免资源管理器预览占用。"""
         target=Path(target)
-        fd,name=tempfile.mkstemp(dir=target.parent,prefix='.framekeep-write-',suffix=target.suffix)
+        device=target.parent.stat().st_dev
+        folder=self.data/'metadata-staging'
+        if self.data.stat().st_dev!=device:
+            owner=hashlib.sha256(str(self.data.resolve()).casefold().encode('utf8')).hexdigest()[:16]
+            folder=volume_root(target.parent)/'.framekeep-staging'/owner/'metadata-staging'
+        folder.mkdir(parents=True,exist_ok=True)
+        if folder.is_symlink() or folder.is_junction() or folder.stat().st_dev!=device:
+            raise ValueError('照片所在卷的软件暂存目录不可用，未改写原文件')
+        fd,name=tempfile.mkstemp(dir=folder,prefix='.framekeep-write-',suffix=target.suffix)
         os.close(fd)
         return Path(name)
     @staticmethod

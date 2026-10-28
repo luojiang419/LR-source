@@ -10,7 +10,7 @@ from PIL import Image
 from canon_link import atomic_write
 from preview_cache import PreviewCache,cache_name
 from file_safety import delete_verified,publish_new,replace_verified
-from metadata_writer import MetadataWriter,sha
+from metadata_writer import MetadataWriter,sha,volume_root
 
 
 class PhotoFileSafetyTests(unittest.TestCase):
@@ -127,13 +127,14 @@ class PhotoFileSafetyTests(unittest.TestCase):
         self.assertFalse(list(self.root.glob('.framekeep-recovery-*')))
 
     @unittest.skipUnless(os.name=='nt','Windows 元数据写入')
-    def test_rating_creates_no_directories_even_during_write_or_failed_commit(self):
+    def test_rating_creates_no_staging_in_photo_directory_during_write_or_failed_commit(self):
         data=self.root/'data';data.mkdir();photos=self.root/'photos';photos.mkdir()
         writer=MetadataWriter(Path(__file__).resolve().parents[1],data)
         photo=photos/'IMG_0001.JPG';Image.new('RGB',(30,20),'green').save(photo)
         run=writer.run
         def check(*args):
             self.assertFalse([p for p in photos.iterdir() if p.is_dir()])
+            self.assertFalse(list(photos.glob('.framekeep-*')))
             self.assertFalse(list(photos.rglob('original.bin')))
             return run(*args)
         with patch.object(writer,'run',side_effect=check):writer.write_rating(photo,4)
@@ -144,14 +145,62 @@ class PhotoFileSafetyTests(unittest.TestCase):
         self.assertFalse(list(photos.glob('.framekeep-*')))
 
     def test_prepared_cleanup_preserves_photo_directory_and_supports_legacy_journal(self):
+        data=self.root/'data';data.mkdir();writer=MetadataWriter(self.root,data)
         photo=self.root/'photo.JPG';photo.write_bytes(b'original')
-        temp=MetadataWriter.prepare_file(photo)
-        self.assertEqual(temp.parent,self.root)
+        temp=writer.prepare_file(photo)
+        self.assertEqual(temp.parent,data/'metadata-staging')
+        self.assertEqual(temp.stat().st_dev,photo.stat().st_dev)
         MetadataWriter.discard_prepared(temp)
         self.assertTrue(self.root.is_dir());self.assertEqual(photo.read_bytes(),b'original')
         legacy=self.root/'.framekeep-write-legacy';legacy.mkdir();old=legacy/'photo.JPG';old.write_bytes(b'prepared')
         MetadataWriter.discard_prepared(old);MetadataWriter.discard_prepared(old)
         self.assertFalse(legacy.exists());self.assertTrue(photo.exists())
+        old=self.root/'.framekeep-write-old.JPG';old.write_bytes(b'old temporary')
+        MetadataWriter.discard_prepared(old);self.assertFalse(old.exists())
+
+    @unittest.skipUnless(os.name=='nt' and Path('D:/APP/WZ/build').is_dir(),'Windows 跨卷暂存')
+    def test_cross_volume_staging_keeps_atomic_commit_outside_photo_directory(self):
+        data=self.root/'data';data.mkdir();writer=MetadataWriter(self.root,data)
+        with tempfile.TemporaryDirectory(dir='D:/APP/WZ/build') as other:
+            other=Path(other);photos=other/'photos';photos.mkdir();photo=photos/'photo.xmp'
+            photo.write_bytes(b'before')
+            if data.stat().st_dev==photos.stat().st_dev:self.skipTest('临时目录与 D 盘属于同一卷')
+            self.assertEqual(volume_root(photos).stat().st_dev,photos.stat().st_dev)
+            with patch('metadata_writer.volume_root',return_value=other):temp=writer.prepare_file(photo)
+            self.assertTrue(temp.is_relative_to(other/'.framekeep-staging'))
+            self.assertFalse(list(photos.glob('.framekeep-*')))
+            self.assertEqual(temp.stat().st_dev,photo.stat().st_dev)
+            temp.write_bytes(b'after');replace_verified(temp,photo,hashlib.sha256(b'before').hexdigest())
+            writer.discard_prepared(temp);self.assertEqual(photo.read_bytes(),b'after')
+
+    def test_unavailable_staging_never_falls_back_to_photo_directory(self):
+        data=self.root/'data';data.mkdir();writer=MetadataWriter(self.root,data)
+        (data/'metadata-staging').write_bytes(b'unrelated existing file')
+        photo=self.root/'photo.JPG';photo.write_bytes(b'original')
+        with self.assertRaises(FileExistsError):writer.prepare_file(photo)
+        self.assertFalse(list(self.root.glob('.framekeep-*')))
+        self.assertEqual(photo.read_bytes(),b'original')
+
+    @unittest.skipUnless(os.name=='nt','Windows 元数据写入')
+    def test_sku_and_sidecar_write_stay_outside_photo_directory(self):
+        data=self.root/'data';data.mkdir();photos=self.root/'photos';photos.mkdir()
+        writer=MetadataWriter(Path(__file__).resolve().parents[1],data)
+        photo=photos/'IMG_0001.JPG';Image.new('RGB',(30,20),'green').save(photo)
+        with Image.open(photo) as im:pixels=im.tobytes()
+        run=writer.run
+        def check(*args):
+            self.assertFalse(list(photos.glob('.framekeep-*')))
+            return run(*args)
+        with patch.object(writer,'run',side_effect=check):
+            temp,target,journal=writer.write(photo,{'SKU':'SKU123','Title':'中文商品名称'},sha(photo))
+            self.assertFalse(list(photos.glob('.framekeep-*')))
+            replace_verified(temp,target,journal['before_hash'])
+            writer.commit_sidecars(journal);writer.discard_prepared(temp)
+        self.assertEqual(writer.read(photo)['XMP-fk:SKU'],'SKU123')
+        self.assertEqual(writer.read(Path(str(photo)+'.xmp'))['XMP-dc:Title'],'中文商品名称')
+        self.assertFalse(list((data/'metadata-staging').iterdir()))
+        self.assertFalse(list(photos.glob('.framekeep-*')))
+        with Image.open(photo) as im:self.assertEqual(im.tobytes(),pixels)
 
     @unittest.skipUnless(os.name=='nt','Windows 元数据写入')
     def test_sku_text_write_failure_cleans_staging_without_source_directories(self):
@@ -160,6 +209,7 @@ class PhotoFileSafetyTests(unittest.TestCase):
         photo=photos/'IMG_0001.JPG';Image.new('RGB',(30,20),'green').save(photo);before=sha(photo)
         def fail(*args):
             self.assertFalse([p for p in photos.iterdir() if p.is_dir()])
+            self.assertFalse(list(photos.glob('.framekeep-*')))
             self.assertTrue(list(data.glob('.framekeep-text-*')))
             raise OSError('injected text write failure')
         run=writer.run
