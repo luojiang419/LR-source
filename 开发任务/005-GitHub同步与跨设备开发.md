@@ -2,12 +2,21 @@
 
 [CODEX_LONG_TASK_CONTINUE_V3]
 
-- 当前状态：2026-10-28 最新完整源码已推送至公开仓库 luojiang419/LR-source 的默认分支 main；本轮源码提交 ed765e5，交付记录另行提交。
+- 当前状态：2026-11-17 当前工作区完整源码已推送至公开仓库 luojiang419/LR-source 的默认分支 main；源码快照 d901de6，交付记录随最终快照同步。
 - 下一步：其他设备直接 git clone https://github.com/luojiang419/LR-source.git；已有检出按正常 Git 流程更新 main。
 - TODO：无本次源码同步遗留。
-- 最近验证：718 份受管文件的敏感路径及高置信度凭据模式扫描无命中；新增历史中的 156 个 blob 同类扫描无命中；main 从 c44e53d 快进至 ed765e5，git push 成功。
-- branch/commit：本地 codex/release-remove-photo-staging；远程 origin/main；本轮源码 ed765e5，最终交付记录 hash 以 Git 为准。
+- 最近验证：1,507 份受管文件完成敏感路径及高置信度凭据模式扫描；唯一命中为 test_ai_retirement.py 中 example.invalid 的合成测试地址，人工确认并非真实凭据。git push 成功，git ls-remote 与 GitHub API 均确认 main 为 d901de6；其源码树与本地提交完全一致。
+- branch/commit：本地 codex/source-sync-20261117，源码提交 8e6c6f0；公开 public/main，源码快照 d901de6；最终交付记录 hash 以 Git 为准。
 - 阻塞：无。密钥、本机资料、缓存、依赖及构建产物继续排除；本次仅同步源码，不改变 ModelScope 发布状态。
+
+## 2026-11-17 当前完整源码同步
+
+- 用户明确要求推送全部源代码；核对 README、既有同步记录与 GitHub 仓库信息后，沿用公开仓库 `https://github.com/luojiang419/LR-source` 的 `main`。私有 `origin` 和现有远程配置保持原状。
+- 将当前工作区 152 份已修改或新增的源码、测试、开发记录和避坑文档提交为 `8e6c6f0`；完整源码树共 1,507 份文件，约 49.72 MB，包含 Python 引擎、Rust/Tauri 桌面程序、安卓出入库、前端、Lightroom 插件、更新系统和构建资料。
+- 延续公开仓库的独立快照历史，以公开旧 main `cb12454` 为唯一父提交，创建完整源码快照 `d901de6` 并正常快进推送，未发布私有历史、未 force push。远端提交及本地源码树 `7386b68884793f35eae4c82460a8be2338b199d6` 已核对一致。
+- 全量扫描受管文件中的敏感路径、私钥、常见平台令牌和凭据地址，未发现真实凭据；唯一地址命中属于 `.invalid` 域名的合成测试。未跟踪的 Canon 厂商 SDK `EDSDK132011CD(13.20.11)/` 继续按既有范围保留本地，密钥、数据库、模型、运行时、缓存、备份及安装包不纳入源码发布。
+- 本次只进行源码提交、同步与远端完整性核验，不修改应用实现，不递增版本、不发布 ModelScope、不重复运行应用测试或构建。既有功能是否验收完成仍以各任务记录为准；Git 空白检查提示原有改动中的行尾空白，本次保留源码原状。
+- 本记录补充后另行提交并快进推送最终快照；最终以远端 main 与本地 `public/source-snapshot` 的提交及文件树一致为交付验收。
 
 ## 2026-10-28 最新完整源码同步
 
