@@ -1,0 +1,87 @@
+{
+  "filesRemoved": 11384.0,
+  "beforeFree": 345878454272,
+  "afterFree": 353517649920,
+  "reason": "用户明确要求发布后清理旧包及可重建构建缓存；本轮临时发布/隔离验收产物及安卓编译输出可重建，无需按旧产物30天门槛等待",
+  "detachedLinks": [
+    {
+      "retainedTarget": "G:\\app\\LR\\.runtime",
+      "path": "G:\\app\\LR\\build\\modelscope-20261109-fixes\\source\\.runtime"
+    },
+    {
+      "retainedTarget": "G:\\app\\LR\\.update-private",
+      "path": "G:\\app\\LR\\build\\modelscope-20261109-fixes\\source\\.update-private"
+    }
+  ],
+  "results": [
+    {
+      "error": null,
+      "path": "G:\\app\\LR\\build\\modelscope-20261109-fixes",
+      "filesRemoved": 8607,
+      "newestFileUtc": "2026-11-09T09:42:53.5045249Z",
+      "remainingBytes": 0,
+      "bytesRemoved": 6052339956
+    },
+    {
+      "error": null,
+      "path": "G:\\app\\LR\\build\\inventory-record-edit\\app",
+      "filesRemoved": 2608,
+      "newestFileUtc": "2026-11-09T08:59:35.2053651Z",
+      "remainingBytes": 0,
+      "bytesRemoved": 2019789707
+    },
+    {
+      "error": null,
+      "path": "G:\\app\\LR\\build\\silent-update\\updater-compile-check.exe",
+      "filesRemoved": 1,
+      "newestFileUtc": "2026-11-09T09:10:06.0464635Z",
+      "remainingBytes": 0,
+      "bytesRemoved": 41472
+    },
+    {
+      "error": null,
+      "path": "G:\\app\\LR\\选片助手\\__pycache__",
+      "filesRemoved": 157,
+      "newestFileUtc": "2026-11-09T09:27:32.4531812Z",
+      "remainingBytes": 0,
+      "bytesRemoved": 4086424
+    },
+    {
+      "error": null,
+      "path": "G:\\app\\LR\\更新系统\\__pycache__",
+      "filesRemoved": 2,
+      "newestFileUtc": "2026-11-09T09:07:26.8471728Z",
+      "remainingBytes": 0,
+      "bytesRemoved": 112593
+    },
+    {
+      "error": null,
+      "path": "G:\\app\\LR\\更新系统\\scripts\\__pycache__",
+      "filesRemoved": 2,
+      "newestFileUtc": "2026-11-09T09:11:52.2582091Z",
+      "remainingBytes": 0,
+      "bytesRemoved": 26362
+    },
+    {
+      "error": null,
+      "path": "G:\\app\\LR\\更新系统\\tests\\__pycache__",
+      "filesRemoved": 7,
+      "newestFileUtc": "2026-11-09T09:11:52.2501794Z",
+      "remainingBytes": 0,
+      "bytesRemoved": 148500
+    }
+  ],
+  "actualFreeDelta": 7639195648,
+  "bytesRemoved": 8076545014,
+  "retained": [
+    "dist/SHIYING 数字资产安装器.exe",
+    "dist/SHIYING 库存管理.apk",
+    "build/inventory-record-edit/gradle-home",
+    "build/inventory-record-edit/baseline.json",
+    "build/inventory-record-edit/implementation.patch",
+    ".runtime",
+    ".framekeep",
+    ".update-private",
+    "EDSDK132011CD(13.20.11)"
+  ]
+}

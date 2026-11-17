@@ -13,11 +13,15 @@ class ConcurrentLabels:
         self.wake.set();self.label_wake.set()
 
     def _label_providers(self,job=None):
-        selected=[p for p in (self.providers.selected('ocr'),self.providers.purpose('sku_label') or self.providers.selected('multimodal')) if p]
+        ocr=self.providers.selected('ocr')
+        # 选用资产视觉模型不能隐式把每次二星变成 OCR + 长文本推理。
+        # 只有明确绑定“款号识别”用途才追加复核；无 OCR 时兼容多模态独立识别。
+        explicit=None if self.providers.data.get('builtin_enabled') else self.providers.purpose('sku_label')
+        selected=[p for p in (ocr,explicit or (self.providers.selected('multimodal') if not ocr else None)) if p]
         return selected[:1] if job and job.get('trigger')=='full_auto' else selected
 
     def _parallel_labels_enabled(self):
-        return any(p.get('protocol')!='local' for p in self._label_providers())
+        return bool(self._label_providers())
 
     def _parallel_reads_enabled(self):
         selected=self._label_providers()
@@ -48,21 +52,27 @@ class ConcurrentLabels:
 
     def _dispatch_labels(self):
         if self.closed.is_set() or self.tasks_paused or not self._parallel_labels_enabled():return
-        capacity=max(self.providers.concurrency(p) for p in self._label_providers() if p.get('protocol')!='local')
-        with self.label_workers_lock:capacity-=len(self.label_workers)
+        capacity=max((self.providers.concurrency(p) if p.get('protocol')!='local' else 1) for p in self._label_providers())
+        urgent_only=False
+        with self.label_workers_lock:
+            available=capacity-len(self.label_workers)
+            # 批量 worker 可能正等预留名额；允许一个现场 worker 使用它，避免调度器自身饥饿。
+            if available==0 and not any(getattr(w,'label_priority',0) for w in self.label_workers):available=1;urgent_only=True
+            capacity=available
         if capacity<=0:return
         context=self._full_context()
         with self.connect() as c:
-            eligible="status IN ('queued','waiting_model') AND due<=? AND (trigger='manual' OR (trigger='full_auto' AND ?) OR (trigger NOT IN ('manual','full_auto') AND ?))"
+            eligible="status IN ('queued','waiting_model') AND due<=? AND (trigger IN ('manual','live') OR (trigger='full_auto' AND ?) OR (trigger NOT IN ('manual','live','full_auto') AND ?))"
             args=(self.clock(),bool(context),self.task_mode=='auto')
             rows=[dict(r,_kind='label') for r in c.execute('SELECT id FROM jobs WHERE priority>0 AND '+eligible+' ORDER BY priority DESC,created DESC LIMIT ?',(*args,capacity))]
-            if self._parallel_reads_enabled():
+            if not urgent_only and self._parallel_reads_enabled():
                 rows += [dict(r,_kind='read') for r in c.execute("SELECT id FROM parse_jobs WHERE status='queued' ORDER BY created LIMIT ?",(capacity,))]
-            rows += [dict(r,_kind='label') for r in c.execute('SELECT id FROM jobs WHERE priority<=0 AND '+eligible+" AND (trigger!='full_auto' OR ?) ORDER BY due,created LIMIT ?",(*args,self._parallel_reads_enabled(),capacity))]
+            if not urgent_only:rows += [dict(r,_kind='label') for r in c.execute('SELECT id FROM jobs WHERE priority<=0 AND '+eligible+" AND (trigger!='full_auto' OR ?) ORDER BY due,created LIMIT ?",(*args,self._parallel_reads_enabled(),capacity))]
         for row in rows[:capacity]:
             job=self._claim_parse(row['id']) if row['_kind']=='read' else self._claim_label(row['id'])
             if not job:continue
             worker=threading.Thread(target=self._run_parallel_label,args=(job,),name='sku-label-'+job['id'][:8],daemon=True)
+            worker.label_priority=job.get('priority',0)
             with self.label_workers_lock:self.label_workers.add(worker)
             try:worker.start()
             except Exception:

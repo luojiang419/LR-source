@@ -127,7 +127,7 @@ end
 
 function M.apply(plan)
     local undo={};local changed=0;local conflicts=0
-    plan.catalog:withWriteAccessDo('末帧：同步选片星级',function()
+    plan.catalog:withWriteAccessDo('SHIYING：同步选片星级',function()
         for _,item in ipairs(plan.changes) do
             local current=item.photo:getRawMetadata('rating') or 0
             if current~=item.before or current>=2 then conflicts=conflicts+1
@@ -157,22 +157,22 @@ function M.process(manifest)
         if not chosen or not chosen[1] then return 'cancelled',{} end
         plan=M.plan(manifest,chosen[1])
     end
-    if LrDialogs.confirm('预览末帧选片同步',M.summary(plan),'写入星级','取消')~='ok' then return 'cancelled',{} end
+    if LrDialogs.confirm('预览SHIYING 数字资产同步',M.summary(plan),'写入星级','取消')~='ok' then return 'cancelled',{} end
     local result=M.apply(plan)
-    LrDialogs.message('末帧同步完成','已修改 '..result.changed..' 张；保护 '..result.protected..' 张；未匹配 '..result.missing..' 个编号。\n可立即 Ctrl+Z，或运行“撤销上次末帧同步”。','info')
+    LrDialogs.message('SHIYING同步完成','已修改 '..result.changed..' 张；保护 '..result.protected..' 张；未匹配 '..result.missing..' 个编号。\n可立即 Ctrl+Z，或运行“撤销上次SHIYING同步”。','info')
     return 'applied',result
 end
 
 function M.undo()
     local batch=M.lastUndo
-    if not batch or batch.catalog~=LrApplication.activeCatalog() then LrDialogs.message('末帧桥接','当前目录没有可撤销的末帧同步。','info');return end
+    if not batch or batch.catalog~=LrApplication.activeCatalog() then LrDialogs.message('SHIYING桥接','当前目录没有可撤销的SHIYING同步。','info');return end
     local changed=0;local conflicts=0
-    batch.catalog:withWriteAccessDo('末帧：撤销上次同步',function()
+    batch.catalog:withWriteAccessDo('SHIYING：撤销上次同步',function()
         for _,item in ipairs(batch.items) do
             if (item.photo:getRawMetadata('rating') or 0)==item.after then item.photo:setRawMetadata('rating',item.before>0 and item.before or nil);changed=changed+1 else conflicts=conflicts+1 end
         end
     end,{timeout=60})
-    M.lastUndo=nil;LrDialogs.message('末帧撤销完成','恢复 '..changed..' 张；跳过已被人工修改的 '..conflicts..' 张。','info')
+    M.lastUndo=nil;LrDialogs.message('SHIYING撤销完成','恢复 '..changed..' 张；跳过已被人工修改的 '..conflicts..' 张。','info')
 end
 
 function M.importFile()
@@ -181,12 +181,12 @@ function M.importFile()
 end
 
 function M.connect(silent)
-    if M.connected then if not silent then LrDialogs.message('末帧桥接','连接任务已在运行；服务重启时会自动重连。','info') end;return end
+    if M.connected then if not silent then LrDialogs.message('SHIYING桥接','连接任务已在运行；服务重启时会自动重连。','info') end;return end
     M.connected=true;local failures=0;local token=nil;local warned=false
     while M.connected do
         local ok,message=LrTasks.pcall(function()
             if not token then
-                local body=LrHttp.get(base..'/bridge/hello',nil,10);assert(body,'请先启动末帧工作台')
+                local body=LrHttp.get(base..'/bridge/hello',nil,10);assert(body,'请先启动SHIYING工作台')
                 local hello=Json.decode(body);assert(hello.schema=='framekeep.bridge' and type(hello.token)=='string','工作台握手失败');token=hello.token
             end
             local headers={{field='X-Framekeep-Bridge',value=token}}
@@ -200,7 +200,7 @@ function M.connect(silent)
                     local prior=Json.decode(prefs.lastJobResult);status=prior.status;result=prior.result
                 else
                     local success,failure=LrTasks.pcall(function()status,result=M.process(data.job.manifest) end)
-                    if not success then status='failed';result={message=tostring(failure):sub(1,500)};LrDialogs.message('末帧同步失败',result.message,'warning') end
+                    if not success then status='failed';result={message=tostring(failure):sub(1,500)};LrDialogs.message('SHIYING同步失败',result.message,'warning') end
                     prefs.lastJobResult=Json.encode{status=status,result=result};prefs.lastJobId=data.job.id
                 end
                 local postHeaders={{field='Content-Type',value='application/json'},{field='X-Framekeep-Bridge',value=token}}
@@ -209,7 +209,7 @@ function M.connect(silent)
         end)
         if ok then failures=0;prefs.lastConnectionError=nil else
             failures=failures+1;token=nil;prefs.lastConnectionError=tostring(message):sub(1,500)
-            if failures==1 and not silent and not warned then warned=true;LrDialogs.message('末帧工作台暂未连接','请启动 http://127.0.0.1:8769 工作台。插件会继续在后台重连，可在菜单中断开。','info') end
+            if failures==1 and not silent and not warned then warned=true;LrDialogs.message('SHIYING工作台暂未连接','请启动 http://127.0.0.1:8769 工作台。插件会继续在后台重连，可在菜单中断开。','info') end
         end
         if M.connected then LrTasks.sleep(math.min(10,2+failures*2)) end
     end

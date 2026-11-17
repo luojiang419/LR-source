@@ -19,6 +19,19 @@
     else if(window.Framekeep?.notify)Framekeep.notify(message);
     else window.alert(message);
   }
+  let fullscreenChanging=false;
+  async function toggleFullscreen(){
+    if(fullscreenChanging)return;
+    fullscreenChanging=true;
+    try{return await invoke('toggle_fullscreen')}
+    finally{fullscreenChanging=false}
+  }
+  // 使用原生窗口全屏，占满当前显示器；不接管Ctrl+Alt+F11等其它快捷键。
+  window.addEventListener('keydown',event=>{
+    if(event.key!=='F11'||event.ctrlKey||event.altKey||event.metaKey||event.shiftKey)return;
+    event.preventDefault();event.stopImmediatePropagation();
+    if(!event.repeat)toggleFullscreen().catch(error=>report('全屏切换失败：'+String(error?.message||error)));
+  },true);
   function paintSettings(value){
     if(!$('desktop-close-behavior'))return;
     $('desktop-close-behavior').value=value.close_behavior;
@@ -46,7 +59,7 @@
   function showCloseDialog(){
     if(!dialog){
       dialog=document.createElement('dialog');dialog.id='desktop-close-dialog';dialog.setAttribute('aria-labelledby','desktop-close-title');
-      dialog.innerHTML='<div class="desktop-close-heading"><h2 id="desktop-close-title">关闭末帧选片</h2><button type="button" data-cancel aria-label="取消关闭">×</button></div><p class="desktop-close-copy">您希望关闭窗口后如何运行？</p><div class="desktop-close-options"><button type="button" id="desktop-close-tray"><strong>最小化到托盘</strong><span>保留后台任务，点击托盘图标可恢复窗口</span></button><button type="button" id="desktop-close-exit"><strong>退出程序</strong><span>保存当前操作并停止后台服务</span></button></div><div class="desktop-remember-row"><div><label id="desktop-remember-label" for="desktop-close-remember">不再询问</label><p>记住所选行为，可在设置中随时更改</p></div><button type="button" id="desktop-close-remember" class="desktop-switch" role="switch" aria-checked="false" aria-labelledby="desktop-remember-label"><span></span></button></div><p id="desktop-close-message" role="status"></p><div class="desktop-close-actions"><button type="button" data-cancel>取消</button></div>';
+      dialog.innerHTML='<div class="desktop-close-heading"><h2 id="desktop-close-title">关闭SHIYING 数字资产</h2><button type="button" data-cancel aria-label="取消关闭">×</button></div><p class="desktop-close-copy">您希望关闭窗口后如何运行？</p><div class="desktop-close-options"><button type="button" id="desktop-close-tray"><strong>最小化到托盘</strong><span>保留后台任务，点击托盘图标可恢复窗口</span></button><button type="button" id="desktop-close-exit"><strong>退出程序</strong><span>保存当前操作并停止后台服务</span></button></div><div class="desktop-remember-row"><div><label id="desktop-remember-label" for="desktop-close-remember">不再询问</label><p>记住所选行为，可在设置中随时更改</p></div><button type="button" id="desktop-close-remember" class="desktop-switch" role="switch" aria-checked="false" aria-labelledby="desktop-remember-label"><span></span></button></div><p id="desktop-close-message" role="status"></p><div class="desktop-close-actions"><button type="button" data-cancel>取消</button></div>';
       document.body.append(dialog);
       const remember=$('desktop-close-remember');remember.onclick=()=>remember.setAttribute('aria-checked',String(remember.getAttribute('aria-checked')!=='true'));
       for(const button of dialog.querySelectorAll('[data-cancel]'))button.onclick=dismissClose;
@@ -59,11 +72,17 @@
     dialog.showModal();$('desktop-close-tray').focus();
   }
   window.FramekeepDesktop={
+    toggleFullscreen,
     chooseFolders:()=>invoke('choose_folders'),
     chooseCacheBackup:()=>invoke('choose_cache_backup'),
     chooseCacheFolder:()=>invoke('choose_cache_folder'),
+    saveInventoryReport:(suggestedName,query)=>invoke('save_inventory_report',{suggestedName,query}),
     saveManifest:(name,data)=>invoke('save_manifest',{suggestedName:name,data}),
-    saveSkuWorkbook:(projectId,suggestedName)=>invoke('save_sku_workbook',{projectId,suggestedName}),
+    saveSkuWorkbook:(projectId,suggestedName,sourceName)=>invoke('save_sku_workbook',{projectId,suggestedName,sourceName}),
+    async saveArchiveDocument(suggestedName,query,onProgress){
+      const unlisten=await window.__TAURI__.event.listen('archive-document-progress',event=>onProgress?.(event.payload));
+      try{return await invoke('save_archive_document',{suggestedName,query})}finally{unlisten()}
+    },
     async initSettings(){
       if(!$('desktop-close-behavior'))return;
       try{
@@ -97,8 +116,12 @@
   if(window.__framekeepHasPendingClose)FramekeepDesktop.close(window.__framekeepPendingClose);
   // 原生启动页也使用同一关闭流程，但工作台就绪指标仅由 HTTP 工作台上报。
   if(location.hostname!=='127.0.0.1')return;
-  const ready=()=>requestAnimationFrame(()=>requestAnimationFrame(()=>{const boot=window.FramekeepBoot;invoke('desktop_ready',{timings:boot?{shell_ready_ms:boot.shellReady,data_ready_ms:boot.dataReady,workbench_ready_ms:boot.workbenchReady}:null}).catch(()=>{})}));
+  const ready=()=>requestAnimationFrame(()=>requestAnimationFrame(()=>{const boot=window.FramekeepBoot;invoke('desktop_ready',{timings:boot?{shell_ready_ms:boot.shellReady,data_ready_ms:boot.dataReady,workbench_ready_ms:boot.workbenchReady,first_photo_ready_ms:boot.firstPhotoReady??null,monitor_ready_ms:boot.monitorReady??null,services_ready:boot.servicesLoaded??true}:null}).catch(()=>{})}));
   if(window.FramekeepBoot?.loading)document.addEventListener('framekeep:boot-ready',ready,{once:true});
   else if(document.readyState==='loading')window.addEventListener('DOMContentLoaded',ready,{once:true});
   else ready();
+  document.addEventListener('framekeep:restore-ready',ready,{once:true});
+  document.addEventListener('framekeep:first-photo',ready,{once:true});
+  document.addEventListener('framekeep:services-ready',ready,{once:true});
+  document.addEventListener('framekeep:monitor-ready',ready,{once:true});
 })();

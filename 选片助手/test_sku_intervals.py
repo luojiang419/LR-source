@@ -22,6 +22,25 @@ ROOT=Path(__file__).resolve().parents[1]
 
 
 class IntervalTests(unittest.TestCase):
+    def test_frozen_types_and_unbound_photos_never_bleed_into_next_label(self):
+        self.mark(1,'FIRST-100',100);self.mark(5,'SECOND-200',200)
+        with self.sku.connect() as c:
+            c.executemany('INSERT INTO shooting_captures VALUES (?,?,?,?,?)',[(self.sid,self.ids[i],'document','first' if i<2 else 'second',100) for i in (0,1,3,4,5)])
+        mapping=labels(self.sku,self.sid)['labels']
+        self.assertEqual({cid for cid,code in mapping.items() if code=='FIRST-100'},set(self.ids[:2]))
+        self.assertEqual({cid for cid,code in mapping.items() if code=='SECOND-200'},set(self.ids[3:6]))
+        self.assertNotIn(self.ids[2],mapping);self.assertNotIn(self.ids[6],mapping)
+
+    def test_group_edit_keeps_unknown_shared_two_star_boundary(self):
+        from metadata_group import group_context
+        self.archive.start_stream(self.sid,'project','模特图')
+        self.automatic('FIRST-100',1);self.automatic('SECOND-200',5)
+        record=self.store.records(self.sid,ids=[self.ids[3]])[0]
+        self.archive.ratings.set(self.archive.ratings.paths(self.sid,record),2)
+        context=group_context(self.archive,self.sku,self.sid,self.ids[4],[self.ids[4]])
+        self.assertEqual(context['capture_ids'],self.ids[4:6])
+
+
     def setUp(self):
         self.temp=tempfile.TemporaryDirectory();self.base=Path(self.temp.name);self.photos=self.base/'photos';self.photos.mkdir()
         self.store=Store(self.base/'data',ROOT);self.sid=self.store.ensure_live_session(self.photos);self.ids=[];self.paths=[]

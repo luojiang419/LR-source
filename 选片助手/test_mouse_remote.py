@@ -141,10 +141,10 @@ class MouseRemoteTests(unittest.TestCase):
         self.assertFalse(self.remote.state()['active']); self.assertEqual(self.transport.filters[-1], 0)
 
     def test_other_process_lock_blocks_even_enumeration(self):
-        def blocked(): raise ValueError('另一个末帧进程已连接')
+        def blocked(): raise ValueError('另一个SHIYING进程已连接')
         self.remote.lease_factory = blocked
-        self.assertIn('另一个末帧', self.remote.state(refresh=True)['error'])
-        with self.assertRaisesRegex(ValueError, '另一个末帧'): self.start()
+        self.assertIn('另一个SHIYING', self.remote.state(refresh=True)['error'])
+        with self.assertRaisesRegex(ValueError, '另一个SHIYING'): self.start()
         self.assertIsNone(self.remote.bridge)
         self.assertEqual(self.transport.filters, [])
 

@@ -11,7 +11,7 @@ import threading
 import time
 import urllib.request
 
-MODEL_IDS={'qwen2.5-vl-7b-q4':'multimodal','glm-ocr-local':'ocr'}
+MODEL_IDS={'qwen2.5-vl-7b-q4':'multimodal','pp-ocrv6-small-local':'ocr','pp-ocrv6-medium-local':'ocr'}
 
 
 def own_process(process):
@@ -39,7 +39,7 @@ class LocalInference:
     def __init__(self,config,logs,components=None):
         self.config=Path(config);self.logs=Path(logs);self.lock=threading.RLock()
         self.process=None;self.active=None;self.endpoint=None;self.log=None;self.closed=False;self.release_job=None
-        self.components=components
+        self.components=components;self.ocr=None
         self.state_lock=threading.RLock();self.warm_thread=None;self.warm_request=None;self.warm_generation=0
         self.state={'status':'idle','model':'','message':'内置模型尚未加载','started':0,'percent':None}
 
@@ -63,10 +63,11 @@ class LocalInference:
 
     def preload(self,provider=None):
         model=provider.get('model') if provider else None
+        if model=='glm-ocr-local':model='pp-ocrv6-medium-local'
         with self.state_lock:
             if self.closed:return self.snapshot()
             if self.warm_request and self.warm_request[0]==model and not self.warm_request[1].is_set():
-                if self.warm_thread and self.warm_thread.is_alive() or model and self.active==model and self.process and self.process.poll() is None:return self.snapshot()
+                if self.warm_thread and self.warm_thread.is_alive() or model and self.active==model and (self.ocr is not None or self.process and self.process.poll() is None):return self.snapshot()
             if self.warm_request:self.warm_request[1].set()
             self.warm_generation+=1
             self.warm_request=(model,threading.Event(),self.warm_generation)
@@ -98,10 +99,10 @@ class LocalInference:
     def settings(self):
         if not self.config.is_file():raise ValueError('尚未部署内置模型，请在设置中开启“使用内置模型”并准备组件，或用新版安装器修复')
         data=json.loads(self.config.read_text(encoding='utf8'))
-        if not Path(data['executable']).is_file():raise ValueError('内置推理运行时不存在，请重新部署')
         return data
 
     def _stop(self):
+        self.ocr=None
         if self.process:
             if self.process.poll() is None:
                 self.process.terminate()
@@ -119,11 +120,12 @@ class LocalInference:
         with self.lock:self._stop()
 
     def _start(self,model,cancel=None):
+        if model=='glm-ocr-local':model='pp-ocrv6-medium-local'
         if self.closed:raise ValueError('内置推理已关闭')
         def current():
             if self.closed or cancel and cancel.is_set():raise ValueError('模型预加载已取消')
         current()
-        if self.active==model and self.process and self.process.poll() is None:
+        if self.active==model and (self.ocr is not None or self.process and self.process.poll() is None):
             self._publish('ready',model,'视觉模型已就绪');return
         self._publish('preparing',model,'正在检查 视觉模型组件')
         if self.components:
@@ -131,6 +133,22 @@ class LocalInference:
         current()
         data=self.settings();item=data.get('models',{}).get(model)
         if model not in MODEL_IDS or not item:raise ValueError('内置模型未部署：'+str(model))
+        if model in ('pp-ocrv6-small-local','pp-ocrv6-medium-local'):
+            for name in ('detector','recognizer','dictionary'):
+                if not Path(item.get(name,'')).is_file():raise ValueError('内置 OCR 文件缺失：'+name)
+            label='Medium' if model=='pp-ocrv6-medium-local' else 'Small'
+            self._stop();self._publish('loading',model,'正在加载 '+label+' OCR')
+            try:
+                from paddle_ocr import PaddleOcr
+                engine=PaddleOcr(item);current()
+                self.ocr=engine;self.active=model
+                self.endpoint={'protocol':'local_onnx','local_runtime':True,'url':'http://127.0.0.1'}
+                self._publish('ready',model,label+' OCR 已就绪');return
+            except Exception as exc:
+                self._stop()
+                if not cancel or not cancel.is_set():self._publish('failed',model,str(exc)[:300])
+                raise
+        if not Path(data.get('executable','')).is_file():raise ValueError('内置推理运行时不存在，请重新部署')
         for name in ('model','mmproj'):
             if not Path(item[name]).is_file():raise ValueError('内置模型文件缺失：'+name)
         self._stop()
@@ -144,8 +162,8 @@ class LocalInference:
             free=int(output.splitlines()[0]);need=8500 if MODEL_IDS[model]=='multimodal' else 3500
             if free<need:gpu_layers=8 if free>=2500 else 0;offload=False
         except (OSError,ValueError,subprocess.SubprocessError):gpu_layers=0;offload=False
-        # CPU 处理 4096 个图像 token 在实拍标签上需约三分钟；限制预算，保留 GPU 的高清输入。
-        image_tokens=1024 if model=='glm-ocr-local' and not offload else 4096
+        # llama.cpp 仅供多模态；OCR 走上方 CPU ONNX 分支。
+        image_tokens=4096
         command=[data['executable'],'--model',item['model'],'--mmproj',item['mmproj'],
             '--host','127.0.0.1','--port',str(port),'--alias',model,
             '--ctx-size',str(item.get('context',8192)),'--parallel','1','--n-gpu-layers',str(gpu_layers),
@@ -179,6 +197,7 @@ class LocalInference:
     def resolve(self,provider):
         # 整个请求持锁，另一队列不能在推理中途卸载模型。
         with self.lock:
+            if provider.get('model')=='glm-ocr-local':provider={**provider,'model':'pp-ocrv6-medium-local'}
             self._start(provider['model'])
             yield {**provider,**self.endpoint}
 

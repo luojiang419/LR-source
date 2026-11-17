@@ -25,28 +25,98 @@ class PresentationTests(unittest.TestCase):
     def cells(self,path,part):
         with ZipFile(path) as z:return {c.get('r'):''.join(c.itertext()) for c in E.fromstring(z.read(part)).findall('m:sheetData/m:row/m:c',N)}
 
+    def test_image_columns_expand_source_table_and_keep_formula_targets(self):
+        import io
+        from sku_workbook import REL
+        source=self.sku.root/self.pid/'source.xlsx'
+        with ZipFile(source) as archive:parts={name:archive.read(name) for name in archive.namelist()}
+        parts['xl/worksheets/sheet1.xml']=parts['xl/worksheets/sheet1.xml'].replace(b'</row></sheetData>',b'<c r="B3"><f>LEN(B2)</f></c></row></sheetData>')
+        parts['xl/worksheets/_rels/sheet1.xml.rels']=f'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="table1" Type="{REL}/table" Target="../tables/table1.xml"/></Relationships>'.encode()
+        parts['xl/tables/table1.xml']=f'<table xmlns="{N["m"]}" id="1" name="Plan" displayName="Plan" ref="A1:B3"><autoFilter ref="A1:B3"/><tableColumns count="2"><tableColumn id="1" name="款号"/><tableColumn id="2" name="图片"/></tableColumns></table>'.encode()
+        parts['xl/worksheets/sheet1.xml']=parts['xl/worksheets/sheet1.xml'].replace(b'</worksheet>',f'<tableParts count="1"><tablePart xmlns:r="{REL}" r:id="table1"/></tableParts></worksheet>'.encode())
+        data=io.BytesIO()
+        with ZipFile(data,'w') as archive:
+            for name,raw in parts.items():archive.writestr(name,raw)
+        pid=self.sku.import_file('table.xlsx',data.getvalue())['project']['id']
+        rename_header(self.sku,pid,'sku','商品款号')
+        output=self.sku.export(pid);plan=inspect_workbook(output)[0]
+        self.assertEqual((plan['sku_col'],plan['image_col'],plan['label_col']),(2,3,4))
+        self.assertEqual(self.cells(output,'xl/worksheets/sheet1.xml')['E3'],'LEN(E2)')
+        with ZipFile(output) as archive:
+            table=E.fromstring(archive.read('xl/tables/table1.xml'));columns=table.find('m:tableColumns',N)
+            self.assertEqual(table.get('ref'),'B1:E3');self.assertEqual(columns.get('count'),'4')
+            self.assertEqual([c.get('name') for c in columns],['商品款号','款号图片','标签图片','图片'])
+            self.assertEqual(table.find('m:autoFilter',N).get('ref'),'B1:E3')
+        again=self.sku.import_file('table-again.xlsx',output.read_bytes())['project']['id']
+        with ZipFile(self.sku.export(again)) as archive:self.assertEqual(E.fromstring(archive.read('xl/tables/table1.xml')).get('ref'),'B1:E3')
+
+    def test_legacy_record_time_uses_ingestion_title_and_keeps_timestamp(self):
+        import io
+        from sku_workbook_auto import replace_sheet
+        source=(self.sku.root/self.pid/'source.xlsx').read_bytes()
+        stamp='2026-11-03T15:45:12+08:00'
+        content,part=replace_sheet(source,'现场记录',[['TEST-123','a.JPG','拍摄目录',stamp,'未拍摄','']])
+        data=io.BytesIO()
+        with ZipFile(io.BytesIO(content)) as original,ZipFile(data,'w') as output:
+            for name in original.namelist():output.writestr(name,original.read(name).replace('入库时间'.encode(),'记录时间'.encode()) if name==part else original.read(name))
+        pid=self.sku.import_file('legacy-time.xlsx',data.getvalue())['project']['id']
+        output=self.sku.export(pid);cells=self.cells(output,part)
+        self.assertEqual([cells[c+'1'] for c in 'ABCDEFGHI'],['序号','款号','款号图片','标签图片','来源文件','现场文件夹','入库时间','拍摄完成时间','拍摄状态'])
+        self.assertEqual(cells['G2'],'2026-11-03 15:45:12')
+        again=self.sku.import_file('time-again.xlsx',output.read_bytes())['project']['id']
+        cells=self.cells(self.sku.export(again),part);self.assertEqual(cells['G1'],'入库时间');self.assertEqual(cells['G2'],'2026-11-03 15:45:12')
+
+    def test_export_beijing_times_sequence_and_repeated_import_preserve_evidence(self):
+        from sku_workbook_auto import replace_sheet
+        from sku_workbook_presentation import _beijing_time
+        source=(self.sku.root/self.pid/'source.xlsx').read_bytes()
+        content,part=replace_sheet(source,'现场记录',[
+            ['TEST-101','a.JPG','2026-11-04T16:12:18Z','2026-11-04T16:12:18Z','已拍摄','2026-11-04T10:12:18.58+08:00'],
+            ['TEST-102','b.JPG','目录','2026-11-05T01:20:14','未拍摄','待补录']])
+        pid=self.sku.import_file('beijing.xlsx',content)['project']['id']
+        original=(self.sku.root/pid/'source.xlsx').read_bytes()
+        before={r['id']:(r['source_values'],r['baseline_completed_at']) for r in self.sku.rows(pid)}
+        output=self.sku.export(pid);cells=self.cells(output,part)
+        self.assertEqual([cells[c+'1'] for c in 'ABCDEFGHI'],['序号','款号','款号图片','标签图片','来源文件','现场文件夹','入库时间','拍摄完成时间','拍摄状态'])
+        self.assertEqual([cells['A2'],cells['A3']],['1','2'])
+        self.assertEqual(cells['G2'],'2026-11-05 00:12:18')
+        self.assertEqual(cells['H2'],'2026-11-04 10:12:18.58')
+        self.assertEqual(cells['G3'],'2026-11-05 01:20:14')
+        self.assertEqual(cells['H3'],'待补录')
+        self.assertEqual(cells['F2'],'2026-11-04T16:12:18Z')  # 普通文本列不改写。
+        self.assertEqual((self.sku.root/pid/'source.xlsx').read_bytes(),original)
+        self.assertEqual({r['id']:(r['source_values'],r['baseline_completed_at']) for r in self.sku.rows(pid)},before)
+        for _ in range(2):
+            pid=self.sku.import_file('again.xlsx',output.read_bytes())['project']['id'];output=self.sku.export(pid)
+            plan=next(p for p in inspect_workbook(output) if p['name']=='现场记录')
+            self.assertEqual((plan['seq_col'],plan['sku_col'],plan['time_col'],plan['status_col']),(1,2,8,9))
+            cells=self.cells(output,part);self.assertEqual(cells['G2'],'2026-11-05 00:12:18');self.assertEqual(cells['H2'],'2026-11-04 10:12:18.58')
+            self.assertEqual(sum(v=='序号' for k,v in cells.items() if k.endswith('1')),1)
+        for value,expected in [('2026-11-04T16:00:00.000001-05:00','2026-11-05 05:00:00.000001'),('2026-02-30T01:02:03+08:00','2026-02-30T01:02:03+08:00'),('2026-11-04T10:12:18.123456789+08:00','2026-11-04 10:12:18.123456789'),('待补录','待补录')]:
+            self.assertEqual(_beijing_time(value),expected)
+
     def test_headers_persist_export_escape_and_reimport_without_losing_schema(self):
         source=self.sku.root/self.pid/'source.xlsx';before=hashlib.sha256(source.read_bytes()).hexdigest()
         for key,title in [('sku','商品编码 & <款>'),('status','完成情况'),('photo','拍摄选图'),('time','完成时刻'),('column:模特图:C','拍摄说明'),('seq','编号'),('row','来源行'),('source','拍摄分组')]:
             rename_header(self.sku,self.pid,key,title)
         out=self.sku.export(self.pid);cells=self.cells(out,'xl/worksheets/sheet1.xml')
-        self.assertEqual([cells.get(c+'1') for c in ['A','C','D','E','F']],['商品编码 & <款>','完成情况','拍摄选图','完成时刻','拍摄说明'])
+        self.assertEqual([cells.get(c+'1') for c in 'ABCDEFGH'],['编号','商品编码 & <款>','拍摄选图','标签图片','图片','完成时刻','完成情况','拍摄说明'])
         summary=self.cells(out,'xl/worksheets/framekeep-all-skus.xml')
         self.assertEqual([summary[c+'1'] for c in 'ABCDE'],['编号','来源行','商品编码 & <款>','拍摄选图','拍摄分组'])
         self.assertEqual(summary['B2'],'模特图 · 2；细节图 · 2')
-        plans=inspect_workbook(out);self.assertEqual(len(plans),2);self.assertEqual(plans[0]['sku_col'],1);self.assertEqual(plans[0]['image_col'],4)
+        plans=inspect_workbook(out);self.assertEqual(len(plans),2);self.assertEqual(plans[0]['sku_col'],2);self.assertEqual(plans[0]['image_col'],3)
         self.assertEqual(hashlib.sha256(source.read_bytes()).hexdigest(),before)
         self.sku.close();self.sku=SkuService(self.store,self.providers,archive=self.archive,autostart=False)
         self.assertEqual(self.sku.state()['project']['presentation']['headers']['sku'],'商品编码 & <款>')
         pid=self.sku.import_file('renamed.xlsx',out.read_bytes())['project']['id']
         self.assertEqual(len(self.sku.rows(pid)),4)
         self.assertEqual(preferences(self.sku,pid)['headers']['sku'],'商品编码 & <款>')
-        self.assertEqual(preferences(self.sku,pid)['headers']['column:模特图:F'],'拍摄说明')
+        self.assertEqual(preferences(self.sku,pid)['headers']['column:模特图:H'],'拍摄说明')
         again=self.sku.export(pid)
         with ZipFile(again) as z:
             book=E.fromstring(z.read('xl/workbook.xml'))
             self.assertEqual(len(book.find('m:sheets',N)),3)
-        self.assertEqual(self.cells(again,'xl/worksheets/sheet1.xml')['F1'],'拍摄说明')
+        self.assertEqual(self.cells(again,'xl/worksheets/sheet1.xml')['H1'],'拍摄说明')
 
     def test_invalid_header_and_foreign_cover_do_not_mutate_preferences(self):
         before=preferences(self.sku,self.pid)
@@ -55,12 +125,14 @@ class PresentationTests(unittest.TestCase):
         with self.assertRaises(ValueError):select_images(self.sku,self.pid,{fixture.CODE:'capture:foreign:photo'})
         self.assertEqual(preferences(self.sku,self.pid),before)
 
-    def test_preferences_backup_and_failed_export_rollback(self):
+    def test_preferences_persist_without_waiting_for_document_export(self):
         from sku_metadata_backup import export_metadata
         rename_header(self.sku,self.pid,'sku','商品款号')
         before=preferences(self.sku,self.pid)
         with patch.object(self.sku,'export',side_effect=ValueError('模拟 Excel 被占用')):
-            with self.assertRaisesRegex(ValueError,'被占用'):rename_header(self.sku,self.pid,'sku','未保存名称')
+            rename_header(self.sku,self.pid,'sku','新保存名称')
+            with self.assertRaisesRegex(ValueError,'被占用'):self.sku.export(self.pid)
+        before['headers']['sku']='新保存名称'
         self.assertEqual(preferences(self.sku,self.pid),before)
         output=export_metadata(self.sku)
         project=next(p for p in output['backup']['payload']['databases']['sku']['projects'] if p['id']==self.pid)
@@ -76,7 +148,10 @@ class PresentationTests(unittest.TestCase):
         self.assertEqual(formula,'[@商品\']编码]&Plan[[#Headers],[商品\']编码]]&IF(A2="Plan[款号]",1,0)')
 
     def test_cover_selection_syncs_all_sheets_and_embeds_selected_pixels(self):
-        self.parse();self.choose();self.sku.parse_capture(self.sid,self.ids[3]);self.choose(cid=self.ids[3]);self.drain()
+        self.parse();self.choose();self.sku.parse_capture(self.sid,self.ids[3])
+        # 本用例验证同组换封面；明确手填相同款号，避免自动分配独立颜色组。
+        details=self.sku.ocr_details(self.sid,self.ids[3])
+        self.sku.choose_ocr_sku(self.sid,self.ids[3],fixture.CODE,details['reading_key'],details['image_key'],literal=True);self.drain()
         before={r['id']:r['status'] for r in self.sku.state()['rows']}
         data=gallery(self.sku,self.pid,fixture.CODE)
         choices=[im for im in data['images'] if im.get('capture_id')==self.ids[2]]
@@ -87,7 +162,7 @@ class PresentationTests(unittest.TestCase):
         self.assertTrue(all(r['sku_image'] is None for r in own if r['status']!='已拍摄'))
         self.assertEqual({r['id']:r['status'] for r in state['rows']},before)
         self.assertEqual(next(g for g in gallery(self.sku,self.pid)['groups'] if g['sku']==fixture.CODE)['selected_key'],key)
-        out=self.sku.export(self.pid);plan=inspect_workbook(out)[0];image=next(im for im in plan['images'] if im['cell']=='D2')
+        out=self.sku.export(self.pid);plan=inspect_workbook(out)[0];image=next(im for im in plan['images'] if im['cell']=='C2')
         from PIL import Image
         import io
         with Image.open(io.BytesIO(read_image(out,image['media'])[0])) as embedded:pixel=embedded.convert('RGB').getpixel((5,5))
@@ -114,13 +189,15 @@ class PresentationTests(unittest.TestCase):
         self.assertEqual(first['total'],135);self.assertEqual([len(x['images']) for x in [first,second,third]],[60,60,15])
         self.assertFalse(third['has_more']);self.assertEqual(len({im['key'] for page in [first,second,third] for im in page['images']}),135)
 
-    def test_browser_plain_header_all_view_gallery_save_cancel_and_reload(self):
+    def test_browser_plain_header_sheet_gallery_save_cancel_and_reload(self):
         from contextlib import ExitStack
         from http.server import ThreadingHTTPServer
         import threading
         from playwright.sync_api import sync_playwright
         import server
-        self.parse();self.choose();self.sku.parse_capture(self.sid,self.ids[3]);self.choose(cid=self.ids[3]);self.drain()
+        self.parse();self.choose();self.sku.parse_capture(self.sid,self.ids[3])
+        details=self.sku.ocr_details(self.sid,self.ids[3])
+        self.sku.choose_ocr_sku(self.sid,self.ids[3],fixture.CODE,details['reading_key'],details['image_key'],literal=True);self.drain()
         values=dict(STORE=self.store,DATA=self.store.data,MODELS=self.providers,SKU=self.sku,ARCHIVE=self.archive,CATALOG=None,ANALYSIS=None,WATCH=None,MOUSE=None,CANON=None,RAWLINK=None,FILESEARCH=None,UPDATES=None,COMPONENTS=None,DRIVER=None)
         http=ThreadingHTTPServer(('127.0.0.1',0),server.Handler);http.daemon_threads=True
         with ExitStack() as stack:
@@ -131,10 +208,11 @@ class PresentationTests(unittest.TestCase):
                     browser=pw.chromium.launch(channel='msedge',headless=True)
                     try:
                         page=browser.new_page(viewport={'width':1500,'height':1050});errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
-                        page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='domcontentloaded');page.locator('#sku-open').click();page.locator('#sku-all-tab').click()
-                        self.assertEqual(page.locator('#sku-rows th').all_text_contents(),['序号','原表行','款号','图片','所属工作表'])
+                        page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='domcontentloaded');page.locator('#sku-open').click();page.locator('[data-progress-sheet="模特图"]').click()
+                        page.wait_for_selector('#sku-rows [data-header-key="sku"]')
+                        self.assertEqual(page.locator('#sku-rows th').all_text_contents(),['序号','原表行','款号','款号图片','标签图片','图片','拍摄类型','拍摄状态','拍摄完成时间','备注'])
                         self.assertEqual(page.locator('#sku-rows tbody tr').count(),2)
-                        self.assertIn('模特图 · 2',page.locator('#sku-rows tbody').inner_text());self.assertIn('细节图 · 2',page.locator('#sku-rows tbody').inner_text())
+                        self.assertIn('模特图',page.locator('#sku-rows tbody').inner_text());self.assertIn('细节图',page.locator('#sku-sheet-tabs').inner_text())
                         self.assertEqual(self.sku.project()['scope'],'模特图')
                         header=page.locator('#sku-rows [data-header-key="sku"]');self.assertEqual(header.locator('svg,i').count(),0)
                         cell=header.locator('..');bounds=cell.bounding_box()
@@ -150,7 +228,7 @@ class PresentationTests(unittest.TestCase):
                         self.assertEqual(response.value.status,200);page.wait_for_function('()=>document.querySelector("#sku-rows [data-header-key=sku]")?.textContent==="商品编码"')
                         header.dblclick();editor.fill('不保存');editor.press('Escape');self.assertEqual(header.inner_text(),'商品编码')
                         header.dblclick();editor.fill(' ');editor.press('Enter');self.assertEqual(header.inner_text(),'商品编码')
-                        cover=page.locator('[data-all-sku="'+normalize(fixture.CODE)+'"] [data-sku-cover]')
+                        cover=page.locator('#sku-rows [data-sku-cover="'+normalize(fixture.CODE)+'"]').first
                         original=cover.locator('img').get_attribute('src');cover.click();page.wait_for_selector('#sku-cover-groups [data-cover-key]')
                         candidate=page.locator('#sku-cover-groups [data-cover-key="capture:'+self.sid+':'+self.ids[2]+'"]')
                         candidate.click();page.locator('#sku-cover-cancel').click();self.assertEqual(cover.locator('img').get_attribute('src'),original)
@@ -172,8 +250,8 @@ class PresentationTests(unittest.TestCase):
                                 page.keyboard.press('Escape')
                         page.set_viewport_size({'width':1500,'height':1050});page.locator('[data-progress-sheet="模特图"]').click()
                         page.wait_for_selector('#sku-rows [data-sku-row]');self.assertEqual(page.locator('#sku-rows [data-header-key="sku"]').inner_text(),'商品编码')
-                        page.reload(wait_until='domcontentloaded');page.locator('#sku-open').click();page.locator('#sku-all-tab').click()
-                        page.wait_for_function('(cid)=>document.querySelector("#sku-rows [data-all-sku] img")?.src.includes(cid)',arg=self.ids[2])
+                        page.reload(wait_until='domcontentloaded');page.locator('#sku-open').click();page.locator('[data-progress-sheet="模特图"]').click()
+                        page.wait_for_function('(cid)=>[...document.querySelectorAll("#sku-rows [data-sku-cover] img")].some(img=>(img.dataset.viewPreviewSource||img.src).includes(cid))',arg=self.ids[2])
                         self.assertEqual(page.locator('#sku-rows [data-header-key="sku"]').inner_text(),'商品编码')
                         self.assertFalse(errors,errors)
                     finally:browser.close()

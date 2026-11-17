@@ -1,0 +1,124 @@
+{
+  "scope": "G:\\app\\LR 项目临时构建、所有本地发行安装包与代码缓存",
+  "releaseId": "20261109053053",
+  "records": [
+    {
+      "path": "G:\\app\\LR\\build\\auto-installer-source",
+      "bytes": 1224032945,
+      "files": 2190,
+      "method": "git worktree remove",
+      "removed": true
+    },
+    {
+      "path": "G:\\app\\LR\\build\\full-installer-source",
+      "bytes": 1258101033,
+      "files": 2267,
+      "method": "git worktree remove",
+      "removed": true
+    },
+    {
+      "path": "G:\\app\\LR\\build\\medium-release-source",
+      "bytes": 1230565963,
+      "files": 2218,
+      "method": "git worktree remove",
+      "removed": true
+    },
+    {
+      "path": "G:\\app\\LR\\build\\rotation-release-source",
+      "bytes": 1224085207,
+      "files": 2191,
+      "method": "git worktree remove",
+      "removed": true
+    },
+    {
+      "path": "G:\\app\\LR\\build",
+      "bytes": 6210738678,
+      "files": 8547,
+      "method": "Remove-Item -LiteralPath",
+      "removed": true
+    },
+    {
+      "path": "G:\\app\\LR\\dist",
+      "bytes": 2252845056,
+      "files": 4,
+      "method": "Remove-Item -LiteralPath",
+      "removed": true
+    },
+    {
+      "path": "G:\\app\\LR\\tools\\__pycache__",
+      "bytes": 23510,
+      "files": 2,
+      "method": "Remove-Item -LiteralPath",
+      "removed": true
+    },
+    {
+      "path": "G:\\app\\LR\\选片助手\\__pycache__",
+      "bytes": 3852867,
+      "files": 148,
+      "method": "Remove-Item -LiteralPath",
+      "removed": true
+    },
+    {
+      "path": "G:\\app\\LR\\选片助手\\pyinstaller-hooks\\__pycache__",
+      "bytes": 897,
+      "files": 1,
+      "method": "Remove-Item -LiteralPath",
+      "removed": true
+    },
+    {
+      "path": "G:\\app\\LR\\选片助手\\mouse_native\\__pycache__",
+      "bytes": 42058,
+      "files": 7,
+      "method": "Remove-Item -LiteralPath",
+      "removed": true
+    },
+    {
+      "path": "G:\\app\\LR\\更新系统\\__pycache__",
+      "bytes": 112561,
+      "files": 2,
+      "method": "Remove-Item -LiteralPath",
+      "removed": true
+    },
+    {
+      "path": "G:\\app\\LR\\更新系统\\tests\\__pycache__",
+      "bytes": 148500,
+      "files": 7,
+      "method": "Remove-Item -LiteralPath",
+      "removed": true
+    },
+    {
+      "path": "G:\\app\\LR\\更新系统\\scripts\\__pycache__",
+      "bytes": 28628,
+      "files": 3,
+      "method": "Remove-Item -LiteralPath",
+      "removed": true
+    }
+  ],
+  "detachedLinks": [
+    "G:\\app\\LR\\build\\auto-installer-source\\.runtime",
+    "G:\\app\\LR\\build\\auto-installer-source\\.update-private",
+    "G:\\app\\LR\\build\\full-installer-source\\.runtime",
+    "G:\\app\\LR\\build\\full-installer-source\\.update-private",
+    "G:\\app\\LR\\build\\medium-release-source\\.runtime",
+    "G:\\app\\LR\\build\\medium-release-source\\.update-private",
+    "G:\\app\\LR\\build\\rotation-release-source\\.runtime",
+    "G:\\app\\LR\\build\\rotation-release-source\\.update-private",
+    "G:\\app\\LR\\build\\assistant-defaults-release-source\\.runtime",
+    "G:\\app\\LR\\build\\assistant-defaults-release-source\\.update-private"
+  ],
+  "retained": [
+    ".git",
+    ".framekeep",
+    ".runtime",
+    ".update-private",
+    "源码及未提交修改",
+    "D:\\Program Files\\Framekeep 现用安装和业务数据",
+    "项目外其它工作树"
+  ],
+  "errors": [],
+  "deletedBytes": 13404577903,
+  "deletedFiles": 17587,
+  "freeBefore": 342623588352,
+  "freeAfter": 355606327296,
+  "actualFreeDelta": 12982738944
+}

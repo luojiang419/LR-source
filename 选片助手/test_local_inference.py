@@ -11,19 +11,19 @@ from model_providers import Providers
 
 
 class LocalIntegrationTests(unittest.TestCase):
-    def test_cpu_image_budget_and_legacy_timeout_allow_real_photo_recognition(self):
+    def test_multimodal_cpu_fallback_keeps_timeout_and_disables_projector_offload(self):
         from unittest.mock import patch,MagicMock
         with tempfile.TemporaryDirectory() as folder:
             root=Path(folder)
             for name in ('server.exe','model.gguf','mmproj.gguf'):(root/name).touch()
-            config=root/'config.json';config.write_text(json.dumps({'executable':str(root/'server.exe'),'models':{'glm-ocr-local':{'model':str(root/'model.gguf'),'mmproj':str(root/'mmproj.gguf')}}}),'utf8')
+            config=root/'config.json';config.write_text(json.dumps({'executable':str(root/'server.exe'),'models':{'qwen2.5-vl-7b-q4':{'model':str(root/'model.gguf'),'mmproj':str(root/'mmproj.gguf')}}}),'utf8')
             runtime=LocalInference(config,root/'logs');process=MagicMock();process.poll.return_value=None
             with patch('local_inference.subprocess.check_output',side_effect=FileNotFoundError),patch('local_inference.subprocess.Popen',return_value=process) as start,patch('local_inference.own_process',return_value=lambda:None),patch('local_inference.urllib.request.urlopen') as health:
                 health.return_value.__enter__.return_value.status=200
-                with runtime.resolve({'model':'glm-ocr-local','timeout':90}) as provider:
+                with runtime.resolve({'model':'qwen2.5-vl-7b-q4','timeout':90}) as provider:
                     self.assertEqual(provider['timeout'],300);self.assertEqual(provider['gpu_layers'],0)
                 command=start.call_args.args[0]
-                self.assertEqual(command[command.index('--image-max-tokens')+1],'1024');self.assertIn('--no-mmproj-offload',command)
+                self.assertEqual(command[command.index('--image-max-tokens')+1],'4096');self.assertIn('--no-mmproj-offload',command)
                 runtime.close();process.terminate.assert_called_once()
 
     def test_builtin_switch_locks_cards_routes_locally_and_restores_external_after_restart(self):
@@ -33,7 +33,7 @@ class LocalIntegrationTests(unittest.TestCase):
             remote=state['selected']['multimodal'];p.bind('asset_analysis',remote);p.bind('sku_label',remote)
             p.save({'name':'外部 OCR','category':'ocr','protocol':'chat','url':'https://example.com/v1','model':'remote-ocr','select':True})
             original=p.public();enabled=p.set_builtin(True)
-            self.assertTrue(enabled['builtin_enabled']);self.assertEqual(p.selected('ocr')['model'],'glm-ocr-local')
+            self.assertTrue(enabled['builtin_enabled']);self.assertEqual(p.selected('ocr')['model'],'pp-ocrv6-medium-local')
             self.assertEqual(p.purpose('asset_analysis')['model'],'qwen2.5-vl-7b-q4');self.assertEqual(p.purpose('sku_label')['model'],'qwen2.5-vl-7b-q4');self.assertEqual(p.selected('multimodal')['model'],'qwen2.5-vl-7b-q4')
             self.assertEqual(set(enabled['selected']),{'ocr','multimodal'});self.assertEqual(enabled['bindings'],{})
             for operation in [lambda:p.select(remote),lambda:p.delete(remote),lambda:p.bind('asset_analysis',remote),lambda:p.save({'name':'attempt'}),lambda:p.models({'id':remote}),lambda:p.check_inference(p.by_id(remote))]:
@@ -54,7 +54,7 @@ class LocalIntegrationTests(unittest.TestCase):
             self.assertEqual(p.public()['selected'],selected)
             local=p.public()['providers'][-1]
             self.assertFalse(local['key_set']);self.assertNotIn('must-not-persist',p.path.read_text(encoding='utf8'))
-            self.assertEqual(set(p.models({'protocol':'local'})['models']),{'glm-ocr-local','qwen2.5-vl-7b-q4'})
+            self.assertEqual(set(p.models({'protocol':'local'})['models']),{'qwen2.5-vl-7b-q4','pp-ocrv6-small-local','pp-ocrv6-medium-local'})
             with self.assertRaises(ValueError):p.save({'name':'错误','category':'ocr','protocol':'local','model':'qwen2.5-vl-7b-q4'})
 
     def test_existing_qwen_card_is_reenabled_without_rewriting_credentials(self):
@@ -73,7 +73,7 @@ class LocalIntegrationTests(unittest.TestCase):
                 self.assertEqual(server.preparation_groups('/api/providers/test',{'id':pid}),['qwen2.5-vl-7b-q4'])
                 self.assertEqual(server.preparation_groups('/api/analysis/batches',{}),['qwen2.5-vl-7b-q4'])
             p.set_builtin(True)
-            self.assertEqual(p.selected('ocr')['model'],'glm-ocr-local')
+            self.assertEqual(p.selected('ocr')['model'],'pp-ocrv6-medium-local')
             self.assertEqual(p.selected('multimodal')['id'],pid)
             self.assertEqual(len(p.public()['providers']),2)
 

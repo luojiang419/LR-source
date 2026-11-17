@@ -1,0 +1,90 @@
+{
+  "releaseId": "20261104101853",
+  "version": "1.0.0",
+  "published": true,
+  "implementation_commit": "f49c51c",
+  "publication": {
+    "repository": "jiangjiang419/framekeep-updates",
+    "releaseId": "20261104101853",
+    "anonymousVerification": true,
+    "installerUrl": "https://modelscope.cn/api/v1/models/jiangjiang419/framekeep-updates/repo?Revision=master&FilePath=releases%2F1.0.0%2F20261104101853%2FFramekeep-Setup.exe",
+    "packageSize": 276015178,
+    "components": [
+      {
+        "path": "components/52d1df764521fb4fc071665dfdf889c3529c78e5438bfb66029eb19cd29e8ea9/llama-b11773-framekeep-win-x64.zip",
+        "sha256": "52d1df764521fb4fc071665dfdf889c3529c78e5438bfb66029eb19cd29e8ea9",
+        "size": 694127530
+      },
+      {
+        "path": "components/0625fb5c1e75be58a164e14f95aa58a3e5badb859b3d17c952385f3e4a9ff3e8/MicrosoftEdgeWebView2RuntimeInstallerX64.exe",
+        "sha256": "0625fb5c1e75be58a164e14f95aa58a3e5badb859b3d17c952385f3e4a9ff3e8",
+        "size": 214156024
+      }
+    ]
+  },
+  "package_validation": {
+    "passed": true,
+    "snapshot": "G:\\app\\LR\\build\\updates\\1.0.0-20261104101853",
+    "release": "20261104101853",
+    "files": 836,
+    "frozen_modules": 116,
+    "package_size": 276015178,
+    "package_sha256": "c05bc1a84e90cc188a277fbe1b14d755015f0731b4178d658564ba5f6bfb5232",
+    "installer_sha256": "9343efe303c58364772047d22212241f37a5d060adec63599928c67ff904f16c",
+    "installer_size": 14106112
+  },
+  "frozen_regression": {
+    "passed": true,
+    "frozen_modules": 116,
+    "entrypoint_checked": true,
+    "source_mismatches": [],
+    "web_files": 71,
+    "tests": 9,
+    "failures": 0,
+    "errors": 0,
+    "skips": 0
+  },
+  "native_installer": {
+    "passed": true,
+    "files": 836,
+    "unknown_preserved": true,
+    "ready": true,
+    "page_errors": []
+  },
+  "real_photos": {
+    "passed": true,
+    "groups": 4,
+    "photos": 16,
+    "peak_model_requests": 4,
+    "all_visible_seconds": 2.72,
+    "all_written_seconds": 10.595,
+    "fields_correct": true,
+    "pixels_unchanged": true,
+    "originals_unchanged": true,
+    "hints_cleared": true,
+    "page_errors": [],
+    "exit_code": 0
+  },
+  "clients": {
+    "old-public": {
+      "status": "checked",
+      "available": true,
+      "releaseId": "20261104101853",
+      "currentReleaseId": "20261104071740"
+    },
+    "installed-config": {
+      "status": "checked",
+      "available": true,
+      "releaseId": "20261104101853",
+      "currentReleaseId": "20261104071740"
+    },
+    "new-release": {
+      "status": "checked",
+      "available": false,
+      "releaseId": "20261104101853",
+      "currentReleaseId": "20261104101853"
+    }
+  },
+  "production_install_replaced": false,
+  "github_pushed": false
+}

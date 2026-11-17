@@ -1,0 +1,1166 @@
+{
+  "date": "2026-11-04",
+  "base": "697aa5668933783d68eecb2bdddf4a9f315bac4b",
+  "local": 187,
+  "remote": 38,
+  "snapshot_tree": "cde426139bb6d5215cbeff2e8d98b943580865c6",
+  "layout_tree": "11ad0b02ae2a96945a137e3c166f667796d2283e",
+  "snapshot_equivalence": "7ed1cec == 5ab299a (complete tree)",
+  "layout_equivalence": "dfba314 == c44e53d (complete tree)",
+  "historical_docs_only": [
+    "50ca9f8",
+    "31c6082"
+  ],
+  "refs": [
+    {
+      "ref": "refs/heads/backup/main-source-before-multimodal-20261027",
+      "commit": "328c1b9018d4f8408b970dc883918c09b17b6d42",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/chore/verify-integrated-local-20261104",
+      "commit": "697aa5668933783d68eecb2bdddf4a9f315bac4b",
+      "status": "direct_ancestor"
+    },
+    {
+      "ref": "refs/heads/codex/archive-folder-sync",
+      "commit": "f8ee51a5c0281df336857ae9bcacc273f66dd29b",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/codex/archive-sku-demo-v2",
+      "commit": "f5f8c9c7138e3379d8a520a3506dc6105ffc23d0",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/codex/asset-panel-spacing",
+      "commit": "2cfc4d215770b164d53b26ccc5bc4ddb21b4f428",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/codex/asset-workspace-auto-ranges",
+      "commit": "54440667d7616622f87ad335c9ce180ecb10ad46",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/codex/automatic-update-installer",
+      "commit": "e8cb3ca5a06eea1991114288df7b654f98fd1545",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/codex/bottom-tabs-sidebar-browser",
+      "commit": "44f3ff364a7f3ea92ba451f8ccc408ea85d2e712",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/codex/bright-asset-selection",
+      "commit": "7d3d6750b4a73a60b6b1a067c4538810e1d52e52",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/codex/compact-paired-photo-workspaces",
+      "commit": "fff5834e90a7b5b1b4d83ac208a47ca679bdb40e",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/codex/complete-install-components",
+      "commit": "f3f6d468254c5ff18a36da518a9473f1e4ea0a70",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/codex/confirmed-workbench-integration",
+      "commit": "e823362085231b6cfea7892419bad48fe84775e4",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/codex/consolidate-workbench-settings",
+      "commit": "1bb6ba60c0bd022c8c03a599cb69d9f7cf169e80",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/codex/current-shooting-sidebar",
+      "commit": "b13b4c8a60a6d412f27eb6e57b973435feeb36b8",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/codex/dual-sku-embedded",
+      "commit": "8f47437afc8bc0bf80aae403b049af3f93568811",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/codex/fix-monitor-photo-sorting",
+      "commit": "0459eb0b7a7590af8aa4d24383cd4628604b55af",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/codex/floating-thumbnail-slider",
+      "commit": "20ee1202bff6710bac1398cb250bd1ed92296fab",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/codex/folder-context-menu",
+      "commit": "7c5d4a281e9b30197593a79f22d4f5d0bfefd614",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/codex/formal-windows-installation",
+      "commit": "ec5cdf444ca329e9b1624c92d1dde19536579f2e",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/codex/hide-selection-export",
+      "commit": "158233998da1aa94de6adcc56d77aeef113cce89",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/codex/import-source-20261022",
+      "commit": "76bb7cf5494f766b59ff94863ed8b9b3abe79943",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/codex/installer-overwrite",
+      "commit": "04b7e5912d0979eed95decdc5ee400cddf352f2a",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/codex/local-vision-ocr",
+      "commit": "e9a1a70da21912d6220436720a5f3096144c4c28",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/codex/logitech-wireless-adapter",
+      "commit": "9c0c731a03f8ae814067dbdb48078017ca4eee0a",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/codex/low-latency-monitor",
+      "commit": "29a00be950e9f30b8135b43f937014edf5afc4ef",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/codex/minimax-hardcore-preview",
+      "commit": "dc00e6cfaf0f436986cfad0d40c9ee49146beb7d",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/codex/mouse-auto-enable",
+      "commit": "54cd0d21a9277b86b039bd3bf65caa0a29c8ff57",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/codex/mouse-driver-hot-refresh",
+      "commit": "6c73ad48f87044c3741efc7c5489022865a867a5",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/codex/mouse-fixed-star-controls",
+      "commit": "86d091c88a6202051542af87d6ffeaf600cd236c",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/codex/ocr-label-entry",
+      "commit": "21555ec8e054116c574dc68f9b158f3d61732185",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/codex/parsing-task-workspace",
+      "commit": "f90878a2561ea73b2758782fa69f979205cbe34a",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/codex/perf-jpeg-arrival-gap",
+      "commit": "51c4be4a485d7b508612298d36afdda541422616",
+      "status": "direct_ancestor"
+    },
+    {
+      "ref": "refs/heads/codex/perf-sharp-jpeg-first",
+      "commit": "b026c971bb20e4d58e387fe4c1f8c994020b9757",
+      "status": "direct_ancestor"
+    },
+    {
+      "ref": "refs/heads/codex/perf-shutter-display",
+      "commit": "d3d4d296ae7ec4787d2d9f9e5d82e9caf6934623",
+      "status": "direct_ancestor"
+    },
+    {
+      "ref": "refs/heads/codex/perf-startup-catalog",
+      "commit": "6b6e24f904512184e8fb493214d84d01c58ba9fb",
+      "status": "direct_ancestor"
+    },
+    {
+      "ref": "refs/heads/codex/persistent-thumbnail-cache",
+      "commit": "575b050b0f786e2aad4b6b360f00abfdc8a1cc9d",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/codex/preview-escape-grid",
+      "commit": "c4ac60bc6f865e562f0bc04e065e605d059887c2",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/codex/preview-size-slider",
+      "commit": "30924c46b0feb1d485da1a14a9c622c9102f7e38",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/codex/progress-panel-usability",
+      "commit": "d0349d93352fcd9e4f2d054fabee79ee661aa61c",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/codex/progress-right-sidebar",
+      "commit": "1effb72df7fbeee61410c087f82d898cc0d7b9de",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/codex/pull-latest-20261028",
+      "commit": "533a14f9048d180b19ce94a2a5df7c59b1db98d9",
+      "status": "direct_ancestor"
+    },
+    {
+      "ref": "refs/heads/codex/resizable-sidebars",
+      "commit": "daaccc0d2d63e86b6259c6399875c8e699e42e55",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/codex/selection-sidebar-automation",
+      "commit": "5632fcf647563c73b9d827929760797523a702b2",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/codex/shared-archive-ratings",
+      "commit": "6094b7991adf2b9224635bf568f791e550fa15f6",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/codex/shiyin-layout-preview",
+      "commit": "11e1c93728b863aaf4c27da3224cbab1827b1917",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/codex/shiyin-theme-integration",
+      "commit": "9eac81526a9c4db85d038160dd97c3c66fe49ea4",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/codex/shooting-grid-types",
+      "commit": "202b2824246af34b95501cb3c7efa1bfbc967171",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/codex/sidebar-send-lr",
+      "commit": "714b11051397767c08c8eb62bb6c4765ed36a4fd",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/codex/simplify-preview-toolbar",
+      "commit": "c436b1e1b9848a1a12b58857e849b1bc76d0a2e8",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/codex/sku-auto-fill",
+      "commit": "a84a756e14c57b4b16e0f2513156cb1e8a80f5d2",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/codex/sku-auto-toggle",
+      "commit": "39ebc5c8e52d24dac41efc6d816c62e024352dec",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/codex/sku-rating-reset",
+      "commit": "f7f472253c26939f168d4877cdf22a018547bb74",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/codex/sku-search-counts",
+      "commit": "a4f4dc1ba8448a46848c845950086cc3640cc9b0",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/codex/sku-search-sheet-badge",
+      "commit": "41cbff40bb1c93e731fef0478bc69c0987f4ef03",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/codex/sku-search-sheet-buttons",
+      "commit": "90dfc7278ab12f9f85a92b8563f400e4d7b5acda",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/codex/toolbar-navigation-layout",
+      "commit": "3fdadd5a157a09a726000ea56e07cd9d00e3d37b",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/docs/lightroom-preview-analysis",
+      "commit": "67053b3be5446279eb3f4a83e1a18f14ae0872f1",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/feat/api-card-concurrency",
+      "commit": "54e9c806e6c7d0f53e233510bdea05938c85cff3",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/feat/api-endpoint-autocomplete",
+      "commit": "6cf270643d34d72e92fe1f45ca8150851d505cdc",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/feat/archive-analysis-pipeline",
+      "commit": "f6ad88f7709dccd2ccdf34b3ca77a9678e5fd647",
+      "status": "direct_ancestor"
+    },
+    {
+      "ref": "refs/heads/feat/archive-decode-pause",
+      "commit": "4bc5efbd5bae289d9c50d4db5c20b5bedde3b758",
+      "status": "direct_ancestor"
+    },
+    {
+      "ref": "refs/heads/feat/archive-sku-image-viewer",
+      "commit": "145496fa7a619b59327fb2ca7037ce858a166f1a",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/feat/asset-ocr-quick-apply",
+      "commit": "41963776a92e9389175e7bb973058981c514e5af",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/feat/bounded-session-browser",
+      "commit": "885332dac69f07b2e54a89521e1c8336a32a6af5",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/feat/canon-eos-auto-link",
+      "commit": "da182fc57e8c46412ee9292e57f10d80d4244eca",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/feat/canon-eos-integration",
+      "commit": "869de7a04d10c876addfa9f242aee7059ce23489",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/feat/capture-one-cache",
+      "commit": "3b40e131c17924a8ddb2edb9fe6f7e09b4a70465",
+      "status": "direct_ancestor"
+    },
+    {
+      "ref": "refs/heads/feat/compact-preview-cache",
+      "commit": "13af18e33ed621453744d166a5bbc1aed485c163",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/feat/concurrent-latest-label-ocr",
+      "commit": "101e64e3a6d3e7ab6044a480835eba159dcc27a7",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/feat/embedded-preview-default",
+      "commit": "4eef53182825dcc3b7e3c84e494aa90ca59052be",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/feat/fast-startup-animation",
+      "commit": "5a8e4a09f11e2519706398ede1d0aa8b9600b78f",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/feat/full-height-panel-rails",
+      "commit": "871c5a0a1d6dedac4742a145be5229d16a757046",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/feat/gpu-media-acceleration",
+      "commit": "4a2f231b73fdfb1fc494e054cbadc0111b056644",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/feat/index-settings-storage",
+      "commit": "fd01063762da1d9a2d16f5a8f6ea8dff2a055f93",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/feat/install-local-data-compact-metadata",
+      "commit": "657be539f1ad2ccd6fc28bc067166ec51d14a4ad",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/feat/instant-ocr-feedback",
+      "commit": "6dfc1d5ee98e9781fddba5a279c42a37d9e2c9b2",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/feat/integrate-multimodal-main",
+      "commit": "31c60826fda0f0985f828a5031172e035f5b2091",
+      "status": "integrated_via_identical_layout_c44e53d_or_docs_only"
+    },
+    {
+      "ref": "refs/heads/feat/lan-quick-search",
+      "commit": "ecaa9d2817302bc98a48797ae97252ce1eba0879",
+      "status": "direct_ancestor"
+    },
+    {
+      "ref": "refs/heads/feat/multidimensional-auto-and-database-merge",
+      "commit": "92c05fc48b4a4d8d0cf10a784a0fa4eb6a1e3a6b",
+      "status": "direct_ancestor"
+    },
+    {
+      "ref": "refs/heads/feat/multimodal-sku-search",
+      "commit": "dfba314c104e4aad94c0ee9f6a192aff63dada23",
+      "status": "integrated_via_identical_layout_c44e53d_or_docs_only"
+    },
+    {
+      "ref": "refs/heads/feat/native-fast-reference-index",
+      "commit": "15594a50ca6b53606eb1b740cde1011e26bdce3d",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/feat/navigation-task-lights",
+      "commit": "1ad55ed003a506a9ac0c00105c1f2fc41df06512",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/feat/ocr-feedback-overlay",
+      "commit": "d114fec79094cf95de1c501bb5ce8db5d1d2ede3",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/feat/ocr-progress-preload",
+      "commit": "3df886c5f4a305cf972c0b29461bfc705a3c0b56",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/feat/ocr-progress-preview",
+      "commit": "0eb4287843587d12ad41cbd70a62dbc31ca35dc9",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/feat/parallel-image-cache",
+      "commit": "45840a108006d3fd16175d24ec434322e1118e3b",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/feat/preview-rating-position",
+      "commit": "e4b9aa378d329e91e63e70b0778f52d83de8612a",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/feat/progress-column-order",
+      "commit": "f9cdb3f6909c77c73bddfc3a06ccc38269ff452e",
+      "status": "direct_ancestor"
+    },
+    {
+      "ref": "refs/heads/feat/quick-search-card-grid",
+      "commit": "ece2389bbd1c6f4d514653f9afac2e92278e1ddb",
+      "status": "direct_ancestor"
+    },
+    {
+      "ref": "refs/heads/feat/quick-search-details-infinite",
+      "commit": "e84280acb21cacb63ac0d825b5dc190af9d97b8c",
+      "status": "direct_ancestor"
+    },
+    {
+      "ref": "refs/heads/feat/reference-path-and-temp-cache",
+      "commit": "63ca88cc286c9733007a8dc37c28c646ee34f8bb",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/feat/reference-picker-eos-auto-follow",
+      "commit": "f8c8845cb03451f767381f045248cc62e9522a4d",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/feat/reference-result-grid",
+      "commit": "d7abccd97dfc1eca35a33bd02a9fb7c9c80a7771",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/feat/selection-empty-camera",
+      "commit": "6f70e5f89387f5a984e6553395ae5bf7fc97c8f9",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/feat/selection-folders-xmp-ratings",
+      "commit": "5b2f848869e08e637f57272c8474d9d620d8b3f2",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/feat/shooting-document-types",
+      "commit": "ca799b44a73e8019343a5e43adc69ce8af873480",
+      "status": "direct_ancestor"
+    },
+    {
+      "ref": "refs/heads/feat/shooting-label-export-layout",
+      "commit": "2404564d8a99f0d951b6a194d2c64f7931e66e73",
+      "status": "direct_ancestor"
+    },
+    {
+      "ref": "refs/heads/feat/shooting-table-display",
+      "commit": "984bf32819d6d15671ad184515a62f4ec7ebca44",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/feat/sku-document-reconciliation",
+      "commit": "cb98be34f43e7ae7ec6fb6144b7d61047c8e3d89",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/feat/sku-match-rules",
+      "commit": "15e6a704b7da5a775bc0913f3a989bb62ed10c12",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/feat/sku-media-pool",
+      "commit": "18935bca0aa62f1bc2e21a4126947b11072d6876",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/feat/sku-metadata-portability",
+      "commit": "bf496907f8799bcf089fb20d242d05b2dd5b96e1",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/feat/sku-range-correction",
+      "commit": "7b08f38c826d4872fde825f4484560080b9c18da",
+      "status": "direct_ancestor"
+    },
+    {
+      "ref": "refs/heads/feat/split-capture-demo",
+      "commit": "2290cd1a0d4f2a3538db8384dd00c95760dde727",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/feat/split-capture-production",
+      "commit": "06522cf47b1c757166bb865d48063c4c784e7764",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/feat/split-reference-fullscreen",
+      "commit": "b6e7b517985699c90aafb99ac26ba90c3c6df0df",
+      "status": "direct_ancestor"
+    },
+    {
+      "ref": "refs/heads/feat/sqlite-natural-asset-search",
+      "commit": "3abf64dded2752dbea861ebcc85eeb902286a779",
+      "status": "direct_ancestor"
+    },
+    {
+      "ref": "refs/heads/feat/tether-save-destination",
+      "commit": "0b811319a88a9360d04dfda9296da94470e1f061",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/feat/tray-close-startup",
+      "commit": "ff000abfae4a8bf1802d537dca7cd01982d3693f",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/feat/upgrade-cleanup-sku-matching",
+      "commit": "d7942a70d31057a9ded9bf891088a70ce20e1a49",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/feat/video-frame-search",
+      "commit": "82aa8ffe0a052e6d3a96b9a5dcd8eb592f71bcbf",
+      "status": "direct_ancestor"
+    },
+    {
+      "ref": "refs/heads/feature/hardware-rating-demo",
+      "commit": "b65547d651cec5b441886288dc33c2684fe82a76",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/feature/multi-folder-workspace",
+      "commit": "042aba5dcc8242aa013d36e9da2c12d5598d6b0d",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/feature/multinode-sync-demo",
+      "commit": "2929036dc833c6dd29b62f361f873f0bee30dcac",
+      "status": "direct_ancestor"
+    },
+    {
+      "ref": "refs/heads/feature/production-bridge",
+      "commit": "247c172da7395dda2eda63e2648426f392a9de92",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/feature/remove-ai-selection",
+      "commit": "9d0370594e7823a726b880ff9ed9b89ce5dfb101",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/feature/tauri-desktop",
+      "commit": "8fded7add7b11d4c3d5a58d5c5c8463b83e7974d",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/fix/api-key-optional-directories",
+      "commit": "6c5ae59164acafb22a927dbb2774ad3e5ebdb3c3",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/fix/archive-cache-count-validity",
+      "commit": "8600d2bd6ec72360c2e751167101659e675d4488",
+      "status": "direct_ancestor"
+    },
+    {
+      "ref": "refs/heads/fix/archive-cache-display",
+      "commit": "826d8f44ccb04599f00cc04982cdd845efcc9dc6",
+      "status": "direct_ancestor"
+    },
+    {
+      "ref": "refs/heads/fix/archive-decode-control-timeout",
+      "commit": "b6fecdaf4cc5410804c71dc6380e98152b158dd8",
+      "status": "direct_ancestor"
+    },
+    {
+      "ref": "refs/heads/fix/archive-decode-progress",
+      "commit": "9494ebed41c94ef3c313590ea0d77d0aa796d73e",
+      "status": "direct_ancestor"
+    },
+    {
+      "ref": "refs/heads/fix/archive-decode-restart",
+      "commit": "54174f98b849b876f688efe1d93fe816a60b49ca",
+      "status": "direct_ancestor"
+    },
+    {
+      "ref": "refs/heads/fix/archive-design-preview-failures",
+      "commit": "18271d4e00575c67b03a514a681d81d4e2121d6c",
+      "status": "direct_ancestor"
+    },
+    {
+      "ref": "refs/heads/fix/archive-first-paint",
+      "commit": "8f12de0ae893dc40e811c880b96edafcafd5c78b",
+      "status": "direct_ancestor"
+    },
+    {
+      "ref": "refs/heads/fix/archive-folder-latency",
+      "commit": "dbd4ffdab395fc8a5c043a15ff9cc7c045711871",
+      "status": "direct_ancestor"
+    },
+    {
+      "ref": "refs/heads/fix/archive-full-speed-fill",
+      "commit": "122160bb4281d287f24ae0ce7b0882b2f3c76069",
+      "status": "direct_ancestor"
+    },
+    {
+      "ref": "refs/heads/fix/archive-progress-scan-schedule",
+      "commit": "d03476793ff21721bbfe6211840589f496242648",
+      "status": "direct_ancestor"
+    },
+    {
+      "ref": "refs/heads/fix/archive-refresh-persistence",
+      "commit": "4bea408474679c5c4c5df0a493bfeb2e3e656644",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/fix/archive-state-timeout",
+      "commit": "5768d4f31d375f17aa0b587c22677fbde688de58",
+      "status": "direct_ancestor"
+    },
+    {
+      "ref": "refs/heads/fix/archive-viewer-sku-heading",
+      "commit": "1b1f4bdf4f37405376747d67843f2c916b59ef2a",
+      "status": "direct_ancestor"
+    },
+    {
+      "ref": "refs/heads/fix/camera-disconnect-preview",
+      "commit": "5435a6fa78e4c2e891fa4a8c9544c9b777ed584d",
+      "status": "direct_ancestor"
+    },
+    {
+      "ref": "refs/heads/fix/catalog-wal-recovery",
+      "commit": "5769c2b3cf17963c727e5664bae3205f68758032",
+      "status": "direct_ancestor"
+    },
+    {
+      "ref": "refs/heads/fix/catalog-wal-startup",
+      "commit": "bef226e9e6baa00a90f03e9f89152c6a91598288",
+      "status": "direct_ancestor"
+    },
+    {
+      "ref": "refs/heads/fix/engine-first-launch",
+      "commit": "5a8e4a09f11e2519706398ede1d0aa8b9600b78f",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/fix/engine-startup-order",
+      "commit": "da182fc57e8c46412ee9292e57f10d80d4244eca",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/fix/eos-preview-theme-background",
+      "commit": "df2e90935b1c755c4b10ac8561567314e83e6159",
+      "status": "direct_ancestor"
+    },
+    {
+      "ref": "refs/heads/fix/index-progress-and-task-cleanup",
+      "commit": "f2fbe1e6769e08c3c3e006d91c2afc92ddc09590",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/fix/installer-reinstall-recovery",
+      "commit": "154f2ba3a749d7552c6323665d3d7d8fde778508",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/fix/manual-tether-startup",
+      "commit": "570a68c05e49247cbd918c4d4e77b3da31b7464c",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/fix/monitor-tether-file-safety",
+      "commit": "a33655506ed7cc266dd7a6fda864ae4bc80612f0",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/fix/no-source-recovery-folders",
+      "commit": "88a698788c0cf87742eb456eb324497ae3f34a72",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/fix/ocr-direct-input",
+      "commit": "3bf7992c38bfa346365e3c6f52b78ea0da5a3726",
+      "status": "direct_ancestor"
+    },
+    {
+      "ref": "refs/heads/fix/ocr-sku-assignment",
+      "commit": "762df5e308424545697f2f992a64fffdbd4fcec5",
+      "status": "direct_ancestor"
+    },
+    {
+      "ref": "refs/heads/fix/ocr-streaming-progress",
+      "commit": "0ba6f550cac89e71f94db438382d582e2e88aa44",
+      "status": "direct_ancestor"
+    },
+    {
+      "ref": "refs/heads/fix/preserve-monitored-photos",
+      "commit": "eb86d8fa0320e43c4368d2c67d37de6648e48b00",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/fix/preview-transfer-and-sku-sidebar",
+      "commit": "4f18087acfc7e187494ad67ea8f9da2f7e5e255e",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/fix/quick-search-frosted-theme",
+      "commit": "7012d3a292fb90ecef163993506dcbc4efee2dc5",
+      "status": "direct_ancestor"
+    },
+    {
+      "ref": "refs/heads/fix/real-catalog-search-latency",
+      "commit": "8f2cb7e43d44a0057c179ba4206bb0b2fb06b7a4",
+      "status": "direct_ancestor"
+    },
+    {
+      "ref": "refs/heads/fix/reference-index-progress-visible",
+      "commit": "6ee70b9071c569e8c486546d2aca0b18bfaa91e8",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/fix/reference-preview-wheel-crossfade",
+      "commit": "793ad3a173df60d8dc0de0716c5a5b5cf86f6425",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/fix/reference-search-submit",
+      "commit": "2c6b6458d6666060ca584d37c43d5e4c2ec85870",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/fix/retrieval-detail-persistence",
+      "commit": "ad7562c3df151103baad9b0a8606a7a4d5697b38",
+      "status": "direct_ancestor"
+    },
+    {
+      "ref": "refs/heads/fix/selection-thumbnail-rating-flicker",
+      "commit": "7a9dd4e404b1bf723c20c45a16ee8a6ad404e963",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/fix/settings-cache-timeout",
+      "commit": "1983a30e61b50744abdea4e83127cae2b7f3e066",
+      "status": "direct_ancestor"
+    },
+    {
+      "ref": "refs/heads/fix/sharing-toggle-switch",
+      "commit": "67b880b15e590cd4b5c244b4085bc04d9996da68",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/fix/shooting-document-settings",
+      "commit": "c476501e51eb55f2165f7854649f0d3ee5b49c66",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/fix/shooting-image-preview",
+      "commit": "6eb2c36565a75f61f394c1e0c0fce403bbf6487c",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/fix/shooting-progress-stale-skus",
+      "commit": "86cca067c89d04b1e5237627913368993b5012cd",
+      "status": "direct_ancestor"
+    },
+    {
+      "ref": "refs/heads/fix/sku-choice-progress",
+      "commit": "f5c5d1dbfe5d27429e7eb61bcb8544fe33411250",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/fix/sku-search-response",
+      "commit": "9bdff738db371791b90ace761d0e60e0e3119615",
+      "status": "direct_ancestor"
+    },
+    {
+      "ref": "refs/heads/fix/split-search-reference-state",
+      "commit": "64426782428441045c3b9a70d932375e501ff87c",
+      "status": "direct_ancestor"
+    },
+    {
+      "ref": "refs/heads/fix/star-trigger-reliability",
+      "commit": "b4952bcb62cff77e83dac9f349fe4fdc9e0075e4",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/fix/startup-initialization-latency",
+      "commit": "3c2a5d6a0398a16324ed314e31868d3a3b82e518",
+      "status": "direct_ancestor"
+    },
+    {
+      "ref": "refs/heads/fix/two-star-ocr-stall",
+      "commit": "572b83883cf64ed6e1bb4c2a8c5e7dfcb486d04c",
+      "status": "direct_ancestor"
+    },
+    {
+      "ref": "refs/heads/fix/two-star-review-sidebar",
+      "commit": "9726ce789d4fe0417dfd62f317729e5d9349819c",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/fix/updater-close-before-install",
+      "commit": "f0c727a589c1f030e93eb95e2b96b21b30e263eb",
+      "status": "direct_ancestor"
+    },
+    {
+      "ref": "refs/heads/fix/workbench-import-preview",
+      "commit": "f701bfc5e08a7029de1b965c7a58e93fb3594005",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/perf/archive-startup-thumbnails",
+      "commit": "759a268b0c61e2874d2fb5ad68aa4ba94877ff5a",
+      "status": "direct_ancestor"
+    },
+    {
+      "ref": "refs/heads/perf/sku-library-instant",
+      "commit": "697aa5668933783d68eecb2bdddf4a9f315bac4b",
+      "status": "direct_ancestor"
+    },
+    {
+      "ref": "refs/heads/perf/sku-library-startup",
+      "commit": "697aa5668933783d68eecb2bdddf4a9f315bac4b",
+      "status": "direct_ancestor"
+    },
+    {
+      "ref": "refs/heads/public/source-snapshot",
+      "commit": "c44e53d4ed8ab97df24fc97f152ba5e54cc2dbb1",
+      "status": "direct_ancestor"
+    },
+    {
+      "ref": "refs/heads/refactor/settings-category-panels",
+      "commit": "2d555dfc16727688a70dae3e2a0b4d6ee6bf7f3f",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/release/modelscope-20261022",
+      "commit": "8885f50b94caa8cba65f97a39cde0001e5521821",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/release/modelscope-20261022-api-manual-tether",
+      "commit": "e94060fafd9c10d032a06ac77f9d37bfe2277d63",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/release/modelscope-20261022-latest",
+      "commit": "8d10dd8e47e5fd6f1cd9d92f3e2804c9d9ab0a63",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/release/modelscope-20261022-sku-preview",
+      "commit": "688b6ccd787a9451472cf3b6df8075ef4f7912f8",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/release/modelscope-20261022-table",
+      "commit": "14e6eee464d392230b315765d947932f084f1e52",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/release/modelscope-20261030-analysis",
+      "commit": "0c17efb324c2db3002f5eaa0b6592fc6147582b3",
+      "status": "direct_ancestor"
+    },
+    {
+      "ref": "refs/heads/release/modelscope-20261103-sku",
+      "commit": "6979553f49dd7821ff0d8f6128e0139a042006e2",
+      "status": "direct_ancestor"
+    },
+    {
+      "ref": "refs/heads/release/modelscope-embedded-preview",
+      "commit": "2e6fff6a7a4a1868983aff9fb61216f3d379e5da",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/release/modelscope-index-storage",
+      "commit": "574b2b6dd843e21164c55f4fe563dd5fd8b5383d",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/release/modelscope-instant-ocr",
+      "commit": "987bdb4472f0352569ee7bc3ac2e4700cf026ff0",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/release/modelscope-no-source-recovery",
+      "commit": "9200676df09336327c3329add7c69fa94a64a161",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/release/modelscope-rating-reset",
+      "commit": "5c00050e70ee1aa8985fbe745fe925da21563884",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/release/modelscope-settings-sku",
+      "commit": "cc46d4d2282c73587c06068f2ab2fe530d100082",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/heads/release/modelscope-upgrade-cleanup-sku",
+      "commit": "481d26c640b60d224819c23c478a458d57ef8149",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/remotes/origin/HEAD",
+      "commit": "9d0370594e7823a726b880ff9ed9b89ce5dfb101",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/remotes/origin/codex/api-model-discovery",
+      "commit": "7918c8dba5ec953c0f2a868a11a337236e92d169",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/remotes/origin/codex/archive-folder-sync",
+      "commit": "7bd5cc649ce103136c18251c4f1835be18286374",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/remotes/origin/codex/asset-archive",
+      "commit": "68fd1d885ccea943f3a93963fd36c5e469163600",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/remotes/origin/codex/asset-archive-design",
+      "commit": "953589dc8b175866410f2f15575bb888c6d3c3ba",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/remotes/origin/codex/bezier-ui-motion",
+      "commit": "af5d8729222a8d7e777d557d17bee6ffe203737c",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/remotes/origin/codex/bright-asset-selection",
+      "commit": "3428d1600040db31b10788d8b3027984094a5df7",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/remotes/origin/codex/centered-top-tabs",
+      "commit": "2ba245e0792c7ab907f13b9052a85ef7f5cbe572",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/remotes/origin/codex/compact-shooting-progress",
+      "commit": "c933ed00f892e8d6da372572fc945318c95ddfe9",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/remotes/origin/codex/docs-mouse-driver",
+      "commit": "bbdddcb3cab591a230488bdab525cab5be23359a",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/remotes/origin/codex/export-shooting-record",
+      "commit": "8931d70d81f52538da66e54975c1fadd9bf0148c",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/remotes/origin/codex/jpg-raw-reconcile",
+      "commit": "1dfa88ae29f4a67315673c4da62b19ac25ad9964",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/remotes/origin/codex/live-collapsible-workspace",
+      "commit": "f78e90faa22243c9ac5503ebbe220b8bcefffa47",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/remotes/origin/codex/live-folder-rating",
+      "commit": "b995c387024dac124cd6209d4f7c10dca5db6325",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/remotes/origin/codex/million-asset-search",
+      "commit": "a866c3f3f0c3e0ab6c310d31e0aee1147b0adf4c",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/remotes/origin/codex/mouse-driver-hot-refresh",
+      "commit": "6c73ad48f87044c3741efc7c5489022865a867a5",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/remotes/origin/codex/perf-startup-catalog",
+      "commit": "e75a31280a88d60ec236649ff915a8c8c36c6a20",
+      "status": "direct_ancestor"
+    },
+    {
+      "ref": "refs/remotes/origin/codex/remote-mouse-options",
+      "commit": "f04f44745937aef51ae6fd6426dbb16c420cdcea",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/remotes/origin/codex/shooting-progress-tabs",
+      "commit": "01768fd46342b0483008eb1e1077f6ff3e7a0b77",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/remotes/origin/codex/sku-auto-toggle",
+      "commit": "0bdc9a8295caacfb901ec7697f298999cbeb8418",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/remotes/origin/codex/sku-ocr-reconciliation",
+      "commit": "c8364a27bb1d8b642f11bc4f8f2fb6693af0c993",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/remotes/origin/codex/sku-sheet-tabs-numbering",
+      "commit": "735ddd9651c80d26afadd65bc3b188f09dc41ac1",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/remotes/origin/codex/wireless-mouse-rating",
+      "commit": "d2c56e0e40f75199c24998cc70a24664eface5df",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/remotes/origin/feat/bounded-session-browser",
+      "commit": "885332dac69f07b2e54a89521e1c8336a32a6af5",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/remotes/origin/feat/lan-quick-search",
+      "commit": "f9cdb3f6909c77c73bddfc3a06ccc38269ff452e",
+      "status": "direct_ancestor"
+    },
+    {
+      "ref": "refs/remotes/origin/feature/hardware-rating-demo",
+      "commit": "b65547d651cec5b441886288dc33c2684fe82a76",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/remotes/origin/feature/image-pan-zoom",
+      "commit": "6ae9ee5b2d2ce42fe4532942e3e36dbaa1208fb8",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/remotes/origin/feature/local-build-test",
+      "commit": "0ef77125649f0d1e0eebe6fedc747fb0d52cb9d1",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/remotes/origin/feature/multi-folder-workspace",
+      "commit": "042aba5dcc8242aa013d36e9da2c12d5598d6b0d",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/remotes/origin/feature/production-bridge",
+      "commit": "247c172da7395dda2eda63e2648426f392a9de92",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/remotes/origin/feature/raw-thumbnail-priority",
+      "commit": "a254dee2b154aeca8fff5fca4c4974b5ab900bd8",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/remotes/origin/feature/remove-ai-selection",
+      "commit": "9d0370594e7823a726b880ff9ed9b89ce5dfb101",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/remotes/origin/feature/remove-burst-sidebar",
+      "commit": "01b6a159b1d978a4d7bab1550e457a6e7e99487d",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/remotes/origin/feature/tauri-desktop",
+      "commit": "8fded7add7b11d4c3d5a58d5c5c8463b83e7974d",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/remotes/origin/fix/no-source-recovery-folders",
+      "commit": "81395e15a4bddaf6cce1a2db10d8884742f87e5b",
+      "status": "integrated_via_identical_snapshot_5ab299a"
+    },
+    {
+      "ref": "refs/remotes/public/HEAD",
+      "commit": "cb124540a0c455813eea56f9a19a80e497e1b927",
+      "status": "direct_ancestor"
+    },
+    {
+      "ref": "refs/remotes/public/codex/sync-document-shooting-progress",
+      "commit": "c9eb1d94bdc5d6b3a5c3aa8f7d199a9224ccab68",
+      "status": "direct_ancestor"
+    },
+    {
+      "ref": "refs/remotes/public/main",
+      "commit": "cb124540a0c455813eea56f9a19a80e497e1b927",
+      "status": "direct_ancestor"
+    }
+  ],
+  "missing": [],
+  "worktrees": [
+    {
+      "path": "G:/app/LR",
+      "status": "M \"\\345\\274\\200\\345\\217\\221\\344\\273\\273\\345\\212\\241/036-LR\\345\\274\\217\\350\\265\\204\\344\\272\\247\\345\\275\\222\\346\\241\\243\\344\\270\\216SKU\\347\\264\\242\\345\\274\\225.md\"\n M \"\\345\\274\\200\\345\\217\\221\\344\\273\\273\\345\\212\\241/115-\\346\\234\\200\\346\\226\\260\\344\\270\\273\\351\\241\\271\\347\\233\\256\\351\\233\\206\\346\\210\\220\\345\\244\\232\\346\\250\\241\\346\\200\\201\\345\\274\\200\\345\\217\\221\\345\\212\\237\\350\\203\\275.md\"\n M \"\\345\\274\\200\\345\\217\\221\\344\\273\\273\\345\\212\\241/143-\\350\\265\\204\\344\\272\\247\\345\\275\\222\\346\\241\\243\\347\\273\\237\\350\\256\\241\\350\\266\\205\\346\\227\\266\\344\\277\\256\\345\\244\\215.md\"\n?? EDSDK132011CD(13.20.11)/\n?? \"\\351\\224\\231\\350\\257\\257/\""
+    },
+    {
+      "path": "D:/data/codex/tree/split-capture-demo/LR",
+      "status": ""
+    },
+    {
+      "path": "D:/data/codex/work/multimodal-sku-search/LR",
+      "status": ""
+    },
+    {
+      "path": "G:/app/LR/build/shooting-documents/commit-worktree",
+      "status": ""
+    },
+    {
+      "path": "G:/app/LR/build/sku-startup/worktree",
+      "status": ""
+    }
+  ],
+  "network": "No fetch/pull/push: daily sync marker is 2026-11-04",
+  "passed": true
+}

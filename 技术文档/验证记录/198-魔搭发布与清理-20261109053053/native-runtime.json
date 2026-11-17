@@ -1,0 +1,18 @@
+{
+  "checks": [
+    {
+      "path": "ascii",
+      "native_exit": 0,
+      "worker_exit": 0,
+      "cache_repaired": true
+    },
+    {
+      "path": "中文 空格",
+      "native_exit": 0,
+      "worker_exit": 0,
+      "cache_repaired": true
+    }
+  ],
+  "corrupt_archive_blocked_before_worker": true,
+  "installer_sha256": "d299b79e6d2e937200b814c7d32038972f60de23fe54da33d442033bac06d665"
+}

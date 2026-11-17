@@ -67,7 +67,7 @@ class Demo:
         while store.jobs[job]['status'] not in ('completed','failed') and time.monotonic()<deadline:time.sleep(.05)
         if store.jobs[job]['status']!='completed':raise ValueError('真实照片索引失败：'+str(store.jobs[job]))
         sid=store.jobs[job]['session_id'];session=store.session(sid);records=store.records(sid)
-        # 明确保留原图真实星级，不使用末帧推荐，也不填造 SKU。
+        # 明确保留原图真实星级，不使用SHIYING推荐，也不填造 SKU。
         state={**session['state'],'overrides':{r['id']:r.get('existingRating',0) for r in records},'view':'grid','filter':'all'}
         store.save(sid,session['revision'],state);archive=AssetArchive(store,autostart=False);link=RawReconcile(archive,autostart=False)
         link.index_sources(sid);link.add_target(str(target.parents[1]));link.close();archive.close()
@@ -86,7 +86,7 @@ class Demo:
     def open(self):
         if self.online():return {'ok':True,'workbench':ENGINE_URL}
         env={k:v for k,v in os.environ.items() if not k.startswith('FRAMEKEEP_')}
-        secret=secrets.token_urlsafe(24);app=ROOT/'dist/末帧选片'
+        secret=secrets.token_urlsafe(24);app=ROOT/'dist/SHIYING 数字资产'
         env.update(FRAMEKEEP_DATA=str(self.run/'data'),FRAMEKEEP_APP_ROOT=str(app),FRAMEKEEP_CONFIG=str(self.run/'no-provider-config.md'),FRAMEKEEP_DESKTOP_TOKEN=secret)
         with (self.run/'引擎日志.txt').open('a',encoding='utf-8') as log:self.engine=subprocess.Popen([str(app/'engine/framekeep-engine.exe'),'--port',str(ENGINE_PORT),'--no-browser'],cwd=app,env=env,stdout=log,stderr=log,creationflags=subprocess.CREATE_NO_WINDOW)
         write_json(BASE/'engine-control.json',{'pid':self.engine.pid,'secret':secret})

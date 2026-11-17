@@ -65,7 +65,7 @@ class VideoPlayback:
         for session in sessions:
             self.stop(session)
 
-    def _start(self, item_id, session, start):
+    def _start(self, item_id, session, start, end=None, expected_fp=None):
         if not re.fullmatch(r'[A-Za-z0-9_-]{8,80}',str(session)):
             raise ValueError('视频播放标识无效')
         try:
@@ -75,12 +75,20 @@ class VideoPlayback:
         if not math.isfinite(start) or not 0<=start<=864000:
             raise ValueError('视频播放位置无效')
         row = self.catalog.item(item_id)
+        if expected_fp is not None and expected_fp!=row['fingerprint']:raise ValueError('视频文件已变化，请重新搜索')
+        if end is not None:
+            try:end=float(end)
+            except (TypeError,ValueError):raise ValueError('片段结束时间无效') from None
+            if not math.isfinite(end) or not start<end<=864000:raise ValueError('片段结束时间无效')
         root = Path(self.catalog._root(row['root'])['path'])
         path = Path(row['path'])
         if row['media_type']!='video':
             raise ValueError('所选素材不是视频')
         if not row['online'] or not path.is_file():
             raise ValueError('视频已离线或不可访问，请检查原文件及网络连接')
+        if expected_fp is not None:
+            stat=path.stat()
+            if stat.st_size!=row['size'] or abs(stat.st_mtime-row['modified'])>.001:raise ValueError('视频文件已变化，请刷新归档')
         try:
             path.resolve(strict=True).relative_to(root.resolve(strict=True))
         except (ValueError,OSError):
@@ -89,7 +97,8 @@ class VideoPlayback:
         if not ffmpeg:
             raise ValueError('视频解码组件未就绪，请重新安装视频组件')
         from gpu_video import playback_candidates
-        candidates=playback_candidates(path,start,ffmpeg,find_tool('ffprobe'))
+        seek_start=start+(float(row.get('video_offset_ms') or 0)/1000 if end is not None else 0)
+        candidates=playback_candidates(path,max(0,seek_start),ffmpeg,find_tool('ffprobe'))
         with self.lock:
             if self.closed:
                 raise ValueError('视频播放服务已关闭')
@@ -107,6 +116,7 @@ class VideoPlayback:
             command=[tool,'-nostdin','-hide_banner','-loglevel','error',*inputs,
                      '-map','0:v:0','-map','0:a:0?','-sn','-dn',*filters,*encoder,'-fpsmax','30','-g','30',
                      '-c:a','aac','-ac','2','-b:a','160k','-max_muxing_queue_size','1024',
+                     *(['-t',f'{end-start:.3f}'] if end is not None else []),
                      '-movflags','+frag_keyframe+empty_moov+default_base_moof','-frag_duration','500000',
                      '-avoid_negative_ts','make_zero','-flush_packets','1','-f','mp4','pipe:1']
             with self.lock:
@@ -134,9 +144,9 @@ class VideoPlayback:
             job.update(status='failed',error='视频无法解码，文件可能损坏或编码暂不受支持。'+''.join(job['stderr'])[-700:])
         return job
 
-    def stream(self, handler, item_id, session, start=0):
+    def stream(self, handler, item_id, session, start=0, end=None, expected_fp=None):
         try:
-            job = self._start(item_id,session,start)
+            job = self._start(item_id,session,start,end,expected_fp)
         except ValueError as error:
             with self.lock:
                 if re.fullmatch(r'[A-Za-z0-9_-]{8,80}',str(session)) and session not in self.jobs:

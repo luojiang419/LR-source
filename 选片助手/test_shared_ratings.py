@@ -84,6 +84,15 @@ class SharedRatingTests(unittest.TestCase):
             decorated=self.archive.ratings.decorate(rows)
         self.assertEqual({row['rating'] for row in decorated},{4})
 
+    def test_session_cache_reuses_unchanged_ratings_and_observes_clear(self):
+        cid=self.add('IMG_0001.JPG');session=self.store.session(self.sid);records=self.store.records(self.sid)
+        self.archive.ratings.set([self.paths[0]],4)
+        self.assertEqual(self.archive.ratings.session(session,records)['sharedRatings'][cid],4)
+        with patch.object(self.archive.ratings,'decorate',side_effect=AssertionError('未变评级不应重复构建')):
+            self.assertEqual(self.archive.ratings.session(session,records)['sharedRatings'][cid],4)
+        self.archive.ratings.set([self.paths[0]],0)
+        self.assertEqual(self.archive.ratings.session(session,records)['sharedRatings'][cid],0)
+
     def test_pair_sharing_without_same_name_cross_directory_and_read_only(self):
         self.add('IMG_0001.JPG')
         raw=self.live/'IMG_0001.CR3';raw.write_bytes(b'pair-fixture')
@@ -147,6 +156,7 @@ class SharedRatingTests(unittest.TestCase):
                     page.locator('#asset-archive-open').click()
                     card=page.locator('#catalog-grid .catalog-card').filter(has=page.locator('img[alt="IMG_0001.JPG"]'))
                     card.wait_for();self.assertEqual(card.locator('.photo-rating-badge').inner_text(),'★★★');card.click()
+                    page.locator('#capture-edit').click();page.wait_for_function('()=>document.getElementById("capture-edit").textContent==="结束编辑并交接"')
                     page.locator('[data-catalog-rating="5"]').click()
                     page.wait_for_function('()=>document.getElementById("catalog-rating-status").textContent==="已保存 5 星"')
                     self.assertEqual(card.locator('.photo-rating-badge').inner_text(),'★★★★★')

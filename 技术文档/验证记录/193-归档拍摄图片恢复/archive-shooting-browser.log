@@ -1,0 +1,7 @@
+test_manual_choice_updates_document_and_library_with_first_product_image (test_document_reconciliation.DocumentTests.test_manual_choice_updates_document_and_library_with_first_product_image) ... ok
+test_browser_document_picture_after_status_and_preview (test_document_reconciliation.DocumentTests.test_browser_document_picture_after_status_and_preview) ... ok
+
+----------------------------------------------------------------------
+Ran 2 tests in 11.159s
+
+OK

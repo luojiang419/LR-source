@@ -23,6 +23,8 @@ from urllib.request import Request, build_opener, HTTPRedirectHandler, ProxyHand
 from asset_catalog import AssetCatalog, MEDIA_EXTENSIONS, _id, archive_folder, archive_path, media_format, media_type, pair_key
 from reference_cache import ReferenceCache
 from native_directory_index import iter_tree_records, ntfs_candidates, DirectoryChanges
+WATCH_RETRY_SECONDS=60
+RECONCILE_RETRY_SECONDS=30
 from archive_resources import INDEX_WORKERS
 from reference_storage import AccessGate, ReferenceStorage, storage_access
 from file_safety import atomic_write
@@ -106,18 +108,17 @@ class SharedArchiveStorage:
 
 
 class ReferenceCatalog(AssetCatalog):
-    def __init__(self, data, protected, stopped, *, fast_index=None):
-        super().__init__(data, fast_index=fast_index)
+    def __init__(self, data, protected, stopped, *, fast_index=None, wait_background=None):
+        super().__init__(data, fast_index=fast_index, keep_wal_open=True)
         self.protected, self.stopped = protected, stopped
+        self.wait_background=wait_background or (lambda root_id:None)
         self.previews = protected / 'catalog_previews'
         from video_preview import VideoPreview
         self.video = VideoPreview(protected)
-        # 保持 WAL 生命周期，避免每个小批次关闭最后连接时反复 checkpoint。
-        self._anchor=sqlite3.connect(self.db,check_same_thread=False)
-        self._anchor.execute('PRAGMA journal_mode').fetchone()
         self._progress_lock=threading.Lock();self._directory_progress={}
 
     def store_records(self, root_id, records, epoch=None):
+        self.wait_background(root_id)
         base=Path(self._root(root_id)['path']);accepted=[];now=time.time()
         with self.connect() as c:excluded=[row[0] for row in c.execute('SELECT folder FROM exclusions WHERE root=?',(root_id,))]
         for record in records:
@@ -130,18 +131,24 @@ class ReferenceCatalog(AssetCatalog):
             extension=path.suffix.lower()
             accepted.append((_id(str(path).casefold()),root_id,str(path),relative,archive_folder(relative),path.name,extension,size,modified/1e9,fingerprint,pair_key(path),media_type(extension),media_format(extension),now))
         if not accepted:return
+        self.wait_background(root_id)
         with self.connect() as c:
             root=c.execute('SELECT scan_epoch,removed FROM roots WHERE id=?',(root_id,)).fetchone()
             if not root or root['removed']:raise InterruptedError('参考位置已移除')
             current=root['scan_epoch'] if epoch is None else epoch
+            previous={row['path']:row['fingerprint'] for row in c.execute(
+                'SELECT path,fingerprint FROM items WHERE path IN ('+','.join('?' for _ in accepted)+')',
+                [row[2] for row in accepted])}
             c.executemany('''INSERT INTO items(id,root,path,relative,folder,name,extension,size,modified,fingerprint,pair_key,media_type,media_format,last_seen,scan_epoch)
                 VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET
-                path=excluded.path,relative=excluded.relative,folder=excluded.folder,name=excluded.name,size=excluded.size,modified=excluded.modified,
+                root=excluded.root,path=excluded.path,relative=excluded.relative,folder=excluded.folder,name=excluded.name,size=excluded.size,modified=excluded.modified,
                 fingerprint=excluded.fingerprint,pair_key=excluded.pair_key,media_type=excluded.media_type,media_format=excluded.media_format,online=1,last_seen=excluded.last_seen,scan_epoch=excluded.scan_epoch''',
                 [(*row,current) for row in accepted])
-        self.queue_previews({row[10] for row in accepted})
+        changed={row[10] for row in accepted if previous.get(row[2])!=row[9]}
+        if changed:self.queue_previews(changed)
 
     def scan_with_progress(self, root_id, report, expected_total=0):
+        self.wait_background(root_id)
         base=Path(self._root(root_id)['path']);scan_metadata={}
         directory_progress=(0,1)
         with self._progress_lock:self._directory_progress[root_id]=directory_progress
@@ -195,6 +202,7 @@ class ReferenceCatalog(AssetCatalog):
                     self.store_records(root_id,batch,epoch);batch.clear();report('indexing',max(done,len(seen)),expected_total)
             if self.stopped():raise InterruptedError('参考索引已暂停')
             if batch:self.store_records(root_id,batch,epoch)
+            self.wait_background(root_id)
             with self.connect() as c:
                 c.execute('UPDATE items SET online=0 WHERE root=? AND scan_epoch<>?',(root_id,epoch))
                 c.execute("UPDATE roots SET scanned=?,status='ready' WHERE id=?",(time.time(),root_id))
@@ -213,7 +221,6 @@ class ReferenceCatalog(AssetCatalog):
             if scan_metadata is not None:scan_metadata[str(path)]=record
             yield path
 
-    def close(self):self._anchor.close();super().close()
 
 
 class ReferenceLibrary:
@@ -234,6 +241,7 @@ class ReferenceLibrary:
         self.index_active=set();self.index_pool=ThreadPoolExecutor(max_workers=self.index_workers,thread_name_prefix='native-reference-index')
         self.delta_pool=ThreadPoolExecutor(max_workers=self.index_workers,thread_name_prefix='reference-delta')
         self.delta_active=set();self.delta_pending={};self.watchers={};self.watch_checked={};self.watch_failed={}
+        self.reconcile_again=set();self.reconcile_retry={}
         self.folder_refresh = {}
         self.stopping = threading.Event()
         self.condition = threading.Condition(self.lock)
@@ -250,9 +258,12 @@ class ReferenceLibrary:
         with self.condition:
             if self.started or self.stopping.is_set():return
             self.started=True
-        self.thread.start()
+        demand=bool(getattr(self.shared_catalog,'visits',None))
+        if not demand:
+            self.thread.start()
         self.watch_thread.start()
         for root in self.config['roots']:
+            if demand:continue
             if not root.get('removed') and (self.shared_catalog is None or not root.get('native_complete') or not self._shared_root_exists(root['id'])):
                 self.enqueue(root['id'])
         if self.config['sharing'].get('enabled'):
@@ -330,8 +341,10 @@ class ReferenceLibrary:
                 self.storage.require_available()
                 stopped = (lambda: self.stopping.is_set() or self.storage.pausing.is_set()) if self.shared_catalog is not None else (lambda: self.stopping.is_set() or cancel.is_set() or self.storage.pausing.is_set())
                 catalog = ReferenceCatalog(self.shared_catalog.data if self.shared_catalog is not None else self.storage.path / root_id,
-                                         self.data, stopped, fast_index=self.shared_catalog.fast_index if self.shared_catalog is not None else None)
+                                         self.data, stopped, fast_index=self.shared_catalog.fast_index if self.shared_catalog is not None else None,
+                                         wait_background=self._wait_for_analysis)
                 if self.shared_catalog is not None:catalog.video=self.shared_catalog.video
+                else:catalog.wal_maintenance.start()
                 catalog.storage_paths=lambda:[self.storage.path,*([Path(self.storage.previous)] if self.storage.previous else [])]
                 if self.search:
                     catalog.discovery = ScopedDiscovery(self.search, self.data, stopped)
@@ -351,6 +364,19 @@ class ReferenceLibrary:
 
     def enqueue(self, root_id):
         self._root(root_id)
+        if getattr(self.shared_catalog,'visits',None):
+            root=self._root(root_id)
+            with self.shared_catalog.connect() as c:
+                current=c.execute('SELECT removed FROM roots WHERE id=?',(root_id,)).fetchone()
+                if current is None:c.execute('INSERT INTO roots(id,path,created) VALUES(?,?,?)',(root_id,root['path'],time.time()))
+                elif current['removed']:c.execute('UPDATE roots SET removed=0 WHERE id=?',(root_id,))
+            with self.condition:
+                if self.stopping.is_set():return {'root_id':root_id,'queued':False,'mode':'visited'}
+                if root_id in self.index_active:self.reconcile_again.add(root_id)
+                else:
+                    self.index_active.add(root_id)
+                    self.index_pool.submit(self._reconcile_visited,root_id)
+            return {'root_id':root_id,'queued':True,'mode':'visited'}
         with self.condition:
             self.cancellations.setdefault(root_id, threading.Event()).clear()
             if root_id not in self.pending:
@@ -359,8 +385,22 @@ class ReferenceLibrary:
                 self.condition.notify()
         return {'root_id': root_id, 'queued': True}
 
+    def _analysis_pending(self):
+        scheduler=getattr(self.warmer,'scheduler',None)
+        return bool(scheduler and scheduler.background_blocked())
+
+    def _wait_for_analysis(self,root_id):
+        while True:
+            cancel=self.cancellations.get(root_id)
+            if self.stopping.is_set() or self.storage.pausing.is_set() or cancel and cancel.is_set():
+                raise InterruptedError('参考目录索引已暂停或取消')
+            if not self._analysis_pending():return
+            self.stopping.wait(.1)
+
     def _run(self):
         while not self.stopping.is_set():
+            if self._analysis_pending():
+                self.stopping.wait(.2);continue
             with self.condition:
                 self.condition.wait_for(lambda:self.stopping.is_set() or len(self.index_active)<self.index_workers and any(root not in self.index_active for root in self.queue))
                 if self.stopping.is_set():return
@@ -385,6 +425,7 @@ class ReferenceLibrary:
                 root['progress'] = {'phase': 'indexing', 'done': 0, 'total': 0, 'percent': 0}
                 self.save()
             try:
+                self._wait_for_analysis(root_id)
                 catalog = self.catalog(root_id)
                 def report(phase, done, total):
                     with self.lock:
@@ -405,6 +446,7 @@ class ReferenceLibrary:
                     return
                 with self.lock:root.update(index_source='native',native_attempted_at=time.time())
                 catalog.scan_with_progress(root_id, report, root.get('native_file_count',0))
+                self._wait_for_analysis(root_id)
                 with catalog.connect() as connection:
                     count = connection.execute('SELECT COUNT(*) FROM capture_items WHERE root=?', (root_id,)).fetchone()[0]
                 with self.lock:
@@ -425,6 +467,24 @@ class ReferenceLibrary:
         finally:
             with self.condition:self.index_active.discard(root_id);self.condition.notify_all()
 
+    def _reconcile_visited(self,root_id):
+        from catalog_file_changes import reconcile
+        try:
+            reconcile(self,root_id)
+            with self.lock:self.reconcile_retry.pop(root_id,None)
+        except (OSError,ValueError,sqlite3.Error) as error:
+            with self.lock:
+                self.reconcile_retry[root_id]=time.monotonic()+RECONCILE_RETRY_SECONDS
+                root=next((root for root in self.config['roots'] if root['id']==root_id),None)
+                if root is not None:root['monitor_error']=str(error)[:240];self.save()
+        finally:
+            with self.condition:
+                self.index_active.discard(root_id)
+                again=root_id in self.reconcile_again;self.reconcile_again.discard(root_id)
+                self.condition.notify_all()
+            if again and not self.stopping.is_set():
+                with suppress(ValueError):self.enqueue(root_id)
+
     def _watch_changes(self):
         try:
             while not self.stopping.wait(.15):
@@ -434,12 +494,14 @@ class ReferenceLibrary:
                     if root_id not in ids:self.watchers.pop(root_id).close()
                 for root in roots:
                     root_id=root['id'];now=time.monotonic()
-                    if root_id not in self.watchers and now-self.watch_failed.get(root_id,-120)>60:
+                    if root_id not in self.watchers and now-self.watch_failed.get(root_id,-120)>WATCH_RETRY_SECONDS:
                         try:
                             self.watchers[root_id]=DirectoryChanges(root['path'])
-                            if root_id in self.watch_failed:self.enqueue(root_id)
+                            if root_id in self.watch_failed or getattr(self.shared_catalog,'visits',None):self.enqueue(root_id)
                             self.watch_failed.pop(root_id,None)
-                        except OSError:self.watch_failed[root_id]=now
+                        except OSError:
+                            self.watch_failed[root_id]=now
+                            if getattr(self.shared_catalog,'visits',None):self.enqueue(root_id)
                     watcher=self.watchers.get(root_id)
                     if watcher:
                         change=watcher.poll()
@@ -447,7 +509,11 @@ class ReferenceLibrary:
                             with self.lock:self.delta_pending.pop(root_id,None)
                             self.enqueue(root_id)
                         elif change['paths']:
-                            with self.lock:self.delta_pending.setdefault(root_id,set()).update(change['paths'])
+                            with self.lock:
+                                pending=self.delta_pending.setdefault(root_id,set());pending.update(change['paths'])
+                                overflow=len(pending)>4096
+                                if overflow:self.delta_pending.pop(root_id,None)
+                            if overflow:self.enqueue(root_id)
                         if not watcher.active:
                             watcher.close();self.watchers.pop(root_id,None);self.watch_failed[root_id]=now
                     # 原生通知用于实时更新；定期后台对账覆盖漏记及程序关闭期间的变化。
@@ -455,6 +521,8 @@ class ReferenceLibrary:
                     interval=21600 if watcher and watcher.active else 1800
                     if now-due>interval and root_id not in self.index_active:
                         self.watch_checked[root_id]=now;self.enqueue(root_id)
+                    if self.reconcile_retry.get(root_id,float('inf'))<=now and root_id not in self.index_active:
+                        self.reconcile_retry.pop(root_id,None);self.enqueue(root_id)
                     with self.lock:
                         changes=self.delta_pending.get(root_id)
                         if changes and root_id not in self.delta_active and root_id not in self.index_active:
@@ -467,6 +535,10 @@ class ReferenceLibrary:
     @storage_access
     def _apply_changes(self,root_id,changes):
         try:
+            if getattr(self.shared_catalog,'visits',None):
+                from catalog_file_changes import apply_changes
+                apply_changes(self,root_id,changes)
+                return
             root=self._root(root_id);base=Path(root['path']);catalog=self.catalog(root_id)
             for relative in sorted(changes,key=len):
                 if self.stopping.is_set():return
@@ -619,11 +691,15 @@ class ReferenceLibrary:
             return []
         with catalog.connect() as connection:
             epoch = connection.execute('SELECT scan_epoch FROM roots WHERE id=?', (root_id,)).fetchone()[0]
+            previous={row['path']:row['fingerprint'] for row in connection.execute(
+                'SELECT path,fingerprint FROM items WHERE path IN ('+','.join('?' for _ in accepted)+')',
+                [row[2] for row in accepted])}
             connection.executemany('''INSERT INTO items(id,root,path,relative,folder,name,extension,size,modified,fingerprint,pair_key,media_type,media_format,last_seen,scan_epoch)
-                VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET path=excluded.path,relative=excluded.relative,folder=excluded.folder,name=excluded.name,size=excluded.size,modified=excluded.modified,
+                VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET root=excluded.root,path=excluded.path,relative=excluded.relative,folder=excluded.folder,name=excluded.name,size=excluded.size,modified=excluded.modified,
                 fingerprint=excluded.fingerprint,media_type=excluded.media_type,media_format=excluded.media_format,online=1,last_seen=excluded.last_seen,scan_epoch=excluded.scan_epoch''', [(*row, epoch) for row in accepted])
-        catalog.queue_previews({row[10] for row in accepted})
-        return [row[10] for row in accepted]
+        changed=[row[10] for row in accepted if previous.get(row[2])!=row[9]]
+        if changed:catalog.queue_previews(set(changed))
+        return changed
 
     @storage_access
     def items(self, root_id, folder='', text='', offset=0, cursor='', allowed=None, *, all_rows=False):
@@ -657,9 +733,18 @@ class ReferenceLibrary:
                 # Everything 退出后自动补建本机索引，不能永远停留在命中缓存。
                 with self.condition:
                     if root_id not in self.index_active and root_id not in self.pending:self.enqueue(root_id)
-        # 立即补齐当前层，整盘扫描仍在后台时也能浏览刚打开的目录。
+        # 索引未完成时补齐当前层；成熟目录由原生通知/后台补偿扫描维护。
+        # 每次列表轮询重扫已完成目录会反复写库和入队，抢占前台图片缓存锁。
         stamp = time.monotonic()
-        if matched is None and not text and stamp-self.folder_refresh.get((root_id, folder), 0)>3:
+        indexed_folder=False
+        if root_state.get('native_complete') and matched is None and not text:
+            with catalog.connect() as connection:
+                indexed_folder=connection.execute('SELECT 1 FROM items WHERE root=? AND online=1 AND folder=? LIMIT 1',
+                                                  (root_id,folder or '/')).fetchone() is not None
+        with self.lock:
+            refresh=matched is None and not text and not indexed_folder and stamp-self.folder_refresh.get((root_id, folder), 0)>3
+            if refresh:self.folder_refresh[(root_id,folder)]=stamp
+        if refresh:
             batch = []
             with os.scandir(target) as entries:
                 for entry in entries:
@@ -682,6 +767,11 @@ class ReferenceLibrary:
         where = ' AND '.join(clauses)
         offset = max(0, int(offset))
         with catalog.connect() as connection:
+            source='capture_items'
+            if not text:
+                from smart_query import CANONICAL
+                source='items i INDEXED BY catalog_items_root_folder'
+                where+=' AND online=1 AND '+CANONICAL.replace('items b','items b INDEXED BY catalog_pair_cover')
             if matched is None and text:
                 predicate,parameters=catalog.fast_index.condition(connection,text)
                 where+=' AND '+predicate;args.extend(parameters)
@@ -691,7 +781,7 @@ class ReferenceLibrary:
                 connection.execute('CREATE TEMP TABLE reference_matches(pair_key TEXT PRIMARY KEY)')
                 connection.executemany('INSERT OR IGNORE INTO reference_matches VALUES (?)',[(key,) for key in matched])
                 where+=' AND pair_key IN (SELECT pair_key FROM reference_matches)'
-            total = connection.execute('SELECT COUNT(*) FROM capture_items WHERE '+where, args).fetchone()[0]
+            total = connection.execute('SELECT COUNT(*) FROM '+source+' WHERE '+where, args).fetchone()[0]
             if cursor:
                 try:
                     name, item_id = json.loads(base64.urlsafe_b64decode(cursor).decode())
@@ -702,7 +792,7 @@ class ReferenceLibrary:
                 where += ' AND (name COLLATE NOCASE>? OR (name COLLATE NOCASE=? AND id>?))'
                 args += [name, name, item_id]
                 offset = 0
-            rows = [dict(row) for row in connection.execute('SELECT id,relative,name,folder,fingerprint,media_type,media_format,codec,duration_ms FROM capture_items WHERE '+where+' ORDER BY name COLLATE NOCASE,id'+('' if all_rows else ' LIMIT 61 OFFSET ?'), args if all_rows else [*args, offset])]
+            rows = [dict(row) for row in connection.execute('SELECT id,relative,name,folder,fingerprint,media_type,media_format,codec,duration_ms FROM '+source+' WHERE '+where+' ORDER BY name COLLATE NOCASE,id'+('' if all_rows else ' LIMIT 61 OFFSET ?'), args if all_rows else [*args, offset])]
         poster_frame=catalog.video.frame
         for row in rows:
             if row.get('media_type')=='video':row['fingerprint']+=f':frame={poster_frame}'
@@ -890,10 +980,7 @@ class ReferenceLibrary:
         with self.lock:
             previous = self.config.get('reference_task')
             changed = previous is not None and previous!=task
-            if changed:
-                self.cache.clear()
-                preferences = self.config.get('preferences') or {}
-                self.config['preferences'] = {**preferences, 'references': [], 'index': 0, 'initialized': True}
+            # 参考集合由用户手动管理，切换照片目录或拍摄文档不清空参考及离线副本。
             self.config['reference_task'] = task
             self.save()
             return {'changed': changed, **self.preferences()}
@@ -918,7 +1005,7 @@ class ReferenceLibrary:
         row = {'id': secrets.token_hex(8), 'name': name, 'address': address, 'secret': protect(token)}
         result = self.remote(row, 'roots')
         if result.get('schema')!='framekeep.library' or result.get('version')!=1 or not isinstance(result.get('roots'), list):
-            raise ValueError('对方不是兼容的末帧文件数据库')
+            raise ValueError('对方不是兼容的SHIYING文件数据库')
         with self.lock:
             previous = next((peer for peer in self.config['peers'] if peer['address']==address), None)
             if previous:

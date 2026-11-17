@@ -1,0 +1,59 @@
+{
+  "source_commit": "8c8712254059f524c895926f71ea38e6faa181e2",
+  "version": "1.0.0",
+  "releaseId": "20261109105721",
+  "install": "D:/Program Files/Framekeep",
+  "data": "D:/Program Files/Framekeep/data",
+  "published": false,
+  "checks": {
+    "installed-validation": {
+      "status": "passed",
+      "files_verified": 938,
+      "releaseId": "20261109105721",
+      "version": "1.0.0",
+      "data_directory": "D:\\Program Files\\Framekeep\\data",
+      "database_identity_verified": true,
+      "ui_errors": [],
+      "existing_models_unchanged": 4,
+      "transaction": "complete"
+    },
+    "prelaunch-data-preservation": {
+      "status": "passed",
+      "files": 25,
+      "models": 4,
+      "data": "D:\\Program Files\\Framekeep\\data"
+    },
+    "frozen-code-validation": {
+      "modules": [
+        "lan_capture_sync",
+        "lan_sync_data",
+        "sku_service",
+        "metadata_writer",
+        "file_safety",
+        "asset_archive",
+        "server"
+      ],
+      "status": "passed"
+    },
+    "frozen-runtime-validation": {
+      "status": "passed",
+      "application": "framekeep",
+      "ui_errors": [],
+      "modules": 3,
+      "disconnect_button": true,
+      "discovery_peer_count": 2
+    }
+  },
+  "recovery": {
+    "directory": "G:\\app\\LR\\build\\local-sync-install\\run-20261109-185719\\business-recovery",
+    "databases": 4,
+    "bytes": 149880832,
+    "quick_check": "ok"
+  },
+  "cleanup": {
+    "status": "blocked_by_automatic_review",
+    "reason": "blocked by policy; no further reason supplied",
+    "deleted_files": 0,
+    "retained_build": "G:\\app\\LR\\build\\local-sync-install\\run-20261109-185719"
+  }
+}

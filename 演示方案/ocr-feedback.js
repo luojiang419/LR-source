@@ -31,9 +31,9 @@
     track.dataset.measured=String(measured);
     if(measured){track.setAttribute('aria-valuenow',String(Math.round(percent)));track.setAttribute('aria-valuemin','0');track.setAttribute('aria-valuemax','100');node.querySelector('.ocr-feedback-fill').style.width=percent+'%'}
     else track.removeAttribute('aria-valuenow');
-    node.querySelector('.ocr-feedback-stage').textContent=progress?.progress_label||({submitting:'提交当前照片',image:'准备图片',waiting_slot:'等待推理资源',loading_model:'模型加载中',recognizing:'解析进行中'}[phase]||'等待开始');
+    node.querySelector('.ocr-feedback-stage').textContent=progress?.progress_label||({submitting:'提交当前照片',image:'准备图片',cache_lookup:'查找清晰缓存',cached_input:'缓存图片已就绪',source_input:'读取标签图片',waiting_slot:'等待模型并发名额',loading_model:'加载本机模型',recognizing:'模型正在读取文字',saving:'保存款号与拍摄记录'}[phase]||'等待开始');
     if(measured)node.querySelector('.ocr-feedback-elapsed').textContent=Math.round(percent)+'%';
-    const step=status==='completed'?4:['recognizing'].includes(phase)?2:['loading_model','waiting_slot'].includes(phase)?1:0;
+    const step=status==='completed'?4:phase==='saving'?3:['recognizing'].includes(phase)?2:['loading_model','waiting_slot'].includes(phase)?1:0;
     [...node.querySelectorAll('.ocr-feedback-stages span')].forEach((item,i)=>item.dataset.state=i<step?'done':i===step?'active':'pending');
   }
   paint(sample,'running','正在解析款号','读取标签文字，完成后显示 SKU');
@@ -65,41 +65,55 @@
   const resize=new ResizeObserver(avoidControls);for(const node of [surface,$('stars'),surface.querySelector('.thumbnail-control'),overlay])if(node)resize.observe(node);
   for(const id of ['preview-rating-position','preview-zoom-position'])$(id).addEventListener('change',avoidControls);
   const keyOf=()=>JSON.stringify([FRAMEKEEP_SESSION.id,Framekeep.remoteTarget().photoId]);
-  let key=keyOf(),previous={...Framekeep.persistedState().overrides},sid=FRAMEKEEP_SESSION.id,pending=0,generation=0,manualPending=false,lastJob='',pendingJob='';
+  let key=keyOf(),previous={...Framekeep.persistedState().overrides},sid=FRAMEKEEP_SESSION.id,pending=0,generation=0,manualPending=false,lastJob='',pendingJob='',enqueueFailure='',enqueueTimer=0;
   function show(status,title,note,progress){for(const node of [sidebar,overlay])paint(node,status,title,note,progress);tickElapsed();avoidControls()}
   function tickElapsed(){for(const node of [sidebar,overlay,sample]){const track=node.querySelector('.ocr-feedback-track');if(!node.hidden&&track.dataset.measured==='false')node.querySelector('.ocr-feedback-elapsed').textContent='已等待 '+Math.max(0,Math.floor((Date.now()-Number(track.dataset.started))/1000))+' 秒'}}
   const elapsedTimer=setInterval(tickElapsed,1000);
   function refresh(){document.dispatchEvent(new CustomEvent('framekeep:ocr-refresh'))}
   function begin(detail){
     if(detail.session_id!==FRAMEKEEP_SESSION.id||detail.capture_id!==Framekeep.remoteTarget().photoId)return null;
-    pending=++generation;manualPending=!!detail.running;pendingJob=lastJob;if(detail.running)show('running','正在解析款号','正在读取标签文字…');else show('queued','准备解析款号','正在提交当前照片…');return pending;
+    clearTimeout(enqueueTimer);enqueueFailure='';pending=++generation;manualPending=!!detail.running;pendingJob=lastJob;if(detail.running)show('running','正在解析款号','正在读取标签文字…');else show('queued','准备解析款号','正在提交当前照片…');return pending;
   }
   function end(token,error){
     if(token!==pending||!token)return;pending=0;
     if(error)show('failed','款号解析失败',error.message||String(error));else refresh();
   }
-  window.FramekeepOcrFeedback={begin,end};
+  // card/paint 供资产归档右栏复用同一套 SVG 解析动画。
+  window.FramekeepOcrFeedback={begin,end,card,paint};
+  document.addEventListener('framekeep:ocr-enqueue-failed',event=>{
+    const detail=event.detail;
+    if(detail.session_id!==FRAMEKEEP_SESSION.id||!detail.capture_ids.includes(Framekeep.remoteTarget().photoId))return;
+    enqueueFailure=detail.message;pending=0;++generation;
+    // 回调可能在本机入队后失败，后台也可能自动接续；先核对真实任务，不弹最终失败提示。
+    show('retry','正在核对解析任务','星级已保存，等待后台接续解析',{phase:'submitting',progress_label:'核对任务状态'});
+    clearTimeout(enqueueTimer);enqueueTimer=setTimeout(()=>{if(enqueueFailure)show('failed','款号未能进入解析',enqueueFailure)},15000);
+    refresh();
+  });
   document.addEventListener('framekeep:selection',()=>{
     const target=Framekeep.remoteTarget(),next=keyOf(),overrides=Framekeep.persistedState().overrides||{};
     const changed=sid===FRAMEKEEP_SESSION.id&&previous[target.photoId]!==overrides[target.photoId];
-    if(next!==key){key=next;pending=0;++generation;show('','','')}
+    if(next!==key){key=next;pending=0;clearTimeout(enqueueTimer);enqueueFailure='';++generation;show('','','')}
     previous={...overrides};sid=FRAMEKEEP_SESSION.id;
     if(!changed)return;
     pending=0;++generation;
     if(overrides[target.photoId]===2){
       const token=begin({session_id:sid,capture_id:target.photoId});
       FramekeepIO.flush().then(()=>end(token),error=>end(token,error));
-    }else{show('','','');FramekeepIO.flush().then(refresh,()=>{})}
+    }else{clearTimeout(enqueueTimer);enqueueFailure='';show('','','');FramekeepIO.flush().then(refresh,()=>{})}
   });
   document.addEventListener('framekeep:capture-status',event=>{
     const data=event.detail;if(keyOf()!==key||data.session_id!==FRAMEKEEP_SESSION.id||data.capture_id!==Framekeep.remoteTarget().photoId)return;
     if(pending&&(!manualPending||!data.ocr?.job_key||data.ocr.job_key===pendingJob))return;
     lastJob=data.ocr?.job_key||'';
     const ocr=data.ocr||{},status=ocr.status,codes=[...new Set(ocr.codes?.length?ocr.codes:status==='review'?ocr.candidates||[]:[])],code=codes.join(' / ');
+    if(enqueueFailure){
+      if(!status||['unparsed','idle','cancelled','ignored'].includes(status))return;
+      clearTimeout(enqueueTimer);enqueueFailure='';
+    }
     if(['queued','running','retry'].includes(status)){
       const progress=ocr.progress||{},phase=progress.phase;
-      const title=status==='retry'?'等待重新解析':status!=='running'?'款号已进入解析':({image:'正在准备标签图片',waiting_slot:'等待推理资源',loading_model:'正在加载 OCR 模型'}[phase]||'正在解析款号');
-      const note=progress.message||(phase==='loading_model'?'正在准备模型，完成后自动解析':phase==='waiting_slot'?'等待当前模型空闲，任务会自动继续':status==='running'?'请求已发送，正在读取标签文字…':'即将读取当前照片的标签');
+      const title=status==='retry'?'等待重新解析':status!=='running'?'款号已进入解析':({image:'正在准备标签图片',cache_lookup:'正在查找标签缓存',cached_input:'标签图片已就绪',source_input:'正在读取标签图片',waiting_slot:'等待模型并发名额',loading_model:'正在加载本机 OCR 模型',saving:'正在保存识别款号'}[phase]||'正在解析款号');
+      const note=progress.message||(phase==='loading_model'?'本机模型尚未就绪，加载完成后自动解析':phase==='waiting_slot'?'当前并发名额已占用，二星标签优先接续':phase==='saving'?'标签文字已返回，正在更新拍摄记录':phase==='recognizing'?'请求已发送，正在读取标签文字…':'正在准备当前照片供 OCR 读取');
       show(status,title,note,progress);
     }
     else if(['completed','matched','confirmed'].includes(status)&&code)show('completed',code,status==='confirmed'?'SKU · 已确认':'SKU · 解析完成');
@@ -113,7 +127,7 @@
   for(const name of ['framekeep:ocr-result','framekeep:ocr-choice'])document.addEventListener(name,refresh);
   // 同步预加载状态供组件准备面板静默处理，不打开弹窗或切换页面。
   window.FramekeepOcrRuntime={preloading:false};let runtimePolling=false;
-  async function pollRuntime(){if(runtimePolling||document.hidden)return;runtimePolling=true;try{const value=await FramekeepIO.api('/api/providers/runtime');FramekeepOcrRuntime.preloading=['preparing','loading'].includes(value.status);document.dispatchEvent(new CustomEvent('framekeep:ocr-runtime',{detail:value}))}catch{}finally{runtimePolling=false}}
+  async function pollRuntime(){if(runtimePolling||document.hidden||!FramekeepOcrRuntime.preloading&&!['selection','progress','analysis','settings'].includes(window.FramekeepWorkspace?.current()||'selection'))return;runtimePolling=true;try{const value=await FramekeepIO.api('/api/providers/runtime');FramekeepOcrRuntime.preloading=['preparing','loading'].includes(value.status);document.dispatchEvent(new CustomEvent('framekeep:ocr-runtime',{detail:value}))}catch{}finally{runtimePolling=false}}
   const runtimeTimer=setInterval(pollRuntime,1000);pollRuntime();
-  window.addEventListener('pagehide',()=>{resize.disconnect();clearInterval(elapsedTimer);clearInterval(runtimeTimer)},{once:true});applyPrefs();tickElapsed();
+  window.addEventListener('pagehide',()=>{resize.disconnect();clearTimeout(enqueueTimer);clearInterval(elapsedTimer);clearInterval(runtimeTimer)},{once:true});applyPrefs();tickElapsed();
 })();

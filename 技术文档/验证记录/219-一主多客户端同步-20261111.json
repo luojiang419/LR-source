@@ -1,0 +1,47 @@
+{
+  "date": "2026-11-11",
+  "branch": "feat/lan-multi-client",
+  "multi_client": {
+    "clients": 12,
+    "initial_captures": 3,
+    "final_captures": 4,
+    "verified_file_rehashes_on_rating_update": 0,
+    "individual_disconnect_preserved_others": true,
+    "client_views_preserved": 12,
+    "bytes_equal": true
+  },
+  "browser": {
+    "selected_photo_preserved": true,
+    "layout": "list",
+    "scroll_top": 5985,
+    "thumbnail_reads_added": 0,
+    "individual_disconnect_preserved_C": true,
+    "page_errors": []
+  },
+  "checks": {
+    "sync_passed": 13,
+    "related_passed": 6,
+    "total_passed": 19,
+    "python_compile": true,
+    "javascript_syntax": true
+  },
+  "clock": {
+    "monotonic": "namespace(implementation='GetTickCount64()', monotonic=True, adjustable=False, resolution=0.015625)",
+    "perf_counter": "namespace(implementation='QueryPerformanceCounter()', monotonic=True, adjustable=False, resolution=1e-07)"
+  },
+  "logs": [
+    "build/lan-multi-final.log",
+    "build/lan-multi-related.log"
+  ],
+  "screenshots": [
+    "build/lan-multi-client/client-browsing-preserved.png",
+    "build/lan-multi-client/host-two-clients.png",
+    "build/lan-multi-client/host-mobile.png"
+  ],
+  "limitations": [
+    "单机隔离HTTP环境，未做多台实体电脑联测",
+    "主机管理页面使用测试路由映射真实A服务",
+    "未打包、覆盖当前安装版或推送"
+  ],
+  "production_data_modified": false
+}

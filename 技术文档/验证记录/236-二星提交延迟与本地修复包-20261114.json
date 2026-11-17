@@ -1,0 +1,115 @@
+{
+  "version": "1.0.1",
+  "releaseId": "20261114062655",
+  "published": false,
+  "productionInstallationModified": false,
+  "signedFilesVerified": 963,
+  "workerRuntimeFilesVerified": 75,
+  "frozenModulesMatchSources": {
+    "engine": [
+      "archive_capture_service",
+      "portable_capture_store",
+      "capture_publish"
+    ],
+    "installedWorker": [
+      "updater",
+      "process_control",
+      "installation"
+    ],
+    "installerWorker": [
+      "updater",
+      "process_control",
+      "installation"
+    ]
+  },
+  "formalUpdatePublicKeyPreserved": true,
+  "nativeRuntime": {
+    "exitCode": 0,
+    "output": "",
+    "error": "",
+    "planCreated": true
+  },
+  "baseline": {
+    "mainSuite": 90,
+    "slowPublisherCasesFailedBeforeFix": 2
+  },
+  "verified": {
+    "mainSuite": 94,
+    "portableAndRecoverySuite": 43,
+    "realCpuBrowser": 1
+  },
+  "realCpuBrowser": {
+    "live": {
+      "submitSeconds": 0.094,
+      "phase": "completed",
+      "publishStillBlocked": true,
+      "feedback": "OCR / 款号识别\nLC123456-P17\nSKU · 解析完成"
+    },
+    "archive": {
+      "submitSeconds": 0.125,
+      "phase": "completed",
+      "publishStillBlocked": true,
+      "feedback": "OCR / 款号识别\nLC123456-P17-A\nSKU · 已应用整款 1 张（含二星）\n图片就绪\n模型准备\nOCR 解析\n完成"
+    },
+    "pageErrors": []
+  },
+  "realCpuReadings": {
+    "passed": true,
+    "readings": [
+      {
+        "text": "LC123456-P17\nSIZE: M",
+        "codes": [
+          "LC123456-P17"
+        ],
+        "timing": {
+          "load_ms": 1187.3474000021815,
+          "detection_ms": 567.1136000019033,
+          "orientation_ms": 126.1921999976039,
+          "recognition_ms": 56.4314000075683,
+          "total_ms": 749.7372000070754
+        },
+        "backend": "CPUExecutionProvider"
+      },
+      {
+        "text": "LC123456-P17\nSIZE: M",
+        "codes": [
+          "LC123456-P17"
+        ],
+        "timing": {
+          "load_ms": 1187.3474000021815,
+          "detection_ms": 578.3148999908008,
+          "orientation_ms": 112.077900004806,
+          "recognition_ms": 60.38969999644905,
+          "total_ms": 750.7824999920558
+        },
+        "backend": "CPUExecutionProvider"
+      }
+    ]
+  },
+  "installer": {
+    "path": "G:\\app\\LR\\dist\\SHIYING-二星即时提交修复-无模型安装包-20261114\\SHIYING 数字资产安装器.exe",
+    "bytes": 32823296,
+    "sha256": "cd9c09a5bd86132437b79ed17f229a7bd6b6e4e2d217581093311b9996c34669"
+  },
+  "bundle": {
+    "path": "G:\\app\\LR\\dist\\SHIYING-二星即时提交修复-无模型安装包-20261114.zip",
+    "bytes": 345137079,
+    "sha256": "401f877918ae31615bc0cb5931b46c2046cd0902a1bd35a4978c183e34cff486"
+  },
+  "cleanup": {
+    "removedBytes": 1230212293.0,
+    "freeAfter": 211194834944,
+    "freeBefore": 209962225664,
+    "preserved": "交付ZIP及目录、构建基线、源码和验证记录；生产程序、照片、业务库和模型未清理",
+    "removed": [
+      {
+        "path": "G:\\app\\LR\\build\\task236-package-verification",
+        "bytes": 1198078355
+      },
+      {
+        "path": "G:\\app\\LR\\build\\task236-installer-runtime",
+        "bytes": 32133938
+      }
+    ]
+  }
+}

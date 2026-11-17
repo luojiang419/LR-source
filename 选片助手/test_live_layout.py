@@ -39,6 +39,28 @@ class OrientationTests(unittest.TestCase):
 
 
 class RevealTests(unittest.TestCase):
+    def test_catalog_reveal_uses_registered_item_and_rejects_missing_removed_or_outside_file(self):
+        from asset_catalog import AssetCatalog
+        from file_reveal import reveal_catalog
+        with tempfile.TemporaryDirectory() as folder:
+            base=Path(folder);photos=base/'photos';photos.mkdir();image=photos/'照片,含空格.JPG';Image.new('RGB',(20,30)).save(image)
+            catalog=AssetCatalog(base/'data')
+            try:
+                root=catalog.add_root(str(photos))['root_id'];catalog.scan(root)
+                row=catalog.items(root=root)['rows'][0]
+                with patch('file_reveal.reveal_path') as reveal:
+                    self.assertEqual(reveal_catalog(catalog,row['id']),{'ok':True});reveal.assert_called_once_with(image.resolve())
+                    with self.assertRaises(ValueError):reveal_catalog(catalog,'unknown')
+                    with catalog.connect() as c:c.execute('UPDATE items SET path=? WHERE id=?',(str(base/'outside.JPG'),row['id']))
+                    with self.assertRaises(ValueError):reveal_catalog(catalog,row['id'])
+                    with catalog.connect() as c:c.execute('UPDATE items SET path=? WHERE id=?',(str(image),row['id']))
+                    image.unlink()
+                    with self.assertRaises(ValueError):reveal_catalog(catalog,row['id'])
+                    Image.new('RGB',(20,30)).save(image);catalog.remove(root)
+                    with self.assertRaises(ValueError):reveal_catalog(catalog,row['id'])
+                    self.assertEqual(reveal.call_count,1)
+            finally:catalog.close()
+
     def test_only_known_components_and_root_confined_files(self):
         with tempfile.TemporaryDirectory() as folder:
             base=Path(folder);photos=base/'photos';photos.mkdir();image=photos/'照片,含空格.JPG';Image.new('RGB',(20,30)).save(image)

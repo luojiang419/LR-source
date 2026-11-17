@@ -1,0 +1,65 @@
+--- a/演示方案/asset-library.js
++++ b/演示方案/asset-library.js
+@@ -47,7 +47,7 @@
+       <button id="catalog-folders-toggle" type="button" class="panel-edge-toggle" aria-controls="catalog-folders"><span aria-hidden="true"></span></button>
+       <aside id="catalog-folders" class="catalog-tree-panel"><header><strong>目录</strong><span id="catalog-count"></span></header><div id="catalog-tree" class="catalog-tree" role="tree"></div><footer class="catalog-tree-actions"><button id="catalog-add-root" class="bordered">添加归档文件夹</button><button id="catalog-scan" class="primary">刷新当前文件夹</button></footer></aside>
+       <main class="catalog-main"><header class="catalog-toolbar" style="flex-wrap:wrap"><label><span>搜索素材</span><input id="catalog-search" type="search" placeholder="文件名、SKU、标题、关键词、相机或拍摄资料"></label><label><span>类型</span><select id="catalog-media"><option value="">全部</option><option value="image">图片 / RAW</option><option value="video">视频</option><option value="design">Adobe / 设计源文件</option></select></label><label><span>顺序</span><select id="catalog-sort"><option value="original">原顺序（文件名升序）</option><option value="modified">最近修改优先</option></select></label><span id="catalog-summary" role="status"></span></header><div id="catalog-grid" class="catalog-grid" aria-live="polite"></div><footer class="catalog-continuous-status" id="catalog-continuous-status" role="status" style="padding:6px 12px;font-size:11px;color:var(--theme-muted)"></footer></main>
+-      <aside class="catalog-inspector"><header><strong>素材资料与 SKU</strong><span id="catalog-inspector-status"></span></header><div id="catalog-inspector-empty" class="catalog-empty">选择素材以检查与修正 SKU</div><div id="catalog-inspector-form" hidden><div class="catalog-preview-wrap"><img id="catalog-selected-preview" alt="当前归档素材预览"><span id="catalog-selected-rating" class="photo-rating-badge" hidden></span><span id="catalog-selected-format" class="photo-format-badge" hidden></span></div><p id="catalog-selected-name"></p><div id="catalog-rating-controls" class="catalog-rating-controls" role="group" aria-label="归档图片星级"><button type="button" data-catalog-rating="1" aria-label="归档图片标 1 星">★</button><button type="button" data-catalog-rating="2" aria-label="归档图片标 2 星">★</button><button type="button" data-catalog-rating="3" aria-label="归档图片标 3 星">★</button><button type="button" data-catalog-rating="4" aria-label="归档图片标 4 星">★</button><button type="button" data-catalog-rating="5" aria-label="归档图片标 5 星">★</button><button type="button" data-catalog-rating="0">清星</button></div><p id="catalog-rating-status" role="status"></p><label>SKU 款号<input id="catalog-selected-sku" maxlength="80" placeholder="待确认"></label><p id="catalog-selected-source"></p><button id="catalog-save-sku" class="primary">确认 SKU 元数据</button></div><section class="catalog-scan-panel"><header><strong>素材解码缓存</strong></header><div id="catalog-preview-progress" class="catalog-index-progress" hidden><div><span id="catalog-preview-status" role="status"></span><strong id="catalog-preview-percent"></strong></div><progress id="catalog-preview-bar" max="100" value="0" aria-label="当前素材缓存覆盖率"></progress><p id="catalog-preview-eta" role="status"></p></div><p id="catalog-scan-status">缩略图与清晰预览均已缓存后，计为已解码。</p></section></aside>
++      <aside class="catalog-inspector"><header><strong>素材资料与 SKU</strong><span id="catalog-inspector-status"></span></header><div id="catalog-inspector-empty" class="catalog-empty">选择素材以检查与修正 SKU</div><div id="catalog-inspector-form" hidden><div class="catalog-preview-wrap"><img id="catalog-selected-preview" alt="当前归档素材预览"><span id="catalog-selected-rating" class="photo-rating-badge" hidden></span><span id="catalog-selected-format" class="photo-format-badge" hidden></span></div><p id="catalog-selected-name"></p><div id="catalog-rating-controls" class="catalog-rating-controls" role="group" aria-label="归档图片星级"><button type="button" data-catalog-rating="1" aria-label="归档图片标 1 星">★</button><button type="button" data-catalog-rating="2" aria-label="归档图片标 2 星">★</button><button type="button" data-catalog-rating="3" aria-label="归档图片标 3 星">★</button><button type="button" data-catalog-rating="4" aria-label="归档图片标 4 星">★</button><button type="button" data-catalog-rating="5" aria-label="归档图片标 5 星">★</button><button type="button" data-catalog-rating="0">清星</button></div><p id="catalog-rating-status" role="status"></p><label>SKU 款号<input id="catalog-selected-sku" maxlength="80" placeholder="待确认"></label><p id="catalog-selected-source"></p></div><section class="catalog-scan-panel"><header><strong>素材解码缓存</strong></header><div id="catalog-preview-progress" class="catalog-index-progress" hidden><div><span id="catalog-preview-status" role="status"></span><strong id="catalog-preview-percent"></strong></div><progress id="catalog-preview-bar" max="100" value="0" aria-label="当前素材缓存覆盖率"></progress><p id="catalog-preview-eta" role="status"></p></div><p id="catalog-scan-status">缩略图与清晰预览均已缓存后，计为已解码。</p></section></aside>
+     </div>`;
+ 
+   const runtimeProgress=document.createElement('p');runtimeProgress.id='catalog-preview-runtime';$('catalog-preview-eta').after(runtimeProgress);
+@@ -842,12 +842,6 @@
+     finally{catalogAppending=false;requestAnimationFrame(loadMoreCatalog)}
+   }
+   $('catalog-grid').addEventListener('scroll',()=>loadMoreCatalog(),{passive:true});
+-  $('catalog-save-sku').onclick = async () => {
+-    if (!selection.item) return;
+-    try { const item = await api('/api/catalog/assign', { item_id: selection.item.id, sku: $('catalog-selected-sku').value }); select({ ...selection.item, ...item }); await refresh({}); message(`已确认 ${item.sku}${item.metadata_operation?'，文件与 XMP 写入已排队':' 的 SKU 元数据'}`); }
+-    catch (error) { message(error.message); }
+-  };
+-
+   const dbPicked=new Map(),dbOrdered=new Map();
+   let dbPickScope='',dbAnchor=null,dbSelectionVersion=0,dbDrag=null,dbDragClick=false,dbDragFrame=0;
+   const dbScope=()=>JSON.stringify([dbMode,dbRoot,dbFolder,dbBin,dbSku,$('sku-database-search').value,$('sku-database-sort').value]);
+--- a/演示方案/archive-capture.js
++++ b/演示方案/archive-capture.js
+@@ -14,8 +14,9 @@
+   for(const node of [$('catalog-inspector-empty'),$('catalog-inspector-form'),inspector.querySelector('.catalog-scan-panel')])if(node)photo.append(node);
+   tabs.after(photo);
+   // 右栏与现场拍摄同一规范：SKU 款号输入 → OCR 解析当前图（有草稿时为“确定”）→ OCR 资料 / 选择 SKU → 说明。
+-  const skuInput=$('catalog-selected-sku'),skuLabel=skuInput.closest('label'),saveButton=$('catalog-save-sku');
+-  skuLabel.classList.add('capture-sku-label');skuInput.placeholder='输入后点击确定，更新当前整款 SKU';
++  const skuInput=$('catalog-selected-sku'),skuLabel=skuInput.closest('label'),saveButton=document.createElement('button');
++  saveButton.id='catalog-save-sku';saveButton.textContent='确定';
++  skuLabel.classList.add('capture-sku-label');skuInput.placeholder='输入后按 Enter 或点击确定，更新当前整款 SKU';
+   const ocr=document.createElement('section');ocr.className='capture-ocr';
+   ocr.innerHTML='<input id="capture-correction" type="checkbox" checked hidden><input id="capture-whole-group" type="checkbox" checked hidden><div class="capture-ocr-actions"><button id="capture-ocr" type="button" title="使用已选 OCR 模型立即读取当前图，不要求二星">OCR 解析当前图</button><button id="capture-ocr-details" type="button" aria-expanded="false" aria-controls="capture-ocr-result">OCR 资料 / 选择 SKU</button></div><div id="capture-ocr-result" class="capture-ocr-result" hidden><p class="capture-ocr-heading">推荐款号 · 点击即应用整款</p><div id="capture-candidates" class="capture-candidates" role="group" aria-label="推荐款号，点击即应用整款"></div><p class="capture-ocr-heading">OCR 原文 · 点击填入输入框</p><div id="capture-ocr-text" class="capture-ocr-raw" role="group" aria-label="OCR 原文，点击填入输入框"></div></div><p id="capture-write-help" class="capture-rule">解析完成后自动写入 SKU 元数据；修正款号后点击确定，整款 RAW / JPG 同步更新；清空输入可重新进行 OCR 识别。</p><p id="capture-group-hint"></p><section id="capture-conflict" hidden></section><p id="capture-item-status" role="status"></p>';
+   skuLabel.after(ocr);
+--- a/选片助手/test_archive_manual_write_progress.py
++++ b/选片助手/test_archive_manual_write_progress.py
+@@ -93,12 +93,14 @@
+                     try:
+                         page=browser.new_page(viewport={'width':1600,'height':1000})
+                         page.on('pageerror',lambda error:errors.append(str(error)))
++                        confirmations=[]
++                        page.on('request',lambda req:confirmations.append(req.url) if req.method=='POST' and req.url.endswith('/api/archive-capture/confirm') else None)
+                         page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='domcontentloaded')
+                         page.wait_for_function('()=>window.FramekeepArchiveOpenItem&&window.FramekeepArchiveCapture')
+                         page.evaluate('(id)=>FramekeepArchiveOpenItem(id)',self.item(2))
+                         page.wait_for_function("()=>!document.querySelector('#catalog-save-sku').disabled")
+                         page.locator('#catalog-selected-sku').fill('中文 Ab-001')
+-                        page.locator('#catalog-save-sku').click()
++                        page.locator('#catalog-selected-sku').press('Enter')
+                         page.wait_for_function("()=>document.getElementById('capture-photo-write-phase').textContent==='排队等待写入'")
+                         self.assertEqual(page.locator('#catalog-grid [data-capture-write="queued"]').count(),2)
+                         self.assertEqual(page.locator('#capture-ocr-feedback').get_attribute('data-status'),'running')
+@@ -122,6 +124,8 @@
+                         page.locator('#capture-folder-tab').click()
+                         self.assertEqual(page.locator('#capture-write-count').inner_text(),'2 / 2')
+                         self.assertEqual(page.locator('#capture-write-phase').inner_text(),'写入完成')
++                        self.assertEqual(len(confirmations),1,'Enter 只能提交一次确认，不能再触发旧独立写入入口')
++                        self.assertEqual(page.locator('#catalog-inspector-form > #catalog-save-sku').count(),0)
+                         for n in (1,2):self.assertEqual(self.archive.writer.read(self.photos/f'IMG_{n:04d}.JPG')['XMP-fk:SKU'],'中文 Ab-001')
+                         page.screenshot(path=str(out/'complete.png'))
+                         self.assertFalse(errors,errors)

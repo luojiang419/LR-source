@@ -1,6 +1,6 @@
 [package]
 name = "framekeep-desktop"
-version = "1.0.0"
+version = "1.0.3"
 edition = "2021"
 
 [build-dependencies]
@@ -16,6 +16,9 @@ uuid = { version = "=1.26.0", features = ["v4"] }
 
 [target.'cfg(windows)'.dependencies]
 winreg = "=0.56.0"
+windows-sys = { version = "=0.61.2", features = ["Win32_Graphics_Gdi", "Win32_Foundation"] }
+png = "=0.17.16"
+base64 = "=0.22.1"
 
 [profile.release]
 lto = true

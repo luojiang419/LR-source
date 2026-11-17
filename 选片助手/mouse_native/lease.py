@@ -30,7 +30,7 @@ class ReceiverLease:
         # OPEN_ALWAYS，不写文件；普通文件系统强制 share=0，禁止并行枚举/接管。
         self.handle = self.kernel.CreateFileW(path, 0x80000000, 0, None, 4, 0, None)
         if self.handle == C.c_void_p(-1).value:
-            raise ValueError('另一个末帧进程已连接此接收器，请关闭那个程序后重试')
+            raise ValueError('另一个SHIYING进程已连接此接收器，请关闭那个程序后重试')
 
     def close(self):
         if self.handle is not None:

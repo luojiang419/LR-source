@@ -27,11 +27,14 @@ class UpdateTests(unittest.TestCase):
         self.trust=patch.object(u,'TRUST',trust);self.trust.start();self.addCleanup(self.trust.stop)
         self.settings={'currentVersion':'1.0.0','currentReleaseId':'20260101000000'}
 
-    def fixture(self, extra=None, release='20261021010101'):
-        files={'末帧选片.exe':b'desktop','engine/framekeep-engine.exe':b'engine',
-            'update/末帧更新器.exe':b'native','update/update-worker.exe':b'worker',
+    def fixture(self, extra=None, release='20261021010101', legacy=False):
+        files={'SHIYING 数字资产.exe':b'desktop','engine/framekeep-engine.exe':b'engine',
+            'update/SHIYING 更新器.exe':b'native','update/update-worker.exe':b'worker',
             'update-config.json':json.dumps({'version':'1.0.0','releaseId':release}).encode()}
         files.update(extra or {})
+        if legacy:
+            files['末帧选片.exe']=files.pop('SHIYING 数字资产.exe')
+            files['update/末帧更新器.exe']=files.pop('update/SHIYING 更新器.exe')
         records=[]
         with zipfile.ZipFile(self.session/'package.zip','w') as archive:
             for name,data in files.items():
@@ -42,6 +45,44 @@ class UpdateTests(unittest.TestCase):
         payload=json.dumps(manifest)
         u.write_json(self.session/'envelope.json',{'payload':payload,'signature':self.key.sign(payload.encode()).hex()})
         return manifest
+
+    def test_legacy_signed_package_and_install_directory_remain_supported(self):
+        self.fixture(legacy=True)
+        manifest=u.validate(self.session,self.settings)
+        old=self.root/'末帧选片.exe';old.write_bytes(b'previous')
+        u.check_root(self.root,False)
+        u.install(self.root,self.session,manifest)
+        self.assertEqual(old.read_bytes(),b'desktop')
+        with patch.object(u.subprocess,'Popen') as launch:
+            u.write_json(self.session/'session.json',{})
+            u.restart(self.root,self.session,health=False)
+        self.assertEqual(launch.call_args.args[0],[str(old)])
+
+    def test_unchanged_adb_is_not_replaced_or_added_to_rollback(self):
+        relative='engine/_internal/runtime/adb/adb.exe'
+        payload=b'identical adb executable'
+        self.fixture({relative:payload});manifest=u.validate(self.session,self.settings)
+        target=self.root/relative;target.parent.mkdir(parents=True);target.write_bytes(payload)
+        replace=u.replace_program_file
+        def guarded_replace(source,destination):
+            if destination==target:raise PermissionError('正在运行的相同ADB不允许替换')
+            return replace(source,destination)
+        with patch.object(u,'replace_program_file',side_effect=guarded_replace):
+            u.install(self.root,self.session,manifest)
+        self.assertEqual(target.read_bytes(),payload)
+        self.assertFalse((self.session/'backup'/relative).exists())
+        self.assertNotIn(relative,[change['path'] for change in u.read_json(self.session/'journal.json')['changes']])
+        u.rollback(self.root,self.session)
+        self.assertEqual(target.read_bytes(),payload)
+
+    def test_same_size_changed_adb_is_replaced_and_can_roll_back(self):
+        relative='engine/_internal/runtime/adb/adb.exe'
+        self.fixture({relative:b'new adb'});manifest=u.validate(self.session,self.settings)
+        target=self.root/relative;target.parent.mkdir(parents=True);target.write_bytes(b'old adb')
+        u.install(self.root,self.session,manifest)
+        self.assertEqual(target.read_bytes(),b'new adb')
+        u.rollback(self.root,self.session)
+        self.assertEqual(target.read_bytes(),b'old adb')
 
     def test_valid_signed_install_preserves_data(self):
         self.fixture();manifest=u.validate(self.session,self.settings)
@@ -54,14 +95,54 @@ class UpdateTests(unittest.TestCase):
         self.assertEqual(unrelated.read_bytes(),b'keep')
         self.assertEqual(previous.read_bytes(),b'engine')
         self.assertEqual((self.session/'backup/engine/framekeep-engine.exe').read_bytes(),b'incomplete old install')
-        self.assertEqual((self.root/'末帧选片.exe').read_bytes(),b'desktop')
+        self.assertEqual((self.root/'SHIYING 数字资产.exe').read_bytes(),b'desktop')
         self.assertEqual(u.read_json(self.session/'journal.json')['status'],'awaiting-health')
+
+    def test_install_controller_upgrades_running_instance_preserves_data_and_completes(self):
+        from unittest.mock import Mock
+        manifest=self.fixture();data=self.root/'data';data.mkdir();(data/'keep.jpg').write_bytes(b'original photo')
+        setup={'mode':'install','root':str(self.root),'data':str(data),'integration':False,
+               'localEnvelope':str(self.session/'envelope.json'),'localPackage':str(self.session/'package.zip'),'preferLatest':True}
+        u.write_json(self.session/'session.json',setup)
+        active={'parentPid':321,'enginePid':654,'port':18761};child=Mock(pid=999);child.poll.return_value=None
+        def stopped(root,session,settings,verified):
+            self.assertEqual(settings['parentPid'],321);self.assertEqual(settings['enginePid'],654)
+            self.assertEqual(settings['data'],str(data))
+        def restart(root,session):
+            u.write_json(session/'healthy.json',{'pid':999,'version':manifest['version'],'releaseId':manifest['releaseId']})
+            return child
+        with patch.object(u.installation,'active_installation',return_value=active),patch.object(u.installation,'integration_backend',return_value=None),patch.object(u,'fetch_envelope',return_value=(u.read_json(self.session/'envelope.json'),manifest)),patch.object(u,'wait_for_application_exit',side_effect=stopped),patch.object(u,'restart',side_effect=restart),patch.object(u.installation,'require_port_free') as port:
+            u.run(self.session)
+        port.assert_not_called();self.assertEqual((data/'keep.jpg').read_bytes(),b'original photo')
+        self.assertEqual(u.read_json(self.session/'status.json')['status'],'complete')
+        self.assertEqual(u.read_json(self.session/'journal.json')['status'],'complete')
+        self.assertFalse((self.root/'.update-state/pending.json').exists())
+
+    def test_handoff_waits_for_both_processes_and_checks_directory_and_port(self):
+        from unittest.mock import MagicMock
+        events=[];settings={'parentPid':123,'enginePid':456,'data':str(self.base/'data'),'port':43210}
+        processes=MagicMock();processes.__enter__.return_value=processes
+        processes.alive.side_effect=[True,False,False]
+        with patch.object(u,'ApplicationProcesses',return_value=processes),patch.object(u.time,'sleep'),patch.object(u.installation,'running_application',side_effect=lambda root:events.append('directory') or False),patch.object(u.installation,'require_port_free',side_effect=lambda port:events.append(port)):
+            u.wait_for_application_exit(self.root,self.session,settings,{'releaseId':'20261029000000'})
+        self.assertEqual(events,['directory',43210]);processes.terminate.assert_not_called()
+        self.assertEqual(u.read_json(self.base/'data/maintenance/updates/handoff.json')['enginePid'],456)
+        self.assertTrue((self.session/'ready.json').is_file())
+
+    def test_remaining_instance_or_cancel_prevents_install_even_without_parent(self):
+        with patch.object(u.installation,'running_application',return_value=True),patch.object(u.installation,'require_port_free') as port:
+            with self.assertRaisesRegex(RuntimeError,'仍有程序运行'):u.wait_for_application_exit(self.root,self.session,{}, {})
+            port.assert_not_called()
+        u.write_json(self.session/'cancel.json',{'cancelled':True})
+        with patch.object(u.installation,'running_application') as running:
+            with self.assertRaisesRegex(RuntimeError,'取消'):u.wait_for_application_exit(self.root,self.session,{}, {})
+            running.assert_not_called()
 
     def test_write_failure_rolls_back_old_and_new_files(self):
         self.fixture();manifest=u.validate(self.session,self.settings)
-        (self.root/'末帧选片.exe').write_bytes(b'old')
+        (self.root/'SHIYING 数字资产.exe').write_bytes(b'old')
         with self.assertRaises(OSError):u.install(self.root,self.session,manifest,fail_after=3)
-        self.assertEqual((self.root/'末帧选片.exe').read_bytes(),b'old')
+        self.assertEqual((self.root/'SHIYING 数字资产.exe').read_bytes(),b'old')
         self.assertFalse((self.root/'engine/framekeep-engine.exe').exists())
         self.assertEqual(u.read_json(self.session/'journal.json')['status'],'rolled-back')
 
@@ -73,8 +154,8 @@ class UpdateTests(unittest.TestCase):
         with self.assertRaisesRegex(OSError,'测试注入写入失败'):u.install(self.root,self.session,manifest,fail_after=3)
         self.assertEqual(previous.read_bytes(),b'old engine')
         self.assertEqual(unrelated.read_bytes(),b'photo')
-        self.assertFalse((self.root/'末帧选片.exe').exists())
-        self.assertFalse((self.root/'update/末帧更新器.exe').exists())
+        self.assertFalse((self.root/'SHIYING 数字资产.exe').exists())
+        self.assertFalse((self.root/'update/SHIYING 更新器.exe').exists())
         self.assertEqual(u.read_json(self.session/'journal.json')['status'],'rolled-back')
 
     def test_invalid_signature_rejected(self):
@@ -100,7 +181,7 @@ class UpdateTests(unittest.TestCase):
         self.assertTrue(u.validate(self.session,dict(self.settings,repair=True)))
 
     def test_package_cannot_write_user_data_or_traversal(self):
-        for path in ('../末帧选片.exe','/末帧选片.exe','engine/../x','engine/COn.txt',
+        for path in ('../SHIYING 数字资产.exe','/SHIYING 数字资产.exe','engine/../x','engine/COn.txt',
                      '.framekeep/framekeep.sqlite3','api key.md','engine/.env','engine/a:b','engine/a.','engine/a\\b'):
             with self.subTest(path=path),self.assertRaises(ValueError):u.safe_path(path)
 
@@ -147,12 +228,12 @@ class UpdateTests(unittest.TestCase):
 
     def test_recovery_restores_interrupted_transaction(self):
         self.fixture();m=u.validate(self.session,self.settings)
-        (self.root/'末帧选片.exe').write_bytes(b'old')
+        (self.root/'SHIYING 数字资产.exe').write_bytes(b'old')
         u.install(self.root,self.session,m)
         u.write_json(self.session/'session.json',{'root':str(self.root)})
         u.write_json(self.root/'.update-state/pending.json',{'session':str(self.session),'pid':0})
         u.recover_pending(self.root)
-        self.assertEqual((self.root/'末帧选片.exe').read_bytes(),b'old')
+        self.assertEqual((self.root/'SHIYING 数字资产.exe').read_bytes(),b'old')
         self.assertFalse((self.root/'.update-state/pending.json').exists())
 
     def test_recovery_recreates_removed_parent_directories(self):
@@ -182,11 +263,11 @@ class UpdateTests(unittest.TestCase):
         self.assertEqual(len(attempts),30)
         self.assertEqual(target.read_bytes(),b'old helper')
         self.assertEqual(u.read_json(self.session/'journal.json')['status'],'rolled-back')
-        self.assertFalse((self.root/'末帧选片.exe').exists())
+        self.assertFalse((self.root/'SHIYING 数字资产.exe').exists())
 
     def test_transient_program_file_lock_is_retried(self):
         source=self.base/'replacement';source.write_bytes(b'new')
-        target=self.root/'末帧选片.exe';target.write_bytes(b'old')
+        target=self.root/'SHIYING 数字资产.exe';target.write_bytes(b'old')
         original=u.os.replace;calls=[]
         def transient(a,b):
             calls.append(1)
@@ -214,7 +295,7 @@ class UpdateTests(unittest.TestCase):
                 u.install(self.root,self.session,manifest)
             self.assertEqual(target.read_bytes(),b'old helper')
             self.assertEqual(u.read_json(self.session/'journal.json')['status'],'rolled-back')
-            self.assertFalse((self.root/'末帧选片.exe').exists())
+            self.assertFalse((self.root/'SHIYING 数字资产.exe').exists())
         finally:kernel.CloseHandle(handle)
 
     def uninstall_receipt(self,root=None,status='complete',older=False):
@@ -233,7 +314,7 @@ class UpdateTests(unittest.TestCase):
         with patch.object(u.installation,'user_data',return_value=home.parent/'data'),patch.object(u,'rollback',side_effect=AssertionError('成功卸载后不能恢复旧程序')):
             u.recover_pending(self.root)
         self.assertFalse(pending.exists());self.assertTrue(list(pending.parent.glob('pending.uninstalled-*.json')))
-        self.assertFalse((self.root/'末帧选片.exe').exists());self.assertEqual(backup.read_bytes(),b'old')
+        self.assertFalse((self.root/'SHIYING 数字资产.exe').exists());self.assertEqual(backup.read_bytes(),b'old')
 
     def test_unrelated_old_failed_receipts_cannot_disable_recovery(self):
         pending=self.root/'.update-state/pending.json';u.write_json(pending,{'session':str(self.session),'pid':0})
@@ -241,7 +322,7 @@ class UpdateTests(unittest.TestCase):
             home,_=self.uninstall_receipt(**kwargs)
             self.assertIsNone(u.completed_uninstall_receipt(self.root,pending,home))
         home,_=self.uninstall_receipt()
-        (self.root/'末帧选片.exe').write_bytes(b'installed')
+        (self.root/'SHIYING 数字资产.exe').write_bytes(b'installed')
         self.assertIsNone(u.completed_uninstall_receipt(self.root,pending,home))
 
     def test_successful_uninstall_archives_pending_and_keeps_backups(self):
@@ -260,7 +341,7 @@ class UpdateTests(unittest.TestCase):
 
     def test_recovery_restores_previous_user_data_marker(self):
         self.fixture();manifest=u.validate(self.session,self.settings)
-        (self.root/'末帧选片.exe').write_bytes(b'old')
+        (self.root/'SHIYING 数字资产.exe').write_bytes(b'old')
         marker=self.root/u.installation.MARKER;marker.write_bytes(b'old-data-location')
         u.write_json(self.session/'installation-marker.json',{'root':str(self.root),'existed':True})
         (self.session/'installation-marker.before').write_bytes(marker.read_bytes())
@@ -268,18 +349,18 @@ class UpdateTests(unittest.TestCase):
         u.write_json(self.session/'session.json',{'root':str(self.root)})
         u.write_json(self.root/'.update-state/pending.json',{'session':str(self.session),'pid':0})
         u.recover_pending(self.root)
-        self.assertEqual(marker.read_bytes(),b'old-data-location');self.assertEqual((self.root/'末帧选片.exe').read_bytes(),b'old')
+        self.assertEqual(marker.read_bytes(),b'old-data-location');self.assertEqual((self.root/'SHIYING 数字资产.exe').read_bytes(),b'old')
 
     def test_registered_healthy_install_is_not_rolled_back_after_interruption(self):
         self.fixture();manifest=u.validate(self.session,self.settings)
-        (self.root/'末帧选片.exe').write_bytes(b'old');u.install(self.root,self.session,manifest)
+        (self.root/'SHIYING 数字资产.exe').write_bytes(b'old');u.install(self.root,self.session,manifest)
         state=u.installation.prepare_marker(self.root,self.base/'data',manifest,False)
         u.installation.complete_registration(self.root,state)
         u.write_json(self.session/'healthy.json',{'releaseId':manifest['releaseId'],'version':manifest['version'],'pid':123})
         u.write_json(self.session/'session.json',{'root':str(self.root)})
         u.write_json(self.root/'.update-state/pending.json',{'session':str(self.session),'pid':0})
         u.recover_pending(self.root)
-        self.assertEqual((self.root/'末帧选片.exe').read_bytes(),b'desktop');self.assertEqual(u.read_json(self.session/'journal.json')['status'],'complete')
+        self.assertEqual((self.root/'SHIYING 数字资产.exe').read_bytes(),b'desktop');self.assertEqual(u.read_json(self.session/'journal.json')['status'],'complete')
 
 
 if __name__=='__main__':unittest.main()

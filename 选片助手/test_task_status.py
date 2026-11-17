@@ -7,6 +7,7 @@ import threading
 import time
 from types import SimpleNamespace
 import unittest
+from unittest.mock import patch
 
 from asset_analysis import AssetAnalysis
 from asset_archive import AssetArchive
@@ -43,6 +44,27 @@ class TaskStatusFixture(unittest.TestCase):
 
 
 class TaskStatusTests(TaskStatusFixture):
+    def test_visited_mode_uses_current_work_without_reading_retired_preview_queue(self):
+        self.catalog.visits=SimpleNamespace(state=lambda:{'running':True,'total':100,'cached':40,'failed':3})
+        connect=sqlite3.connect
+        def checked(path,*args,**kwargs):
+            self.assertNotIn('/previews/index.sqlite3',str(path))
+            return connect(path,*args,**kwargs)
+        with patch('task_status.sqlite3.connect',side_effect=checked):values=self.snapshot()
+        self.assertEqual(values['archive']['active'],57)
+        self.assertEqual(values['selection']['state'],'idle')
+
+    def test_slow_read_query_has_execution_budget_not_only_busy_timeout(self):
+        with self.previews.connect() as c:c.executemany('INSERT INTO pending(identity,root,record,requested) VALUES(?,?,?,0)',[(str(n),'photos','{}') for n in range(1000)])
+        connect=sqlite3.connect
+        def slow(path,*args,**kwargs):
+            c=connect(path,*args,**kwargs)
+            if '/previews/index.sqlite3' in str(path):c.create_function('json_extract',2,lambda *_:(time.sleep(.002),None)[1])
+            return c
+        with patch('task_status.sqlite3.connect',side_effect=slow):
+            started=time.monotonic();values=self.snapshot();elapsed=time.monotonic()-started
+        self.assertLess(elapsed,1)
+        self.assertEqual(values['selection']['state'],'unknown')
     def test_idle_and_completed_tasks_do_not_look_busy(self):
         with self.sku.connect() as c:c.execute("INSERT INTO jobs(id,status) VALUES ('old','failed')")
         with self.archive.connect() as c:c.execute("INSERT INTO metadata_jobs(id,status) VALUES ('old','completed')")
@@ -82,6 +104,8 @@ class TaskStatusTests(TaskStatusFixture):
 
     def test_database_contention_is_unknown_and_does_not_block_other_modules(self):
         with closing(sqlite3.connect(self.sku.db)) as lock:
+            # WAL下BEGIN EXCLUSIVE仍允许只读快照；用回滚日志真实模拟读锁阻挡。
+            lock.execute('PRAGMA journal_mode=DELETE')
             lock.execute('BEGIN EXCLUSIVE')
             started=time.monotonic();values=self.snapshot();elapsed=time.monotonic()-started
             self.assertLess(elapsed,1)

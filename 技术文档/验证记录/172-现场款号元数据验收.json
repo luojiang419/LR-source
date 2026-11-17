@@ -1,0 +1,94 @@
+{
+  "frozen": {
+    "passed": true,
+    "frozen_modules": 113,
+    "entrypoint_checked": true,
+    "source_mismatches": [],
+    "web_files": 69,
+    "tests": 13,
+    "failures": 0,
+    "errors": 0,
+    "skips": 0
+  },
+  "engine_smoke": {
+    "passed": true,
+    "ready_seconds": 0.531,
+    "isolated_data": true,
+    "production_edits": 0,
+    "http_resources_match": true,
+    "exit_code": 0
+  },
+  "sample": {
+    "passed": true,
+    "source_unchanged": true,
+    "source_sha256": "ebd923fda525215b2f1d8b8ede621017dd58ba4daae73e3a148505d14f491b58",
+    "pixels_unchanged": true,
+    "thumbnail_sha256": "c0c704555c949946e83f9e265f2af35d03da4554e9a9e829cb76602c8ef6b873",
+    "rating": 2,
+    "sku": "LC7877836-P1",
+    "windows_subject": "LC7877836-P1",
+    "windows_keywords": [
+      "SKU:LC7877836-P1",
+      "ShootType:细节图"
+    ],
+    "output": "G:\\app\\LR\\build\\live-sku-metadata\\XSY_2297-元数据验收副本.JPG"
+  },
+  "package": {
+    "passed": true,
+    "signed_manifest_verified": true,
+    "application_files_verified": 833,
+    "package_sha256": "fb6dc187c0dfe1173528c44bf14dcc4febb444d3f469ecda8fba3518c26d6d6c",
+    "outer_zip_crc_verified": true,
+    "published": false,
+    "version": "1.0.0",
+    "releaseId": "20261103060833"
+  },
+  "browser": {
+    "passed": true,
+    "errors": [],
+    "file_status": {
+      "status": "applied",
+      "total": 2,
+      "applied": 2,
+      "operation_ids": [
+        "246cec5cdf254bc3a9cb6feca107e45d"
+      ],
+      "jobs": [
+        {
+          "operation": "246cec5cdf254bc3a9cb6feca107e45d",
+          "status": "applied",
+          "reason": "",
+          "path": "C:\\Users\\jiang\\AppData\\Local\\Temp\\tmpcy9uerwf\\photos\\1.JPG"
+        },
+        {
+          "operation": "246cec5cdf254bc3a9cb6feca107e45d",
+          "status": "applied",
+          "reason": "",
+          "path": "C:\\Users\\jiang\\AppData\\Local\\Temp\\tmpcy9uerwf\\photos\\0.JPG"
+        }
+      ],
+      "sku": "UI-100"
+    }
+  },
+  "branch": "fix/live-sku-visible-metadata",
+  "source_regression": {
+    "tests": 83,
+    "initial_errors": 1,
+    "initial_skips": 9,
+    "error_retry_passed": true,
+    "effective_passed_after_retry": 74
+  },
+  "real_raw": {
+    "tests": 9,
+    "initial_errors": 1,
+    "retry_passed": true,
+    "all_effective_cases_passed": true
+  },
+  "parsing_feedback": {
+    "tests": 5,
+    "passed": true
+  },
+  "installed_on_field_computer": false,
+  "source_image_modified": false,
+  "published": false
+}

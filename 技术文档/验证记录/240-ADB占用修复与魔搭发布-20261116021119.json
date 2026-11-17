@@ -1,0 +1,212 @@
+{
+  "published": true,
+  "repository": "jiangjiang419/framekeep-updates",
+  "version": "1.0.1",
+  "releaseId": "20261116021119",
+  "anonymous_verified": true,
+  "full_installer_url": "https://modelscope.cn/api/v1/models/jiangjiang419/framekeep-updates/repo?Revision=master&FilePath=releases%2F1.0.1%2F20261116021119%2FSHIYING-Full-Setup.exe",
+  "light_installer_url": "https://modelscope.cn/api/v1/models/jiangjiang419/framekeep-updates/repo?Revision=master&FilePath=releases%2F1.0.1%2F20261116021119%2FSHIYING-Setup.exe",
+  "artifacts": {
+    "SHIYING-Windows-x64.zip": {
+      "bytes": 332759289,
+      "sha256": "2df52a2b07997d754943095eced5b7dc2d36cf1c1e8cd85a75cfb41ce2afe597"
+    },
+    "SHIYING-Setup.exe": {
+      "bytes": 32823296,
+      "sha256": "2c3df20a663639e7a885e0e20426dbe9eceadf7602e8938a7a226c93f0a9e522"
+    },
+    "SHIYING-Full-Setup.exe": {
+      "bytes": 751668224,
+      "sha256": "0cb586374522773e3e769d21250ed07633f7be63211dd754410c1d026c575282"
+    }
+  },
+  "components": [
+    {
+      "path": "components/52d1df764521fb4fc071665dfdf889c3529c78e5438bfb66029eb19cd29e8ea9/llama-b11773-framekeep-win-x64.zip",
+      "sha256": "52d1df764521fb4fc071665dfdf889c3529c78e5438bfb66029eb19cd29e8ea9",
+      "size": 694127530
+    },
+    {
+      "path": "components/d218f6fbf0f1c23d2161bd6ac7f5eaa6104fa89955c09290497e31008e2618e4/PP-OCRv6_small_det.tar",
+      "sha256": "d218f6fbf0f1c23d2161bd6ac7f5eaa6104fa89955c09290497e31008e2618e4",
+      "size": 9891840
+    },
+    {
+      "path": "components/d267ab077a44a0eedb1ea8f8c542d263f211de8e9d7a029bf9fcfff7e5a88fb1/PP-OCRv6_small_rec.tar",
+      "sha256": "d267ab077a44a0eedb1ea8f8c542d263f211de8e9d7a029bf9fcfff7e5a88fb1",
+      "size": 21319680
+    },
+    {
+      "path": "components/d8cc46c7163c83a151aef8fce5856b965860df90a875029216d605b0f607eaec/PP-OCRv6_medium_rec.tar",
+      "sha256": "d8cc46c7163c83a151aef8fce5856b965860df90a875029216d605b0f607eaec",
+      "size": 76718080
+    },
+    {
+      "path": "components/c5adb0b15de1b1838934eba1dd72e7529e7d80132216c6ee6d26eba6fa054fcf/PP-OCRv6_medium_det.tar",
+      "sha256": "c5adb0b15de1b1838934eba1dd72e7529e7d80132216c6ee6d26eba6fa054fcf",
+      "size": 62044160
+    },
+    {
+      "path": "components/0625fb5c1e75be58a164e14f95aa58a3e5badb859b3d17c952385f3e4a9ff3e8/MicrosoftEdgeWebView2RuntimeInstallerX64.exe",
+      "sha256": "0625fb5c1e75be58a164e14f95aa58a3e5badb859b3d17c952385f3e4a9ff3e8",
+      "size": 214156024
+    }
+  ],
+  "previous_release": {
+    "version": "1.0.1",
+    "releaseId": "20261116013944"
+  },
+  "local_install_modified": false,
+  "implementation_commit": "0765de7",
+  "tests": {
+    "update_system": 90,
+    "new_failure_reproductions_before_fix": 2
+  },
+  "source_verification": {
+    "status": "passed",
+    "frozen_module_count": 165,
+    "web_file_count": 79,
+    "config_locations": [
+      "G:\\app\\LR\\build\\tauri-release\\SHIYING 数字资产\\update-config.json",
+      "G:\\app\\LR\\build\\tauri-release\\SHIYING 数字资产\\engine\\_internal\\更新系统\\update-config.json",
+      "G:\\app\\LR\\build\\tauri-release\\SHIYING 数字资产\\update\\_internal\\更新系统\\update-config.json"
+    ],
+    "releaseId": "20261116021119",
+    "source_hashes_unchanged": true,
+    "desktop_rebuilt": true
+  },
+  "installer_verification": {
+    "status": "passed",
+    "version": "1.0.1",
+    "releaseId": "20261116021119",
+    "program_files_verified": 963,
+    "signature_verified": true,
+    "light_native_runtime_verified": true,
+    "full_payload_verified": true,
+    "artifacts": {
+      "SHIYING-Windows-x64.zip": {
+        "bytes": 332759289,
+        "sha256": "2df52a2b07997d754943095eced5b7dc2d36cf1c1e8cd85a75cfb41ce2afe597"
+      },
+      "SHIYING-Setup.exe": {
+        "bytes": 32823296,
+        "sha256": "2c3df20a663639e7a885e0e20426dbe9eceadf7602e8938a7a226c93f0a9e522"
+      },
+      "SHIYING-Full-Setup.exe": {
+        "bytes": 751668224,
+        "sha256": "0cb586374522773e3e769d21250ed07633f7be63211dd754410c1d026c575282"
+      }
+    },
+    "installed": false,
+    "production_data_used": false,
+    "published": false
+  },
+  "frozen_worker_success_and_rollback": {
+    "success": {
+      "status": "complete",
+      "elapsedSeconds": 9.734,
+      "forceExit": true,
+      "programFilesVerified": true,
+      "userDataPreserved": true,
+      "workerSurvivedParentExit": true,
+      "detachedBundledAdbReleased": true,
+      "externalAdbPreserved": true,
+      "adbReplacementOrRollbackVerified": true
+    },
+    "rollback": {
+      "status": "rolled-back",
+      "elapsedSeconds": 9.672,
+      "forceExit": true,
+      "programFilesVerified": true,
+      "userDataPreserved": true,
+      "workerSurvivedParentExit": true,
+      "detachedBundledAdbReleased": true,
+      "externalAdbPreserved": true,
+      "adbReplacementOrRollbackVerified": true
+    }
+  },
+  "frozen_frontend": {
+    "status": "passed",
+    "checks": [
+      "removed parsing page",
+      "independent channel failure restores current original, navigation and zoom",
+      "normal writing hint hidden, dialog details retained",
+      "shared model advanced settings retained",
+      "four themes responsive"
+    ],
+    "errors": [],
+    "source_photos_unchanged": true,
+    "production_data_used": false,
+    "frozen_engine": "G:\\app\\LR\\build\\tauri-release\\SHIYING 数字资产\\engine\\framekeep-engine.exe"
+  },
+  "online_clients": {
+    "status": "passed",
+    "anonymous_live_manifest_used": true,
+    "previous_versions_detect_update": true,
+    "current_version_reports_latest": true,
+    "verified_download_cache_reused": true,
+    "clients": {
+      "old-public": {
+        "status": "downloaded",
+        "available": true,
+        "downloaded": true,
+        "version": "1.0.1",
+        "releaseId": "20261116021119",
+        "currentVersion": "1.0.1",
+        "currentReleaseId": "20261116013944"
+      },
+      "local-installed": {
+        "status": "downloaded",
+        "available": true,
+        "downloaded": true,
+        "version": "1.0.1",
+        "releaseId": "20261116021119",
+        "currentVersion": "1.0.1",
+        "currentReleaseId": "20261114043205"
+      },
+      "current": {
+        "status": "checked",
+        "available": false,
+        "downloaded": false,
+        "version": "1.0.1",
+        "releaseId": "20261116021119",
+        "currentVersion": "1.0.1",
+        "currentReleaseId": "20261116021119"
+      }
+    },
+    "production_modified": false
+  },
+  "private_source_sha256": "03ef0852e169cf8d697c5e897f3a13ab9f5102c4830da1f2215923d72f906345",
+  "private_source_file_count": 582,
+  "production_install_modified": false,
+  "external_sdk_adb_preserved": true,
+  "cleanup": {
+    "free_before": 156107182080,
+    "deleted_bytes": 718841272,
+    "removed": [
+      "G:\\app\\LR\\build\\single-installer\\20261116021119\\offline-payload.zip"
+    ],
+    "final_artifacts_sources_models_business_data_preserved": true,
+    "free_after": 156826030080,
+    "free_delta": 718848000
+  },
+  "completed_at_utc": "2026-11-16T02:21:52.501265+00:00",
+  "github_pushed": false,
+  "user_distribution_package": {
+    "releaseId": "20261116021119",
+    "version": "1.0.1",
+    "file": "G:\\app\\LR\\dist\\SHIYING-ADB占用修复-更新安装包-1.0.1-20261116021119.exe",
+    "bytes": 751668224,
+    "sha256": "0cb586374522773e3e769d21250ed07633f7be63211dd754410c1d026c575282",
+    "single_exe": true,
+    "official_signed_package": true,
+    "matches_verified_published_full_installer": true,
+    "sources_unchanged": 582,
+    "includes_cpu_ocr_and_basic_dependencies": true,
+    "qwen_or_glm_weights_included": false,
+    "instructions": "G:\\app\\LR\\dist\\SHIYING-ADB占用修复-更新安装包-1.0.1-20261116021119.安装说明.txt",
+    "checksum_file": "G:\\app\\LR\\dist\\SHIYING-ADB占用修复-更新安装包-1.0.1-20261116021119.sha256.txt",
+    "native_runtime_and_full_payload_already_verified": true,
+    "real_frozen_update_and_rollback_already_verified": true
+  }
+}

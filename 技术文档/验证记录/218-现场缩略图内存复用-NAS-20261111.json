@@ -1,0 +1,289 @@
+{
+  "stage": "完成",
+  "source": "\\\\192.168.0.181\\新摄影\\细节图\\源图片备份（勿动）\\现场拍摄小档\\2026-11-04",
+  "photos": 8434,
+  "elapsed_seconds": 237.856,
+  "reads": 8434,
+  "unique_reads": 8434,
+  "duplicate_reads": {},
+  "stats": {
+    "entries": 8434,
+    "bytes": 36270398,
+    "decodedBytes": 100608000,
+    "active": 0,
+    "queued": 0,
+    "requests": 8434,
+    "hits": 90746,
+    "byteLimit": 536870912,
+    "decodedLimit": 100663296
+  },
+  "checks": [
+    {
+      "page": 1,
+      "selected_id": "e96a8a890131605afa09478f",
+      "photos": 240,
+      "reads_after_first_pass": 240,
+      "reads_after_revisits": 240
+    },
+    {
+      "page": 2,
+      "selected_id": "83baf76f9b618d5a5501d013",
+      "photos": 240,
+      "reads_after_first_pass": 480,
+      "reads_after_revisits": 480
+    },
+    {
+      "page": 3,
+      "selected_id": "f14e6e2095e67f3dfb7cef4b",
+      "photos": 240,
+      "reads_after_first_pass": 720,
+      "reads_after_revisits": 720
+    },
+    {
+      "page": 4,
+      "selected_id": "3154780c03568f664e900dd4",
+      "photos": 240,
+      "reads_after_first_pass": 960,
+      "reads_after_revisits": 960
+    },
+    {
+      "page": 5,
+      "selected_id": "f7f48ea8ce9b76cb1f8f4bc6",
+      "photos": 240,
+      "reads_after_first_pass": 1200,
+      "reads_after_revisits": 1200
+    },
+    {
+      "page": 6,
+      "selected_id": "47638e40ebc5a1ea6a47e596",
+      "photos": 240,
+      "reads_after_first_pass": 1440,
+      "reads_after_revisits": 1440
+    },
+    {
+      "page": 7,
+      "selected_id": "05967e30b192f2a8aff2e3a9",
+      "photos": 240,
+      "reads_after_first_pass": 1680,
+      "reads_after_revisits": 1680
+    },
+    {
+      "page": 8,
+      "selected_id": "896e48319f0dae5347b80484",
+      "photos": 240,
+      "reads_after_first_pass": 1920,
+      "reads_after_revisits": 1920
+    },
+    {
+      "page": 9,
+      "selected_id": "7e9ef3b81cf696dc159ba486",
+      "photos": 240,
+      "reads_after_first_pass": 2160,
+      "reads_after_revisits": 2160
+    },
+    {
+      "page": 10,
+      "selected_id": "1c59262f69bd42d68009d052",
+      "photos": 240,
+      "reads_after_first_pass": 2400,
+      "reads_after_revisits": 2400
+    },
+    {
+      "page": 11,
+      "selected_id": "2123cbcae444d93af8bff332",
+      "photos": 240,
+      "reads_after_first_pass": 2640,
+      "reads_after_revisits": 2640
+    },
+    {
+      "page": 12,
+      "selected_id": "b0e917d0dfec327a9652caf8",
+      "photos": 240,
+      "reads_after_first_pass": 2880,
+      "reads_after_revisits": 2880
+    },
+    {
+      "page": 13,
+      "selected_id": "eadd1427555cce9cded3a97f",
+      "photos": 240,
+      "reads_after_first_pass": 3120,
+      "reads_after_revisits": 3120
+    },
+    {
+      "page": 14,
+      "selected_id": "c6efbcdc076cc390af7b232f",
+      "photos": 240,
+      "reads_after_first_pass": 3360,
+      "reads_after_revisits": 3360
+    },
+    {
+      "page": 15,
+      "selected_id": "1e8e4df9d51a8d9f5e8e85d2",
+      "photos": 240,
+      "reads_after_first_pass": 3600,
+      "reads_after_revisits": 3600
+    },
+    {
+      "page": 16,
+      "selected_id": "1c2d7e35bedd9dbef60c7b74",
+      "photos": 240,
+      "reads_after_first_pass": 3840,
+      "reads_after_revisits": 3840
+    },
+    {
+      "page": 17,
+      "selected_id": "91c46d10fde3e9afb9ce8e11",
+      "photos": 240,
+      "reads_after_first_pass": 4080,
+      "reads_after_revisits": 4080
+    },
+    {
+      "page": 18,
+      "selected_id": "cb48e4a59b1991139a01aefd",
+      "photos": 240,
+      "reads_after_first_pass": 4320,
+      "reads_after_revisits": 4320
+    },
+    {
+      "page": 19,
+      "selected_id": "224270f856be3b857d2e1474",
+      "photos": 240,
+      "reads_after_first_pass": 4560,
+      "reads_after_revisits": 4560
+    },
+    {
+      "page": 20,
+      "selected_id": "783e647438527f58cb0658a1",
+      "photos": 240,
+      "reads_after_first_pass": 4800,
+      "reads_after_revisits": 4800
+    },
+    {
+      "page": 21,
+      "selected_id": "b91af9688bcd3a74fe234827",
+      "photos": 240,
+      "reads_after_first_pass": 5040,
+      "reads_after_revisits": 5040
+    },
+    {
+      "page": 22,
+      "selected_id": "2d17cf2ad43457e41cf3d037",
+      "photos": 240,
+      "reads_after_first_pass": 5280,
+      "reads_after_revisits": 5280
+    },
+    {
+      "page": 23,
+      "selected_id": "191ebd1894d25ec8a8dc4405",
+      "photos": 240,
+      "reads_after_first_pass": 5520,
+      "reads_after_revisits": 5520
+    },
+    {
+      "page": 24,
+      "selected_id": "027f9cc5eac84fac231cc706",
+      "photos": 240,
+      "reads_after_first_pass": 5760,
+      "reads_after_revisits": 5760
+    },
+    {
+      "page": 25,
+      "selected_id": "c2c22a2d4a786f19c6d60e37",
+      "photos": 240,
+      "reads_after_first_pass": 6000,
+      "reads_after_revisits": 6000
+    },
+    {
+      "page": 26,
+      "selected_id": "7bf5e6c990b1887b991aa849",
+      "photos": 240,
+      "reads_after_first_pass": 6240,
+      "reads_after_revisits": 6240
+    },
+    {
+      "page": 27,
+      "selected_id": "20776199ac08090fa32f42a9",
+      "photos": 240,
+      "reads_after_first_pass": 6480,
+      "reads_after_revisits": 6480
+    },
+    {
+      "page": 28,
+      "selected_id": "13470d8270bffb1633cb5ae1",
+      "photos": 240,
+      "reads_after_first_pass": 6720,
+      "reads_after_revisits": 6720
+    },
+    {
+      "page": 29,
+      "selected_id": "487d05809b4e02cebfad74d4",
+      "photos": 240,
+      "reads_after_first_pass": 6960,
+      "reads_after_revisits": 6960
+    },
+    {
+      "page": 30,
+      "selected_id": "08e5e210a57cd56d44e766b6",
+      "photos": 240,
+      "reads_after_first_pass": 7200,
+      "reads_after_revisits": 7200
+    },
+    {
+      "page": 31,
+      "selected_id": "278ffa2d793203cfa4f66185",
+      "photos": 240,
+      "reads_after_first_pass": 7440,
+      "reads_after_revisits": 7440
+    },
+    {
+      "page": 32,
+      "selected_id": "aa4463af1c0853973b2fe8b7",
+      "photos": 240,
+      "reads_after_first_pass": 7680,
+      "reads_after_revisits": 7680
+    },
+    {
+      "page": 33,
+      "selected_id": "f5a686263fb318ea1514ea91",
+      "photos": 240,
+      "reads_after_first_pass": 7920,
+      "reads_after_revisits": 7920
+    },
+    {
+      "page": 34,
+      "selected_id": "ac2577ff71d2a3a4db84ad44",
+      "photos": 240,
+      "reads_after_first_pass": 8160,
+      "reads_after_revisits": 8160
+    },
+    {
+      "page": 35,
+      "selected_id": "6ca4ed27d2f769ff97473ddc",
+      "photos": 240,
+      "reads_after_first_pass": 8400,
+      "reads_after_revisits": 8400
+    },
+    {
+      "page": 36,
+      "selected_id": "fd6346191ad4f03c8b892e6e",
+      "photos": 34,
+      "reads_after_first_pass": 8434,
+      "reads_after_revisits": 8434
+    }
+  ],
+  "page_errors": [],
+  "failed_thumbnails": [],
+  "source_manifest_unchanged": true,
+  "source_files_checked": 8546,
+  "cross_page_revisits_added_reads": 0,
+  "validation_date": "2026-11-11",
+  "branch": "fix/live-thumbnail-memory",
+  "regressions": {
+    "passed": 25,
+    "known_existing_failure": "test_shift_hover_drag_cancel_filter_scroll_and_save：第83行获取隐藏节点位置返回None，修改前四个前端模块在隔离副本中复现同样错误",
+    "baseline_log": "build/live-thumbnail-memory-baseline.log",
+    "main_log": "build/live-thumbnail-memory-regression-final.log",
+    "ui_log": "build/live-thumbnail-memory-ui-regression.log"
+  },
+  "scope": "源码与隔离真实浏览器验收；未打包、覆盖安装版或推送"
+}

@@ -1,0 +1,219 @@
+{
+  "verified_at": "2026-11-04T16:15:18+08:00",
+  "branch": "fix/metadata-queue-blocking-isolation",
+  "baseline": "49e2b5a",
+  "published": false,
+  "online_manifest_changed": false,
+  "github_pushed": false,
+  "production_install_replaced": false,
+  "customer_database_available": false,
+  "reported_customer_status": "all queued zero with no extra message",
+  "baseline_reproductions": {
+    "tests": 3,
+    "failures": 3,
+    "seconds": 22.612
+  },
+  "fixed_tests": {
+    "focused": 7,
+    "focused_seconds": 32.333,
+    "source_total": 75,
+    "source_passed": 74,
+    "source_skipped_raw_fixture": 1,
+    "source_seconds": 232.775
+  },
+  "frozen": {
+    "passed": true,
+    "frozen_modules": 115,
+    "entrypoint_checked": true,
+    "source_mismatches": [],
+    "web_files": 71,
+    "tests": 14,
+    "failures": 0,
+    "errors": 0,
+    "skips": 0
+  },
+  "real_engine_legacy": {
+    "legacy_missing_jobs": 12,
+    "legacy_images_without_sku": 12,
+    "real_ocr_evidence_preserved": true,
+    "progress_samples": [
+      {
+        "applied_files": 0,
+        "shot_skus": 3,
+        "footer": "拍摄进度 · 3 已拍摄"
+      },
+      {
+        "applied_files": 1,
+        "shot_skus": 3,
+        "footer": "拍摄进度 · 3 已拍摄"
+      },
+      {
+        "applied_files": 2,
+        "shot_skus": 3,
+        "footer": "拍摄进度 · 3 已拍摄"
+      },
+      {
+        "applied_files": 3,
+        "shot_skus": 3,
+        "footer": "拍摄进度 · 3 已拍摄"
+      },
+      {
+        "applied_files": 4,
+        "shot_skus": 3,
+        "footer": "拍摄进度 · 3 已拍摄"
+      },
+      {
+        "applied_files": 5,
+        "shot_skus": 3,
+        "footer": "拍摄进度 · 3 已拍摄"
+      },
+      {
+        "applied_files": 6,
+        "shot_skus": 3,
+        "footer": "拍摄进度 · 3 已拍摄"
+      },
+      {
+        "applied_files": 7,
+        "shot_skus": 3,
+        "footer": "拍摄进度 · 3 已拍摄"
+      },
+      {
+        "applied_files": 8,
+        "shot_skus": 3,
+        "footer": "拍摄进度 · 3 已拍摄"
+      },
+      {
+        "applied_files": 9,
+        "shot_skus": 3,
+        "footer": "拍摄进度 · 3 已拍摄"
+      },
+      {
+        "applied_files": 10,
+        "shot_skus": 3,
+        "footer": "拍摄进度 · 3 已拍摄"
+      },
+      {
+        "applied_files": 11,
+        "shot_skus": 3,
+        "footer": "拍摄进度 · 3 已拍摄"
+      },
+      {
+        "applied_files": 12,
+        "shot_skus": 3,
+        "footer": "拍摄进度 · 3 已拍摄"
+      }
+    ],
+    "errors": [],
+    "queue": {
+      "worker": {
+        "phase": "idle",
+        "since": 1793779563.1936505,
+        "path": "",
+        "job_id": "",
+        "error": "",
+        "alive": true,
+        "elapsed_seconds": 0.0,
+        "backfilled_jobs": 12,
+        "backfill": {
+          "phase": "idle",
+          "since": 1793779558.794252,
+          "error": "",
+          "elapsed_seconds": 4.4,
+          "unverified_records": [
+            {
+              "id": "old-corrupt",
+              "sku": "UNKNOWN-OLD",
+              "project": ""
+            }
+          ]
+        },
+        "rating_path": null
+      },
+      "process_id": 43400,
+      "database": "G:\\app\\LR\\build\\queue-blocking\\engine-legacy\\data\\asset_archive.sqlite3",
+      "threads": [
+        {
+          "name": "asset-metadata",
+          "alive": true
+        },
+        {
+          "name": "metadata-backfill",
+          "alive": true
+        },
+        {
+          "name": "asset-archive",
+          "alive": true
+        },
+        {
+          "name": "rating-xmp-sync",
+          "alive": true
+        }
+      ],
+      "counts": {
+        "applied": 12
+      },
+      "recent_issues": [],
+      "data_path": "G:\\app\\LR\\build\\queue-blocking\\engine-legacy\\data",
+      "releaseId": "20261104071740"
+    },
+    "passed": true,
+    "all_files_read_back": true,
+    "all_pixels_unchanged": true,
+    "tail_unassigned": true,
+    "no_zero_shot_progress": true,
+    "no_pending_hint_after_success": true,
+    "exit_code": 0
+  },
+  "package": {
+    "passed": true,
+    "local_signature_verified": true,
+    "files": 835,
+    "archive_crc_verified": true,
+    "stage_matches": true,
+    "published": false,
+    "releaseId": "20261104071740",
+    "bundle_bytes": 288769338,
+    "bundle_sha256": "e1d079760e25c7003d8388b72985febbdcbe4c8092b48c0d5fa51afe7ae3d4cc"
+  },
+  "native_local_installer": {
+    "was_running": false,
+    "errors": [],
+    "passed": true,
+    "files": 835,
+    "status": {
+      "status": "complete",
+      "version": "1.0.0",
+      "releaseId": "20261104071740",
+      "pid": 67452,
+      "components": null
+    },
+    "unknown_preserved": true,
+    "health": {
+      "application": "framekeep",
+      "process_id": 57980,
+      "ready": true
+    },
+    "workflow": {
+      "config": {
+        "live_enabled": false,
+        "global_enabled": false,
+        "session_id": null,
+        "ocr_paused": false,
+        "vision_paused": false
+      },
+      "runs": {},
+      "error": "",
+      "active": [],
+      "timings": {},
+      "sku_writeback": {
+        "counts": {},
+        "failed": [],
+        "paused": false,
+        "loading": false,
+        "error": ""
+      }
+    }
+  },
+  "delivery": "dist/末帧选片-客户写入队列阻塞修复-本地-20261104.zip",
+  "customer_followup": "Install the local package manually; if queue still stalls, copy queue diagnostics from the customer machine. Local reproduction does not identify the actual customer lock owner."
+}

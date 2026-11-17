@@ -16,6 +16,7 @@ from provider_concurrency import ProviderConcurrency,concurrency_value,DEFAULT_A
 
 CATEGORIES={'multimodal','ocr','text'}
 PROTOCOLS={'responses','chat','ocr_json','paddleocr','local'}
+BUILTIN_MODELS={'ocr':('pp-ocrv6-medium-local','内置 PP-OCRv6 Medium'),'multimodal':('qwen2.5-vl-7b-q4','内置 Qwen2.5-VL 7B Q4')}
 
 
 class NoModelRedirect(urllib.request.HTTPRedirectHandler):
@@ -51,13 +52,21 @@ class Providers(ProviderConcurrency):
             try:
                 c=legacy();saved=self.save({'name':'原 AI 助手','category':'multimodal','protocol':'responses','url':c['url'],'model':c['model'],'key':c['key']});self.select(saved['providers'][0]['id'])
             except (ValueError,OSError):pass
-        # 旧版内置模式只有 OCR。升级保留开关与外部卡片，补齐按需使用的视觉卡片。
-        if self.data.get('builtin_enabled') and not self._builtin('multimodal'):
-            self.data['providers'].append({'id':uuid.uuid4().hex,'name':'内置 Qwen2.5-VL 7B Q4',
-                'category':'multimodal','protocol':'local','url':'http://127.0.0.1',
-                'model':'qwen2.5-vl-7b-q4','timeout':300,'max_tokens':4096,'image_size':1600,
-                'json_mode':True,'concurrency':1})
-            self._persist()
+        # 原地迁移旧本地 OCR 卡片，保留选用/绑定 id；外部 API 和密钥完全保留。
+        changed=False
+        for provider in self.data['providers']:
+            if provider.get('protocol')=='local' and provider.get('category')=='ocr' and provider.get('model')=='glm-ocr-local':
+                provider.update(model=BUILTIN_MODELS['ocr'][0],name=BUILTIN_MODELS['ocr'][1],json_mode=False,concurrency=1)
+                changed=True
+        if self.data.get('builtin_enabled'):
+            for category,(model,name) in BUILTIN_MODELS.items():
+                if self._builtin(category):continue
+                self.data['providers'].append({'id':uuid.uuid4().hex,'name':name,'category':category,
+                    'protocol':'local','url':'http://127.0.0.1','model':model,'timeout':300,
+                    'max_tokens':4096 if category=='multimodal' else 1200,'image_size':1600,
+                    'json_mode':category!='ocr','concurrency':1})
+                changed=True
+        if changed:self._persist()
 
     def _persist(self):
         self.path.parent.mkdir(parents=True,exist_ok=True);temp=self.path.with_suffix('.tmp')
@@ -78,14 +87,14 @@ class Providers(ProviderConcurrency):
         if self.data.get('builtin_enabled',False):raise ValueError('请先关闭“使用内置模型”，再切换或修改 API 配置')
 
     def _builtin(self,category):
-        model={'ocr':'glm-ocr-local','multimodal':'qwen2.5-vl-7b-q4'}.get(category)
+        model=BUILTIN_MODELS.get(category,('',))[0]
         return next((p for p in self.data['providers'] if p['category']==category and p['protocol']=='local' and p['model']==model),None)
 
     def set_builtin(self,enabled):
         if type(enabled) is not bool:raise ValueError('内置模型开关必须为布尔值')
         with self.lock:
             if enabled and not self.data.get('builtin_enabled',False):
-                for category,model,name in [('ocr','glm-ocr-local','内置 GLM-OCR'),('multimodal','qwen2.5-vl-7b-q4','内置 Qwen2.5-VL 7B Q4')]:
+                for category,(model,name) in BUILTIN_MODELS.items():
                     if not self._builtin(category):self.save({'name':name,'category':category,'protocol':'local','model':model,'timeout':300,'max_tokens':4096 if category=='multimodal' else 1200,'image_size':1600,'json_mode':category!='ocr'})
             self.data['builtin_enabled']=enabled;self._persist();return self.public()
 
@@ -105,7 +114,8 @@ class Providers(ProviderConcurrency):
             if not name or not model or len(name)>100 or len(model)>200:raise ValueError('请填写配置名称和模型标识')
             if protocol=='local':
                 from local_inference import MODEL_IDS
-                if MODEL_IDS.get(model)!=category:raise ValueError('请选择对应类别的内置模型：qwen2.5-vl-7b-q4 / glm-ocr-local')
+                if category=='ocr' and model=='glm-ocr-local':model=BUILTIN_MODELS['ocr'][0]
+                if MODEL_IDS.get(model)!=category:raise ValueError('请选择对应类别的内置模型：'+ ' / '.join(MODEL_IDS))
             if old and old['category']!=category:raise ValueError('已有卡片不能更换分类，请新建配置')
             concurrency=body.get('concurrency',1 if protocol=='local' else old.get('concurrency',DEFAULT_API_CONCURRENCY))
             if type(concurrency) is not int or not 1<=concurrency<=MAX_API_CONCURRENCY:raise ValueError('最大并发数须为 1–64 的整数')

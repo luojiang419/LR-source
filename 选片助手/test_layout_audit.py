@@ -30,7 +30,7 @@ from test_sku_workflow import fixture_book,NS
 import media_engine as media
 
 ROOT=Path(__file__).resolve().parents[1]
-TABS={'selection':'selection-tab','progress':'sku-open','archive':'asset-archive-open','database':'sku-database-open','analysis':'asset-analysis-open','settings':'app-settings-open'}
+TABS={'selection':'selection-tab','progress':'sku-open','archive':'asset-archive-open','database':'sku-database-open','settings':'app-settings-open'}
 
 
 def long_workbook():

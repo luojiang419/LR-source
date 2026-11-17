@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "末帧选片",
-  "version": "1.0.0",
+  "productName": "SHIYING 数字资产",
+  "version": "1.0.3",
   "identifier": "com.framekeep.culling",
   "build": {"frontendDist": "frontend"},
   "app": {

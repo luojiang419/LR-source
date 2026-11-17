@@ -9,6 +9,7 @@ import time
 
 from retrieval_schema import digest, dumps, normalized, tokens
 from sku_match import normalize
+from smart_index import save_frames
 
 
 def install(c):
@@ -23,6 +24,12 @@ CREATE TABLE IF NOT EXISTS intelligence_jobs(
  due REAL NOT NULL,created REAL NOT NULL,updated REAL NOT NULL,UNIQUE(item,fingerprint,config));
 CREATE INDEX IF NOT EXISTS intelligence_queue ON intelligence_jobs(status,due,created);
 CREATE INDEX IF NOT EXISTS intelligence_job_item ON intelligence_jobs(item,updated DESC);
+CREATE INDEX IF NOT EXISTS intelligence_phase_queue ON intelligence_jobs(config,status,due,created);
+CREATE TABLE IF NOT EXISTS intelligence_ocr(
+ item TEXT PRIMARY KEY,fingerprint TEXT NOT NULL,config TEXT NOT NULL,
+ model TEXT NOT NULL,frames TEXT NOT NULL,created REAL NOT NULL);
+CREATE TRIGGER IF NOT EXISTS intelligence_ocr_delete AFTER DELETE ON items BEGIN
+ DELETE FROM intelligence_ocr WHERE item=old.id; END;
 CREATE TABLE IF NOT EXISTS intelligence_results(
  item TEXT PRIMARY KEY,fingerprint TEXT NOT NULL,config TEXT NOT NULL,provider TEXT NOT NULL,
  frames TEXT NOT NULL,summary TEXT NOT NULL,created REAL NOT NULL);
@@ -69,6 +76,16 @@ CREATE TRIGGER IF NOT EXISTS intelligence_delete AFTER DELETE ON items BEGIN
 ''')
     # 未发行开发库的第一版 item 未参与倒排。保留结果，升级全文表后按资产 ID 与词交集检索。
     definition = c.execute("SELECT sql FROM sqlite_master WHERE name='intelligence_fts'").fetchone()[0]
+    # 外层 items UPSERT 的冲突策略会覆盖触发器的 INSERT OR IGNORE。
+    # 自动解析保留原 dirty 标记时，重扫同一图片不能因此报唯一键冲突。
+    for trigger in ('intelligence_insert','intelligence_update'):
+        sql=c.execute("SELECT sql FROM sqlite_master WHERE type='trigger' AND name=?",(trigger,)).fetchone()[0]
+        old='INSERT OR IGNORE INTO intelligence_dirty VALUES(new.id)'
+        if old in sql:
+            c.execute('SAVEPOINT intelligence_trigger_upgrade')
+            c.execute('DROP TRIGGER '+trigger)
+            c.execute(sql.replace(old,'INSERT INTO intelligence_dirty VALUES(new.id) ON CONFLICT(item) DO NOTHING'))
+            c.execute('RELEASE intelligence_trigger_upgrade')
     if 'UNINDEXED' in definition.upper():
         c.executescript('''BEGIN IMMEDIATE;
 CREATE TABLE intelligence_fts_upgrade AS SELECT item,terms FROM intelligence_fts;
@@ -77,6 +94,8 @@ CREATE VIRTUAL TABLE intelligence_fts USING fts5(item,terms,tokenize='unicode61'
 INSERT INTO intelligence_fts(item,terms) SELECT item,terms FROM intelligence_fts_upgrade;
 DROP TABLE intelligence_fts_upgrade;
 COMMIT;''')
+    from catalog_ocr import install as install_ocr
+    install_ocr(c)
 
 
 _PLANES = {}
@@ -108,6 +127,8 @@ def save_result(c, item, fingerprint, config, provider, frames, vectors):
     c.execute('DELETE FROM intelligence_vectors WHERE item=?', (item,))
     c.execute('DELETE FROM intelligence_lsh WHERE item=?', (item,))
     text = []
+    ocr=c.execute('SELECT frames FROM intelligence_ocr WHERE item=? AND fingerprint=?',(item,fingerprint)).fetchone()
+    if ocr:text.extend(str(frame.get('reading',{}).get('text','')) for frame in json.loads(ocr[0]))
     for index, frame in enumerate(frames):
         value = frame['result'];text.extend([value['summary'], value['visible_text'], *value['keywords']])
         for key, content in {**value['attributes'], **value.get('custom', {})}.items():
@@ -118,6 +139,7 @@ def save_result(c, item, fingerprint, config, provider, frames, vectors):
     c.execute('INSERT OR REPLACE INTO intelligence_results VALUES(?,?,?,?,?,?,?)',
               (item, fingerprint, config, provider, dumps(frames), summary, time.time()))
     c.execute('INSERT INTO intelligence_fts(item,terms) VALUES(?,?)', (item, ' '.join(tokens(' '.join(text)))))
+    save_frames(c,item,fingerprint,frames)
     for frame, backend, vector in vectors:
         store_vector(c, item, frame, backend, fingerprint, vector)
     c.execute('UPDATE intelligence_meta SET generation=generation+1 WHERE id=1')
@@ -128,30 +150,33 @@ def condition(c, text):
     if not terms:
         return '0', []
     expression = ' AND '.join('"'+term.replace('"', '""')+'"' for term in terms)
-    return '''id IN (SELECT r.item FROM intelligence_results r JOIN items current ON current.id=r.item
-      WHERE current.fingerprint=r.fingerprint AND r.item IN
+    return '''id IN (SELECT current.id FROM items current
+      WHERE (EXISTS(SELECT 1 FROM intelligence_results r WHERE r.item=current.id AND r.fingerprint=current.fingerprint)
+       OR EXISTS(SELECT 1 FROM intelligence_ocr o WHERE o.item=current.id AND o.fingerprint=current.fingerprint)) AND current.id IN
       (SELECT item FROM intelligence_fts WHERE intelligence_fts MATCH ?))''', [expression]
 
 
 def row_condition(text):
     terms = tokens(text)[:80]
     if len(text.strip()) == 1 and '\u3400' <= text.strip() <= '\u9fff':
-        return '''EXISTS(SELECT 1 FROM intelligence_results r WHERE r.item=i.id AND r.fingerprint=i.fingerprint
+        return '''((EXISTS(SELECT 1 FROM intelligence_results r WHERE r.item=i.id AND r.fingerprint=i.fingerprint)
+            OR EXISTS(SELECT 1 FROM intelligence_ocr o WHERE o.item=i.id AND o.fingerprint=i.fingerprint))
             AND EXISTS(SELECT 1 FROM intelligence_fts WHERE intelligence_fts MATCH ('item:"'||i.id||'"')
             AND instr(terms,?)>0))''', [text.strip()]
     expression = ' AND '.join('terms:"'+term.replace('"','""')+'"' for term in terms)
     if not expression:return '0', []
-    return '''EXISTS(SELECT 1 FROM intelligence_results r WHERE r.item=i.id AND r.fingerprint=i.fingerprint
+    return '''((EXISTS(SELECT 1 FROM intelligence_results r WHERE r.item=i.id AND r.fingerprint=i.fingerprint)
+        OR EXISTS(SELECT 1 FROM intelligence_ocr o WHERE o.item=i.id AND o.fingerprint=i.fingerprint))
         AND EXISTS(SELECT 1 FROM intelligence_fts WHERE intelligence_fts MATCH
         ('item:"'||i.id||'" AND ('||?||')')))''', [expression]
 
 
-def query(catalog, text='', facets=None, root='', media='', cursor='', limit=60):
+def query(catalog, text='', facets=None, root='', media='', cursor='', limit=60, cancel=None,files_only=False):
     start = time.perf_counter();facets = facets or {}
     if not isinstance(text, str) or len(text) > 300 or not isinstance(facets, dict) or len(facets) > 20:
         raise ValueError('检索条件过长')
     limit = max(1, min(100, int(limit)))
-    signature = digest([text, facets, root, media])
+    signature = digest([text, facets, root, media]+(['files'] if files_only else []))
     clauses = ['i.online=1', 'roots.removed=0'];args = []
     if root:
         clauses.append('i.root=?');args.append(root)
@@ -160,12 +185,18 @@ def query(catalog, text='', facets=None, root='', media='', cursor='', limit=60)
             raise ValueError('媒体类型无效')
         clauses.append('i.media_type=?');args.append(media)
     with catalog.connect() as c:
+        c.execute('BEGIN')
+        deadline=time.monotonic()+2
+        c.set_progress_handler(lambda:int(bool(cancel and cancel()) or time.monotonic()>deadline),5000)
         generation = c.execute('SELECT generation FROM intelligence_meta WHERE id=1').fetchone()[0]
         key = normalize(text)
         rank = "CASE WHEN i.normalized=? AND ?!='' THEN 0 WHEN i.normalized>=? AND i.normalized<? AND ?!='' THEN 1 ELSE 2 END"
         upper = key[:-1]+chr(ord(key[-1])+1) if key else ''
         rank_args = [key, key, key, upper, key]
+        candidate_sql=None;candidate_args=[]
         if text.strip():
+            from literal_search import candidates
+            candidate_sql,candidate_args=candidates(catalog,c,text,prefix=True,files_only=files_only)
             visual, values = condition(c, text)
             path, path_values = catalog.fast_index.condition(c, text)
             metadata, metadata_values = catalog.metadata.condition(text)
@@ -177,7 +208,9 @@ def query(catalog, text='', facets=None, root='', media='', cursor='', limit=60)
             if key:
                 lanes.insert(0, 'SELECT id FROM items INDEXED BY catalog_items_sku WHERE normalized>=? AND normalized<?')
                 lane_args = [key, upper]+lane_args
-            if not key and len(text) < 3:
+            if candidate_sql is not None:
+                pass
+            elif not key and len(text) < 3:
                 # 两字中文是常见颜色/品类。路径与 EXIF 的 trigram 不覆盖此长度，
                 # 按当前有序候选检查字面匹配，避免提前扫描百万条路径/元数据。
                 point, point_args = row_condition(text)
@@ -212,15 +245,15 @@ def query(catalog, text='', facets=None, root='', media='', cursor='', limit=60)
             except (ValueError, KeyError, TypeError):
                 raise ValueError('索引或条件已更新，请重新搜索') from None
         # 高频颜色/品类可命中数十万项。沿时间索引流式取一页，不能先排序整批大 JSON 或全部候选。
-        ordered_scan = not key
+        ordered_scan = not key and candidate_sql is None
         canonical = '''(i.media_type<>'image' OR NOT EXISTS(SELECT 1 FROM items b
             WHERE b.pair_key=i.pair_key AND b.online=1 AND
             (CASE WHEN b.source='manual' THEN 0 ELSE 2 END + CASE WHEN b.extension IN ('.jpg','.jpeg') THEN 0 ELSE 1 END,b.id)
             <(CASE WHEN i.source='manual' THEN 0 ELSE 2 END + CASE WHEN i.extension IN ('.jpg','.jpeg') THEN 0 ELSE 1 END,i.id)))'''
         clauses.append(canonical)
-        source = 'items i INDEXED BY intelligence_catalog_order' if ordered_scan else 'items i'
-        sql = 'SELECT i.id AS id,i.modified AS modified,'+rank+' AS priority FROM '+source+' JOIN roots ON roots.id=i.root WHERE '+' AND '.join(clauses)
-        all_args = rank_args+args
+        source = ('('+candidate_sql+') candidates CROSS JOIN items i ON i.id=candidates.id') if candidate_sql is not None else 'items i INDEXED BY intelligence_catalog_order' if ordered_scan else 'items i'
+        sql = 'SELECT i.id AS id,i.modified AS modified,'+rank+' AS priority FROM '+source+' CROSS JOIN roots ON roots.id=i.root WHERE '+' AND '.join(clauses)
+        all_args = rank_args+candidate_args+args
         if marker:
             if ordered_scan:
                 modified = -float(marker['key'][1])
@@ -229,17 +262,22 @@ def query(catalog, text='', facets=None, root='', media='', cursor='', limit=60)
             else:
                 sql = 'SELECT * FROM ('+sql+') WHERE (priority,-modified,id)>(?,?,?)'
                 all_args.extend(marker['key'])
-        deadline = time.monotonic()+2
-        c.set_progress_handler(lambda: int(time.monotonic() > deadline), 5000)
+        c.set_progress_handler(lambda:int(bool(cancel and cancel()) or time.monotonic()>deadline),5000)
         try:
             ordering = 'modified DESC,id' if ordered_scan else 'priority,modified DESC,id'
-            keys = [dict(row) for row in c.execute(sql+' ORDER BY '+ordering+' LIMIT ?', all_args+[limit+1])]
+            keys=None
+            if candidate_sql is not None:
+                from literal_search import page_keys
+                keys=page_keys(catalog,c,text,clauses,args,candidate_sql,candidate_args,limit=limit,
+                               ranked=True,marker=marker['key'] if marker else None,cancel=cancel,deadline=deadline,roots=True,files_only=files_only)
+            if keys is None:keys = [dict(row) for row in c.execute(sql+' ORDER BY '+ordering+' LIMIT ?', all_args+[limit+1])]
             rows = []
             if keys:
                 marks = ','.join('?' for _ in keys)
-                hydrated = {row['id']:dict(row) for row in c.execute('''SELECT i.*,r.summary,r.frames FROM capture_items i
+                hydrate_sql='SELECT i.*,NULL AS summary,NULL AS frames FROM capture_items i' if files_only else '''SELECT i.*,r.summary,r.frames FROM capture_items i
                     LEFT JOIN intelligence_results r ON r.item=i.id AND r.fingerprint=i.fingerprint
-                    WHERE i.id IN ('''+marks+')', [row['id'] for row in keys])}
+                    '''
+                hydrated = {row['id']:dict(row) for row in c.execute(hydrate_sql+' WHERE i.id IN ('+marks+')', [row['id'] for row in keys])}
                 rows = [{**hydrated[row['id']], 'priority':row['priority']} for row in keys]
         except sqlite3.OperationalError as exc:
             if 'interrupt' in str(exc):raise ValueError('检索超过时间预算，请缩小关键词或归档范围') from None
@@ -255,7 +293,7 @@ def query(catalog, text='', facets=None, root='', media='', cursor='', limit=60)
         last = rows[-1]
         next_cursor = base64.urlsafe_b64encode(dumps({'q': signature, 'g': generation,
                            'key': [last['priority'], -last['modified'], last['id']]}).encode()).decode().rstrip('=')
-    return {'rows': rows, 'has_more': more, 'next_cursor': next_cursor, 'elapsed_ms': round((time.perf_counter()-start)*1000, 2)}
+    return {'rows': rows, 'has_more': more, 'next_cursor': next_cursor, 'elapsed_ms': round((time.perf_counter()-start)*1000, 2),**({'scope':'files'} if files_only else {})}
 
 
 def image_query(catalog, vector, backend, *, limit=60, root='', threshold=0):
@@ -315,6 +353,18 @@ def image_query(catalog, vector, backend, *, limit=60, root='', threshold=0):
             score, frame = best[item]
             row.update(score=round(score, 5), frame=frame, preview='/api/catalog/preview/'+item,
                        reasons=[('CLIP 语义相似' if backend.startswith('chinese-clip') else '布局与配色相似')+f' {score:.1%}'])
+            if row['media_type']=='video':
+                matched=c.execute('SELECT timestamp_ms,source_frame FROM smart_frames WHERE item=? AND frame=? AND fingerprint=?',(item,frame,row['fingerprint'])).fetchone()
+                stamp=matched['timestamp_ms'] if matched else None
+                if stamp is None:
+                    old=c.execute('SELECT frames FROM intelligence_results WHERE item=? AND fingerprint=?',(item,row['fingerprint'])).fetchone()
+                    if old and len(old[0])<512000:
+                        legacy=json.loads(old[0])
+                        if frame<len(legacy):stamp=round(legacy[frame]['seconds']*1000)
+                if stamp is not None:
+                    row.update(result_id=f'{item}:frame:{frame}',frame_index=frame,timestamp_ms=stamp,source_frame=matched['source_frame'] if matched else None,
+                        preview=f'/api/intelligence/frame/{item}/{frame}?v={row["fingerprint"]}&time={stamp}',
+                        clip={'start':max(0,stamp-1500)/1000,'end':min(row.get('video_duration_ms') or row.get('duration_ms') or stamp+1500,stamp+1500)/1000,'center':stamp/1000})
             rows.append(row)
     return {'rows': rows, 'backend': backend, 'approximate': approximate, 'incomplete': incomplete,
             'candidates': scanned, 'indexed_vectors': count, 'has_more': False, 'next_cursor': '',

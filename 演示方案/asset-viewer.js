@@ -5,6 +5,10 @@
   const dialog=document.createElement('dialog');dialog.id='asset-image-viewer';dialog.setAttribute('aria-labelledby','asset-viewer-title');
   dialog.innerHTML='<header class="asset-viewer-heading"><div><span id="asset-viewer-kind"></span><h2 id="asset-viewer-title"></h2></div><button id="asset-viewer-close" aria-label="退出全屏浏览">关闭 <kbd>Esc</kbd></button></header><div class="asset-viewer-body"><div id="asset-viewer-stage" tabindex="0" role="region" aria-label="图片视口，滚轮缩放，放大后拖拽平移"><img id="asset-viewer-thumbnail" alt="" draggable="false" hidden><img id="asset-viewer-image" alt="" draggable="false" hidden><span id="asset-viewer-loading" aria-hidden="true"></span><p id="asset-viewer-image-status" role="status"></p></div><aside class="asset-viewer-info" aria-labelledby="asset-viewer-info-title"><div class="asset-viewer-info-heading"><span>PHOTO DETAILS</span><h3 id="asset-viewer-info-title"></h3></div><div id="asset-viewer-fields"></div><p id="asset-viewer-info-status" role="status"></p></aside></div><footer class="asset-viewer-toolbar"><div class="asset-viewer-navigation"><button id="asset-viewer-prev" aria-label="上一张图片">←</button><span id="asset-viewer-position"></span><button id="asset-viewer-next" aria-label="下一张图片">→</button></div><div class="asset-viewer-zoom"><button id="asset-viewer-minus" aria-label="缩小图片">−</button><output id="asset-viewer-scale" title="相对于适应窗口的缩放比例">100%</output><button id="asset-viewer-plus" aria-label="放大图片">＋</button><button id="asset-viewer-fit">适应窗口</button></div><p>滚轮缩放 · 拖拽平移</p></footer>';
   document.body.append(dialog);
+  const skuHeading=document.createElement('div');skuHeading.id='asset-viewer-sku';skuHeading.hidden=true;
+  skuHeading.innerHTML='<span>SKU 款号</span><strong></strong>';
+  dialog.querySelector('.asset-viewer-info-heading').before(skuHeading);
+  function showSku(item){skuHeading.hidden=kind!=='archive';skuHeading.querySelector('strong').textContent=item.sku||'未确认'}
   const stage=$('asset-viewer-stage');
   const playback=document.createElement('div');playback.className='asset-viewer-playback';playback.hidden=true;
   playback.innerHTML='<button id="asset-video-play" type="button" aria-label="暂停视频">暂停</button><output id="asset-video-time">0:00 / --:--</output><input id="asset-video-seek" type="range" min="0" max="0" step="0.01" value="0" aria-label="视频播放进度" disabled><button id="asset-video-mute" type="button" aria-label="静音">静音</button>';
@@ -22,9 +26,9 @@
   function paintVideo(context){
     if(!videoValid(context))return;
     const position=videoPosition(context),total=context.total;
-    $('asset-video-time').value=clock(position)+' / '+(total?clock(total):'--:--');
-    const slider=$('asset-video-seek');slider.disabled=!total;slider.max=String(total||0);
-    if(!context.dragging)slider.value=String(Math.min(total||0,position));
+    $('asset-video-time').value=context.clip?'片段 '+context.clip.start.toFixed(3)+'–'+context.clip.end.toFixed(3)+'s · 命中 '+context.clip.center.toFixed(3)+'s':clock(position)+' / '+(total?clock(total):'--:--');$('asset-video-time').title=context.clip?'片段 '+context.clip.start.toFixed(3)+'–'+context.clip.end.toFixed(3)+' 秒':'';
+    const slider=$('asset-video-seek');slider.disabled=!total;slider.min=String(context.clip?.start||0);slider.max=String(context.clip?.end||total||0);
+    if(!context.dragging)slider.value=String(Math.min(context.clip?.end||total||0,position));
     $('asset-video-play').textContent=context.wanted?'暂停':'播放';$('asset-video-play').setAttribute('aria-label',context.wanted?'暂停视频':'播放视频');
     $('asset-video-mute').textContent=context.video.muted?'开启声音':'静音';$('asset-video-mute').setAttribute('aria-label',context.video.muted?'开启声音':'静音');
   }
@@ -42,15 +46,15 @@
   function loadVideo(item,request,offset=0,wanted=true,previous=null){
     stopVideo();clearImages();FramekeepAssetLoading.pause();
     const video=document.createElement('video');video.id='asset-viewer-video';video.playsInline=true;video.preload='auto';video.poster=item.preview;
-    video.muted=previous?.muted||false;
-    const context={item,request,video,session:crypto.randomUUID(),offset,wanted,total:previous?.total||Number(item.duration_ms||0)/1000,dragging:false,seekTimer:null,seekTarget:null};videoContext=context;
+    video.muted=previous?.muted??Boolean(item.clip);const clip=item.clip||null;if(clip)offset=clamp(offset||clip.start,clip.start,Math.max(clip.start,clip.end-.001));
+    const context={item,clip,request,video,session:crypto.randomUUID(),offset,wanted,total:previous?.total||Number(item.duration_ms||0)/1000,dragging:false,seekTimer:null,seekTarget:null};videoContext=context;
     stage.append(video);stage.classList.remove('is-zoomed');
     videoMessage(context,'正在准备视频，可继续查看右侧资料…');paintVideo(context);
     video.onloadeddata=()=>{if(!videoValid(context))return;videoMessage(context,'','ready');if(context.wanted)playVideo(context)};
     video.onplaying=()=>videoMessage(context,'','ready');
     video.onwaiting=()=>videoMessage(context,'正在缓冲视频…');
-    video.ontimeupdate=()=>paintVideo(context);
-    video.onended=()=>{if(!videoValid(context))return;context.wanted=false;context.total=context.total||(context.offset+video.currentTime);paintVideo(context);videoMessage(context,'播放结束，按空格重新播放','preview')};
+    video.ontimeupdate=()=>{if(context.clip&&videoPosition(context)>=context.clip.end){video.pause();context.wanted=false}paintVideo(context)};
+    video.onended=()=>{if(!videoValid(context))return;context.wanted=false;context.total=context.total||(context.offset+video.currentTime);paintVideo(context);videoMessage(context,context.clip?'片段结束，按空格重新播放':'播放结束，按空格重新播放','preview')};
     video.onerror=async()=>{
       if(!videoValid(context))return;
       context.wanted=false;paintVideo(context);
@@ -58,18 +62,18 @@
       try{const state=await FramekeepIO.api('/api/catalog/video/state?'+new URLSearchParams({session:context.session}));reason=state.error||reason}catch{}
       videoMessage(context,reason+'；可切换素材或重新点击播放。','error');
     };
-    video.src='/api/catalog/video/stream/'+encodeURIComponent(item.id)+'?'+new URLSearchParams({session:context.session,start:offset.toFixed(3)});
+    video.dataset.clipStart=String(clip?.start??'');video.dataset.clipEnd=String(clip?.end??'');video.src='/api/catalog/video/stream/'+encodeURIComponent(item.id)+'?'+new URLSearchParams({session:context.session,start:offset.toFixed(3),...(clip?{end:clip.end.toFixed(3)}:{}),...(item.fingerprint?{v:item.fingerprint}:{})});
     if(wanted)playVideo(context);else video.load();
   }
   function seekVideo(target,delay=0){
     const context=videoContext;if(!context||!context.total)return;
-    target=clamp(target,0,Math.max(0,context.total-.05));context.seekTarget=target;paintVideo(context);clearTimeout(context.seekTimer);
+    target=clamp(target,context.clip?.start||0,Math.max(context.clip?.start||0,(context.clip?.end||context.total)-.05));context.seekTarget=target;paintVideo(context);clearTimeout(context.seekTimer);
     context.seekTimer=setTimeout(()=>{if(videoValid(context))loadVideo(context.item,context.request,target,context.wanted,{total:context.total,muted:context.video.muted})},delay);
   }
   function toggleVideo(){
     const context=videoContext;if(!context)return;
     if(context.wanted){context.wanted=false;context.video.pause();paintVideo(context)}
-    else if(context.video.ended||context.video.error)loadVideo(context.item,context.request,context.video.ended?0:videoPosition(context),true,{total:context.total,muted:context.video.muted});
+    else if(context.video.ended||context.video.error)loadVideo(context.item,context.request,context.video.ended?(context.clip?.start||0):videoPosition(context),true,{total:context.total,muted:context.video.muted});
     else playVideo(context);
   }
   $('asset-video-play').onclick=toggleVideo;
@@ -77,33 +81,104 @@
   $('asset-video-seek').oninput=event=>{if(videoContext){videoContext.dragging=true;$('asset-video-time').value=clock(Number(event.target.value))+' / '+clock(videoContext.total)}};
   $('asset-video-seek').onchange=event=>{if(videoContext){videoContext.dragging=false;seekVideo(Number(event.target.value))}};
   let image=$('asset-viewer-image'),thumbnail=$('asset-viewer-thumbnail'),replaceTimer;
+  // 本项目的交互预算：最多 6 张 / 96 MiB 解码像素，邻图单路预取。
+  // 池键保留完整版本 URL；池内 Image 本身进入视口，命中不再重新解码。
+  const decodedPreviews=new Map(),decodedLimit=96*1024*1024,decodedCount=6;
+  let previewKey='',prefetchTimer=null,prefetchEpoch=0,navigationDirection=1;
+  const largeUrl=item=>{const url=window.FramekeepDesignPreviews?.url(item)||new URL(item.preview,location.href);url.searchParams.set('size','2048');return url.href};
+  function discardPreview(key){
+    const entry=decodedPreviews.get(key);if(!entry)return;
+    decodedPreviews.delete(key);entry.cancelled=true;entry.image.onload=entry.image.onerror=null;
+    entry.image.removeAttribute('src');entry.finish(false);
+  }
+  function trimPreviews(){
+    let bytes=[...decodedPreviews.values()].reduce((sum,entry)=>sum+entry.bytes,0);
+    for(const [key,entry] of decodedPreviews){
+      if(decodedPreviews.size<=decodedCount&&bytes<=decodedLimit)break;
+      if(key===previewKey)continue;
+      bytes-=entry.bytes;discardPreview(key);
+    }
+  }
+  function stopPrefetch(keep=new Set()){
+    clearTimeout(prefetchTimer);prefetchEpoch++;
+    for(const [key,entry] of decodedPreviews)if(!entry.ready&&!keep.has(key))discardPreview(key);
+  }
+  function releasePreviews(){
+    stopPrefetch();previewKey='';for(const key of decodedPreviews.keys())discardPreview(key);
+  }
+  function decodedPreview(url,foreground=false){
+    let entry=decodedPreviews.get(url);
+    if(entry){decodedPreviews.delete(url);decodedPreviews.set(url,entry);if(foreground)entry.image.fetchPriority='high';return entry}
+    const element=new Image();element.decoding='async';element.fetchPriority=foreground?'high':'low';
+    entry={image:element,ready:false,cancelled:false,bytes:2048*2048*4,finish:null,promise:null};
+    entry.promise=new Promise(resolve=>{entry.finish=resolve});decodedPreviews.set(url,entry);trimPreviews();
+    if(entry.cancelled)return entry;
+    element.onerror=()=>{if(decodedPreviews.get(url)===entry)discardPreview(url)};
+    element.onload=async()=>{
+      try{await element.decode()}catch{if(!entry.cancelled)element.onerror?.();return}
+      if(entry.cancelled||decodedPreviews.get(url)!==entry)return;
+      entry.ready=true;entry.bytes=element.naturalWidth*element.naturalHeight*4;
+      element.onload=element.onerror=null;
+      // 服务应返回 <=2048px；异常超预算图只用于本次显示，不驻留或继续预取。
+      if(entry.bytes>decodedLimit){
+        if(url!==previewKey){discardPreview(url);return}
+        for(const key of decodedPreviews.keys())if(key!==url)discardPreview(key);
+        decodedPreviews.delete(url);entry.ephemeral=true;entry.finish(true);return;
+      }
+      trimPreviews();entry.finish(!entry.cancelled);
+    };
+    element.src=url;return entry;
+  }
+  function prefetchNearby(){
+    clearTimeout(prefetchTimer);const epoch=++prefetchEpoch;
+    // 只在当前图已清晰显示后准备邻图，取消切换前的队列，避免抢占前台。
+    prefetchTimer=setTimeout(async()=>{
+      const offsets=[navigationDirection,navigationDirection*2,-navigationDirection];
+      for(const offset of offsets){
+        if(epoch!==prefetchEpoch||!dialog.open||videoContext)return;
+        const item=rows[index+offset];if(!item||item.media_type==='video')continue;
+        // 热切换可保留仍在邻域的在途预取；先等它收尾，始终只有单路预取。
+        for(const [key,entry] of decodedPreviews)if(!entry.ready&&key!==previewKey)await entry.promise;
+        if(epoch!==prefetchEpoch||!dialog.open||videoContext)return;
+        await decodedPreview(largeUrl(item)).promise;
+      }
+    },80);
+  }
   $('asset-viewer-loading').innerHTML=FramekeepAssetLoading.markup('');
   let rows=[],index=0,kind='archive',origin=null,sequence=0,controller=null,drag=null,requestSharpPreview=null;
   let metadataEditor=null,detailsTimer=null;
-  const metadataWrites=new Map();
+  const metadataWrites=new Map(),metadataSaveFailures=new Map();
   let scale=1,x=0,y=0,fitWidth=0,fitHeight=0;
   const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
   const dateText=value=>value?String(value).replace('T',' '):'未提供';
   const bytes=value=>value!==null&&value!==undefined&&value!==''&&Number.isFinite(Number(value))&&Number(value)>=0?Number(value)>=1048576?(Number(value)/1048576).toFixed(2)+' MB':Math.round(Number(value)/1024)+' KB':'未提供';
   const duration=value=>Number.isFinite(Number(value))?`${Math.floor(Number(value)/60000)}:${String(Math.floor(Number(value)%60000/1000)).padStart(2,'0')}`:'未提供';
   const field=(name,value)=>`<div class="asset-viewer-field"><dt>${esc(name)}</dt><dd>${esc(value??'未提供')}</dd></div>`;
-  function baseFields(item){return '<dl>'+field('文件名',item.name)+(kind==='archive'?field('文件大小',bytes(item.size)):'')+field('拍摄时间',dateText(item.time))+field('SKU 款号',item.sku||'未确认')+'</dl>'}
+  function baseFields(item){return '<dl>'+field('文件名',item.name)+(kind==='archive'?field('文件大小',bytes(item.size)):'')+field('拍摄时间',dateText(item.time))+(kind==='sku-database'?field('SKU 款号',item.sku||'未确认'):'')+'</dl>'}
   function info(item,data){
     if(kind==='sku-database'){
       $('asset-viewer-fields').innerHTML=baseFields({...item,sku:data.selected_sku||item.sku})+`<section class="asset-viewer-ocr"><h4>OCR 原文本</h4>${data.target_capture_id&&data.target_capture_id!==data.capture_id?`<p class="asset-viewer-ocr-source">区间标签来源：${esc(data.source_name)}</p>`:''}<pre>${esc(data.text||'暂无 OCR 原文')}</pre></section>`;
       return;
     }
-    const row={...item,...data.item},capture=data.capture||{},media=data.media||{},sources={manual:'人工确认',embedded:'文件内嵌元数据',path_rule:'路径候选（未 OCR）',review:'待复核',unmatched:'未识别',archive:'最终归档'};
+    const row={...item,...data.item},capture=data.capture||{},media=data.media||{},sources={manual:'人工确认',embedded:'文件内嵌元数据',path_rule:'路径候选（未 OCR）',ocr_folder:'目录与 OCR 一致',folder_default:'无款号图 · 采用 LC 目录名',review:'待复核',unmatched:'未识别',archive:'最终归档'};
+    showSku(row);
     if(videoContext&&videoContext.item.id===row.id){videoContext.total=Number(media.duration_ms||row.duration_ms||0)/1000;paintVideo(videoContext)}
     const sourceFile=(data.files||[]).find(file=>file.path===row.path);
     const tag=(...names)=>Object.entries(data.tags||{}).find(([key])=>names.includes(key.split(':').pop()))?.[1];
     const fps=tag('VideoFrameRate','FrameRate'),audio=tag('AudioFormat','AudioCodecID','AudioEncoding');
     const technical=row.media_type==='video'?field('容器格式',media.media_format||row.media_format)+field('视频编码',media.codec||row.codec||'等待本机读取')+field('时长',duration(media.duration_ms??row.duration_ms))+field('帧率',fps?fps+' fps':null)+field('音频编码',audio)+field('音频声道',tag('AudioChannels','ChannelCount'))+field('音频采样率',tag('AudioSampleRate','AudioSamplingRate')):row.media_type==='design'?field('设计格式',row.media_format||row.extension):'';
-    $('asset-viewer-fields').innerHTML='<dl>'+field('文件名',row.name)+field('文件大小',bytes(sourceFile?.size??row.size))+field('素材类型',row.media_type==='video'?'专业视频':row.media_type==='design'?'Adobe / 设计源文件':'图片 / RAW')+field('拍摄时间',dateText(capture.time))+field('SKU 款号',row.sku||'未确认')+(row.media_type==='image'?field('星级',row.rating>0?'★'.repeat(row.rating):'未标星'):'')+field('尺寸',capture.width&&capture.height?`${capture.width} × ${capture.height}`:'未提供')+technical+field('相机',[capture.make,capture.camera].filter(Boolean).join(' ')||'未提供')+field('ISO',capture.iso)+field('光圈',capture.aperture?'f/'+capture.aperture:null)+field('快门',capture.shutter?`${capture.shutter<1?'1/'+Math.round(1/capture.shutter):capture.shutter} 秒`:null)+field('款号来源',sources[row.source]||'其他记录')+field('原图路径',row.path||row.relative)+'</dl><section class="asset-viewer-files"><h4>素材文件</h4>'+(data.files||[]).map(file=>`<div><strong>${esc(file.name)}</strong><span>${esc(bytes(file.size))} · ${file.online?'在线':'离线'}</span><small>${esc(file.path)}</small><small>文件修改时间：${esc(file.modified?new Date(file.modified*1000).toLocaleString('zh-CN'):'未提供')}</small></div>`).join('')+'</section>';
+    $('asset-viewer-fields').innerHTML='<dl>'+field('文件名',row.name)+field('文件大小',bytes(sourceFile?.size??row.size))+field('素材类型',row.media_type==='video'?'专业视频':row.media_type==='design'?'Adobe / 设计源文件':'图片 / RAW')+field('拍摄时间',dateText(capture.time))+(row.media_type==='image'?field('星级',row.rating>0?'★'.repeat(row.rating):'未标星'):'')+field('尺寸',capture.width&&capture.height?`${capture.width} × ${capture.height}`:'未提供')+technical+field('相机',[capture.make,capture.camera].filter(Boolean).join(' ')||'未提供')+field('ISO',capture.iso)+field('光圈',capture.aperture?'f/'+capture.aperture:null)+field('快门',capture.shutter?`${capture.shutter<1?'1/'+Math.round(1/capture.shutter):capture.shutter} 秒`:null)+field('款号来源',sources[row.source]||'其他记录')+field('原图路径',row.path||row.relative)+'</dl><section class="asset-viewer-files"><h4>素材文件</h4>'+(data.files||[]).map(file=>`<div><strong>${esc(file.name)}</strong><span>${esc(bytes(file.size))} · ${file.online?'在线':'离线'}</span><small>${esc(file.path)}</small><small>文件修改时间：${esc(file.modified?new Date(file.modified*1000).toLocaleString('zh-CN'):'未提供')}</small></div>`).join('')+'</section>';
     const description=data.description||{};
     const extra=document.createElement('section');extra.className='asset-viewer-files';
     extra.innerHTML='<h4>已入库资料</h4><dl>'+field('标题',description.title||'未提供')+field('描述',description.description||'未提供')+field('关键词',(description.keywords||[]).join('、')||'未提供')+field('颜色标签',description.label||'未提供')+field('镜头',capture.lens)+field('焦距',capture.focal_length?capture.focal_length+' mm':null)+'</dl>';
     $('asset-viewer-fields').append(extra);
+    if(data.ocr){
+      const proof=document.createElement('section');proof.className='asset-viewer-ocr';
+      const validation=data.ocr.validation,fingerprint=data.ocr.fingerprints,writeback=data.ocr.writeback;
+      const writeLabels={queued:'等待写入',writing:'正在写入',applied:'已写入',failed:'写入失败',reverting:'正在撤销旧款号',cancelled:'已取消旧写入'};
+      proof.innerHTML='<h4>OCR 与款号核验</h4><p>'+esc(validation?.reason||'等待目录款号核验')+'</p>'+(validation?.sku?'<p>数据库 SKU：'+esc(validation.sku)+'</p>':'')+'<pre>'+esc(data.ocr.text||'未识别到可见文字')+'</pre><p>视觉文件指纹：'+(fingerprint?.content_sha?'已入库':'等待视觉解析')+'</p><p>SKU 元数据 · '+esc(writeLabels[writeback?.status]||'等待款号确认')+'</p>'+(writeback?.reason?'<p>'+esc(writeback.reason)+'</p>':'')+'<p>确认后的 SKU 自动后台写入，JPG 内嵌，RAW 使用 XMP 侧车。</p>';
+      $('asset-viewer-fields').append(proof);
+    }
     if(data.tags&&Object.keys(data.tags).length){
       const tags=document.createElement('details');tags.className='asset-viewer-files';
       tags.innerHTML='<summary>全部已读取资料</summary><dl>'+Object.entries(data.tags).map(([key,value])=>field(key,typeof value==='object'?JSON.stringify(value):value)).join('')+'</dl>';
@@ -162,9 +237,9 @@
           const failed=operation.jobs.find(job=>job.status!=='applied');
           if(failed)throw new Error(failed.reason||'元数据未完成写入');
           const fresh=await metadataValue(context.item,true,true);
-          context.token=fresh.token;context.saved=version;context.status.textContent='已自动保存元数据';
+          context.token=fresh.token;context.saved=version;context.status.textContent='已自动保存元数据';metadataSaveFailures.delete(context.item.id);
         }
-      }catch(error){context.status.textContent='保存失败：'+error.message}
+      }catch(error){context.status.textContent='保存失败：'+error.message;metadataSaveFailures.set(context.item.id,error)}
       finally{context.busy=false;metadataWrites.delete(context.item.id)}
     })();
     metadataWrites.set(context.item.id,work);await work;
@@ -192,20 +267,32 @@
   function clearImages(){
     clearTimeout(replaceTimer);
     requestSharpPreview=null;
-    for(const layer of [thumbnail,image]){layer.onload=layer.onerror=null;layer.removeAttribute('src');layer.hidden=true}
+    for(const layer of [thumbnail,image]){
+      if(decodedPreviews.get(layer.src)?.image!==layer){layer.onload=layer.onerror=null;layer.removeAttribute('src')}
+      layer.hidden=true;
+    }
   }
   function viewerPreviewEdge(){
     return 2048;
   }
   function loadImages(item,request){
-    const small=new URL(item.preview,location.href);small.searchParams.set('size','420');
+    const small=window.FramekeepDesignPreviews?.url(item)||new URL(item.preview,location.href);small.searchParams.set('size','420');
+    if(kind==='archive'&&window.FramekeepArchiveThumbnailCacheEnabled===false){small.searchParams.set('thumbnail_source','file');small.searchParams.delete('cached')}
     const edge=viewerPreviewEdge();
-    const large=new URL(item.preview,location.href);large.searchParams.set('size',String(edge));
+    const large=new URL(largeUrl(item));previewKey=large.href;
+    const keep=new Set([previewKey]);
+    if(decodedPreviews.get(previewKey)?.ready)for(const offset of [navigationDirection,navigationDirection*2,-navigationDirection]){
+      const adjacent=rows[index+offset];if(adjacent&&adjacent.media_type!=='video')keep.add(largeUrl(adjacent));
+    }
+    stopPrefetch(keep);
     // 只复用相同带版本号 URL 的已显示小图，避免读取到另一张图片。
-    const cached=[...document.querySelectorAll('.catalog-thumb img')].find(img=>img.complete&&img.naturalWidth&&new URL(img.currentSrc,location.href).href===small.href);
+    const cached=decodedPreviews.get(large.href)?.ready?null:[...document.querySelectorAll('.catalog-thumb img')].find(img=>img.complete&&img.naturalWidth&&new URL(img.currentSrc,location.href).href===small.href);
     FramekeepAssetLoading.pause();clearImages();
     const fresh=(old,id)=>{const next=new Image();next.id=id;next.alt=item.name;next.draggable=false;next.hidden=true;next.decoding='async';next.fetchPriority='high';old.replaceWith(next);return next};
-    thumbnail=fresh(thumbnail,'asset-viewer-thumbnail');image=fresh(image,'asset-viewer-image');
+    thumbnail=fresh(thumbnail,'asset-viewer-thumbnail');
+    const decoded=decodedPreview(large.href,true),previous=image;image=decoded.image;
+    image.id='asset-viewer-image';image.alt=item.name;image.draggable=false;image.hidden=true;image.removeAttribute('style');
+    if(previous!==image){previous.removeAttribute('id');previous.replaceWith(image)}
     const low=thumbnail,full=image,valid=()=>request===sequence&&dialog.open;
     let ready=false,failed=false,lowReady=false,lowFailed=false;
     const status=()=>{
@@ -218,15 +305,15 @@
     };
     low.onload=()=>{if(!valid()||ready)return;lowReady=true;low.hidden=false;layout();status()};
     low.onerror=()=>{if(valid()&&!ready){lowFailed=true;status()}};
-    full.onload=async()=>{
-      try{await full.decode()}catch{if(valid())full.onerror();return}
+    const displayFull=()=>{
       if(!valid())return;
       ready=true;full.hidden=false;layout();status();
+      if(!decoded.ephemeral)prefetchNearby();
       requestSharpPreview?.();
       if(matchMedia('(prefers-reduced-motion: reduce)').matches)low.hidden=true;
       else replaceTimer=setTimeout(()=>{if(valid())low.hidden=true},200);
     };
-    full.onerror=()=>{if(!valid()||ready)return;failed=true;status()};
+    const failFull=()=>{if(!valid()||ready)return;failed=true;status()};
     requestSharpPreview=()=>{
       if(!valid()||!ready||scale<=1||edge>=2048||full.dataset.sharp==='2048')return;
       const sharp=new URL(item.preview,location.href);sharp.searchParams.set('size','2048');
@@ -244,9 +331,12 @@
       // 复制已经解码的像素，即使禁用 HTTP 缓存也不再次等待缩略图请求。
       try{const canvas=document.createElement('canvas');canvas.width=cached.naturalWidth;canvas.height=cached.naturalHeight;canvas.getContext('2d').drawImage(cached,0,0);smallSource=canvas.toDataURL('image/jpeg',.94)}catch{}
     }
-    low.src=smallSource;
-    if(low.complete&&low.naturalWidth)low.onload();
-    full.src=large.href;
+    if(decoded.ready)displayFull();
+    else{
+      low.src=smallSource;
+      if(low.complete&&low.naturalWidth)low.onload();
+      decoded.promise.then(success=>success?displayFull():failFull());
+    }
   }
   function endDrag(){if(!drag)return;const id=drag.id;drag=null;stage.classList.remove('panning');if(stage.hasPointerCapture(id))stage.releasePointerCapture(id)}
   function fit(){endDrag();scale=1;x=0;y=0;paint()}
@@ -258,18 +348,30 @@
   async function show(next){
     clearTimeout(detailsTimer);
     flushMetadataEditor();
-    index=clamp(next,0,rows.length-1);const item=rows[index],request=++sequence;controller?.abort();controller=new AbortController();
+    next=clamp(next,0,rows.length-1);if(next!==index)navigationDirection=next>index?1:-1;
+    index=next;const item=rows[index],request=++sequence;controller?.abort();controller=new AbortController();
     endDrag();fitWidth=fitHeight=0;fit();
-    const isVideo=item.media_type==='video';playback.hidden=!isVideo;dialog.querySelector('.asset-viewer-zoom').hidden=isVideo;
+    const isVideo=item.media_type==='video';
+    if(isVideo&&item.frame_index!==undefined){
+      stopVideo();
+      try{
+        const matched=await FramekeepIO.api('/api/intelligence/frame-info?'+new URLSearchParams({item:item.id,frame:item.frame_index}));
+        if(request!==sequence||!dialog.open)return;
+        if(matched.fingerprint!==item.fingerprint||matched.timestamp_ms!==item.timestamp_ms)throw new Error('帧计划已变化，请重新搜索');
+        Object.assign(item,matched);
+      }catch(error){if(request===sequence){stage.dataset.previewState='error';stage.setAttribute('aria-busy','false');$('asset-viewer-loading').hidden=true;$('asset-viewer-image-status').textContent=error.message}return}
+    }
+    playback.hidden=!isVideo;dialog.querySelector('.asset-viewer-zoom').hidden=isVideo;
     stage.setAttribute('aria-label',isVideo?'视频播放器，空格播放或暂停，左右键前后定位 5 秒':'图片视口，滚轮缩放，放大后拖拽平移');
     viewerHint.textContent=isVideo?'空格播放 / 暂停 · ← / → 前后 5 秒':'滚轮缩放 · 拖拽平移';
-    $('asset-viewer-title').textContent=item.name;$('asset-viewer-kind').textContent=kind==='archive'?'资产归档':'SKU 数据库';$('asset-viewer-info-title').textContent=isVideo?'视频详细信息':kind==='archive'?'图片详细信息':'拍摄与 OCR 资料';
+    $('asset-viewer-title').textContent=item.name;$('asset-viewer-kind').textContent=dialog.classList.contains('image-only')?'快捷预览':kind==='archive'?'资产归档':'SKU 数据库';$('asset-viewer-info-title').textContent=isVideo?'视频详细信息':kind==='archive'?'图片详细信息':'拍摄与 OCR 资料';
     dialog.querySelector('.asset-viewer-info-heading>span').textContent=isVideo?'VIDEO DETAILS':'PHOTO DETAILS';
+    showSku(item);
     $('asset-viewer-position').textContent=`${index+1} / ${rows.length}`;$('asset-viewer-prev').disabled=index===0;$('asset-viewer-next').disabled=index===rows.length-1;
     $('asset-viewer-fields').innerHTML=baseFields(item)+(kind==='sku-database'?'<section class="asset-viewer-ocr"><h4>OCR 原文本</h4><pre>正在读取…</pre></section>':'');
     $('asset-viewer-info-status').textContent=kind==='archive'?'正在同步已入库资料…':'正在读取图片资料…';
-    if(isVideo)loadVideo(item,request);else{stopVideo();loadImages(item,request)}
-    await readDetails(item,request);
+    if(isVideo){releasePreviews();loadVideo(item,request)}else{stopVideo();loadImages(item,request)}
+    if(!dialog.classList.contains('image-only'))await readDetails(item,request);
   }
   async function readDetails(item,request,refresh=false){
     clearTimeout(detailsTimer);
@@ -277,13 +379,13 @@
     try{
       const data=await FramekeepIO.api(path,undefined,20000,controller.signal);
       if(request!==sequence||!dialog.open)return;
-      $('asset-viewer-info-status').textContent='';info(item,data);
+      const kept=$('asset-video-frames');$('asset-viewer-info-status').textContent='';info(item,data);if(item.media_type==='video'){if(kept&&kept.dataset.item===item.id)$('asset-viewer-fields').append(kept);else loadFramePanel(item,request)}
       if(kind==='archive'&&['queued','running'].includes(data.metadata_status))detailsTimer=setTimeout(()=>readDetails(item,request),700);
     }
     catch(error){if(request===sequence&&dialog.open){$('asset-viewer-info-status').textContent='详细资料读取失败：'+error.message;if(kind==='sku-database')$('asset-viewer-fields').querySelector('pre').textContent='OCR 原文暂时无法读取'}}
   }
   let viewerActive=false;
-  function cleanup(){if(!viewerActive)return;viewerActive=false;++sequence;clearTimeout(detailsTimer);controller?.abort();stopVideo();endDrag();clearImages();FramekeepAssetLoading.resume();stage.setAttribute('aria-busy','false');rows=[];if(origin?.isConnected)origin.focus({preventScroll:true});origin=null}
+  function cleanup(){if(!viewerActive)return;viewerActive=false;++sequence;clearTimeout(detailsTimer);controller?.abort();stopVideo();endDrag();clearImages();releasePreviews();FramekeepAssetLoading.resume();stage.setAttribute('aria-busy','false');rows=[];if(origin?.isConnected)origin.focus({preventScroll:true});origin=null}
   function close(){flushMetadataEditor();if(dialog.open)dialog.close();cleanup()}
   $('asset-viewer-close').onclick=close;dialog.addEventListener('cancel',event=>{event.preventDefault();close()});
   dialog.addEventListener('close',()=>{if(!dialog.open)cleanup()});
@@ -308,10 +410,33 @@
     const actions={Escape:close,ArrowLeft:()=>show(index-1),ArrowRight:()=>show(index+1),'+':()=>zoom(scale*1.25),'=':()=>zoom(scale*1.25),'-':()=>zoom(scale/1.25),'0':fit,Home:fit};
     if(actions[event.key]){event.preventDefault();event.stopPropagation();actions[event.key]()}
   },true);
-  window.addEventListener('pagehide',stopVideo);
+  window.addEventListener('pagehide',()=>{stopVideo();releasePreviews()});
   document.addEventListener('framekeep:workspace',close);
-  window.FramekeepAssetViewer={open(mode,items,id,trigger){
-    const selected=items.findIndex(item=>item.id===id);if(selected<0)return;kind=mode;rows=items.map(item=>({...item}));origin=trigger||document.activeElement;
+  let framePickSequence=0;
+  async function loadFramePanel(item,request,after=-1,section=null){
+    if(request!==sequence||!dialog.open)return;
+    if(!section){section=document.createElement('section');section.id='asset-video-frames';section.dataset.item=item.id;section.className='asset-video-frames';section.innerHTML='<h4>抽帧解析</h4><p class="asset-frame-status" role="status">正在读取已解析帧…</p><div class="asset-frame-grid"></div><button class="asset-frame-more" hidden>加载更多帧</button>';$('asset-viewer-fields').append(section)}
+    try{
+      const data=await FramekeepIO.api('/api/intelligence/frames?'+new URLSearchParams({item:item.id,cursor:after,limit:60}));
+      if(request!==sequence||!dialog.open)return;
+      section.querySelector('.asset-frame-status').textContent=data.total?`已解析 ${data.completed} / ${data.total} 帧${data.failed?' · 失败 '+data.failed:''}${data.interval_ms?' · 间隔 '+(data.interval_ms/1000)+'s':''} · 点击预览前后各 1.5 秒`:'尚未抽帧解析；启用多维解析后自动处理';
+      const grid=section.querySelector('.asset-frame-grid');
+      for(const frame of data.rows){
+        const button=document.createElement('button');button.type='button';button.disabled=!frame.preview;button.title=frame.summary||frame.error||'等待解析';button.dataset.videoFrame=frame.frame;
+        button.innerHTML=(frame.preview?`<img loading="lazy" src="${esc(frame.preview)}" alt="视频帧 ${esc(frame.frame+1)}">`:'<span class="asset-frame-pending">等待解析</span>')+`<span>${frame.timestamp_ms!==null?(frame.timestamp_ms/1000).toFixed(3)+'s':'待抽帧'}</span>`;
+        button.onclick=async()=>{const pick=++framePickSequence;try{const matched=await FramekeepIO.api('/api/intelligence/frame-info?'+new URLSearchParams({item:item.id,frame:frame.frame}));if(matched.fingerprint!==item.fingerprint||matched.timestamp_ms!==frame.timestamp_ms)throw new Error('帧计划已变化，请重新打开视频');if(pick===framePickSequence&&request===sequence&&dialog.open)loadVideo(matched,request)}catch(error){section.querySelector('.asset-frame-status').textContent=error.message}};
+        grid.append(button);
+      }
+      const more=section.querySelector('.asset-frame-more');more.hidden=!data.has_more;more.onclick=()=>{more.disabled=true;loadFramePanel(item,request,data.next_cursor,section).finally(()=>{more.disabled=false})};
+    }catch(error){if(request===sequence)section.querySelector('.asset-frame-status').textContent='帧资料读取失败：'+error.message}
+  }
+  window.FramekeepAssetViewer={async flush(){
+    if(metadataEditor)await saveMetadataEditor(metadataEditor);
+    await Promise.all([...metadataWrites.values()]);
+    if(metadataSaveFailures.size)throw new Error('图片元数据尚未保存：'+[...metadataSaveFailures.values()][0].message);
+  },open(mode,items,id,trigger,options={}){
+    const selected=items.findIndex(item=>(item.result_id||item.id)===id);if(selected<0)return;kind=mode;rows=items.map(item=>({...item}));origin=trigger||document.activeElement;
+    dialog.classList.toggle('image-only',!!options.imageOnly);
     viewerActive=true;if(!dialog.open)dialog.showModal();show(selected);$('asset-viewer-close').focus({preventScroll:true});
   }};
 })();

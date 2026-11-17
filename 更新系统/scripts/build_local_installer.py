@@ -9,7 +9,7 @@ import zipfile
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from cryptography.hazmat.primitives.serialization import Encoding,PublicFormat
 
-from build_tools import ROOT,CSC,render_animation
+from build_tools import ROOT,CSC,render_animation,pack_worker,worker_resources
 import release
 
 
@@ -21,33 +21,34 @@ def archive_bundle(output):
     return archive
 
 
-def build(output=None,*,notes=None,title='末帧选片本地安装包'):
+def build(output=None,*,notes=None,title='SHIYING 数字资产本地安装包'):
     config=json.loads((ROOT/'更新系统/update-config.json').read_text('utf8'))
-    output=Path(output) if output else ROOT/'dist'/('末帧选片-本地安装包-无模型-'+config['releaseId'])
+    output=Path(output) if output else ROOT/'dist'/('SHIYING 数字资产-本地安装包-无模型-'+config['releaseId'])
     # 私钥仅在本次构建进程内使用；仅本安装器的内嵌 worker 信任其公钥。
     key=Ed25519PrivateKey.generate()
-    notes=notes or '包含当前源码编译的末帧选片程序，沿用已有资料和模型；缺失组件按需校验下载。'
+    notes=notes or '包含当前源码编译的SHIYING 数字资产程序，沿用已有资料和模型；缺失组件按需校验下载。'
     release.build(notes,output=output,local_key=key)
     work=ROOT/'build/local-installer'/config['releaseId'];work.mkdir(parents=True,exist_ok=True)
     local_config={**config,'publicKey':key.public_key().public_bytes(Encoding.Raw,PublicFormat.Raw).hex()}
     (work/'update-config.json').write_text(json.dumps(local_config,ensure_ascii=False,indent=2),'utf8')
-    command=[sys.executable,'-m','PyInstaller','--noconfirm','--clean','--log-level','WARN','--onefile','--console',
-        '--name','local-install-worker','--distpath',str(work),'--workpath',str(work/'pyinstaller'),
+    command=[sys.executable,'-m','PyInstaller','--noconfirm','--clean','--log-level','WARN','--onedir','--console',
+        '--name','update-worker','--distpath',str(work/'worker-dist'),'--workpath',str(work/'pyinstaller'),
         '--specpath',str(work),'--add-data',str(work/'update-config.json')+';更新系统']
     for module in ('tkinter','torch','numpy','PIL','scipy','matplotlib','pytest','IPython','PyQt5','PySide6','PyQt6'):
         command+=['--exclude-module',module]
     subprocess.run(command+[str(ROOT/'更新系统/updater.py')],check=True,cwd=ROOT)
+    pack_worker(work/'worker-dist/update-worker',work)
     (output/'components').mkdir();(output/'components/.keep').touch()
-    installer=output/'末帧选片安装器.exe'
+    installer=output/'SHIYING 数字资产安装器.exe'
     common=[str(CSC),'/nologo','/target:winexe','/platform:anycpu','/optimize+','/define:INSTALLER,COMPLETE',
-        '/win32icon:'+str(ROOT/'桌面程序/icons/icon.ico'),'/resource:'+str(render_animation())+',animation.png',
-        '/resource:'+str(work/'local-install-worker.exe')+',worker.exe',
-        *['/reference:'+n for n in ('System.Windows.Forms.dll','System.Drawing.dll','Accessibility.dll','System.Web.Extensions.dll')]]
+        '/win32icon:'+str(ROOT/'桌面程序/icons/icon.ico'),'/resource:'+str(ROOT/'桌面程序/icons/icon.png')+',brand.png','/resource:'+str(render_animation())+',animation.png',
+        *worker_resources(work),
+        *['/reference:'+n for n in ('System.Windows.Forms.dll','System.Drawing.dll','Accessibility.dll','System.Web.Extensions.dll','System.IO.Compression.dll')]]
     subprocess.run(common+['/out:'+str(installer),str(ROOT/'更新系统/SharedTheme.cs'),str(ROOT/'更新系统/Program.cs')],check=True)
     (output/'安装说明.txt').write_text(title+' · 无模型安装包\n\n'
-        '请完整解压后运行“末帧选片安装器.exe”，保留软件 ZIP、envelope.json 和 components 目录。\n'
+        '请完整解压后运行“SHIYING 数字资产安装器.exe”，保留软件 ZIP、envelope.json 和 components 目录。\n'
         '包含软件程序，不包含模型权重和 llama.cpp 推理运行时。安装时优先复用现有用户资料中的组件，缺失项从魔搭校验下载。\n'
-        '沿用既有安装目录和资料。保存并正常退出正在运行的末帧后再安装。\n'
+        '沿用既有安装目录和资料。校验后自动退出SHIYING，8秒内未退出将强制结束进程并继续安装；请先完成正在进行的操作。\n'
         '已有模型选用保持；如队列显示等待选用模型，在设置 → AI 助手配置打开“使用内置模型”。\n'
         '本次更新：'+notes+'\n'
         '此本地包由独立构建公钥校验，程序内的正式更新公钥保持不变；未发布到在线更新源。\n'
@@ -57,12 +58,12 @@ def build(output=None,*,notes=None,title='末帧选片本地安装包'):
     report={'releaseId':config['releaseId'],'published':False,'includesModels':False,
         'remotePublicKeyUnchanged':config['publicKey']!=local_config['publicKey'],
         'installer':{'size':installer.stat().st_size,'sha256':release.sha256(installer)},
-        'package':{'size':(output/'Framekeep-Windows-x64.zip').stat().st_size,'sha256':release.sha256(output/'Framekeep-Windows-x64.zip')}}
+        'package':{'size':(output/'SHIYING-Windows-x64.zip').stat().st_size,'sha256':release.sha256(output/'SHIYING-Windows-x64.zip')}}
     (output/'构建信息.json').write_text(json.dumps(report,ensure_ascii=False,indent=2),'utf8')
     print(archive_bundle(output));return output
 
 
 if __name__=='__main__':
     parser=argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--output',type=Path);parser.add_argument('--notes');parser.add_argument('--title',default='末帧选片本地安装包')
+    parser.add_argument('--output',type=Path);parser.add_argument('--notes');parser.add_argument('--title',default='SHIYING 数字资产本地安装包')
     args=parser.parse_args();build(args.output,notes=args.notes,title=args.title)

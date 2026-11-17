@@ -1,6 +1,12 @@
 api key.md
 .env
 .env.*
+DOC/OCR.txt
+安卓出入库/.gradle/
+安卓出入库/local.properties
+安卓出入库/ocr.local.properties
+安卓出入库/**/build/
+安卓出入库/*.jks
 !.env.example
 .framekeep/
 /data/
@@ -21,6 +27,7 @@ backup/
 桌面程序/frontend/startup-visual.js
 
 .framekeep-search-dev/
+/测试文件夹/
 桌面程序/frontend/desktop.js
 
 桌面程序/frontend/desktop-lifecycle.css

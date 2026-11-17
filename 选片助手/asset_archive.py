@@ -1,5 +1,5 @@
 """永久资产、拍摄结束区间与可恢复文件元数据写入队列。"""
-from contextlib import contextmanager
+from contextlib import contextmanager,closing,nullcontext
 import json
 import os
 from pathlib import Path
@@ -10,10 +10,10 @@ import uuid
 
 import media_engine as media
 import asset_search
-from metadata_writer import MetadataWriter,sha
+from metadata_writer import MetadataWriter,sha,obsolete_reserved_keywords
 from metadata_history import save_record
 from sku_match import normalize
-from sku_intervals import partition
+from sku_intervals import partition,frozen_contexts
 
 def uid():return uuid.uuid4().hex
 def dumps(v):return json.dumps(v,ensure_ascii=False,sort_keys=True)
@@ -21,7 +21,11 @@ def dumps(v):return json.dumps(v,ensure_ascii=False,sort_keys=True)
 class AssetArchive:
     def __init__(self,store,*,autostart=True):
         self.store=store;self.db=store.data/'asset_archive.sqlite3';self.writer=MetadataWriter(store.root,store.data)
-        self.lock=threading.RLock();self.closed=threading.Event();self.sku=None;self.on_assignment=None;self.autostart=autostart
+        self._commit_wait_guard=threading.Lock();self.metadata_commit_waiting=0
+        # 返回正在拍摄的会话 ID；拍摄期间只写该会话，其余旧照片任务一律暂停。
+        self.live_session=None
+        self.backfill_wake=threading.Event();self._backfill_guard=threading.Lock();self._backfill_prefixes=set()
+        self.lock=threading.RLock();self.closed=threading.Event();self.sku=None;self.on_assignment=None;self.autostart=autostart;self.catalog_writeback=None
         with self.connect() as c:
             c.executescript('''PRAGMA journal_mode=WAL;
 CREATE TABLE IF NOT EXISTS assets(id TEXT PRIMARY KEY,created REAL,captured TEXT,camera TEXT,role TEXT DEFAULT 'product',sku TEXT DEFAULT '',normalized TEXT DEFAULT '',project TEXT DEFAULT '',scope TEXT DEFAULT '',segment TEXT DEFAULT '',source TEXT DEFAULT '',locked INTEGER DEFAULT 0,revision INTEGER DEFAULT 0);
@@ -44,6 +48,10 @@ CREATE TABLE IF NOT EXISTS bindings(stream TEXT,asset TEXT,capture TEXT,seq INTE
 CREATE TABLE IF NOT EXISTS segments(id TEXT PRIMARY KEY,job TEXT UNIQUE,stream TEXT,label TEXT,members TEXT,status TEXT,sku TEXT DEFAULT '',operation TEXT DEFAULT '',reason TEXT DEFAULT '',created REAL);
 CREATE TABLE IF NOT EXISTS event_receipts(id TEXT PRIMARY KEY);
 CREATE TABLE IF NOT EXISTS audit(id TEXT PRIMARY KEY,kind TEXT,data TEXT,created REAL);
+CREATE TABLE IF NOT EXISTS portable_sku_evidence(path TEXT PRIMARY KEY,data TEXT NOT NULL,revision TEXT,updated REAL);
+CREATE TABLE IF NOT EXISTS portable_ratings(path TEXT PRIMARY KEY,rating INTEGER NOT NULL,updated REAL);
+CREATE TABLE IF NOT EXISTS portable_capture_outbox(id TEXT PRIMARY KEY,data TEXT NOT NULL,delivered INTEGER DEFAULT 0);
+CREATE TABLE IF NOT EXISTS portable_source_links(file TEXT PRIMARY KEY,root TEXT,session TEXT,capture TEXT,project TEXT,scope TEXT);
 PRAGMA user_version=1;''')
             asset_search.install(c)
             # 兼容旧拍摄段：SKU 确认后统一自动写入，不再依赖界面开关。
@@ -52,6 +60,29 @@ PRAGMA user_version=1;''')
             c.execute("UPDATE streams SET mode='sidecar' WHERE state='active' AND mode!='sidecar'")
             c.execute("UPDATE metadata_jobs SET status='queued' WHERE status='running'")
             c.execute("UPDATE metadata_jobs SET mode='sidecar' WHERE status='queued' AND journal='{}'")
+            c.execute('CREATE INDEX IF NOT EXISTS metadata_asset_revision ON metadata_jobs(asset,revision,file,path,created DESC)')
+            c.execute('CREATE INDEX IF NOT EXISTS metadata_queue_status ON metadata_jobs(status,created)')
+            c.execute('CREATE INDEX IF NOT EXISTS files_asset ON files(asset)')
+            c.execute('CREATE INDEX IF NOT EXISTS locations_file ON locations(file)')
+            columns={r['name'] for r in c.execute('PRAGMA table_info(metadata_jobs)')}
+            for name,kind in (('retry_at','REAL'),('retry_count','INTEGER')):
+                if name not in columns:c.execute(f'ALTER TABLE metadata_jobs ADD COLUMN {name} {kind} NOT NULL DEFAULT 0')
+            # 旧版丢失了 WinError，重新校验一次，随后按真实错误分类处理。
+            c.execute("UPDATE metadata_jobs SET status='queued',reason='旧版占用失败，等待重新校验',retry_at=0,retry_count=0 WHERE status='failed' AND reason='文件仍被写入或占用，请稍后重试'")
+            c.execute("UPDATE operations SET status='queued' WHERE id IN (SELECT operation FROM metadata_jobs WHERE status='queued' AND reason='旧版占用失败，等待重新校验')")
+            # 旧客户端在8次分享锁冲突后永久失败，升级后恢复；其它失败仍需复核。
+            c.execute("""UPDATE metadata_jobs SET status='queued',retry_at=0
+                WHERE status='failed' AND (reason LIKE '%[WinError 32]%' OR reason LIKE '%[WinError 33]%')""")
+            c.execute("UPDATE operations SET status='queued' WHERE id IN (SELECT operation FROM metadata_jobs WHERE status='queued')")
+            if 'initial_count' not in {r['name'] for r in c.execute('PRAGMA table_info(streams)')}:
+                c.execute('ALTER TABLE streams ADD COLUMN initial_count INTEGER NOT NULL DEFAULT 0')
+        # 启动前遗留的现场队列属于历史补写；已明确提交的新写入及手动补写仍可断点接续。
+        from metadata_backfill import pause_pending
+        with self.connect() as c:pause_pending(c,'metadata_jobs','fields',linked_only=True)
+        self.metadata_io_lock=threading.RLock()
+        self.metadata_start_lock=threading.Lock();self.metadata_thread=None;self.backfill_thread=None
+        self.metadata_progress={'phase':'stopped','since':time.time(),'path':'','job_id':'','error':''}
+        self.backfill_progress={'phase':'stopped','since':time.time(),'error':''}
         self.thread=threading.Thread(target=self._run,daemon=True,name='asset-archive')
         if autostart:self.thread.start()
     @contextmanager
@@ -70,26 +101,29 @@ PRAGMA user_version=1;''')
                 self._ratings = SharedRatings(self)
             return self._ratings
 
-    def ensure(self,sid,cid,*,asset_hint=None,inherit=True):
+    def ensure(self,sid,cid,*,asset_hint=None,inherit=True,_prepared=None,_session=None,_record=None,_connection=None):
         with self.lock:
-            session=self.store.session(sid)
+            session=_session or self.store.session(sid)
             if not session:raise ValueError('照片目录不存在')
-            record=next(iter(self.store.records(sid,ids=[cid])),None)
+            record=_record or next(iter(self.store.records(sid,ids=[cid])),None)
             if not record:raise ValueError('照片不存在')
             with self.store.connect() as c:final=bool(c.execute('SELECT 1 FROM settings WHERE key=?',('archive_session:'+sid,)).fetchone())
-            with self.connect() as c:
+            with nullcontext(_connection) if _connection is not None else self.connect() as c:
                 linked=c.execute('SELECT asset FROM catalog_links WHERE session=? AND capture=?',(sid,cid)).fetchone();aid=linked[0] if linked else None
             if asset_hint and aid and aid!=asset_hint:raise ValueError('目标 RAW 已关联其他资产，请先复核')
             aid=aid or asset_hint
             paths=[(k,media.resolved_file(session['root'],record[k])) for k in ('raw','jpg') if record.get(k)]
             # 先查齐所有组件，再决定资产身份；任何失败都不留下半个 RAW/JPG 资产。
-            with self.connect() as c:
+            with nullcontext(_connection) if _connection is not None else self.connect() as c:
                 components=[]
                 for kind,path in paths:
                     known=c.execute('SELECT f.* FROM locations l JOIN files f ON f.id=l.file WHERE l.path=?',(str(path),)).fetchone()
                     if known:
                         components.append((kind,path,dict(known),None,None));continue
-                    digest=sha(path);metadata=self.writer.read_asset(path)
+                    prepared=(_prepared or {}).get(str(path))
+                    if prepared and self._registration_signature(path)==prepared[0]:
+                        _,digest,metadata=prepared
+                    else:digest=sha(path);metadata=self.writer.read_asset(path)
                     identity=metadata.get('XMP-fk:FileId')
                     try:identity=uuid.UUID(str(identity)).hex
                     except ValueError:identity=None
@@ -128,16 +162,50 @@ PRAGMA user_version=1;''')
                     current=c.execute('SELECT * FROM assets WHERE id=?',(aid,)).fetchone()
                     assignment=c.execute('SELECT data FROM assignments WHERE asset=? AND revision=?',(aid,current['revision'])).fetchone()
                     if inherit and current['sku'] and assignment:
-                        origin=json.loads(assignment[0]).get('operation');old_job=c.execute('SELECT mode FROM metadata_jobs WHERE operation=? LIMIT 1',(origin,)).fetchone()
+                        origin=json.loads(assignment[0]).get('operation');old_job=c.execute('SELECT mode,fields FROM metadata_jobs WHERE operation=? ORDER BY created DESC LIMIT 1',(origin,)).fetchone()
                         if old_job and not c.execute('SELECT 1 FROM metadata_jobs WHERE operation=? AND file=? AND path=?',(origin,fid,str(path))).fetchone():
-                            mode=old_job['mode'];fields={'AssetId':aid,'FileId':fid,'SKU':current['sku'],'ShootType':current['scope'],'ProjectId':current['project'],'SegmentId':current['segment'],'MetadataRevision':current['revision']}
+                            mode=old_job['mode'];fields={'AssetId':aid,'FileId':fid,'SKU':current['sku'],'ShootType':current['scope'],'ProjectId':current['project'],'SegmentId':current['segment'],'MetadataRevision':current['revision'],'_manual_backfill':json.loads(old_job['fields']).get('_manual_backfill',-1)}
                             cap=self.writer.capability(path,mode);status='queued' if cap!='unsupported' else 'failed'
                             c.execute('INSERT INTO metadata_jobs(id,operation,file,asset,revision,path,expected_sha,mode,fields,status,reason,created) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',(uid(),origin,fid,aid,current['revision'],str(path),digest,mode,dumps(fields),status,'' if status=='queued' else '后到组件的格式尚未开放内嵌写入',time.time()))
-                c.execute('INSERT OR REPLACE INTO catalog_links VALUES (?,?,?)',(sid,cid,aid))
+                c.execute('INSERT INTO catalog_links VALUES (?,?,?) ON CONFLICT(session,capture) DO UPDATE SET asset=excluded.asset WHERE catalog_links.asset IS NOT excluded.asset',(sid,cid,aid))
                 for kind,path in paths:
                     file=c.execute('SELECT f.* FROM files f JOIN locations l ON l.file=f.id WHERE l.path=?',(str(path),)).fetchone()
                     if file:c.execute('INSERT OR REPLACE INTO file_fingerprints VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',(str(path),aid,file['id'],path.name,path.stem.casefold(),str(path.parent),record.get('cameraKey',''),record.get('time'),dumps(record.get('captureIdentity',{})),file['sha'],'archive' if final else 'onsite',time.time()))
             return aid
+    @staticmethod
+    def _registration_signature(path):
+        from rating_xmp import sidecar_paths
+        paths=[path,*sidecar_paths(path)]
+        return tuple((str(p),p.stat().st_size,p.stat().st_mtime_ns) for p in paths)
+
+    def _prepare_registration(self,session,record):
+        prepared={}
+        for kind in ('raw','jpg'):
+            if not record.get(kind):continue
+            path=media.resolved_file(session['root'],record[kind])
+            with self.writer.file_lock(path):
+                signature=self._registration_signature(path);digest=sha(path);metadata=self.writer.read_asset(path)
+                if self._registration_signature(path)==signature:prepared[str(path)]=(signature,digest,metadata)
+        return prepared
+
+    def _register_stream_batch(self,stream,session,records,seq,positions=None):
+        """慢只读准备在事务外并行，短事务内登记一批；变化的文件重新读取。"""
+        from concurrent.futures import ThreadPoolExecutor
+        if self.lock._is_owned() or self.sku and self.sku.lock._is_owned():
+            # 已在归档事件临界区时不能跨线程等待文件锁（评级提交也需要归档锁）。
+            prepared=[{} for _ in records]
+        else:
+            with ThreadPoolExecutor(max_workers=4,thread_name_prefix='asset-prepare') as pool:
+                prepared=list(pool.map(lambda r:self._prepare_registration(session,r),records))
+        with self.lock,self.connect() as c:
+            c.execute('BEGIN IMMEDIATE')
+            for record,values in zip(records,prepared):
+                aid=self.ensure(stream['session'],record['id'],_prepared=values,_session=session,_record=record,_connection=c)
+                position=(positions or {}).get(record['id'],seq+1);seq=max(seq,position)
+                order=(record.get('time') or '')+'|'+f'{position:012}'
+                late=bool(position>stream['initial_count'] and stream['last_boundary'] and record.get('time') and order<=stream['last_boundary'])
+                c.execute('INSERT OR IGNORE INTO bindings VALUES (?,?,?,?,?,?)',(stream['id'],aid,record['id'],position,order,'late' if late else 'pending'))
+        return seq
     def _adopt_incomplete(self,c,old_id,aid,components):
         """仅回收旧版本中断后留下、没有被任何业务使用的组件资产。"""
         old=c.execute('SELECT * FROM assets WHERE id=?',(old_id,)).fetchone()
@@ -164,7 +232,7 @@ PRAGMA user_version=1;''')
         with self.connect() as c:
             row=c.execute('SELECT * FROM assets WHERE id=?',(aid,)).fetchone()
             if not row:raise ValueError('资产不存在')
-            value=dict(row);value['files']=[dict(r) for r in c.execute('SELECT f.*,l.path,l.status AS location_status FROM files f JOIN locations l ON l.file=f.id WHERE f.asset=?',(aid,))]
+            value=dict(row);value['files']=[dict(r) for r in c.execute('SELECT f.*,l.path,l.status AS location_status,p.sha AS path_sha FROM files f JOIN locations l ON l.file=f.id LEFT JOIN file_fingerprints p ON p.path=l.path WHERE f.asset=?',(aid,))]
             value['history']=[dict(r) for r in c.execute('SELECT * FROM assignments WHERE asset=? ORDER BY revision DESC LIMIT 30',(aid,))]
             value['jobs']=[dict(r) for r in c.execute('SELECT id,operation,status,reason,mode,path FROM metadata_jobs WHERE asset=? ORDER BY created DESC LIMIT 30',(aid,))]
             return value
@@ -179,7 +247,10 @@ PRAGMA user_version=1;''')
             asset_search.hydrate(c,rows)
         return {'rows':rows,'total':total,'offset':offset}
     def search(self,**kwargs):return asset_search.search(self,**kwargs)
-    def preview(self,sid,cids,sku,scope,project='',mode='sidecar',overwrite=False,asset_ids=None,source='manual',segment=''):
+    def preview(self,sid,cids,sku,scope,project='',mode='sidecar',overwrite=False,asset_ids=None,source='manual',segment='',defer_io=False):
+        capture=getattr(self,'capture_service',None)
+        source_session=self.store.session(sid) if capture and sid else None
+        if source_session:capture.require_live(sid)
         if not isinstance(sku,str) or not normalize(sku) or len(sku)>80 or any(ord(ch)<32 for ch in sku):raise ValueError('请填写有效 SKU（不超过 80 字符）')
         if not isinstance(scope,str) or not scope.strip() or len(scope)>100:raise ValueError('请填写拍摄类型/工作表')
         if mode not in ('embedded','sidecar'):raise ValueError('请选择正确写入策略')
@@ -194,34 +265,52 @@ PRAGMA user_version=1;''')
             if source!='manual' and a['locked']:conflict=True
             files=[]
             for f in a['files']:
-                online=Path(f['path']).is_file()
-                files.append({'id':f['id'],'path':f['path'],'sha':sha(f['path']) if online else f['sha'],'capability':self.writer.capability(f['path'],mode),'online':online})
+                if source_session and not Path(f['path']).absolute().is_relative_to(Path(source_session['root']).absolute()):continue
+                # 已登记资产的改款只入队；离线/外部改动由文件 worker 校验并报告。
+                online=defer_io or Path(f['path']).is_file()
+                files.append({'id':f['id'],'path':f['path'],'sha':(f.get('path_sha') or f['sha']) if defer_io else sha(f['path']) if online else f['sha'],'capability':self.writer.capability(f['path'],mode),'online':online})
             targets.append({'id':aid,'revision':a['revision'],'before':{k:a[k] for k in ('sku','normalized','scope','project','segment','source','locked')},'conflict':conflict,'apply':not conflict or (overwrite and source in ('manual','segment')),'files':files})
         data={'targets':targets,'sku':sku,'scope':scope,'project':project,'mode':mode,'source':source,'segment':segment}
+        if source_session:data['source_root']=source_session['root']
         pid=uid()
         with self.connect() as c:c.execute('INSERT INTO previews(id,data,created) VALUES (?,?,?)',(pid,dumps(data),time.time()))
         return {'preview_id':pid,**data}
-    def apply(self,pid):
+    def apply(self,pid,*,request_key='',metadata_guard=None):
         with self.lock,self.connect() as c:
+            if request_key:
+                previous=c.execute('SELECT id FROM operations WHERE source=? LIMIT 1',(request_key,)).fetchone()
+                if previous:return self.operation(previous['id'])
             row=c.execute('SELECT * FROM previews WHERE id=?',(pid,)).fetchone()
             if not row or row['used'] or time.time()-row['created']>900:raise ValueError('预览已失效，请重新预览')
             data=json.loads(row['data'])
             if data.get('group'):raise ValueError('请使用整款编辑提交更新')
             targets=[t for t in data['targets'] if t['apply']]
+            capture=getattr(self,'capture_service',None)
+            source_root=None
+            if capture and data.get('source_root'):source_root=Path(data['source_root']).absolute()
+            if capture and data.get('segment'):
+                context=c.execute('SELECT t.session FROM segments s JOIN streams t ON t.id=s.stream WHERE s.id=?',(data['segment'],)).fetchone()
+                source_session=self.store.session(context[0]) if context else None
+                if source_session:source_root=Path(source_session['root']).absolute()
             if not targets:raise ValueError('没有可应用的目标，请先处理归属冲突')
             for t in targets:
                 current=c.execute('SELECT revision FROM assets WHERE id=?',(t['id'],)).fetchone()
                 if not current or current[0]!=t['revision']:raise ValueError('资产归属版本已变，请重新预览')
-            oid=uid();c.execute('INSERT INTO operations(id,created,kind,source) VALUES (?,?,?,?)',(oid,time.time(),'assign',data['segment']))
+            oid=uid();c.execute('INSERT INTO operations(id,created,kind,source) VALUES (?,?,?,?)',(oid,time.time(),'assign',request_key or data['segment']))
             for t in targets:
                 revision=t['revision']+1
+                c.execute("UPDATE metadata_jobs SET status='cancelled',reason='归属版本已更新，旧任务未写入' WHERE asset=? AND revision<? AND status='queued' AND coalesce(json_extract(fields,'$._descriptive'),0)=0",(t['id'],revision))
                 c.execute('INSERT INTO assignments VALUES (?,?,?,?)',(t['id'],revision,dumps({'before':t['before'],'after':{k:data[k] for k in ('sku','scope','project','segment','source')},'operation':oid}),time.time()))
                 c.execute('UPDATE assets SET sku=?,normalized=?,scope=?,project=?,segment=?,source=?,locked=?,revision=? WHERE id=?',(data['sku'],normalize(data['sku']),data['scope'],data['project'],data['segment'],data['source'],int(data['source']=='manual'),revision,t['id']))
                 for f in t['files']:
-                    fields={'AssetId':t['id'],'FileId':f['id'],'SKU':data['sku'],'ShootType':data['scope'],'ProjectId':data['project'],'SegmentId':data['segment'],'MetadataRevision':revision}
+                    if source_root and not Path(f['path']).absolute().is_relative_to(source_root):continue
+                    if metadata_guard and f['path']!=metadata_guard['path']:continue
+                    fields={'AssetId':t['id'],'FileId':f['id'],'SKU':data['sku'],'ShootType':data['scope'],'ProjectId':data['project'],'SegmentId':data['segment'],'MetadataRevision':revision,'_manual_backfill':1}
+                    if metadata_guard:fields['_catalog_ocr']=metadata_guard
                     status='queued' if f['capability']!='unsupported' and f['online'] else 'failed';reason='' if status=='queued' else ('文件离线，请重新定位' if not f['online'] else '此格式尚不支持内部元数据写入，未写入该文件')
                     c.execute('INSERT INTO metadata_jobs(id,operation,file,asset,revision,path,expected_sha,mode,fields,status,reason,created) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',(uid(),oid,f['id'],t['id'],revision,f['path'],f['sha'],data['mode'],dumps(fields),status,reason,time.time()))
             c.execute('UPDATE previews SET used=1 WHERE id=?',(pid,));c.execute('INSERT INTO audit VALUES (?,?,?,?)',(uid(),'assign',dumps({'operation':oid,'preview':pid}),time.time()))
+            c.execute('INSERT OR IGNORE INTO portable_capture_outbox(id,data) VALUES(?,?)',(oid,dumps({'operation':oid,'targets':[t['id'] for t in targets],'assignment':data})))
             if not c.execute("SELECT 1 FROM metadata_jobs WHERE operation=? AND status='queued'",(oid,)).fetchone():c.execute("UPDATE operations SET status='finished' WHERE id=?",(oid,))
         if self.on_assignment:self.on_assignment([t['id'] for t in targets])
         return self.operation(oid)
@@ -233,9 +322,72 @@ PRAGMA user_version=1;''')
             for job in jobs:job['storage']=self.writer.capability(job['path'],job['mode'])
         return {'operation':dict(row),'jobs':jobs}
     def retry(self,oid):
-        with self.connect() as c:c.execute("UPDATE metadata_jobs SET status='queued',reason='' WHERE operation=? AND status='failed'",(oid,))
+        with self.connect() as c:
+            c.execute("UPDATE metadata_jobs SET status='queued',reason='',retry_at=0,retry_count=0 WHERE operation=? AND status='failed'",(oid,))
+            c.execute("UPDATE operations SET status='queued' WHERE id=? AND EXISTS(SELECT 1 FROM metadata_jobs WHERE operation=? AND status='queued')",(oid,oid))
         return self.operation(oid)
-    def _refresh_catalog(self,aid):
+    def repair_segment_jobs(self,segment_id):
+        """已入库并非已写文件；补齐当前归属遗漏的组件任务，不重试失败。"""
+        with self.connect() as c:
+            missing=c.execute("""SELECT 1 FROM assets a JOIN files f ON f.asset=a.id JOIN locations l ON l.file=f.id
+                WHERE a.segment=? AND NOT EXISTS(SELECT 1 FROM metadata_jobs m WHERE m.asset=a.id
+                AND m.revision=a.revision AND m.file=f.id AND m.path=l.path
+                AND coalesce(json_extract(m.fields,'$._descriptive'),0)=0) LIMIT 1""",(segment_id,)).fetchone()
+            legacy=c.execute("""SELECT 1 FROM metadata_jobs m JOIN assets a ON a.id=m.asset AND a.revision=m.revision
+                WHERE a.segment=? AND m.status='applied' AND (lower(m.path) LIKE '%.jpg' OR lower(m.path) LIKE '%.jpeg')
+                AND json_valid(m.journal) AND (json_type(m.journal,'$.after.WindowsSubject') IS NULL OR coalesce(json_extract(m.journal,'$.keyword_policy'),0)<2)
+                AND coalesce(json_extract(m.fields,'$._descriptive'),0)=0 LIMIT 1""",(segment_id,)).fetchone()
+        if not missing and not legacy:return
+        with self.lock,self.connect() as c:
+            segment=c.execute('SELECT * FROM segments WHERE id=?',(segment_id,)).fetchone()
+            if not segment or not segment['operation']:return
+            stream=c.execute('SELECT * FROM streams WHERE id=?',(segment['stream'],)).fetchone()
+            for aid in json.loads(segment['members']):
+                asset=c.execute('SELECT * FROM assets WHERE id=?',(aid,)).fetchone()
+                if not asset or asset['segment']!=segment_id or asset['sku']!=segment['sku']:continue
+                assignment=c.execute('SELECT data FROM assignments WHERE asset=? AND revision=?',(aid,asset['revision'])).fetchone()
+                if not assignment:continue
+                operation=json.loads(assignment['data'])['operation']
+                files=c.execute('SELECT f.*,l.path FROM files f JOIN locations l ON l.file=f.id WHERE f.asset=?',(aid,)).fetchall()
+                for file in files:
+                    previous=c.execute("SELECT * FROM metadata_jobs WHERE asset=? AND revision=? AND file=? AND path=? AND coalesce(json_extract(fields,'$._descriptive'),0)=0 ORDER BY created DESC LIMIT 1",(aid,asset['revision'],file['id'],file['path'])).fetchone()
+                    if previous:
+                        journal=json.loads(previous['journal'])
+                        if previous['status']=='applied' and Path(file['path']).suffix.lower() in ('.jpg','.jpeg') and ('WindowsSubject' not in journal.get('after',{}) or journal.get('keyword_policy',0)<2 and obsolete_reserved_keywords(journal)):
+                            # 旧版私有 XMP 已成功的当前现场图，仍需补齐 Windows
+                            # 属性；保留原操作的字段恢复基线，不伪造新归属版本。
+                            c.execute("UPDATE metadata_jobs SET status='queued',reason='',expected_sha=?,journal=?,fields=json_set(fields,'$._manual_backfill',-1) WHERE id=?",(file['sha'],dumps({'upgrade':journal}),previous['id']))
+                            c.execute("UPDATE operations SET status='queued' WHERE id=?",(previous['operation'],))
+                        elif previous['status']=='applied' and journal.get('keyword_policy',0)<2:
+                            c.execute("UPDATE metadata_jobs SET journal=json_set(journal,'$.keyword_policy',2) WHERE id=?",(previous['id'],))
+                        continue
+                    fields={'AssetId':aid,'FileId':file['id'],'SKU':asset['sku'],'ShootType':asset['scope'],'ProjectId':asset['project'],'SegmentId':segment_id,'MetadataRevision':asset['revision'],'_manual_backfill':-1}
+                    c.execute('INSERT INTO metadata_jobs(id,operation,file,asset,revision,path,expected_sha,mode,fields,status,created) VALUES (?,?,?,?,?,?,?,?,?,?,?)',
+                              (uid(),operation,file['id'],aid,asset['revision'],file['path'],file['sha'],stream['mode'],dumps(fields),'queued',time.time()))
+                    c.execute("UPDATE operations SET status='queued' WHERE id=?",(operation,))
+    def metadata_statuses(self,keys):
+        """只读库中当前归属版本，旧批次的成功不能遮盖改款后的待写或失败。"""
+        from sku_writeback_status import statuses
+        return statuses(self,keys)
+    def capture_metadata_busy(self,sid,cid):
+        """只读保护自己的文件改写窗口，防止监控先刷新后误排重复 OCR。"""
+        with self.connect() as c:
+            paths=[r['path'] for r in c.execute('SELECT l.path FROM catalog_links k JOIN files f ON f.asset=k.asset JOIN locations l ON l.file=f.id WHERE k.session=? AND k.capture=?',(sid,cid))]
+            if not paths:return False
+            for path in paths:
+                if c.execute("SELECT 1 FROM metadata_jobs WHERE path=? AND status='running' LIMIT 1",(path,)).fetchone():return True
+                if hasattr(self,'_ratings') and c.execute("SELECT 1 FROM rating_file_sync WHERE path=? AND status='running' LIMIT 1",(path,)).fetchone():return True
+        if hasattr(self,'_ratings') and getattr(self._ratings.sync,'active_path',None) in paths:return True
+        progress=self.metadata_progress
+        return progress['path'] in paths and progress['phase'] in ('preparing','waiting_archive','committing','verifying','refreshing')
+    def _capture_fingerprints(self,aid):
+        with self.connect() as c:links=c.execute('SELECT session,capture FROM catalog_links WHERE asset=?',(aid,)).fetchall()
+        result={}
+        for link in links:
+            record=next(iter(self.store.records(link['session'],ids=[link['capture']])),None)
+            if record:result[(link['session'],link['capture'])]=record['fingerprint']
+        return result
+    def _refresh_catalog(self,aid,before=None):
         with self.connect() as c:links=c.execute('SELECT * FROM catalog_links WHERE asset=?',(aid,)).fetchall()
         for link in links:
             session=self.store.session(link['session'])
@@ -245,62 +397,178 @@ PRAGMA user_version=1;''')
             try:
                 paths=[media.resolved_file(session['root'],record[k]) for k in ('raw','jpg') if record.get(k)]
                 for path in paths:media._STATS[str(path)]=path.stat()
-                old=record['fingerprint'];record['fingerprint']=media.fingerprint(paths)
+                old=(before or {}).get((link['session'],link['capture']),record['fingerprint']);record['fingerprint']=media.fingerprint(paths)
                 with self.connect() as c:
                     for path in paths:c.execute('UPDATE file_fingerprints SET sha=?,updated=? WHERE path=?',(sha(path),time.time(),str(path)))
                 if self.sku:self.sku.metadata_changed(link['session'],link['capture'],old,record['fingerprint'])
-                with self.store.connect() as c:c.execute('UPDATE captures SET data=? WHERE session=? AND id=?',(dumps(record),link['session'],link['capture']))
+                with self.store.connect() as c:c.execute("UPDATE captures SET data=json_set(data,'$.fingerprint',?) WHERE session=? AND id=?",(record['fingerprint'],link['session'],link['capture']))
             except (OSError,ValueError):pass
     def process_one(self):
-        with self.lock:
+        with self.metadata_io_lock:
+            self._metadata_phase('claiming')
+            live=self._live_session_id()
+            capture=getattr(self,'capture_service',None)
+            frozen=capture.blocked_io_roots() if capture else []
             with self.connect() as c:
-                row=c.execute("SELECT * FROM metadata_jobs WHERE status='queued' ORDER BY created LIMIT 1").fetchone()
-                if not row:return
+                c.execute('BEGIN IMMEDIATE')
+                # 本进程的唯一消费者锁已取得：没有活跃提交者，running 只能是异常遗留。
+                c.execute("""UPDATE metadata_jobs SET status='queued',retry_at=0,reason='已恢复中断的文件写入'
+                    WHERE status='running'""")
+                guards=''.join(" AND NOT (path=? OR path LIKE ? ESCAPE '\\')" for _ in frozen)
+                params=[time.time()]
+                for root in frozen:
+                    prefix=root.rstrip('\\/')+'\\';params.extend([root,prefix.replace('\\','\\\\').replace('%','\\%').replace('_','\\_')+'%'])
+                row=self._next_metadata_job(c,guards,params,live)
+                if not row:
+                    self._metadata_phase('idle');return
                 job=dict(row);current=c.execute('SELECT revision FROM assets WHERE id=?',(job['asset'],)).fetchone()
                 descriptive=json.loads(job['fields']).get('_descriptive')
+                prepared_revision=current[0] if current else None
                 if not current or current[0]!=job['revision'] and not descriptive:
                     c.execute("UPDATE metadata_jobs SET status='cancelled',reason='归属版本已更新' WHERE id=?",(job['id'],));return
                 c.execute("UPDATE metadata_jobs SET status='running' WHERE id=?",(job['id'],))
+            self._metadata_phase('waiting_file',job)
             try:
-                fields=json.loads(job['fields']);journal=json.loads(job['journal'])
-                if 'Rating' in fields and not journal.get('restore'):
-                    latest=self.ratings.get([job['path']],explicit_only=True)
-                    if latest is not None:fields['Rating']=max(0,latest)
-                # 提交后崩溃：读回已持久化的 journal，补记数据库而非再写一遍。
-                committed=journal.get('target') and Path(journal['target']).exists() and sha(journal['target'])==journal.get('after_hash')
+                with self.writer.file_lock(job['path'],timeout=.2):
+                    return self._process_metadata_job(job,descriptive,prepared_revision)
+            except Exception as exc:
+                self._defer_metadata_job(job,exc)
+                self._metadata_phase('idle')
+                return True
+    def _live_session_id(self):
+        provider=self.live_session
+        try:return (provider() if provider else None) or None
+        except Exception:return None
+    @staticmethod
+    def _next_metadata_job(c,guards,params,live=None):
+        """新任务优先于反复重试的旧任务，归档 OCR 补写让位于现场写入。
+
+        原先按创建时间领取：成百上千个长期被占用、每 30 秒回到队头的旧任务，
+        会让消费者永远轮不到新近确认的整款照片，进度因此停在 0。"""
+        base="SELECT * FROM metadata_jobs WHERE status='queued' AND retry_at<=? AND coalesce(json_extract(fields,'$._manual_backfill'),0)!=-1"+guards
+        params=list(params)
+        if live:
+            # 正在拍摄：只领取当前拍摄会话的照片，旧照片补写留给拍摄结束或手动补写。
+            base+=' AND asset IN (SELECT asset FROM catalog_links WHERE session=?)';params.append(live)
+        for extra,order in (("AND retry_count=0 AND instr(fields,'_catalog_ocr')=0",'created'),
+                            ("AND retry_count=0",'created'),('','retry_count,created')):
+            row=c.execute(base+' '+extra+' ORDER BY '+order+' LIMIT 1',params).fetchone()
+            if row:return row
+        return None
+    def _defer_metadata_job(self,job,exc):
+        from file_safety import metadata_retry_delay
+        attempts=job['retry_count'];delay=metadata_retry_delay(exc,attempts)
+        reason=(f'文件暂被占用，{delay:g}秒后自动重试（第{attempts+1}次）：' if delay is not None else '')+str(exc)
+        with self.connect() as c:
+            c.execute("UPDATE metadata_jobs SET status=?,reason=?,retry_at=?,retry_count=? WHERE id=? AND status='running'",
+                      ('queued' if delay is not None else 'failed',reason[:350],time.time()+delay if delay is not None else 0,attempts+1,job['id']))
+    @contextmanager
+    def _metadata_commit_lock(self):
+        # 通知归档线程在下一个间隙让出业务锁；等待者计数仅作让行提示，不改变加锁语义。
+        with self._commit_wait_guard:self.metadata_commit_waiting+=1
+        try:acquired=self.lock.acquire(timeout=.5)
+        finally:
+            with self._commit_wait_guard:self.metadata_commit_waiting-=1
+        if not acquired:
+            from file_safety import ArchiveBusyError
+            raise ArchiveBusyError('归档处理尚未收尾，已释放当前图片等待自动接续')
+        try:yield
+        finally:self.lock.release()
+    def _yield_to_metadata_commit(self):
+        deadline=time.monotonic()+1
+        while self.metadata_commit_waiting and time.monotonic()<deadline and not self.closed.is_set():time.sleep(.02)
+    def _process_metadata_job(self,job,descriptive,prepared_revision):
+        # 等同张照片的星级提交后重新读取队列中已登记的自改版本，不能沿用领取前哈希。
+        with self.connect() as c:latest=c.execute('SELECT * FROM metadata_jobs WHERE id=?',(job['id'],)).fetchone()
+        if not latest or latest['status']!='running':
+            self._metadata_phase('idle');return
+        job=dict(latest)
+        try:
+            self._metadata_phase('preparing',job)
+            if getattr(self,'capture_service',None):self.capture_service.guard([job['path']])
+            capture_before=self._capture_fingerprints(job['asset'])
+            fields=json.loads(job['fields']);journal=json.loads(job['journal'])
+            capture=getattr(self,'capture_service',None)
+            if capture and fields.get('DecisionId'):
+                dataset=capture.dataset_for_path(job['path'])
+                record=dataset.record(path=Path(job['path']).relative_to(dataset.root).as_posix()) if dataset else None
+                if record and record.get('decision_id')!=fields['DecisionId']:
+                    raise ValueError('共享目录已有新的确认版本，旧文件任务未覆盖，请刷新当前款号')
+            if 'Rating' in fields and not journal.get('restore'):
+                latest=self.ratings.get([job['path']],explicit_only=True)
+                if latest is not None:fields['Rating']=max(0,latest)
+            # 提交后崩溃：读回已持久化的 journal，补记数据库而非再写一遍。
+            committed=journal.get('target') and Path(journal['target']).exists() and sha(journal['target'])==journal.get('after_hash')
+            if not committed:
+                upgrade=journal.get('upgrade')
+                if fields.get('_catalog_ocr') and not journal.get('restore'):
+                    if not self.catalog_writeback:raise ValueError('归档 SKU 写入服务尚未就绪')
+                    self.catalog_writeback.validate(fields['_catalog_ocr'])
+                self.writer.discard_sidecars(journal)
+                if descriptive:
+                    from photo_metadata import sidecar_hashes
+                    if sidecar_hashes(job['path'])!=fields.pop('_sidecar_hashes',{}):raise ValueError('XMP 已被其他程序修改，请重新打开图片再编辑')
+                    fields.pop('_descriptive',None)
+                    current_fields=self.writer.owned(self.writer.read_asset(job['path']))
+                    fields={**current_fields,**fields,'AssetId':job['asset'],'FileId':job['file']}
+                with self.writer.exclusive(job['path']):
+                    payload,target,journal=self.writer.write(job['path'],fields,job['expected_sha'],mode=job['mode'],restore=journal.get('restore'),applied=journal.get('applied'),sidecars_restore=journal.get('sidecars_restore'))
+                    if upgrade:
+                        journal['before']={**journal['before'],**upgrade['before']}
+                        journal['subjects_before']=upgrade.get('subjects_before',[])
+                        originals={entry['target']:entry for entry in upgrade.get('sidecars',[])}
+                        for entry in journal.get('sidecars',[]):
+                            if entry['target'] in originals:
+                                entry['before']=originals[entry['target']]['before']
+                                entry['subjects_before']=originals[entry['target']].get('subjects_before',[])
+                    journal['history']=str(save_record(self.store.data,job['id'],journal,source=job['path']))
+                    with self.connect() as c:c.execute('UPDATE metadata_jobs SET journal=? WHERE id=?',(dumps(journal),job['id']))
+                    if sha(job['path'])!=job['expected_sha'] or (sha(target) if target.exists() else None)!=journal['before_hash']:raise ValueError('替换前文件已变化，未覆盖')
+            self._metadata_phase('waiting_archive',job)
+            with self._metadata_commit_lock():
+                with self.connect() as c:
+                    latest=c.execute('SELECT status FROM metadata_jobs WHERE id=?',(job['id'],)).fetchone()
+                    revision=c.execute('SELECT revision FROM assets WHERE id=?',(job['asset'],)).fetchone()
+                    if not latest or latest['status']!='running' or not revision or revision[0]!=prepared_revision:
+                        if latest and latest['status']=='running':
+                            c.execute("UPDATE metadata_jobs SET status=?,reason=? WHERE id=?",('queued' if descriptive else 'cancelled','准备期间归属已变化，将使用最新资料' if descriptive else '准备期间归属版本已更新，旧结果未提交',job['id']))
+                        pending=c.execute("SELECT count(*) FROM metadata_jobs WHERE operation=? AND status IN ('queued','running')",(job['operation'],)).fetchone()[0]
+                        c.execute('UPDATE operations SET status=? WHERE id=?',('running' if pending else 'finished',job['operation']))
+                        self.writer.discard_sidecars(journal)
+                        return
                 if not committed:
-                    self.writer.discard_sidecars(journal)
-                    if descriptive:
-                        from photo_metadata import sidecar_hashes
-                        if sidecar_hashes(job['path'])!=fields.pop('_sidecar_hashes',{}):raise ValueError('XMP 已被其他程序修改，请重新打开图片再编辑')
-                        fields.pop('_descriptive',None)
-                        current_fields=self.writer.owned(self.writer.read_asset(job['path']))
-                        fields={**current_fields,**fields,'AssetId':job['asset'],'FileId':job['file']}
-                    with self.writer.exclusive(job['path']):
-                        payload,target,journal=self.writer.write(job['path'],fields,job['expected_sha'],mode=job['mode'],restore=journal.get('restore'),applied=journal.get('applied'),sidecars_restore=journal.get('sidecars_restore'))
-                        journal['history']=str(save_record(self.store.data,job['id'],journal,source=job['path']))
-                        with self.connect() as c:c.execute('UPDATE metadata_jobs SET journal=? WHERE id=?',(dumps(journal),job['id']))
-                        if sha(job['path'])!=job['expected_sha'] or (sha(target) if target.exists() else None)!=journal['before_hash']:raise ValueError('替换前文件已变化，未覆盖')
+                    self._metadata_phase('committing',job)
                     # 内存结果完成校验后结束只读保护；提交用同一读写句柄再次核对版本。
                     if sha(job['path'])!=job['expected_sha'] or (sha(target) if target.exists() else None)!=journal['before_hash']:raise ValueError('提交前检测到外部修改')
                     self.writer.check_sidecars(journal)
                     self.writer.commit(payload,target,journal)
                 if sha(journal['target'])!=journal['after_hash']:raise ValueError('提交后检测到外部修改，请核对文件')
                 self.writer.commit_sidecars(journal)
+                self._metadata_phase('verifying',job)
+                self.writer.verify_committed(journal)
                 digest=sha(job['path'])
+                if fields.get('_catalog_ocr') and self.catalog_writeback:
+                    with self.writer.exclusive(job['path']):
+                        self.catalog_writeback.committed({**job,'journal':dumps(journal)},fields['_catalog_ocr'],digest)
                 with self.connect() as c:
                     c.execute('UPDATE files SET sha=? WHERE id=?',(digest,job['file']));c.execute('INSERT OR IGNORE INTO versions VALUES (?,?,?)',(job['file'],digest,time.time()))
                     c.execute("UPDATE metadata_jobs SET expected_sha=? WHERE path=? AND status='queued'",(digest,job['path']))
                     from photo_metadata import sidecar_hashes
                     c.execute("UPDATE metadata_jobs SET fields=json_set(fields,'$._sidecar_hashes',json(?)) WHERE path=? AND status='queued' AND json_extract(fields,'$._descriptive')=1",(dumps(sidecar_hashes(job['path'])),job['path']))
-                    c.execute("UPDATE metadata_jobs SET status='applied',reason='' WHERE id=?",(job['id'],))
+                    c.execute("UPDATE metadata_jobs SET status='applied',reason='',retry_at=0,retry_count=0 WHERE id=?",(job['id'],))
                 save_record(self.store.data,job['id'],journal,source=job['path'],status='applied')
-                self._refresh_catalog(job['asset'])
-            except Exception as exc:
-                with self.connect() as c:c.execute("UPDATE metadata_jobs SET status='failed',reason=? WHERE id=?",(str(exc)[:350],job['id']))
-            with self.connect() as c:
-                pending=c.execute("SELECT count(*) FROM metadata_jobs WHERE operation=? AND status IN ('queued','running')",(job['operation'],)).fetchone()[0]
-                c.execute('UPDATE operations SET status=? WHERE id=?',('running' if pending else 'finished',job['operation']))
+                from pipeline_metrics import record as record_metric
+                record_metric('metadata_applied',job_id=job['id'],path=job['path'],asset=job['asset'],revision=prepared_revision)
+                self._metadata_phase('refreshing',job)
+                self._refresh_catalog(job['asset'],capture_before)
+        except Exception as exc:
+            self._metadata_phase('failed',job,error=str(exc)[:350])
+            self._defer_metadata_job(job,exc)
+        with self.connect() as c:
+            pending=c.execute("SELECT count(*) FROM metadata_jobs WHERE operation=? AND status IN ('queued','running')",(job['operation'],)).fetchone()[0]
+            c.execute('UPDATE operations SET status=? WHERE id=?',('running' if pending else 'finished',job['operation']))
+        self._metadata_phase('idle')
+        return True
     def revert(self,oid):
         with self.lock,self.connect() as c:
             jobs=c.execute('SELECT * FROM metadata_jobs WHERE operation=?',(oid,)).fetchall()
@@ -348,7 +616,7 @@ PRAGMA user_version=1;''')
                     ids=[r['id'] for r in records]
                     if start_capture not in ids:raise ValueError('起点照片不存在')
                     seen=ids[:ids.index(start_capture)]
-                c.execute('INSERT INTO streams(id,session,project,scope,auto_write,mode,seen,state,created) VALUES (?,?,?,?,?,?,?,?,?)',(stream,sid,project,scope,int(auto_write),mode,dumps(seen),'active',time.time()))
+                c.execute('INSERT INTO streams(id,session,project,scope,auto_write,mode,seen,state,created,initial_count) VALUES (?,?,?,?,?,?,?,?,?,?)',(stream,sid,project,scope,int(auto_write),mode,dumps(seen),'active',time.time(),len(records)))
         self.sync_stream(stream);return self.stream_state()
     def stream_state(self):
         with self.connect() as c:
@@ -357,25 +625,35 @@ PRAGMA user_version=1;''')
             late=[dict(r) for r in c.execute("SELECT * FROM bindings WHERE state='late' ORDER BY seq LIMIT 100")]
         for s in segments:s['members']=json.loads(s['members'])
         return {'streams':streams,'segments':segments,'late':late}
-    def sync_stream(self,stream_id=None):
-        with self.lock:
-            with self.connect() as c:streams=c.execute('SELECT * FROM streams WHERE '+('id=?' if stream_id else "state='active'"),(stream_id,) if stream_id else ()).fetchall()
-            for stream in streams:
-                seen=set(json.loads(stream['seen']));records=self.store.records(stream['session'])
-                with self.connect() as c:
-                    seq=c.execute('SELECT COALESCE(MAX(seq),0) FROM bindings WHERE stream=?',(stream['id'],)).fetchone()[0]
-                    bound={r[0] for r in c.execute('SELECT capture FROM bindings WHERE stream=?',(stream['id'],))}
-                    paths={r[0].casefold() for r in c.execute('SELECT l.path FROM locations l JOIN files f ON f.id=l.file JOIN catalog_links k ON k.asset=f.asset WHERE k.session=?',(stream['session'],))}
-                session=self.store.session(stream['session'])
-                for r in records:
-                    if r['id'] in seen:
-                        if r['id'] in bound and any(str(Path(session['root'])/r[k]).casefold() not in paths for k in ('raw','jpg') if r.get(k)):self.ensure(stream['session'],r['id'])
-                        continue
-                    aid=self.ensure(stream['session'],r['id']);seq+=1;order=(r.get('time') or '')+'|'+f'{seq:012}'
-                    late=bool(stream['last_boundary'] and r.get('time') and order<=stream['last_boundary'])
-                    with self.connect() as c:c.execute('INSERT OR IGNORE INTO bindings VALUES (?,?,?,?,?,?)',(stream['id'],aid,r['id'],seq,order,'late' if late else 'pending'))
-                    seen.add(r['id'])
-                with self.connect() as c:c.execute('UPDATE streams SET seen=? WHERE id=?',(dumps(list(seen)),stream['id']))
+    def sync_stream(self,stream_id=None,*,capture_ids=None):
+        with self.connect() as c:streams=c.execute('SELECT * FROM streams WHERE '+('id=?' if stream_id else "state='active'"),(stream_id,) if stream_id else ()).fetchall()
+        for stream in streams:
+            seen=set(json.loads(stream['seen']));original_seen=set(seen);records=self.store.records(stream['session'])
+            positions={r['id']:i+1 for i,r in enumerate(records)}
+            if capture_ids is not None:records=[r for r in records if r['id'] in capture_ids]
+            if getattr(self,'sku',None):
+                with self.sku.connect() as db:frozen={r['capture']:(r['project'],r['scope']) for r in db.execute('SELECT capture,project,scope FROM shooting_captures WHERE session=?',(stream['session'],))}
+                if frozen:records=[r for r in records if frozen.get(r['id'])==(stream['project'],stream['scope'])]
+            with self.connect() as c:
+                seq=c.execute('SELECT COALESCE(MAX(seq),0) FROM bindings WHERE stream=?',(stream['id'],)).fetchone()[0]
+                bound={r[0] for r in c.execute('SELECT capture FROM bindings WHERE stream=?',(stream['id'],))}
+                paths={r[0].casefold() for r in c.execute('SELECT l.path FROM locations l JOIN files f ON f.id=l.file JOIN catalog_links k ON k.asset=f.asset WHERE k.session=?',(stream['session'],))}
+            session=self.store.session(stream['session'])
+            pending=[]
+            for r in records:
+                if self.closed.is_set():return
+                if r['id'] in seen and (capture_ids is None or r['id'] in bound):
+                    if r['id'] in bound and any(str(Path(session['root'])/r[k]).casefold() not in paths for k in ('raw','jpg') if r.get(k)):self.ensure(stream['session'],r['id'])
+                    continue
+                pending.append(r)
+                if len(pending)>=32:
+                    seq=self._register_stream_batch(stream,session,pending,seq,positions);seen.update(r['id'] for r in pending);pending=[]
+                    with self.connect() as c:c.execute('UPDATE streams SET seen=? WHERE id=?',(dumps(list(seen)),stream['id']))
+                    if (self.autostart or self.thread.is_alive()) and capture_ids is None:break
+            if pending:
+                seq=self._register_stream_batch(stream,session,pending,seq,positions);seen.update(r['id'] for r in pending)
+            if seen!=original_seen:
+                with self.connect() as c:c.execute('UPDATE streams SET seen=? WHERE id=?',(dumps(sorted(seen)),stream['id']))
     def _rebuild_segments(self,stream_id):
         """所有已知结束标签共同决定成员，补入旧标签时重划受影响的自动归属。"""
         with self.lock:
@@ -392,19 +670,25 @@ PRAGMA user_version=1;''')
                 cid=binding['capture']
                 if cid in boundaries:superseded.append(boundaries[cid])
                 boundaries[cid]=segment
-            records=[r for r in self.store.records(stream['session']) if r['id'] in by_capture]
+            excluded=set(json.loads(stream['seen']))-by_capture.keys()
+            records=[r for r in self.store.records(stream['session']) if r['id'] not in excluded]
             known_boundaries=set(boundaries)
             session=self.store.session(stream['session'])
-            overrides=session['state'].get('overrides',{})
+            overrides=dict(session['state'].get('overrides',{}))
+            overrides.update(self.ratings.session(session,records)['sharedRatings'])
             # 尚未识别的款末标签也隔断，不能把未知的前款并入后款。
             for record in records:
                 if overrides.get(record['id'],record.get('existingRating',0))==2:
                     boundaries.setdefault(record['id'],None)
-            intervals=partition(records,boundaries)
+            intervals=partition(records,boundaries,contexts=frozen_contexts(self.sku,stream['session']))
             changes=[]
             for interval in intervals:
                 segment=interval['boundary']
                 if segment is None:continue
+                missing=set(interval['members'])-by_capture.keys()
+                if missing:
+                    self.sync_stream(stream_id,capture_ids=missing)
+                    return self._rebuild_segments(stream_id)
                 members=list(dict.fromkeys(by_capture[cid]['asset'] for cid in interval['members']))
                 if set(members)!=set(json.loads(segment['members'])) or any(old['label']==segment['label'] for old in superseded):
                     changes.append((segment,members))
@@ -419,10 +703,11 @@ PRAGMA user_version=1;''')
                 for segment in superseded:
                     c.execute("UPDATE segments SET status='superseded',reason='同一标签已有更新识别记录' WHERE id=?",(segment['id'],))
                 sealed={cid for interval in intervals for cid in interval['members']}
-                for binding in bindings:
-                    c.execute('UPDATE bindings SET state=? WHERE stream=? AND asset=?',('sealed' if binding['capture'] in sealed else 'pending',stream_id,binding['asset']))
+                changed_bindings=[('sealed' if b['capture'] in sealed else 'pending',stream_id,b['asset']) for b in bindings
+                                  if b['state']!=('sealed' if b['capture'] in sealed else 'pending')]
+                c.executemany('UPDATE bindings SET state=? WHERE stream=? AND asset=?',changed_bindings)
                 latest=max((by_capture[cid]['order_key'] for cid in known_boundaries),default='')
-                c.execute('UPDATE streams SET last_boundary=? WHERE id=?',(latest,stream_id))
+                if latest!=stream['last_boundary']:c.execute('UPDATE streams SET last_boundary=? WHERE id=?',(latest,stream_id))
                 c.execute("UPDATE assets SET role='product' WHERE id IN (SELECT label FROM segments WHERE stream=? AND status='cancelled') AND NOT EXISTS (SELECT 1 FROM segments g WHERE g.label=assets.id AND g.status NOT IN ('cancelled','superseded'))",(stream_id,))
                 ready=[r[0] for r in c.execute("SELECT id FROM segments WHERE stream=? AND status='ready'",(stream_id,))]
             for sid in ready:
@@ -486,14 +771,24 @@ PRAGMA user_version=1;''')
                 if c.execute('SELECT 1 FROM event_receipts WHERE id=?',(event_id,)).fetchone():return
                 stream=c.execute('SELECT s.id FROM streams s JOIN bindings b ON b.stream=s.id WHERE s.session=? AND s.project=? AND s.scope=? AND b.capture=? ORDER BY s.created DESC LIMIT 1',
                     (job['session_id'],job['project'],job['scope'],job['capture_id'])).fetchone()
+                if not stream:stream=c.execute("SELECT id FROM streams WHERE session=? AND project=? AND scope=? AND state='active' ORDER BY created DESC LIMIT 1",(job['session_id'],job['project'],job['scope'])).fetchone()
             if not stream:
                 # 换入文档后，旧段可能已占用当前照片；明确确认须接续当前款的完整区间。
                 from metadata_group import group_context
                 group=group_context(self,self.sku,job['session_id'],job['capture_id'],[job['capture_id']])
                 self.start_stream(job['session_id'],job['project'],job['scope'],start_capture=group['capture_ids'][0])
-            self.reserve(job)
+                with self.connect() as c:stream=c.execute("SELECT id FROM streams WHERE session=? AND project=? AND scope=? AND state='active' ORDER BY created DESC LIMIT 1",(job['session_id'],job['project'],job['scope'])).fetchone()
+        # 按完整索引划定目标区间，只准备该款，不等待未来数千张未确认照片。
+        records=self.store.records(job['session_id']);session=self.store.session(job['session_id'])
+        ratings={**session['state'].get('overrides',{}),**self.ratings.session(session,records)['sharedRatings']}
+        boundaries={r['id']:None for r in records if ratings.get(r['id'],r.get('existingRating',0))==2};boundaries[job['capture_id']]=None
+        interval=next((i for i in partition(records,boundaries,contexts=frozen_contexts(self.sku,job['session_id'])) if i['label']==job['capture_id']),None)
+        if not interval:raise ValueError('标签区间已变化，请重新核对')
+        self.sync_stream(stream['id'],capture_ids=set(interval['members']))
+        with self.lock:
+            self.reserve(job,prepared=True)
             self.handle_event(event_id,job,sku)
-    def reserve(self,job):
+    def reserve(self,job,*,prepared=False):
         with self.lock:
             with self.connect() as c:
                 existing=c.execute('SELECT * FROM segments WHERE job=?',(job['id'],)).fetchone()
@@ -510,9 +805,9 @@ PRAGMA user_version=1;''')
                 stream=c.execute('SELECT s.* FROM streams s JOIN bindings b ON b.stream=s.id WHERE b.capture=? AND s.session=? AND s.project=? AND s.scope=? ORDER BY s.created DESC LIMIT 1',(job['capture_id'],job['session_id'],job['project'],job['scope'])).fetchone()
                 if not stream:stream=c.execute("SELECT * FROM streams WHERE session=? AND project=? AND scope=? AND state='active' ORDER BY created DESC LIMIT 1",(job['session_id'],job['project'],job['scope'])).fetchone()
             if not stream:return
-            if stream['state']=='active' and not stream['last_boundary']:
+            if not prepared and stream['state']=='active' and not stream['last_boundary']:
                 self.start_stream(stream['session'],stream['project'],stream['scope'])
-            self.sync_stream(stream['id'])
+            if not prepared:self.sync_stream(stream['id'])
             with self.connect() as c:
                 label=c.execute('SELECT * FROM bindings WHERE stream=? AND capture=?',(stream['id'],job['capture_id'])).fetchone()
                 if not label:return
@@ -534,7 +829,7 @@ PRAGMA user_version=1;''')
                 if seg['operation'] and seg['sku']==sku:pass
                 else:
                     if seg['operation']:self.revert(seg['operation'])
-                    p=self.preview(None,None,sku,stream['scope'],stream['project'],stream['mode'],asset_ids=json.loads(seg['members']),source='segment',segment=seg['id'])
+                    p=self.preview(None,None,sku,stream['scope'],stream['project'],stream['mode'],asset_ids=json.loads(seg['members']),source='segment',segment=seg['id'],defer_io=True)
                     try:
                         op=self.apply(p['preview_id'])['operation']['id']
                         protected=sum(not target['apply'] for target in p['targets'])
@@ -568,7 +863,7 @@ PRAGMA user_version=1;''')
             seg=c.execute('SELECT * FROM segments WHERE id=?',(segment_id,)).fetchone()
             if not seg or seg['status']!='ready':raise ValueError('此区间尚未确认 SKU 或已提交')
             stream=c.execute('SELECT * FROM streams WHERE id=?',(seg['stream'],)).fetchone()
-        preview=self.preview(None,None,seg['sku'],stream['scope'],stream['project'],stream['mode'],asset_ids=json.loads(seg['members']),source='segment',segment=seg['id'])
+        preview=self.preview(None,None,seg['sku'],stream['scope'],stream['project'],stream['mode'],asset_ids=json.loads(seg['members']),source='segment',segment=seg['id'],defer_io=True)
         op=self.apply(preview['preview_id'])
         protected=sum(not target['apply'] for target in preview['targets'])
         with self.connect() as c:c.execute('UPDATE segments SET operation=?,status=?,reason=? WHERE id=?',(op['operation']['id'],'needs_review' if protected else 'confirmed',f'{protected} 张人工或其他归属已保留，请复核' if protected else '',seg['id']))
@@ -583,20 +878,121 @@ PRAGMA user_version=1;''')
         self.reserve(job)
         with self.connect() as c:c.execute("UPDATE assets SET role='product' WHERE id=?",(rows[-1]['asset'],))
         self.handle_event(uid(),job,sku);return self.stream_state()
-    def tick(self):
+    def tick(self,*,process_metadata=True):
+        self._yield_to_metadata_commit()
+        if self.sku:self.sku.sync_shooting_streams()
+        self._yield_to_metadata_commit()
         self.sync_stream()
+        self._yield_to_metadata_commit()
         if self.sku:self.sku.deliver_events(self)
         # 旧版本已识别、等待勾选的当前拍摄段也自动继续处理。
         with self.connect() as c:
             ready=[r[0] for r in c.execute("SELECT g.id FROM segments g JOIN streams s ON s.id=g.stream WHERE g.status='ready' AND s.state='active'")]
         for segment in ready:
+            self._yield_to_metadata_commit()
             try:self.apply_segment(segment)
             except ValueError as exc:
                 with self.connect() as c:c.execute("UPDATE segments SET status='needs_review',reason=? WHERE id=?",(str(exc),segment))
-        self.process_one()
-    def _run(self):
+        self._yield_to_metadata_commit()
+        # 拍摄期间不做归档 OCR 自动补写，全力保证现场照片写入。
+        if self.catalog_writeback and not self._live_session_id():self.catalog_writeback.tick()
+        if process_metadata:self.process_one()
+    def _run_metadata(self):
         while not self.closed.is_set():
-            try:self.tick()
+            worked=False
+            try:
+                worked=self.process_one()
+                self.metadata_worker_error=''
+            except Exception as exc:
+                self.metadata_worker_error=str(exc)[:250]
+                self._metadata_phase('error',error=self.metadata_worker_error)
+            # 有积压时连续消费；仅空闲或异常退避，单图校验/落盘过程仍完整执行。
+            self.closed.wait(.001 if worked else .1)
+    def request_backfill(self,prefix=''):
+        """旧照片补写只在用户于资产归档点击补写后执行，不再后台自动全库扫描。"""
+        from metadata_backfill import release_pending
+        release_pending(self,prefix)
+        with self._backfill_guard:self._backfill_prefixes.add(prefix or '')
+        self.backfill_wake.set()
+    def _run_backfill(self):
+        self.backfill_progress={'phase':'idle','since':time.time(),'error':''}
+        while not self.closed.is_set():
+            if not self.backfill_wake.wait(.5):continue
+            if self._live_session_id():
+                # 拍摄中保留请求，结束后再执行。
+                if self.backfill_progress['phase']!='paused_live':self.backfill_progress={'phase':'paused_live','since':time.time(),'error':''}
+                self.closed.wait(2);continue
+            with self._backfill_guard:prefixes=sorted(self._backfill_prefixes)
+            if not prefixes:
+                self.backfill_wake.clear();continue
+            delay=0
+            for prefix in prefixes:
+                self.backfill_progress={'phase':'scanning','since':time.time(),'error':''}
+                try:
+                    from metadata_backfill import enqueue_missing
+                    while not self.closed.is_set() and not self._live_session_id():
+                        created=enqueue_missing(self,prefix=prefix)
+                        self.backfilled_jobs=getattr(self,'backfilled_jobs',0)+created
+                        if created<128:
+                            with self._backfill_guard:self._backfill_prefixes.discard(prefix)
+                            break
+                        self.closed.wait(.2)
+                    self.backfill_progress={'phase':'idle','since':time.time(),'error':''}
+                except Exception as exc:
+                    self.backfill_progress={'phase':'error','since':time.time(),'error':str(exc)[:250]};delay=10
+            if delay:self.closed.wait(delay)
+    def start_metadata(self):
+        with self.metadata_start_lock:
+            if self.closed.is_set():return
+            if not self.metadata_thread or not self.metadata_thread.is_alive():
+                self.metadata_thread=threading.Thread(target=self._run_metadata,daemon=True,name='asset-metadata')
+                self.metadata_thread.start()
+            if not self.backfill_thread or not self.backfill_thread.is_alive():
+                self.backfill_thread=threading.Thread(target=self._run_backfill,daemon=True,name='metadata-backfill')
+                self.backfill_thread.start()
+    def _metadata_phase(self,phase,job=None,*,error=''):
+        self.metadata_progress={'phase':phase,'since':time.time(),'path':job['path'] if job else '',
+                                'job_id':job['id'] if job else '', 'error':error}
+    def metadata_queue_state(self):
+        progress=dict(self.metadata_progress)
+        progress.update(alive=bool(self.metadata_thread and self.metadata_thread.is_alive()),
+                        elapsed_seconds=round(max(0,time.time()-progress['since']),1),
+                        backfilled_jobs=getattr(self,'backfilled_jobs',0),live_session=self._live_session_id())
+        progress['backfill']={**self.backfill_progress,'elapsed_seconds':round(max(0,time.time()-self.backfill_progress['since']),1)}
+        progress['backfill']['unverified_records']=list(getattr(self,'backfill_unverified',[]))
+        ratings=getattr(self,'_ratings',None)
+        progress['rating_path']=getattr(ratings.sync,'active_path',None) if ratings else None
+        return progress
+    def metadata_queue_diagnostics(self):
+        import sys,traceback
+        result={'worker':self.metadata_queue_state(),'process_id':os.getpid(),'database':str(self.db),'threads':[]}
+        try:
+            with closing(sqlite3.connect(self.db.resolve().as_uri()+'?mode=ro',uri=True,timeout=.2)) as c:
+                c.row_factory=sqlite3.Row
+                result['counts']=dict(c.execute('SELECT status,count(*) FROM metadata_jobs GROUP BY status'))
+                result['recent_issues']=[dict(r) for r in c.execute("SELECT path,status,reason FROM metadata_jobs WHERE status IN ('failed','running') ORDER BY created DESC LIMIT 8")]
+                now=time.time()
+                result['queue']=dict(zip(('fresh','retrying','waiting_retry','catalog_ocr'),c.execute("""SELECT
+                    coalesce(sum(retry_count=0),0),coalesce(sum(retry_count>0),0),coalesce(sum(retry_at>?),0),
+                    coalesce(sum(instr(fields,'_catalog_ocr')>0),0) FROM metadata_jobs WHERE status='queued'""",(now,)).fetchone()))
+                result['retry_reasons']=[dict(r) for r in c.execute("SELECT substr(reason,1,120) AS reason,count(*) AS jobs FROM metadata_jobs WHERE status='queued' AND retry_count>0 GROUP BY 1 ORDER BY 2 DESC LIMIT 5")]
+        except sqlite3.Error as exc:result['database_error']=str(exc)
+        frames=sys._current_frames()
+        ratings=getattr(self,'_ratings',None)
+        known=[self.metadata_thread,self.backfill_thread,self.thread,ratings.sync.thread if ratings else None]
+        # 归档业务锁的持有者可能是任意服务线程；列出其余线程才能看到谁在占用。
+        for thread in [*known,*(t for t in threading.enumerate() if t not in known and t is not threading.current_thread())]:
+            if thread is None:continue
+            frame=frames.get(thread.ident)
+            result['threads'].append({'name':thread.name,'alive':thread.is_alive(),
+                                      'stack':''.join(traceback.format_stack(frame,limit=14)) if frame else ''})
+        result['commit_waiting']=self.metadata_commit_waiting
+        return result
+    def _run(self):
+        # 目录枚举/事件投递可能很慢或失败，不能阻止已持久化的文件任务。
+        self.start_metadata()
+        while not self.closed.is_set():
+            try:self.tick(process_metadata=False)
             except Exception as exc:
                 self.worker_error=str(exc)[:250]
                 try:
@@ -606,4 +1002,8 @@ PRAGMA user_version=1;''')
     def close(self):
         self.closed.set()
         if hasattr(self,'_ratings'):self._ratings.sync.close()
-        if self.thread.is_alive():self.thread.join(timeout=3)
+        # closed 已阻止领取下一项；必须等当前元数据提交完成才允许进程结束。
+        if self.thread.is_alive():self.thread.join()
+        if self.metadata_thread and self.metadata_thread.is_alive():self.metadata_thread.join()
+        if self.backfill_thread and self.backfill_thread.is_alive():self.backfill_thread.join()
+        self.writer.close()

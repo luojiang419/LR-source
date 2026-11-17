@@ -1,0 +1,39 @@
+{
+  "repository": "jiangjiang419/framekeep-updates",
+  "releaseId": "20261109053053",
+  "anonymousVerification": true,
+  "installerUrl": "https://modelscope.cn/api/v1/models/jiangjiang419/framekeep-updates/repo?Revision=master&FilePath=releases%2F1.0.0%2F20261109053053%2FSHIYING-Setup.exe",
+  "packageSize": 327346199,
+  "components": [
+    {
+      "path": "components/52d1df764521fb4fc071665dfdf889c3529c78e5438bfb66029eb19cd29e8ea9/llama-b11773-framekeep-win-x64.zip",
+      "sha256": "52d1df764521fb4fc071665dfdf889c3529c78e5438bfb66029eb19cd29e8ea9",
+      "size": 694127530
+    },
+    {
+      "path": "components/d218f6fbf0f1c23d2161bd6ac7f5eaa6104fa89955c09290497e31008e2618e4/PP-OCRv6_small_det.tar",
+      "sha256": "d218f6fbf0f1c23d2161bd6ac7f5eaa6104fa89955c09290497e31008e2618e4",
+      "size": 9891840
+    },
+    {
+      "path": "components/d267ab077a44a0eedb1ea8f8c542d263f211de8e9d7a029bf9fcfff7e5a88fb1/PP-OCRv6_small_rec.tar",
+      "sha256": "d267ab077a44a0eedb1ea8f8c542d263f211de8e9d7a029bf9fcfff7e5a88fb1",
+      "size": 21319680
+    },
+    {
+      "path": "components/d8cc46c7163c83a151aef8fce5856b965860df90a875029216d605b0f607eaec/PP-OCRv6_medium_rec.tar",
+      "sha256": "d8cc46c7163c83a151aef8fce5856b965860df90a875029216d605b0f607eaec",
+      "size": 76718080
+    },
+    {
+      "path": "components/c5adb0b15de1b1838934eba1dd72e7529e7d80132216c6ee6d26eba6fa054fcf/PP-OCRv6_medium_det.tar",
+      "sha256": "c5adb0b15de1b1838934eba1dd72e7529e7d80132216c6ee6d26eba6fa054fcf",
+      "size": 62044160
+    },
+    {
+      "path": "components/0625fb5c1e75be58a164e14f95aa58a3e5badb859b3d17c952385f3e4a9ff3e8/MicrosoftEdgeWebView2RuntimeInstallerX64.exe",
+      "sha256": "0625fb5c1e75be58a164e14f95aa58a3e5badb859b3d17c952385f3e4a9ff3e8",
+      "size": 214156024
+    }
+  ]
+}

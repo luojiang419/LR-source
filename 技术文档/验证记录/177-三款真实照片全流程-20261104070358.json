@@ -1,0 +1,212 @@
+{
+  "engine": "actual frozen release",
+  "releaseId": "20261104070358",
+  "source_modified": false,
+  "mocked_ocr": false,
+  "provider_model": "glm-ocr",
+  "provider_protocol": "chat",
+  "errors": [],
+  "passed": true,
+  "unclosed_tail_unassigned": true,
+  "all_intervals_exact": true,
+  "pixels_unchanged": true,
+  "rows": 3,
+  "actual_written_photos": 12,
+  "seconds": 114.485,
+  "exit_code": 0,
+  "groups": [
+    {
+      "sku": "LC7877836-P1",
+      "files": [
+        "XSY_2235.JPG",
+        "XSY_2295.JPG",
+        "XSY_2296.JPG",
+        "XSY_2297.JPG"
+      ],
+      "capture_to_index_seconds": [
+        {
+          "name": "XSY_2235.JPG",
+          "seconds": 0.547
+        },
+        {
+          "name": "XSY_2295.JPG",
+          "seconds": 0.156
+        },
+        {
+          "name": "XSY_2296.JPG",
+          "seconds": 0.188
+        },
+        {
+          "name": "XSY_2297.JPG",
+          "seconds": 0.141
+        }
+      ],
+      "two_star_to_written_seconds": 32.312,
+      "actual_ocr_jobs": 1,
+      "automatic_confirmation": true,
+      "ocr": [
+        {
+          "status": "confirmed",
+          "readings": [
+            {
+              "model": "glm-ocr",
+              "text": "\nSIZE : S\nLC7877836-P1\n261103 G757\n74.7% COTTON\n16.5% POLYESTER\n8.8% REGENERATED FIBRE\nMADE IN CHINA",
+              "codes": [
+                "LC7877836-P1"
+              ],
+              "confidence": 0,
+              "unscored": true
+            },
+            {
+              "model": "qwen3.5-9b-vlm",
+              "text": "SIZE : S LC7877836-P1 261103 G757 74.7% COTTON 16.5% POLYESTER 8.8% REGENERATED FIBRE MADE IN CHINA",
+              "codes": [
+                "LC7877836-P1",
+                "261103"
+              ],
+              "confidence": 0.95,
+              "unscored": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "sku": "LC7832852-P305",
+      "files": [
+        "XSY_2487.JPG",
+        "XSY_2556.JPG",
+        "XSY_2557.JPG",
+        "XSY_2558.JPG"
+      ],
+      "capture_to_index_seconds": [
+        {
+          "name": "XSY_2487.JPG",
+          "seconds": 0.125
+        },
+        {
+          "name": "XSY_2556.JPG",
+          "seconds": 0.172
+        },
+        {
+          "name": "XSY_2557.JPG",
+          "seconds": 0.125
+        },
+        {
+          "name": "XSY_2558.JPG",
+          "seconds": 0.14
+        }
+      ],
+      "two_star_to_written_seconds": 38.579,
+      "actual_ocr_jobs": 1,
+      "automatic_confirmation": true,
+      "ocr": [
+        {
+          "status": "confirmed",
+          "readings": [
+            {
+              "model": "glm-ocr",
+              "text": "\nmia\n\nSIZE : S\nLC7832852-P305\n261108 (571)\n71.5% COTTON\n27% POLYESTER\n1.5% ELASTANE\nMADE IN CHINA",
+              "codes": [
+                "LC7832852-P305"
+              ],
+              "confidence": 0,
+              "unscored": true
+            },
+            {
+              "model": "qwen3.5-9b-vlm",
+              "text": "SIZE : S\nLC7832852-P305\n261108 (571)\n71.5% COTTON\n27% POLYESTER\n1.5% ELASTANE\nMADE IN CHINA",
+              "codes": [
+                "LC7832852-P305",
+                "261108"
+              ],
+              "confidence": 0.98,
+              "unscored": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "sku": "LC7832852-P804",
+      "files": [
+        "XSY_2559.JPG",
+        "XSY_2609.JPG",
+        "XSY_2610.JPG",
+        "XSY_2611.JPG"
+      ],
+      "capture_to_index_seconds": [
+        {
+          "name": "XSY_2559.JPG",
+          "seconds": 0.172
+        },
+        {
+          "name": "XSY_2609.JPG",
+          "seconds": 0.187
+        },
+        {
+          "name": "XSY_2610.JPG",
+          "seconds": 0.172
+        },
+        {
+          "name": "XSY_2611.JPG",
+          "seconds": 0.172
+        }
+      ],
+      "two_star_to_written_seconds": 31.578,
+      "actual_ocr_jobs": 1,
+      "automatic_confirmation": true,
+      "ocr": [
+        {
+          "status": "confirmed",
+          "readings": [
+            {
+              "model": "glm-ocr",
+              "text": "\nSIZE : S\nLC7832852-P804\n261108 571\n71.5% COTTON\n27% POLYESTER\n1.5% ELASTANE\nMADE IN CHINA",
+              "codes": [
+                "LC7832852-P804"
+              ],
+              "confidence": 0,
+              "unscored": true
+            },
+            {
+              "model": "qwen3.5-9b-vlm",
+              "text": "SIZE : S\nLC7832852-P804\n261108 (57)\n71.5% COTTON\n27% POLYESTER\n1.5% ELASTANE\nMADE IN CHINA",
+              "codes": [
+                "LC7832852-P804",
+                "261108 (57)"
+              ],
+              "confidence": 0.98,
+              "unscored": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "restart": {
+    "passed": true,
+    "rows_still_shot": 3,
+    "all_metadata_applied": true,
+    "new_ocr_jobs": 0,
+    "new_ocr_documents": 0,
+    "queue": {
+      "worker": {
+        "phase": "idle",
+        "since": 1793776079.4162672,
+        "path": "",
+        "job_id": "",
+        "error": "",
+        "alive": true,
+        "elapsed_seconds": 0.0
+      },
+      "counts": {
+        "applied": 12
+      },
+      "data_path": "G:\\app\\LR\\build\\live-arrival-queue\\full-workflow-final\\data",
+      "releaseId": "20261104070358"
+    },
+    "observation_seconds": 13,
+    "exit_code": 0
+  }
+}

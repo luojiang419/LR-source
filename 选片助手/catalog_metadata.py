@@ -21,7 +21,9 @@ class CatalogMetadata:
         self.stop = threading.Event()
         self.wake = threading.Event()
         self.thread = None
+        self.foreground_thread = None
         self.error = ''
+        self.scheduler = None
         self.fts = False
         self.start_lock = threading.Lock()
         with catalog.connect() as c:
@@ -33,6 +35,7 @@ class CatalogMetadata:
                   priority INTEGER NOT NULL DEFAULT 0, generation INTEGER NOT NULL DEFAULT 0
                 );
                 CREATE INDEX IF NOT EXISTS catalog_metadata_queue ON catalog_metadata(status,priority DESC,updated,item);
+                CREATE INDEX IF NOT EXISTS catalog_metadata_status_cover ON catalog_metadata(item,status);
                 CREATE TRIGGER IF NOT EXISTS catalog_metadata_insert AFTER INSERT ON items BEGIN
                   INSERT OR IGNORE INTO catalog_metadata(item,fingerprint) VALUES(new.id,new.fingerprint);
                 END;
@@ -83,6 +86,8 @@ class CatalogMetadata:
         self.wake.set()
         if self.thread is not None:
             self.thread.join(timeout=35)
+        if self.foreground_thread is not None:
+            self.foreground_thread.join(timeout=35)
 
     def request(self, item_id, *, force=False):
         # 不访问路径，也不为每次查看已完成项执行写事务。
@@ -102,6 +107,23 @@ class CatalogMetadata:
                 raise ValueError('资料库正在更新，请稍后重新读取') from None
         self.wake.set()
 
+    def request_many(self, item_ids, *, verify=False):
+        """浏览页只提升现有任务优先级；不在请求线程读取 NAS 或重排已完成项。"""
+        ids=list(dict.fromkeys(item_ids))
+        if not ids:return
+        try:
+            with self.catalog.connect() as c:
+                c.execute('PRAGMA busy_timeout=0')
+                marks=','.join('?' for _ in ids)
+                c.execute('''INSERT OR IGNORE INTO catalog_metadata(item,fingerprint,priority)
+                    SELECT id,fingerprint,1 FROM items WHERE id IN ('''+marks+')',ids)
+                c.execute("UPDATE catalog_metadata SET priority=1 WHERE status='queued' AND priority<1 AND item IN ("+marks+')',ids)
+                if verify:
+                    c.execute("UPDATE catalog_metadata SET status='queued',priority=1,generation=generation+1 WHERE status IN ('ready','failed') AND item IN ("+marks+')',ids)
+        except sqlite3.OperationalError:
+            pass  # 页面下次补读时重试，不能让后台写锁挡住首屏。
+        self.wake.set()
+
     def changed_path(self, path):
         path = str(path)
         with self.catalog.connect() as c:
@@ -115,8 +137,8 @@ class CatalogMetadata:
 
     def state(self):
         with self.catalog.connect() as c:
-            counts = dict(c.execute('''SELECT coalesce(m.status,'queued'),count(*) FROM items i
-                LEFT JOIN catalog_metadata m ON i.id=m.item JOIN roots r ON r.id=i.root
+            counts = dict(c.execute('''SELECT coalesce(m.status,'queued'),count(*) FROM items i INDEXED BY catalog_browse_cover
+                LEFT JOIN catalog_metadata m INDEXED BY catalog_metadata_status_cover ON i.id=m.item JOIN roots r ON r.id=i.root
                 WHERE i.online=1 AND r.removed=0 GROUP BY coalesce(m.status,'queued')'''))
         return {'total':sum(counts.values()), 'ready':counts.get('ready',0),
                 'pending':counts.get('queued',0)+counts.get('running',0), 'failed':counts.get('failed',0), 'error':self.error}
@@ -136,7 +158,9 @@ class CatalogMetadata:
             candidate = 'm.rowid IN (SELECT rowid FROM catalog_metadata_fts WHERE catalog_metadata_fts MATCH ?) AND '
             args.append('"'+text.replace('"','""')+'"')
         args.append(text)
-        return ('''pair_key IN (SELECT i.pair_key FROM catalog_metadata m JOIN items i ON i.id=m.item
+        # 短词也先过滤资料文本，再按主键校验素材版本；否则优化器可能从
+        # online/排序索引逐项随机读取大段 payload/search_text，放大磁盘开销。
+        return ('''pair_key IN (SELECT i.pair_key FROM catalog_metadata m CROSS JOIN items i ON i.id=m.item
             WHERE i.online=1 AND m.fingerprint=i.fingerprint AND '''+candidate+'''instr(lower(m.search_text),lower(?))>0)''', args)
 
     def _extract(self, row):
@@ -157,7 +181,9 @@ class CatalogMetadata:
         tool = media.find_exiftool(Path(__file__).resolve().parents[1])
         # 所有文本标签一次提取；复用常驻 ExifTool，避免每张图片启动新进程。
         with media.preview_exif_session(tool) as session:
-            values = json.loads(session.execute(['-charset','filename=UTF8','-fast','-json','-n','-G1','-s','-all:all',str(path)], cancel=self.stop))[0]
+            from metadata_writer import metadata_json_types,windows_text
+            values = metadata_json_types(json.loads(session.execute(['-charset','filename=UTF8','-fast','-json','-api','StructFormat=JSONQ','-n','-G1','-s','-all:all',str(path)], cancel=self.stop))[0])
+        if any(tag in values for tag in ('IFD0:XPSubject','IFD0:XPKeywords')):values.update(windows_text(path))
         error = values.get('ExifTool:Error') or values.get('Error')
         if error:
             raise ValueError(str(error))
@@ -224,15 +250,27 @@ class CatalogMetadata:
         search += f" ISO {capture['iso']} f/{capture['aperture']} {capture['width']} × {capture['height']}"
         return search
 
-    def process_one(self):
+    def process_one(self, *, priority_only=False):
+        priority=priority_only or bool(self.scheduler and self.scheduler.background_blocked())
+        visits=getattr(self.catalog,'visits',None);scope='';scope_args=[]
+        if visits:
+            with visits.lock:key=visits.key;path=visits.path
+            if not key or path is None or not visits.allows(path/'_scope'):return False
+            scope=' AND i.root=? AND i.folder=?';scope_args=[key[0],key[1] or '/']
         with self.catalog.connect() as c:
+            if priority_only and not c.execute("SELECT 1 FROM catalog_metadata WHERE status='queued' AND priority>0 LIMIT 1").fetchone():
+                return False
             c.execute('BEGIN IMMEDIATE')
             row = c.execute('''SELECT i.*,m.generation FROM catalog_metadata m JOIN items i ON i.id=m.item
-                JOIN roots r ON r.id=i.root WHERE m.status='queued' AND i.online=1 AND r.removed=0
-                ORDER BY m.priority DESC,m.updated,m.item LIMIT 1''').fetchone()
+                JOIN roots r ON r.id=i.root WHERE m.status='queued' AND i.online=1 AND r.removed=0'''+
+                (' AND m.priority>0' if priority else '')+scope+' ORDER BY m.priority DESC,m.updated,m.item LIMIT 1',scope_args).fetchone()
             if row is None:
                 return False
             row = dict(row)
+            visits=getattr(self.catalog,'visits',None)
+            if visits and not visits.allows(row['path']):
+                c.execute('UPDATE catalog_metadata SET priority=0 WHERE item=?',(row['id'],))
+                return False
             c.execute("UPDATE catalog_metadata SET status='running' WHERE item=?", (row['id'],))
         try:
             payload, search = self._extract(row)
@@ -244,27 +282,64 @@ class CatalogMetadata:
                 status = 'failed'
             payload, search, error = None, None, str(exc)[:1000]
         with self.catalog.connect() as c:
-            c.execute('''UPDATE catalog_metadata SET status=?,error=?,updated=?,priority=0,
+            saved=c.execute('''UPDATE catalog_metadata SET status=?,error=?,updated=?,priority=0,
                 payload=coalesce(?,payload),search_text=coalesce(?,search_text)
                 WHERE item=? AND fingerprint=? AND generation=?''',
-                (status,error,time.time(),dumps(payload) if payload is not None else None,search,row['id'],row['fingerprint'],row['generation']))
+                (status,error,time.time(),dumps(payload) if payload is not None else None,search,row['id'],row['fingerprint'],row['generation'])).rowcount
+            if saved and status=='ready':
+                from sku_match import normalize
+                tags=payload.get('tags',{});sku=tags.get('XMP-fk:SKU','')
+                subjects=tags.get('XMP-dc:Subject',[])
+                subjects=subjects if isinstance(subjects,list) else [subjects]
+                codes=list(dict.fromkeys(value[4:] for value in subjects if isinstance(value,str) and value.startswith('SKU:') and value[4:].strip()))
+                if not sku and len(codes)==1:sku=codes[0]
+                if isinstance(sku,str) and len(sku)<=80 and not any(ord(ch)<32 for ch in sku):
+                    sku=sku.strip();key=normalize(sku)
+                    if key:
+                        c.execute("""UPDATE items SET sku=?,normalized=?,source='embedded',confidence=1
+ WHERE id=? AND fingerprint=? AND source IN ('unmatched','review','path_rule','embedded')""",(sku,key,row['id'],row['fingerprint']))
+                    elif not codes:
+                        c.execute("UPDATE items SET sku='',normalized='',source='unmatched',confidence=NULL WHERE id=? AND fingerprint=? AND source='embedded'",(row['id'],row['fingerprint']))
+        if saved and status=='ready' and getattr(self.catalog,'capture_service',None):
+            self.catalog.capture_service.observe_metadata(row,payload)
         return True
 
-    def _run(self):
-        recovered=False
+    def _run_foreground(self):
+        # 另一共享盘离线时，其 stat/EXIF 不能堵住用户正在浏览的目录。
         while not self.stop.is_set():
             try:
-                if not recovered:
+                if self.process_one(priority_only=True):continue
+            except Exception as exc:
+                self.error=str(exc)
+            self.stop.wait(.25)
+
+    def _run(self):
+        recovered=False;restored=False
+        if getattr(self.catalog,'visits',None):
+            # 旧后台队列留存，但本轮只领取用户访问范围内的优先任务。
+            with self.catalog.connect() as c:c.execute("UPDATE catalog_metadata SET status='queued' WHERE status='running'")
+            self._run_foreground()
+            return
+        while not self.stop.is_set():
+            try:
+                if not restored:
+                    with self.catalog.connect() as c:c.execute("UPDATE catalog_metadata SET status='queued' WHERE status='running'")
+                    restored=True
+                    self.foreground_thread=threading.Thread(target=self._run_foreground,name='catalog-metadata-visible',daemon=True)
+                    self.foreground_thread.start()
+                if not recovered and not (self.scheduler and self.scheduler.background_blocked()):
                     # 全库重启核对属于后台恢复，不能阻塞引擎的 HTTP 就绪。
                     # 同一事务恢复，异常时回滚并由本线程重试。
                     with self.catalog.connect() as c:
-                        c.execute("UPDATE catalog_metadata SET status='queued' WHERE status='running'")
                         c.execute("UPDATE catalog_metadata SET status='queued',priority=-1 WHERE status='ready'")
                     recovered=True
                 if self.process_one():
                     self.error = ''
                     self.stop.wait(.03)
                     continue
+                if self.scheduler and self.scheduler.background_blocked():
+                    # OCR 批次期间只响应用户主动查看的资料，不读取 NAS 全库 EXIF。
+                    self.stop.wait(.5);continue
                 # 分批补齐旧版本存量；新文件和版本变化由扫描触发器立即排队。
                 with self.catalog.connect() as c:
                     added=c.execute('''INSERT OR IGNORE INTO catalog_metadata(item,fingerprint)

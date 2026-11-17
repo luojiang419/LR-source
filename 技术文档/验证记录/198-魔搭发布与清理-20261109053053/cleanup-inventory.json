@@ -1,0 +1,358 @@
+[
+  {
+    "path": "build\\archive-analysis-pipeline",
+    "bytes": 163335,
+    "files": 1,
+    "links": [],
+    "databases": [],
+    "database_count": 0
+  },
+  {
+    "path": "build\\assistant-defaults-publish",
+    "bytes": 42155042,
+    "files": 4,
+    "links": [],
+    "databases": [],
+    "database_count": 0
+  },
+  {
+    "path": "build\\assistant-defaults-release-source",
+    "bytes": 1355305157,
+    "files": 3382,
+    "links": [
+      "build\\assistant-defaults-release-source\\.runtime",
+      "build\\assistant-defaults-release-source\\.update-private"
+    ],
+    "databases": [],
+    "database_count": 0
+  },
+  {
+    "path": "build\\auto-installer-source",
+    "bytes": 1224033000,
+    "files": 2191,
+    "links": [
+      "build\\auto-installer-source\\.runtime",
+      "build\\auto-installer-source\\.update-private"
+    ],
+    "databases": [],
+    "database_count": 0
+  },
+  {
+    "path": "build\\cache-maintenance",
+    "bytes": 2150,
+    "files": 2,
+    "links": [],
+    "databases": [],
+    "database_count": 0
+  },
+  {
+    "path": "build\\complete-install",
+    "bytes": 115015,
+    "files": 1,
+    "links": [],
+    "databases": [],
+    "database_count": 0
+  },
+  {
+    "path": "build\\cpu-mirror-preparation",
+    "bytes": 0,
+    "files": 0,
+    "links": [],
+    "databases": [],
+    "database_count": 0
+  },
+  {
+    "path": "build\\desktop-paddle-ocr",
+    "bytes": 179959795,
+    "files": 69,
+    "links": [],
+    "databases": [
+      "build\\desktop-paddle-ocr\\packaged-final\\data\\asset_archive.sqlite3",
+      "build\\desktop-paddle-ocr\\packaged-final\\data\\asset_catalog.sqlite3",
+      "build\\desktop-paddle-ocr\\packaged-final\\data\\framekeep.sqlite3",
+      "build\\desktop-paddle-ocr\\packaged-final\\data\\quick_search.sqlite3",
+      "build\\desktop-paddle-ocr\\packaged-final\\data\\sku.sqlite3",
+      "build\\desktop-paddle-ocr\\packaged-final\\data\\vision_analysis.sqlite3",
+      "build\\desktop-paddle-ocr\\packaged-final\\data\\reference-library\\temporary\\index.sqlite3",
+      "build\\desktop-paddle-ocr\\packaged-final\\data\\previews\\index.sqlite3",
+      "build\\desktop-paddle-ocr\\packaged-final\\data\\inventory\\inventory.sqlite3",
+      "build\\desktop-paddle-ocr\\packaged-final\\data\\catalog_previews\\index.sqlite3"
+    ],
+    "database_count": 10
+  },
+  {
+    "path": "build\\full-installer-source",
+    "bytes": 1258101088,
+    "files": 2268,
+    "links": [
+      "build\\full-installer-source\\.runtime",
+      "build\\full-installer-source\\.update-private"
+    ],
+    "databases": [],
+    "database_count": 0
+  },
+  {
+    "path": "build\\glm-q8-validation",
+    "bytes": 27861,
+    "files": 4,
+    "links": [],
+    "databases": [],
+    "database_count": 0
+  },
+  {
+    "path": "build\\install-automation-tests.log",
+    "bytes": 5484,
+    "files": 1,
+    "links": [],
+    "databases": [],
+    "database_count": 0
+  },
+  {
+    "path": "build\\installer-update-tests.log",
+    "bytes": 4076,
+    "files": 1,
+    "links": [],
+    "databases": [],
+    "database_count": 0
+  },
+  {
+    "path": "build\\local-model-validation",
+    "bytes": 421530,
+    "files": 2,
+    "links": [],
+    "databases": [],
+    "database_count": 0
+  },
+  {
+    "path": "build\\medium-release-source",
+    "bytes": 1230566018,
+    "files": 2219,
+    "links": [
+      "build\\medium-release-source\\.runtime",
+      "build\\medium-release-source\\.update-private"
+    ],
+    "databases": [],
+    "database_count": 0
+  },
+  {
+    "path": "build\\model-defaults-acceptance",
+    "bytes": 1142835,
+    "files": 5,
+    "links": [],
+    "databases": [],
+    "database_count": 0
+  },
+  {
+    "path": "build\\model-discovery-acceptance",
+    "bytes": 159045,
+    "files": 1,
+    "links": [],
+    "databases": [],
+    "database_count": 0
+  },
+  {
+    "path": "build\\ocr-rotation",
+    "bytes": 3682824,
+    "files": 10,
+    "links": [],
+    "databases": [],
+    "database_count": 0
+  },
+  {
+    "path": "build\\ocr-streaming",
+    "bytes": 127632,
+    "files": 1,
+    "links": [],
+    "databases": [],
+    "database_count": 0
+  },
+  {
+    "path": "build\\rotation-release-source",
+    "bytes": 1224085264,
+    "files": 2192,
+    "links": [
+      "build\\rotation-release-source\\.runtime",
+      "build\\rotation-release-source\\.update-private"
+    ],
+    "databases": [],
+    "database_count": 0
+  },
+  {
+    "path": "build\\update-art",
+    "bytes": 566773,
+    "files": 2,
+    "links": [],
+    "databases": [],
+    "database_count": 0
+  },
+  {
+    "path": "build\\update-tools-build.json",
+    "bytes": 581,
+    "files": 1,
+    "links": [],
+    "databases": [],
+    "database_count": 0
+  },
+  {
+    "path": "build\\update-worker.spec",
+    "bytes": 997,
+    "files": 1,
+    "links": [],
+    "databases": [],
+    "database_count": 0
+  },
+  {
+    "path": "dist\\SHIYING 数字资产全量安装器-20261109-修复版.exe",
+    "bytes": 746219008,
+    "files": 1,
+    "links": [],
+    "databases": [],
+    "database_count": 0
+  },
+  {
+    "path": "dist\\SHIYING 数字资产全量安装器-OCR方向修复版.exe",
+    "bytes": 746234368,
+    "files": 1,
+    "links": [],
+    "databases": [],
+    "database_count": 0
+  },
+  {
+    "path": "dist\\SHIYING 数字资产全量安装器-自动更新版.exe",
+    "bytes": 746233856,
+    "files": 1,
+    "links": [],
+    "databases": [],
+    "database_count": 0
+  },
+  {
+    "path": "dist\\SHIYING 数字资产安装器-20261109015625.exe",
+    "bytes": 14157824,
+    "files": 1,
+    "links": [],
+    "databases": [],
+    "database_count": 0
+  },
+  {
+    "path": ".runtime\\canon-network-static-python",
+    "bytes": 9091798,
+    "files": 116,
+    "links": [],
+    "databases": [],
+    "database_count": 0
+  },
+  {
+    "path": ".runtime\\component-archives",
+    "bytes": 169973760,
+    "files": 4,
+    "links": [],
+    "databases": [],
+    "database_count": 0
+  },
+  {
+    "path": ".runtime\\component-offline",
+    "bytes": 214156024,
+    "files": 1,
+    "links": [],
+    "databases": [],
+    "database_count": 0
+  },
+  {
+    "path": ".runtime\\component-seed",
+    "bytes": 1825836,
+    "files": 8,
+    "links": [],
+    "databases": [],
+    "database_count": 0
+  },
+  {
+    "path": ".runtime\\everything",
+    "bytes": 180763,
+    "files": 3,
+    "links": [],
+    "databases": [],
+    "database_count": 0
+  },
+  {
+    "path": ".runtime\\exiftool",
+    "bytes": 34553294,
+    "files": 517,
+    "links": [],
+    "databases": [],
+    "database_count": 0
+  },
+  {
+    "path": ".runtime\\ffmpeg",
+    "bytes": 210680623,
+    "files": 4,
+    "links": [],
+    "databases": [],
+    "database_count": 0
+  },
+  {
+    "path": ".runtime\\ffmpeg-compat",
+    "bytes": 202786266,
+    "files": 5,
+    "links": [],
+    "databases": [],
+    "database_count": 0
+  },
+  {
+    "path": ".runtime\\gpu",
+    "bytes": 105477512,
+    "files": 8,
+    "links": [],
+    "databases": [],
+    "database_count": 0
+  },
+  {
+    "path": ".runtime\\llama.cpp",
+    "bytes": 1213348146,
+    "files": 57,
+    "links": [],
+    "databases": [],
+    "database_count": 0
+  },
+  {
+    "path": ".runtime\\local-inference",
+    "bytes": 598,
+    "files": 1,
+    "links": [],
+    "databases": [],
+    "database_count": 0
+  },
+  {
+    "path": ".runtime\\models",
+    "bytes": 8926732953,
+    "files": 16,
+    "links": [],
+    "databases": [],
+    "database_count": 0
+  },
+  {
+    "path": ".runtime\\rea-deploy",
+    "bytes": 259496,
+    "files": 8,
+    "links": [],
+    "databases": [],
+    "database_count": 0
+  },
+  {
+    "path": ".runtime\\report-authoring",
+    "bytes": 0,
+    "files": 0,
+    "links": [
+      ".runtime\\report-authoring\\node_modules"
+    ],
+    "databases": [],
+    "database_count": 0
+  },
+  {
+    "path": "安卓出入库\\app\\build",
+    "bytes": 0,
+    "files": 0,
+    "links": [],
+    "databases": [],
+    "database_count": 0
+  }
+]

@@ -1,0 +1,96 @@
+{
+  "version": "1.0.0",
+  "releaseId": "20261111104735",
+  "installer": "G:\\app\\LR\\dist\\SHIYING 数字资产全量安装器-20261111104735.exe",
+  "bytes": 751476224,
+  "sha256": "71b49afcba53706bbf12f3a6228f8b7ef40295653306ac95b2ce531af1cc5602",
+  "snapshot": "G:\\app\\LR\\build\\updates\\1.0.0-20261111104735",
+  "published": false,
+  "installed": false,
+  "baseCommit": "7a6f897",
+  "branch": "build/windows-installer-20261111",
+  "sourceScope": "当前工作区源码，含原有未提交修改；本次不提交其它任务文件",
+  "tests": {
+    "updatePassed": 71,
+    "updateSkipped": 8,
+    "workbenchPassed": 1,
+    "skipReason": "7项真实Windows注册及1项真实锁EXE故障注入受本机环境阻塞"
+  },
+  "sourceIntegrity": {
+    "verifiedModules": 154,
+    "mismatches": []
+  },
+  "runtime": {
+    "exitCode": 0,
+    "output": "",
+    "error": "",
+    "planCreated": true
+  },
+  "workerIntegrity": {
+    "status": "verified",
+    "files": 75,
+    "archive_sha256": "45834396206b31dd6b9d2eeef3b9c44986822c732746499f190ee8f051862914",
+    "runtime": "onedir"
+  },
+  "payloadIntegrity": {
+    "status": "verified",
+    "files": 19,
+    "archive_sha256": "bf37413e9a56584085abbf9a55bb9e8ffe1a0f573b6d0a78841c2364c4486c15",
+    "runtime": "offline-payload"
+  },
+  "isolatedInstall": {
+    "signatureVerified": true,
+    "installedFilesVerified": 945,
+    "photoPreserved": true,
+    "userModelPreserved": true,
+    "releaseId": "20261111104735",
+    "productionInstalled": false,
+    "registrationTested": false
+  },
+  "animationReuse": {
+    "source": "D:\\Program Files\\Framekeep\\update\\SHIYING 更新器.exe",
+    "source_sha256": "068926940416929ec100503eaff388ada9202165ccb3a10501a17319f1e11d0b",
+    "animation_sha256": "62db48282a1b53956a604ee9afc202bed125d15c481e6a6600396ff169e14393",
+    "svg_sha256": "248058aee45d3928df2af78ae98e7c6563e59855a9f50c60f5f40208d25615bd",
+    "dimensions": [
+      240,
+      8640
+    ],
+    "reason": "Edge 启动阻塞；复用现安装版未修改的安装器动画"
+  },
+  "includes": {
+    "cpuOcr": true,
+    "webviewAndDriver": true,
+    "qwenWeights": false,
+    "glmWeights": false
+  },
+  "cleanup": {
+    "deleted": [
+      {
+        "path": "G:\\app\\LR\\build\\engine-dist",
+        "logicalBytes": 747620528
+      },
+      {
+        "path": "G:\\app\\LR\\build\\update-worker-dist",
+        "logicalBytes": 32122825
+      },
+      {
+        "path": "G:\\app\\LR\\build\\installer-20261111\\payload-check",
+        "logicalBytes": 750780631
+      },
+      {
+        "path": "G:\\app\\LR\\build\\installer-20261111\\isolated-install",
+        "logicalBytes": 2062575226
+      },
+      {
+        "path": "G:\\app\\LR\\build\\single-installer\\20261111104735\\offline-payload.zip",
+        "logicalBytes": 718660645
+      }
+    ],
+    "retained": [],
+    "logicalBytes": 4311759855,
+    "freeBefore": 273421025280,
+    "freeAfter": 277405700096
+  },
+  "installerHashVerifiedAfterCleanup": true
+}

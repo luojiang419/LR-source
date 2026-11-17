@@ -142,11 +142,11 @@ class EverythingSearch:
         if not self.gate.acquire(timeout=self.timeout):return {'available':False,'message':'Everything 正忙，稍后重试'}
         try:
             if not self.enabled:return unavailable('已停用 Everything 接入，使用本机快速索引')
-            command=[sys.executable,'--everything-worker',str(self.dll)] if getattr(sys,'frozen',False) else [sys.executable,str(Path(__file__).resolve()),'--worker',str(self.dll)]
-            p=subprocess.run(command,input=json.dumps(payload).encode('utf8'),stdout=subprocess.PIPE,stderr=subprocess.PIPE,timeout=self.timeout,creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
-            if p.returncode:raise ValueError('适配进程退出')
-            result=json.loads(p.stdout.decode('utf8'))
-        except (OSError,ValueError,subprocess.TimeoutExpired):result={'available':False,'message':'Everything 查询超时或失败，已使用本机备案库'}
+            # Everything IPC 本身已有查询服务。旧路径为每次按键额外启动一个
+            # Python 子进程，真实测试的启动成本超过查询成本；直接在常驻引擎内
+            # 调用 SDK，保留相同的只读请求和范围校验。
+            result=worker(self.dll,payload)
+        except (OSError,ValueError,ctypes.ArgumentError):result={'available':False,'message':'Everything 查询失败，已使用本机备案库'}
         finally:self.gate.release()
         self.cached={k:v for k,v in result.items() if k not in ('paths','records','total','has_more')};self.checked=time.monotonic()
         return result
@@ -195,14 +195,23 @@ class EverythingSearch:
     def search(self,text,offset=0,limit=60):
         literal_query(text);offset=int(offset);limit=max(1,min(100,int(limit)))
         if not 0<=offset<=10000:raise ValueError('文件搜索分页范围超限，请缩小文件名或目录条件')
-        started=time.perf_counter();result=self._request({'text':text,'offset':offset,'limit':limit})
+        # Everything 的全局库包含应用缩略图、模型图标和缓存；这些文件名命中
+        # 不能占掉快捷搜索首屏。先取受限候选，再在内存中剔除受管缓存。
+        started=time.perf_counter();result=self._request({'text':text,'offset':offset,'limit':min(2048,max(200,limit*20))})
         source='everything'
         if not result.get('available'):
             source='archive';fallback=asset_search.local_paths(self.archive,text.strip(),offset,limit)
             message=result.get('message','');result.update(fallback)
             result['message']=message+('；'+fallback['message'] if fallback.get('message') else '')
-        known=asset_search.known_paths(self.archive,result.get('paths',[]))
-        rows=[{'path':p,'asset':known.get(p.casefold()),'identity_verified':False} for p in result.pop('paths',[])]
+        ignored={'catalog_previews','previews','model-cache','icons','thumb','thumbs','.cache','node_modules'}
+        paths=[]
+        for value in result.pop('paths',[]):
+            path=Path(value)
+            if any(part.casefold() in ignored for part in path.parts):continue
+            paths.append(str(path))
+            if len(paths)>=limit:break
+        known=asset_search.known_paths(self.archive,paths)
+        rows=[{'path':p,'asset':known.get(p.casefold()),'identity_verified':False} for p in paths]
         return {**result,'rows':rows,'source':source,'offset':offset,'elapsed_ms':round((time.perf_counter()-started)*1000,2),'coverage':'仅 Everything 当前已索引位置' if source=='everything' else '仅本机已备案位置'}
 
 

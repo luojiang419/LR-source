@@ -12,6 +12,8 @@ html[data-hardcore-layout] .reference-search .reference-dropzone:hover,.referenc
 html[data-hardcore-layout] .reference-search .reference-actions button {min-width:0;min-height:29px;padding:5px 6px;font-size:11px;white-space:nowrap;}
 html[data-hardcore-layout] .reference-search [data-reference=generate] {display:block;width:100%;min-height:32px;margin-top:8px;padding:7px;font-size:11px;border-radius:6px;}
 .reference-search .reference-threshold-label {display:grid;grid-template-columns:1fr auto;gap:8px;margin:14px 0 6px;font-size:11px;color:var(--theme-text-soft);}
+.reference-search .reference-match-label {display:grid;gap:6px;margin-top:12px;font-size:11px;color:var(--theme-text-soft);}
+.reference-search .reference-match-mode {width:100%;min-width:0;min-height:29px;font:inherit;color:var(--theme-text);background:var(--theme-control);border:1px solid var(--theme-border);border-radius:6px;padding:5px 6px;}
 .reference-search output {font-weight:600;color:var(--theme-text);font-variant-numeric:tabular-nums;}
 html[data-hardcore-layout] .reference-search .reference-threshold {grid-column:1/-1;display:block;width:100%;min-height:18px;height:18px;margin:0;padding:0;border:0;box-shadow:none;background:transparent;accent-color:var(--theme-emphasis);cursor:pointer;}
 .reference-search .reference-help {min-height:30px;margin:4px 0 0;font-size:10px;color:var(--theme-muted);line-height:1.5;}

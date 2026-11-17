@@ -1,0 +1,170 @@
+--- a/选片助手/archive_capture_service.py
++++ b/选片助手/archive_capture_service.py
+@@ -2343,13 +2343,14 @@
+         token='execute:'+uuid.uuid4().hex;temporary=[];destination=None;release=False
+         try:
+             with self._archive_io():
++                from archive_review_scope import validate_archive_review_scope
++                validate_archive_review_scope(self, plan)
+                 for name in ('reference_root', 'source'):
+                     root=Path(plan[name]).resolve()
+                     for dataset in list(self.datasets.values()):
+                         if self.dataset_for_path(dataset.root) is not dataset:continue
+                         if root.is_relative_to(dataset.root) or dataset.root.is_relative_to(root):
+                             dataset.ownership.check()
+-                            if any(g.get('status')=='review' for g in dataset.groups()):raise ValueError('来源存在待复核分组，请核对后再归档')
+                             if not dataset.meta('archive_freeze'):
+                                 with dataset.connect() as c:c.execute("INSERT OR REPLACE INTO meta VALUES('archive_freeze',?)",(token,))
+                                 temporary.append(dataset)
+--- a/选片助手/sku_folder_archive.py
++++ b/选片助手/sku_folder_archive.py
+@@ -371,7 +371,7 @@
+                     equal=sha(destination)==row['input_sha256'] if row['raw'] else image_pixels(destination)==image_pixels(row['source'])
+                     if equal:row['file_id']=target_meta.get('XMP-fk:FileId')
+                 self.verify_item(row)
+-        return {'source': str(final_root), 'reference_root': str(source_root), 'target': str(target_root),'parent_length':parent_length,'direct':direct,'fast':fast,
++        plan = {'source': str(final_root), 'reference_root': str(source_root), 'target': str(target_root),'parent_length':parent_length,'direct':direct,'fast':fast,
+                 'preprocess':preprocess,'reference_records':references,'reference_scope':'matched_final_only',
+                 'basis': 'final_directory_manifest', 'expected': len(items),
+                 'final_expected':len(final_files)-len(excluded_records),'final_inventory_count':len(final_files),
+@@ -382,6 +382,11 @@
+                 'deleted_reference_count': len(deleted), 'skipped_reference_records': deleted,
+                 'unassigned_reference_count':len(unrelated_unassigned),'unassigned_reference_records':unrelated_unassigned,
+                 'sidecar_manifest':sides,'manifest':manifest}
++        capture=getattr(self.writer,'capture_service',None)
++        if capture:
++            from archive_review_scope import validate_archive_review_scope
++            validate_archive_review_scope(capture, plan)
++        return plan
+ 
+     def execute(self, plan, *, progress=None, on_plan_changed=None, preprocess_context=None, _portable_internal=False):
+         capture=getattr(self.writer,'capture_service',None)
+--- /dev/null
++++ b/选片助手/archive_review_scope.py
+@@ -0,0 +1,31 @@
++"""归档复核只约束本次选用且由该数据集管理的文件。"""
++from pathlib import Path
++
++
++def validate_archive_review_scope(capture, plan):
++    selected = {Path(row[key]).absolute() for row in plan['items']
++                for key in ('source', 'reference') if row.get(key)}
++    if not selected:
++        return
++    for dataset in list(capture.datasets.values()):
++        if not any(path.is_relative_to(dataset.root) for path in selected):
++            continue
++        reviews = [group for group in dataset.groups() if group.get('status') == 'review']
++        if not reviews:
++            continue
++        assets = set(); groups = set()
++        for record in dataset.records_snapshot():
++            path = (dataset.root / record['relative_path']).absolute()
++            if path not in selected or capture.dataset_for_path(path) is not dataset:
++                continue
++            assets.add(record['asset_id'])
++            groups.update(record.get(key) for key in ('group_id', 'inherited_group_id') if record.get(key))
++        for group in reviews:
++            members = set(group.get('members') or [])
++            if group.get('label'):
++                members.add(group['label'])
++            if group['id'] in groups or assets.intersection(members):
++                detail = group.get('sku') or group['id']
++                raise ValueError('本次选用来源存在待复核分组，请核对后再归档：' +
++                                 str(dataset.root) + '；分组：' + detail +
++                                 ('；原因：' + group['reason'] if group.get('reason') else ''))
+--- /dev/null
++++ b/选片助手/test_archive_review_scope.py
+@@ -0,0 +1,92 @@
++"""本次选用成员、兄弟目录复核和父子数据集权限的归档回归。"""
++from pathlib import Path
++from types import SimpleNamespace
++from unittest.mock import patch
++import unittest
++import uuid
++
++from archive_review_scope import validate_archive_review_scope
++import test_archive_capture_service as fixtures
++
++
++class ReviewScopeTests(unittest.TestCase):
++    def setUp(self):
++        self.root=Path('review-fixture').absolute()
++        self.selected=self.root/'10-30/one.JPG'
++        self.rows=[{'relative_path':'10-30/one.JPG','asset_id':'one','group_id':'selected'},
++                   {'relative_path':'11-04/other.JPG','asset_id':'other','group_id':'unrelated'}]
++        self.groups=[{'id':'unrelated','status':'review','members':['other']}]
++        self.dataset=SimpleNamespace(root=self.root,groups=lambda:self.groups,records_snapshot=lambda:self.rows)
++        self.capture=SimpleNamespace(datasets={'parent':self.dataset},dataset_for_path=lambda p:self.dataset)
++        self.plan={'items':[{'source':str(self.selected),'reference':str(self.selected)}]}
++
++    def test_unrelated_date_review_does_not_block(self):
++        validate_archive_review_scope(self.capture,self.plan)
++
++    def test_selected_member_review_still_blocks(self):
++        self.groups[0]['members'].append('one')
++        with self.assertRaisesRegex(ValueError,'本次选用来源存在待复核分组'):
++            validate_archive_review_scope(self.capture,self.plan)
++
++    def test_selected_label_without_member_entry_still_blocks(self):
++        self.groups[0]['label']='one'
++        with self.assertRaisesRegex(ValueError,'待复核分组'):
++            validate_archive_review_scope(self.capture,self.plan)
++
++    def test_selected_record_group_link_still_blocks(self):
++        self.rows[0]['inherited_group_id']='unrelated'
++        with self.assertRaisesRegex(ValueError,'待复核分组'):
++            validate_archive_review_scope(self.capture,self.plan)
++
++    def test_parent_shadow_record_does_not_override_independent_child(self):
++        self.groups[0]['members'].append('one')
++        child=SimpleNamespace(root=self.selected.parent,groups=lambda:[],records_snapshot=lambda:[])
++        self.capture.datasets['child']=child
++        self.capture.dataset_for_path=lambda p:child
++        validate_archive_review_scope(self.capture,self.plan)
++
++    def test_final_source_review_is_checked_even_when_reference_is_clean(self):
++        self.plan['items'][0]['reference']=str(self.root/'10-30/small.JPG')
++        self.groups[0]['members'].append('one')
++        with self.assertRaisesRegex(ValueError,'待复核分组'):
++            validate_archive_review_scope(self.capture,self.plan)
++
++    def test_excluded_files_are_not_selected(self):
++        self.plan['excluded_records']=[{'source':str(self.root/'11-04/other.JPG')}]
++        validate_archive_review_scope(self.capture,self.plan)
++
++
++class ReviewExecutionTests(unittest.TestCase):
++    setUp=fixtures.ArchiveCaptureTests.setUp
++    tearDown=fixtures.ArchiveCaptureTests.tearDown
++    client=fixtures.ArchiveCaptureTests.client
++    item=fixtures.ArchiveCaptureTests.item
++    drain=fixtures.ArchiveCaptureTests.drain
++
++    def plan(self):
++        self.api.confirm(self.item(1),'LC123456',whole_group=False);self.drain()
++        record=self.dataset.record(path='IMG_0001.JPG');path=str(self.photos/'IMG_0001.JPG')
++        return {'source':str(self.photos),'reference_root':str(self.photos),'target':str(self.base/'archive-target'),
++                'items':[{'source':path,'reference':path,'sku':'LC123456','scope':'detail','rating':0,
++                          'parent_sku':'LC12','metadata_fingerprint':record.get('capture_identity') or 'test-capture'}]}
++
++    def review(self,n):
++        member=self.dataset.record(path=f'IMG_{n:04d}.JPG')['asset_id']
++        self.dataset.change(groups=[{'id':uuid.uuid4().hex,'status':'review','members':[member],'reason':'测试待复核'}],kind='test-review')
++
++    def test_execution_with_unrelated_review_prepares_and_releases_target(self):
++        plan=self.plan();self.review(3)
++        with self.api.archive_execution(plan) as destination:
++            self.assertTrue(destination.meta('archive_freeze'))
++            self.assertEqual(plan['items'][0]['portable_fields']['SKU'],'LC123456')
++        self.assertFalse(destination.meta('archive_freeze'))
++        self.assertFalse(list((self.base/'archive-target').glob('*.JPG')))
++
++    def test_execution_blocks_selected_review_before_any_target_creation(self):
++        plan=self.plan();self.review(1)
++        with self.assertRaisesRegex(ValueError,'本次选用来源存在待复核分组'):
++            with self.api.archive_execution(plan):self.fail('不应进入复制阶段')
++        self.assertFalse((self.base/'archive-target').exists())
++
++
++if __name__=='__main__':unittest.main()

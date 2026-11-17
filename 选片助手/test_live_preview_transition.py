@@ -1,4 +1,4 @@
-"""真实目录/HTTP/浏览器：新图先显、清晰图升级、淡入与并发操作保护。"""
+"""非 JPEG 目录/HTTP/浏览器：保留 PNG 的渐进预览、淡入与并发操作保护。"""
 from contextlib import ExitStack
 import hashlib
 import json
@@ -28,7 +28,7 @@ class LivePreviewTests(unittest.TestCase):
                 p=photos/name;Image.new('RGB',(1200,800),color).save(p);return hashlib.sha256(name.casefold().encode()).hexdigest()[:24]
             sid=watch.start(str(photos))['session_id'];store.activate(sid)
             patches.enter_context(patch('media_engine.read_metadata',side_effect=lambda paths,*a,**kw:[{} for _ in paths]))
-            picture('FIRST.JPG');watch.tick();watch.thread.start()
+            picture('FIRST.PNG');watch.tick();watch.thread.start()
             for name,value in dict(STORE=store,DATA=store.data,WATCH=watch,CANON=None,PREVIEWS=None,
                                    MOUSE=None,MODELS=None,SKU=None,ARCHIVE=None,ANALYSIS=None,RAWLINK=None,FILESEARCH=None).items():
                 patches.enter_context(patch.object(server,name,value))
@@ -43,21 +43,21 @@ class LivePreviewTests(unittest.TestCase):
                         page.goto(url,wait_until='domcontentloaded')
                         page.wait_for_function('()=>!FramekeepBoot.loading&&document.querySelector("#photos img")?.naturalWidth>0')
                         page.evaluate('''()=>{window.arrivalOverlays=0;new MutationObserver(ms=>{for(const m of ms)for(const n of m.addedNodes)if(n.classList?.contains('live-photo-outgoing'))arrivalOverlays++}).observe(document.getElementById('photos'),{childList:true})}''')
-                        held=[];large=[];hold_id=hashlib.sha256(b'second.jpg').hexdigest()[:24];hold_detail=True
+                        held=[];large=[];hold_id=hashlib.sha256(b'second.png').hexdigest()[:24];hold_detail=True
                         def route(request):
                             address=request.request.url
                             if hold_id and hold_id in address and 'size=480' in address:held.append(request)
-                            elif hold_detail and hashlib.sha256(b'second.jpg').hexdigest()[:24] in address and 'size=2048' in address:large.append(request)
+                            elif hold_detail and hashlib.sha256(b'second.png').hexdigest()[:24] in address and 'size=2048' in address:large.append(request)
                             else:request.continue_()
                         page.route('**/api/preview/**',route)
-                        picture('SECOND.JPG','red')
+                        picture('SECOND.PNG','red')
                         page.wait_for_function('()=>true');page.wait_for_timeout(300)
-                        self.assertTrue(held);self.assertEqual(page.locator('#filename').inner_text(),'FIRST.JPG')
-                        self.assertEqual(page.locator('#photos [data-loupe] img').get_attribute('alt'),'FIRST.JPG')
+                        self.assertTrue(held);self.assertEqual(page.locator('#filename').inner_text(),'FIRST.PNG')
+                        self.assertEqual(page.locator('#photos [data-loupe] img').get_attribute('alt'),'FIRST.PNG')
                         hold_id=None
                         for request in held:request.continue_()
                         held.clear()
-                        page.wait_for_function('()=>document.getElementById("filename").textContent==="SECOND.JPG"&&document.querySelector("#photos [data-loupe] img")?.naturalWidth>0')
+                        page.wait_for_function('()=>document.getElementById("filename").textContent==="SECOND.PNG"&&document.querySelector("#photos [data-loupe] img")?.naturalWidth>0')
                         self.assertIn('size=480',page.locator('#photos [data-loupe] img').get_attribute('src'))
                         page.wait_for_function('()=>arrivalOverlays===1')
                         page.evaluate('()=>FramekeepViewer.setScale(2)')
@@ -68,17 +68,17 @@ class LivePreviewTests(unittest.TestCase):
                         page.evaluate('()=>Framekeep.syncSharedRatings({})')
                         self.assertEqual(page.evaluate('FramekeepViewer.getScale()'),2)
                         page.wait_for_function('()=>!document.querySelector(".live-photo-outgoing")')
-                        page.emulate_media(reduced_motion='reduce');picture('THIRD.JPG','blue')
-                        page.wait_for_function('()=>document.getElementById("filename").textContent==="THIRD.JPG"')
+                        page.emulate_media(reduced_motion='reduce');picture('THIRD.PNG','blue')
+                        page.wait_for_function('()=>document.getElementById("filename").textContent==="THIRD.PNG"')
                         self.assertEqual(page.evaluate('arrivalOverlays'),1)
-                        for i in range(4):picture(f'BURST_{i}.JPG','navy')
-                        page.wait_for_function('()=>DEMO_PHOTOS.length===7&&document.getElementById("filename").textContent==="BURST_3.JPG"')
+                        for i in range(4):picture(f'BURST_{i}.PNG','navy')
+                        page.wait_for_function('()=>DEMO_PHOTOS.length===7&&document.getElementById("filename").textContent==="BURST_3.PNG"')
                         generation=watch.state()['generation'];version=watch.state()['version']
                         with urllib.request.urlopen(url+f'/api/state?session_id={sid}&live_after={version}&live_generation={generation}') as r:delta=json.load(r)
                         self.assertTrue(delta['catalog_delta']);self.assertEqual(delta['catalog'],[])
                         with urllib.request.urlopen(url+f'/api/state?session_id={sid}&live_after=0&live_generation=stale') as r:fallback=json.load(r)
                         self.assertFalse(fallback.get('catalog_delta'));self.assertEqual(len(fallback['catalog']),7)
-                        for name,manual in [('MANUAL.JPG',True),('PAUSED.JPG',False)]:
+                        for name,manual in [('MANUAL.PNG',True),('PAUSED.PNG',False)]:
                             hold_id=picture(name,'purple');page.wait_for_timeout(300);self.assertTrue(held)
                             if manual:page.locator('#previous').click()
                             else:page.evaluate('()=>FramekeepWatch.setFollow(false)')
@@ -88,10 +88,10 @@ class LivePreviewTests(unittest.TestCase):
                             expected=8 if manual else 9
                             page.wait_for_function('(n)=>DEMO_PHOTOS.length===n',arg=expected)
                             self.assertEqual(page.locator('#filename').inner_text(),selected)
-                        # 从小目录切入分页模式时，仍定位新拍摄图，不能把增量当成完整页。
+                        # 跨过旧分页阈值后仍连续浏览全部图片，增量不能覆盖已有目录。
                         patches.enter_context(patch.object(server.session_browser,'LARGE_SESSION',9))
-                        page.evaluate('()=>FramekeepWatch.setFollow(true)');picture('PAGED.JPG','orange')
-                        page.wait_for_function('()=>FRAMEKEEP_SESSION.browser?.paged&&document.getElementById("filename").textContent==="PAGED.JPG"')
+                        page.evaluate('()=>FramekeepWatch.setFollow(true)');picture('PAGED.PNG','orange')
+                        page.wait_for_function('()=>FRAMEKEEP_SESSION.browser?.continuous&&document.getElementById("filename").textContent==="PAGED.PNG"')
                         self.assertFalse(errors,errors)
                         page.screenshot(path=str(out/'transition-acceptance.png'))
                         (out/'transition-acceptance.json').write_text(json.dumps({'passed':True,'oldFrameUntilReady':True,'progressivePreview':True,'upgradeKeepsZoom':True,'crossfade':True,'reducedMotion':True,'burstCount':4,'deltaFallback':True,'manualNavigationProtected':True,'pauseProtected':True,'pageErrors':errors}),encoding='utf8')

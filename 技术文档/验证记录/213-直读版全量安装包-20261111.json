@@ -1,0 +1,64 @@
+{
+  "version": "1.0.0",
+  "releaseId": "20261111115946",
+  "installer": "G:\\app\\LR\\dist\\SHIYING 数字资产全量安装器-直读版-20261111115946.exe",
+  "bytes": 752344064,
+  "sha256": "b88840f7869549d362612df976729fff2b5863d6942ccb20a229bbff699dd5ab",
+  "snapshot": "G:\\app\\LR\\build\\updates\\1.0.0-20261111115946",
+  "mode": "direct-only",
+  "published": false,
+  "productionInstalled": false,
+  "payloadCheck": "G:\\app\\LR\\build\\direct-only-installer\\payload-check-20261111115946",
+  "sourceContext": "当前共享工作树源码，保留其它任务改动；Git仅提交本任务增量",
+  "sourceModulesVerified": 155,
+  "sourceMismatches": [],
+  "regression": {
+    "directAndLiveDistinctPassed": 45,
+    "pipelineAdditionalPassed": 15,
+    "pipelineAdditionalFailed": 1,
+    "existingFailure": "test_api_workers_use_card_capacity_without_cross_phase_overlap",
+    "baselineReproduced": true,
+    "environment": "scheduler limit=2; test barrier requires 4",
+    "fullSuiteRun": false
+  },
+  "payload": {
+    "workerFiles": 75,
+    "offlineFiles": 19,
+    "workerExitCode": 0,
+    "signatureVerified": true
+  },
+  "isolatedInstall": {
+    "signatureVerified": true,
+    "installedFilesVerified": 953,
+    "photoPreserved": true,
+    "userModelPreserved": true,
+    "releaseId": "20261111115946",
+    "productionInstalled": false,
+    "registrationTested": false
+  },
+  "runtime": {
+    "engine_started": true,
+    "engine_pid": 49428,
+    "live_full_image_size": [
+      3600,
+      2400
+    ],
+    "small_http_responses": 25,
+    "all_preview_no_store": true,
+    "js_errors": [],
+    "http_errors": [],
+    "legacy_preview_preserved": true,
+    "legacy_preference_ignored_and_preserved": true,
+    "new_preview_files": 0,
+    "preview_index_created": false,
+    "catalog_preview_directory_created": false,
+    "cache_controls_removed": true,
+    "productionInstalled": false
+  },
+  "cleanup": {
+    "deletedLogicalBytes": 8158550289,
+    "freeIncrease": 7500390400,
+    "preserved": []
+  },
+  "currentProductionOverwritten": false
+}

@@ -1,0 +1,33 @@
+.record-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+#record-view{margin:0;flex:1}
+#record-view button{flex:1}
+#records .table-wrap{overflow:hidden}
+#records table{min-width:0;table-layout:fixed}
+#records th:first-child{width:30%;padding-left:12px}
+#records th:nth-child(2),#records th:nth-child(3){width:20%}
+#records th:last-child{width:30%}
+#record-rows>tr>td{padding:0;max-width:none;width:auto;color:var(--text)}
+.record-swipe{position:relative;overflow:hidden;touch-action:pan-y pinch-zoom;user-select:none;-webkit-user-select:none}
+.record-content{position:relative;display:grid;grid-template-columns:30% 20% 20% 30%;align-items:center;background:var(--bg);transform:translateX(var(--swipe-x,0px));transition:transform .3s var(--ease)}
+.record-cell{min-width:0;padding:12px 8px;font-size:10px;overflow-wrap:anywhere}
+.record-cell:first-child{padding-left:12px}
+.record-cell:last-child{font-size:8px;color:var(--muted)}
+.record-cell>small{font-size:9px;color:var(--faint)}
+.record-cell strong{display:block;font-size:10px;font-weight:500;margin:5px 0}
+.record-cell .mode-badge{display:inline-block;font-size:8px;padding:2px 5px}
+.record-cell button{display:block;line-height:0;touch-action:pan-y pinch-zoom}
+.record-cell .record-sku-edit{width:100%;min-height:32px;padding:3px 0;border:0;border-radius:4px;background:transparent;color:inherit;text-align:left;line-height:1.45;overflow-wrap:anywhere;box-shadow:none}
+.record-sku-edit:focus-visible{outline:2px solid var(--warm);outline-offset:2px}
+.record-cell img{display:block;width:100%;max-width:48px;height:60px;object-fit:cover;border-radius:7px;pointer-events:none}
+#record-rows .record-action{position:absolute;top:0;bottom:0;width:76px;padding:0;border-radius:0;background:#b8443b;color:#fff;font-size:13px;font-weight:550;touch-action:manipulation}
+.record-action[data-side=left]{left:0}.record-action[data-side=right]{right:0}
+#record-rows .record-action.restore{background:#397451}
+.record-swipe.swiping .record-content{transition:none}
+.record-swipe[data-busy=true]{pointer-events:none;opacity:.6}
+.record-content:focus-visible{outline:2px solid var(--warm);outline-offset:-3px}
+
+.record-content.is-analyzing strong{color:var(--muted)}
+.record-content.is-analyzing strong:before{content:'';display:inline-block;width:8px;height:8px;margin-right:5px;border:1px solid var(--border);border-top-color:var(--warm);border-radius:50%;animation:cleanup-spin 1s linear infinite}
+.record-content.is-review{cursor:pointer}
+.record-content.is-review strong{color:var(--warm)}
+#record-ocr-text{white-space:pre-wrap;overflow-wrap:anywhere;font-size:11px;color:var(--muted)}

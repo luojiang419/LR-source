@@ -54,7 +54,7 @@ class ReleaseComponentTests(unittest.TestCase):
         with patch('build_release.validate_release',side_effect=RuntimeError('旧元数据引擎')) as validate:
             with self.assertRaisesRegex(RuntimeError,'旧元数据引擎'):
                 release.build(output=output)
-        validate.assert_called_once_with(self.root/'build/tauri-release/末帧选片')
+        validate.assert_called_once_with(self.root/'build/tauri-release/SHIYING 数字资产')
         self.assertFalse(output.exists())
 
 

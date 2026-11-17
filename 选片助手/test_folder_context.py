@@ -98,7 +98,7 @@ class FolderContextTests(unittest.TestCase):
                         page.wait_for_function('(id)=>FRAMEKEEP_SESSION.id!==id',arg=sid)
                     self.assertIsNone(page.evaluate('()=>FRAMEKEEP_SESSION.id'));self.assertEqual(page.locator('#photo-grid [data-photo]').count(),0)
                     page.reload(wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading');self.assertEqual(page.locator('#folder-list .folder-row').count(),0)
-                    self.assertTrue(page.locator('#catalog-empty').is_visible());self.assertTrue(page.locator('#canon-tether-open').is_enabled())
+                    self.assertTrue(page.locator('#catalog-empty').is_visible());self.assertEqual(page.locator('#canon-tether-open').count(),0);self.assertTrue(page.locator('#folder-watch').is_enabled())
                     page.locator('#folder-watch').click();page.locator('#watch-path').fill(str(self.folders[0]));page.locator('#watch-start').click()
                     row(self.ids[0]).wait_for(state='attached');page.wait_for_function('(id)=>FRAMEKEEP_SESSION.id===id',arg=self.ids[0])
                     self.assertEqual(page.locator('#stars .on').count(),5)

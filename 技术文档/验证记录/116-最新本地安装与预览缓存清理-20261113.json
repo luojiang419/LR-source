@@ -1,0 +1,118 @@
+{
+  "date": "2026-11-13",
+  "branch": "fix/manual-metadata-backfill",
+  "source_base_commit": "90fd8b8",
+  "includes_existing_uncommitted_source": true,
+  "installation": {
+    "status": "complete",
+    "installed": "D:\\Program Files\\Framekeep",
+    "data": "D:\\Program Files\\Framekeep\\data",
+    "version": "1.0.1",
+    "releaseId": "20261111191634",
+    "verified_files": 945,
+    "protected_data_files": 49,
+    "data_unchanged_before_start": true,
+    "health": {
+      "pid": 21312,
+      "releaseId": "20261111191634",
+      "version": "1.0.1"
+    },
+    "session": "D:\\Program Files\\Framekeep\\.update-state\\local-latest-20261113",
+    "published": false
+  },
+  "source_verification": {
+    "modules": 158,
+    "server_entry": true,
+    "web_files": 77,
+    "source_unchanged_during_build": true
+  },
+  "tests": {
+    "update_system_passed": 79,
+    "regression_passed": 87,
+    "regression_failed": 1,
+    "regression_failure": "test_monitor_source_safety: unexpected existing .shiying metadata; diagnostic also leaves pending rating write",
+    "direct_only_passed": 9
+  },
+  "preview_cleanup": {
+    "original_files": 322044,
+    "removed_logical_bytes": 69241272195,
+    "targets": [
+      "D:\\data\\FR-TEMP\\previews",
+      "D:\\data\\FR-TEMP\\catalog_previews",
+      "D:\\Program Files\\Framekeep\\data\\previews",
+      "D:\\Program Files\\Framekeep\\data\\catalog_previews"
+    ],
+    "remaining_files": 0,
+    "remaining_bytes": 0,
+    "final_phase_disk": {
+      "free_before": 233049174016,
+      "free_after": 276344315904,
+      "free_delta": 43295141888
+    },
+    "whole_session_disk_observation": {
+      "includes_build_and_install": true,
+      "d_free_before": 206453170176,
+      "d_free_after": 276344295424
+    },
+    "business_index_preserved_bytes": 25050898432,
+    "quick_search_preserved": true,
+    "cache_location_config_unchanged": true,
+    "installed_engine_smoke": {
+      "direct_state": {
+        "mode": "file",
+        "direct_only": true,
+        "decode_enabled": false,
+        "images": 0,
+        "bytes": 0,
+        "pending": 0,
+        "failed": 0,
+        "limit_gb": 0,
+        "path": "",
+        "job": {
+          "status": "idle",
+          "message": "文件直读，不构建预览缓存"
+        }
+      },
+      "images": [
+        {
+          "kind": "preview",
+          "http": 200,
+          "pixels": [
+            480,
+            300
+          ],
+          "bytes": 2909,
+          "cache_control": "no-store"
+        },
+        {
+          "kind": "previewLarge",
+          "http": 200,
+          "pixels": [
+            1280,
+            800
+          ],
+          "bytes": 16629,
+          "cache_control": "no-store"
+        },
+        {
+          "kind": "previewFull",
+          "http": 200,
+          "pixels": [
+            1280,
+            800
+          ],
+          "bytes": 16629,
+          "cache_control": "no-store"
+        }
+      ],
+      "fixture_preserved": true,
+      "new_disk_preview_files": 0,
+      "status": "passed"
+    }
+  },
+  "limitations": [
+    "Native screenshot timed out; native accessibility tree verified",
+    "Automatic approval rejected build duplicate cleanup: blocked by policy; those duplicates retained"
+  ],
+  "published": false
+}

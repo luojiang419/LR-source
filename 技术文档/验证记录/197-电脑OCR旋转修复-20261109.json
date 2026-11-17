@@ -1,0 +1,5378 @@
+{
+  "status": "verified_local_artifact",
+  "sourceCommit": "96cbaa7",
+  "ocrTestsPassed": 39,
+  "base_images": 12,
+  "baseline": [
+    {
+      "name": "XSY_2297",
+      "degrees": 0,
+      "kind": "printed",
+      "scorable": true,
+      "expected": "LC7877836-P1",
+      "sha256": "3379f88e8fc6b8b037f3a3a0e841af2ea03bb49a33566783861d9a6d18ffd205",
+      "codes": [
+        "LC7877836-P1"
+      ],
+      "correct": true,
+      "text": "p\nSIZE:S\nLC7877836-P1\n261103\n(G757)\n74.7% COTTON\n16.5%POLYESTER\n8.8%REGENERA TED FIBRE\nMADE IN CHINA",
+      "timing": {
+        "load_ms": 716.4435000013327,
+        "detection_ms": 595.7338999996864,
+        "recognition_ms": 244.96110000109184,
+        "total_ms": 840.6950000007782
+      },
+      "orientation": null
+    },
+    {
+      "name": "XSY_2611",
+      "degrees": 0,
+      "kind": "printed",
+      "scorable": true,
+      "expected": "LC7832852-P804",
+      "sha256": "a70c69de88cbf9371570a81889877853f3cbdedee49369d7e1d309ca22d521ef",
+      "codes": [
+        "LC7832852-P804"
+      ],
+      "correct": true,
+      "text": "SIZE:S\nLC7832852-P804\n261108\n571\n71.5% COTTON\n27% POLYESTER\n1.5% ELASTANE\nMADE IN CHINA",
+      "timing": {
+        "load_ms": 716.4435000013327,
+        "detection_ms": 583.1232000000455,
+        "recognition_ms": 190.11970000065048,
+        "total_ms": 773.242900000696
+      },
+      "orientation": null
+    },
+    {
+      "name": "XSY_2948",
+      "degrees": 0,
+      "kind": "printed",
+      "scorable": true,
+      "expected": "LC7832746-P2909",
+      "sha256": "b4cce2bbe3a5d5545c5ab3bf406f7299ea2978f9c6f6cb0a1f9d298b80069814",
+      "codes": [
+        "LC7832746-P2909"
+      ],
+      "correct": true,
+      "text": "SIZE:S\nLC7832746-P2909\n261109\nG123\n75% COTTON\n23% POLYESTER\n2% ELASTANE\nMADE IN CHINA",
+      "timing": {
+        "load_ms": 716.4435000013327,
+        "detection_ms": 560.7293999983085,
+        "recognition_ms": 195.8040000008623,
+        "total_ms": 756.5333999991708
+      },
+      "orientation": null
+    },
+    {
+      "name": "XSY_3471",
+      "degrees": 0,
+      "kind": "handwritten",
+      "scorable": true,
+      "expected": "LC7832773-P805",
+      "sha256": "bc55e4df734e2254c56992802a1ba525742e427526e51465c2144498437cf2a7",
+      "codes": [
+        "LC7832773-P805"
+      ],
+      "correct": true,
+      "text": "宏爵制衣厂\n款号：LC7832773\n-P805\n尺码：\n顺富7158SH\n面料\n用线：\nHX117\n板类：\nS码\n坐围：\n车板工号：12\n8.18\n期：",
+      "timing": {
+        "load_ms": 716.4435000013327,
+        "detection_ms": 575.9359000003315,
+        "recognition_ms": 329.640299998573,
+        "total_ms": 905.5761999989045
+      },
+      "orientation": null
+    },
+    {
+      "name": "XSY_3843",
+      "degrees": 0,
+      "kind": "printed",
+      "scorable": true,
+      "expected": "LC7311702-P6016",
+      "sha256": "53dca419b0cefa1ddf58b7e9b46c67f5f86e434cd25908d6c8f913d41f4e8c38",
+      "codes": [
+        "LC7311702-P6016"
+      ],
+      "correct": true,
+      "text": "MANANVAAAINA\nSIZE:S\nLC7311702-P6016\n261015\nG388\n70%Viscose\n23%Polyamide\n7%Elastane\nMADE IN CHINA",
+      "timing": {
+        "load_ms": 716.4435000013327,
+        "detection_ms": 592.8648000008252,
+        "recognition_ms": 230.98059999938414,
+        "total_ms": 823.8454000002093
+      },
+      "orientation": null
+    },
+    {
+      "name": "XSY_4241",
+      "degrees": 0,
+      "kind": "printed",
+      "scorable": true,
+      "expected": "LC7877496-P804",
+      "sha256": "c288151fd7ddbe2a74166fe8455316a3114cdf13bd7fa02334419512b7ecdf89",
+      "codes": [
+        "LC7877496-P804"
+      ],
+      "correct": true,
+      "text": "SIZE:S\nLC7877496-P804\n261009\nG93\n75% COTTON\n23% POLYESTER\n2% ELASTANE",
+      "timing": {
+        "load_ms": 716.4435000013327,
+        "detection_ms": 598.4334999993735,
+        "recognition_ms": 169.69450000033248,
+        "total_ms": 768.1279999997059
+      },
+      "orientation": null
+    },
+    {
+      "name": "XSY_4571",
+      "degrees": 0,
+      "kind": "printed",
+      "scorable": true,
+      "expected": "LC7877554-P1410",
+      "sha256": "8457b2480e2bdada8d94bafd43e1ac304eaccacc01cf09fa0448d1c8266ff5d2",
+      "codes": [
+        "LC7877554-P1410"
+      ],
+      "correct": true,
+      "text": "SIZE:S\nLC7877554-P1410\n261013\nG123\n75% COTTON\n23% POLYESTER\n2% ELASTANE\nMADE IN CHINA",
+      "timing": {
+        "load_ms": 716.4435000013327,
+        "detection_ms": 617.8837000006752,
+        "recognition_ms": 210.97240000017337,
+        "total_ms": 828.8561000008485
+      },
+      "orientation": null
+    },
+    {
+      "name": "XSY_4936",
+      "degrees": 0,
+      "kind": "printed",
+      "scorable": true,
+      "expected": "LC7832886-P1",
+      "sha256": "464f9f69707ec8adc91c76ef50ce0fc94b2cd08182226e86776634ddf0bf273c",
+      "codes": [
+        "LC7832886-P1"
+      ],
+      "correct": true,
+      "text": "SIZE:S\nLC7832886-P1\n261112\nG763\n73%COTTON\n25.4%POLYESTER\n1.6%ELASTANE\nMADE IN CHINA",
+      "timing": {
+        "load_ms": 716.4435000013327,
+        "detection_ms": 581.9135000001552,
+        "recognition_ms": 218.1672000006074,
+        "total_ms": 800.0807000007626
+      },
+      "orientation": null
+    },
+    {
+      "name": "XSY_5294",
+      "degrees": 0,
+      "kind": "printed",
+      "scorable": true,
+      "expected": "LC7877529-P105",
+      "sha256": "99d518f63efb6c1220abf98d9ba74a3f45888cef8b46bdbac4bec1774cf67a5d",
+      "codes": [
+        "LC7877529-P105"
+      ],
+      "correct": true,
+      "text": "DVS\nSVS\nSIZE:S\nLC7877529-P105\n261020\nG93\n71% COTTON\n27.5% POLYESTER\n1.5% ELASTANE\nMADE IN CHINA",
+      "timing": {
+        "load_ms": 716.4435000013327,
+        "detection_ms": 589.8464000001695,
+        "recognition_ms": 253.8079000005382,
+        "total_ms": 843.6543000007077
+      },
+      "orientation": null
+    },
+    {
+      "name": "XSY_5753",
+      "degrees": 0,
+      "kind": "handwritten",
+      "scorable": true,
+      "expected": "7877842-P305",
+      "sha256": "78fe19197cc2bf2aec058b8b2ce6bcbca8180373e66fa25218f891fd47481164",
+      "codes": [
+        "187842-9305",
+        "7705E",
+        "1955",
+        "1361"
+      ],
+      "correct": false,
+      "text": "187842-9305\n号：7705E\n今t\n1955\n面线\n1361\n级骨\n成眼码粉\n打枣\n纸样",
+      "timing": {
+        "load_ms": 716.4435000013327,
+        "detection_ms": 579.2806999997993,
+        "recognition_ms": 246.87200000153098,
+        "total_ms": 826.1527000013302
+      },
+      "orientation": null
+    },
+    {
+      "name": "XSY_5988",
+      "degrees": 0,
+      "kind": "handwritten",
+      "scorable": false,
+      "expected": "LC787843-P1",
+      "sha256": "187314af856d803705a1ed26200fd454f593409b59aaca8efede127ec34cdd20",
+      "codes": [
+        "L0787843-p1"
+      ],
+      "correct": false,
+      "text": "L0787843-p1拍照样",
+      "timing": {
+        "load_ms": 716.4435000013327,
+        "detection_ms": 576.3041999998677,
+        "recognition_ms": 26.283600000169827,
+        "total_ms": 602.5878000000375
+      },
+      "orientation": null
+    },
+    {
+      "name": "XSY_6454",
+      "degrees": 0,
+      "kind": "printed",
+      "scorable": true,
+      "expected": "LC7881112-P1",
+      "sha256": "1e79b1145170d55809f69a6e80552e08cfb0323f2a44ae6445ff74c1a2671262",
+      "codes": [
+        "LC7881112-P1"
+      ],
+      "correct": true,
+      "text": "SIZE: S\nLC7881112-P1\n261017\nG823\n74.7%COTTON\n16.5% POLYESTER\n8.8%REGENERATED FIBER\nMADE IN CHINA",
+      "timing": {
+        "load_ms": 716.4435000013327,
+        "detection_ms": 578.4920999994938,
+        "recognition_ms": 211.60349999991013,
+        "total_ms": 790.0955999994039
+      },
+      "orientation": null
+    },
+    {
+      "name": "XSY_2297",
+      "degrees": 90,
+      "kind": "printed",
+      "scorable": true,
+      "expected": "LC7877836-P1",
+      "sha256": "4f95a2e75b9073a9ed4ff8388b306e108bcee909857336dbc71980ab4a2e93eb",
+      "codes": [
+        "LC7877836-P1"
+      ],
+      "correct": true,
+      "text": "LC7877836-P1\n .5STE\n(G6757)\n4.7 OT0N\nRIBRE\nSZEIS\nAD   HIN\nnia\nR\n261103",
+      "timing": {
+        "load_ms": 716.4435000013327,
+        "detection_ms": 586.4849999998114,
+        "recognition_ms": 249.25210000037623,
+        "total_ms": 835.7371000001876
+      },
+      "orientation": null
+    },
+    {
+      "name": "XSY_2611",
+      "degrees": 90,
+      "kind": "printed",
+      "scorable": true,
+      "expected": "LC7832852-P804",
+      "sha256": "45d06cd1dfcb71b18f0f4b6bb6970bb6a3521ca86d91d4fb9cd0f512e268c1ec",
+      "codes": [
+        "78804",
+        "1.5 T0",
+        "5  ANE",
+        "261108"
+      ],
+      "correct": false,
+      "text": "78804\n1.5 T0\n TE\n57\n5  ANE\nAE I HIN\nSZE:S\n261108",
+      "timing": {
+        "load_ms": 716.4435000013327,
+        "detection_ms": 603.6010999996506,
+        "recognition_ms": 199.27989999996498,
+        "total_ms": 802.8809999996156
+      },
+      "orientation": null
+    },
+    {
+      "name": "XSY_2948",
+      "degrees": 90,
+      "kind": "printed",
+      "scorable": true,
+      "expected": "LC7832746-P2909",
+      "sha256": "27ad1c8e9a32c43ee85a820685d7ca67b61e172679db594879c27f74c89eee2c",
+      "codes": [
+        "782909",
+        "C0T0N",
+        "61  23"
+      ],
+      "correct": false,
+      "text": "AI  HIN\n782909\n5% C0T0N\n SNE\n61  23\n STE\nSIZZES",
+      "timing": {
+        "load_ms": 716.4435000013327,
+        "detection_ms": 578.2314000007318,
+        "recognition_ms": 169.98640000019805,
+        "total_ms": 748.2178000009299
+      },
+      "orientation": null
+    },
+    {
+      "name": "XSY_3471",
+      "degrees": 90,
+      "kind": "handwritten",
+      "scorable": true,
+      "expected": "LC7832773-P805",
+      "sha256": "b0fc8dc83fb5c9bf51ad4dc25e99b6b04217d7edb1f90ce781fd38d22b9ba5ae",
+      "codes": [
+        "H58SL"
+      ],
+      "correct": false,
+      "text": "H58SL\n数：C8Y\ndo&d-\n全市市部\nLIIKH:\n车工卫空车2\n居房：\n养务房\n面料\n用\n图",
+      "timing": {
+        "load_ms": 716.4435000013327,
+        "detection_ms": 578.4058999997796,
+        "recognition_ms": 268.81829999911133,
+        "total_ms": 847.224199998891
+      },
+      "orientation": null
+    },
+    {
+      "name": "XSY_3843",
+      "degrees": 90,
+      "kind": "printed",
+      "scorable": true,
+      "expected": "LC7311702-P6016",
+      "sha256": "db549ec96791f8f8eda983afc53fbcae23e8ad970ad228465fd22a98e9ef47dc",
+      "codes": [
+        "73011601",
+        "8880",
+        "3ide",
+        "261015"
+      ],
+      "correct": false,
+      "text": "73011601\nI IN\nSIZE:S\n8880)\n3ide\n0%se\n% ane\n261015",
+      "timing": {
+        "load_ms": 716.4435000013327,
+        "detection_ms": 583.1287999990309,
+        "recognition_ms": 205.15979999981937,
+        "total_ms": 788.2885999988503
+      },
+      "orientation": null
+    },
+    {
+      "name": "XSY_4241",
+      "degrees": 90,
+      "kind": "printed",
+      "scorable": true,
+      "expected": "LC7877496-P804",
+      "sha256": "2b429e40037ddf58d1579d0b37cd1362ac81a6ac86ac56fc524f707e5d9a7771",
+      "codes": [
+        "787804",
+        "261 693",
+        "CT0N"
+      ],
+      "correct": false,
+      "text": "787804\n TE\n NE\nSIZE:S\n261 693\n0% CT0N",
+      "timing": {
+        "load_ms": 716.4435000013327,
+        "detection_ms": 620.9040000012465,
+        "recognition_ms": 152.43229999941832,
+        "total_ms": 773.3363000006648
+      },
+      "orientation": null
+    },
+    {
+      "name": "XSY_4571",
+      "degrees": 90,
+      "kind": "printed",
+      "scorable": true,
+      "expected": "LC7877554-P1410",
+      "sha256": "657de6d653e8562012d8c865c67e4ec5b647cd2c7fc95b18883525c51ed835a4",
+      "codes": [
+        "7811",
+        "75 0T0N"
+      ],
+      "correct": false,
+      "text": "7811\nA HIN\n6 23\n ANE\n75 0T0N\n STE\nSIZE:S",
+      "timing": {
+        "load_ms": 716.4435000013327,
+        "detection_ms": 605.8057999998709,
+        "recognition_ms": 173.3473000003869,
+        "total_ms": 779.1531000002578
+      },
+      "orientation": null
+    },
+    {
+      "name": "XSY_4936",
+      "degrees": 90,
+      "kind": "printed",
+      "scorable": true,
+      "expected": "LC7832886-P1",
+      "sha256": "78c5ae60d6aba458304c6cfe47f11cc2e259e1f7662f94343816a58c2d3c30e1",
+      "codes": [
+        "C76-P",
+        "G763"
+      ],
+      "correct": false,
+      "text": " E\nAIIIN\nC76-P\nG763)\n_GTN\nSI:ZE:S\n3%CTON\n612",
+      "timing": {
+        "load_ms": 716.4435000013327,
+        "detection_ms": 601.3009000016609,
+        "recognition_ms": 203.79209999919112,
+        "total_ms": 805.093000000852
+      },
+      "orientation": null
+    },
+    {
+      "name": "XSY_5294",
+      "degrees": 90,
+      "kind": "printed",
+      "scorable": true,
+      "expected": "LC7877529-P105",
+      "sha256": "9478e2f1ace09bbcd00ce9061bc721cf5b04c9046fe33ac93115bec66bf8a124",
+      "codes": [
+        "78105",
+        "1 CT0N"
+      ],
+      "correct": false,
+      "text": "SUS\n  E\n78105\n_ AN\nAIIN\nSIZEIS\n6 9\n1 CT0N\nDVS",
+      "timing": {
+        "load_ms": 716.4435000013327,
+        "detection_ms": 592.5308000005316,
+        "recognition_ms": 229.06479999983276,
+        "total_ms": 821.5956000003644
+      },
+      "orientation": null
+    },
+    {
+      "name": "XSY_5753",
+      "degrees": 90,
+      "kind": "handwritten",
+      "scorable": true,
+      "expected": "7877842-P305",
+      "sha256": "cb705404533f0faec519c34dea2a9b46711ae9dd4cbca81d17e79fe0a688d628",
+      "codes": [
+        "556174"
+      ],
+      "correct": false,
+      "text": "556174\n称E\n成眼码数\n号\n面\n性",
+      "timing": {
+        "load_ms": 716.4435000013327,
+        "detection_ms": 574.420499999178,
+        "recognition_ms": 145.39370000056806,
+        "total_ms": 719.814199999746
+      },
+      "orientation": null
+    },
+    {
+      "name": "XSY_5988",
+      "degrees": 90,
+      "kind": "handwritten",
+      "scorable": false,
+      "expected": "LC787843-P1",
+      "sha256": "8dcddcc8fd26fca15cf9790f1ecf4e985edfe12e2bb6b6e83345e26e946ca771",
+      "codes": [
+        "48127"
+      ],
+      "correct": false,
+      "text": "韩1）幼48127",
+      "timing": {
+        "load_ms": 716.4435000013327,
+        "detection_ms": 578.3296999998129,
+        "recognition_ms": 26.95529999982682,
+        "total_ms": 605.2849999996397
+      },
+      "orientation": null
+    },
+    {
+      "name": "XSY_6454",
+      "degrees": 90,
+      "kind": "printed",
+      "scorable": true,
+      "expected": "LC7881112-P1",
+      "sha256": "00d467a5a137f2a622f79263cd9b74390731e2b338043e05051781ba9289c801",
+      "codes": [
+        "782-P1"
+      ],
+      "correct": false,
+      "text": "R BE\n823\n4.TO\n 6.SE\nAI HIN\nSIZE: S\n上782-P1\n261017",
+      "timing": {
+        "load_ms": 716.4435000013327,
+        "detection_ms": 565.0533999996696,
+        "recognition_ms": 200.2182999985962,
+        "total_ms": 765.2716999982658
+      },
+      "orientation": null
+    },
+    {
+      "name": "XSY_2297",
+      "degrees": 180,
+      "kind": "printed",
+      "scorable": true,
+      "expected": "LC7877836-P1",
+      "sha256": "85ec6d7d8a5e509aed8ec57da5ffad36ed40f49b55351ebe21aef5536c523a15",
+      "codes": [
+        "LC787836-P1"
+      ],
+      "correct": false,
+      "text": "A HIN\nRE BRE\n .5TE\n.7  \nG757)\n261103\nLC787836-P1\nSIZE/S\n回\njid",
+      "timing": {
+        "load_ms": 716.4435000013327,
+        "detection_ms": 562.6799000001483,
+        "recognition_ms": 250.4332999997132,
+        "total_ms": 813.1131999998615
+      },
+      "orientation": null
+    },
+    {
+      "name": "XSY_2611",
+      "degrees": 180,
+      "kind": "printed",
+      "scorable": true,
+      "expected": "LC7832852-P804",
+      "sha256": "007d3ca09a72f54d30a2ab1802ee5159eaccf9dad789c38f646afbdb5d40c129",
+      "codes": [
+        "5ANE",
+        "261108"
+      ],
+      "correct": false,
+      "text": "AI HIN\n5ANE\n STE\n.5 0\n571\n261108\n780\nSZEIS",
+      "timing": {
+        "load_ms": 716.4435000013327,
+        "detection_ms": 590.8080999997765,
+        "recognition_ms": 195.21509999867703,
+        "total_ms": 786.0231999984535
+      },
+      "orientation": null
+    },
+    {
+      "name": "XSY_2948",
+      "degrees": 180,
+      "kind": "printed",
+      "scorable": true,
+      "expected": "LC7832746-P2909",
+      "sha256": "c1ad45bd9fcb161ba3a0c2c4aeaa2689ddfabf0fc6b4b1f673de89753b002978",
+      "codes": [
+        "G123",
+        "261109",
+        "78299"
+      ],
+      "correct": false,
+      "text": "I  HIN\n N\n TE\n50% C0\nG123\n261109\n78299\nSIZZES",
+      "timing": {
+        "load_ms": 716.4435000013327,
+        "detection_ms": 581.5165999993042,
+        "recognition_ms": 223.91980000065814,
+        "total_ms": 805.4363999999623
+      },
+      "orientation": null
+    },
+    {
+      "name": "XSY_3471",
+      "degrees": 180,
+      "kind": "handwritten",
+      "scorable": true,
+      "expected": "LC7832773-P805",
+      "sha256": "7d5fcd1b383b468098a68b188e35b831442463aa6ccbf6fea3b970f1518fab0c",
+      "codes": [
+        "H58SL",
+        "CC82"
+      ],
+      "correct": false,
+      "text": "18\n明\n车工卫工号气济门2\n业S\n房质\n用：H二）\nH58SL\n面料\nsodd-\n后产房：\n数：CC82\n市济部",
+      "timing": {
+        "load_ms": 716.4435000013327,
+        "detection_ms": 650.6162000005133,
+        "recognition_ms": 316.4735999998811,
+        "total_ms": 967.0898000003945
+      },
+      "orientation": null
+    },
+    {
+      "name": "XSY_3843",
+      "degrees": 180,
+      "kind": "printed",
+      "scorable": true,
+      "expected": "LC7311702-P6016",
+      "sha256": "68cbc964ae94e116ee795984f57f69822b3a8f1393d6faf478db43632adad2ff",
+      "codes": [
+        "C11116"
+      ],
+      "correct": false,
+      "text": "AH  IN\n%ne\n3lide\n0%icse\n8888)\n261015\nC11116\nS:EZIS",
+      "timing": {
+        "load_ms": 716.4435000013327,
+        "detection_ms": 626.097899999877,
+        "recognition_ms": 208.4391999997024,
+        "total_ms": 834.5370999995794
+      },
+      "orientation": null
+    },
+    {
+      "name": "XSY_4241",
+      "degrees": 180,
+      "kind": "printed",
+      "scorable": true,
+      "expected": "LC7877496-P804",
+      "sha256": "1b30a30d27f380a915e95505ea09f96a804606e0ad2824192358ff39b6cf4ed4",
+      "codes": [
+        "CT0N",
+        "261009"
+      ],
+      "correct": false,
+      "text": "  NE\n TE\n75% CT0N\nG93\n261009\n780\nSIZE:S",
+      "timing": {
+        "load_ms": 716.4435000013327,
+        "detection_ms": 597.4334000002273,
+        "recognition_ms": 172.89399999935995,
+        "total_ms": 770.3273999995872
+      },
+      "orientation": null
+    },
+    {
+      "name": "XSY_4571",
+      "degrees": 180,
+      "kind": "printed",
+      "scorable": true,
+      "expected": "LC7877554-P1410",
+      "sha256": "22f79dbe93de1b705ea021bc7b1cbbb6a0680b20b258e928945e1eee9e4c1342",
+      "codes": [
+        "750 C0T0N",
+        "G123",
+        "78141"
+      ],
+      "correct": false,
+      "text": "AI  HIN\n  N\n STE\n750 C0T0N\nG123\n613\n78141一\nSIZE:S",
+      "timing": {
+        "load_ms": 716.4435000013327,
+        "detection_ms": 593.6420999987604,
+        "recognition_ms": 207.0190000013099,
+        "total_ms": 800.6611000000703
+      },
+      "orientation": null
+    },
+    {
+      "name": "XSY_4936",
+      "degrees": 180,
+      "kind": "printed",
+      "scorable": true,
+      "expected": "LC7832886-P1",
+      "sha256": "2472a5c1580c3ba8ac3cb986a67aa7dbf8b721d86cc346c836c5bc140495eecf",
+      "codes": [
+        "6112"
+      ],
+      "correct": false,
+      "text": "AA N\nAN\n5E\n3%TTON\n763)\n家6112\nC6-P\nSIZE:S",
+      "timing": {
+        "load_ms": 716.4435000013327,
+        "detection_ms": 609.1940999995131,
+        "recognition_ms": 230.08330000084243,
+        "total_ms": 839.2774000003556
+      },
+      "orientation": null
+    },
+    {
+      "name": "XSY_5294",
+      "degrees": 180,
+      "kind": "printed",
+      "scorable": true,
+      "expected": "LC7877529-P105",
+      "sha256": "ce5b7866ce7f1876198dba01ef5585b2367aa96a884772a6a561793305bca268",
+      "codes": [
+        "78105"
+      ],
+      "correct": false,
+      "text": "AIIN\n5 AN\n 7E\n18% 0N\n6 9\n78105\nSIZZES\nSAD",
+      "timing": {
+        "load_ms": 716.4435000013327,
+        "detection_ms": 575.1191999988805,
+        "recognition_ms": 205.07290000023204,
+        "total_ms": 780.1920999991125
+      },
+      "orientation": null
+    },
+    {
+      "name": "XSY_5753",
+      "degrees": 180,
+      "kind": "handwritten",
+      "scorable": true,
+      "expected": "7877842-P305",
+      "sha256": "1902d9e6a5faacc25d4dca8c9ee3493c654715b177dc4103e1ad2e98ed93aa4e",
+      "codes": [
+        "5961",
+        "7S0L"
+      ],
+      "correct": false,
+      "text": "性\n联出光\n净速\n198\n号：\n741\n5961\n面\n餐\n7S0L\n禁骨",
+      "timing": {
+        "load_ms": 716.4435000013327,
+        "detection_ms": 575.9904999995342,
+        "recognition_ms": 268.14700000068115,
+        "total_ms": 844.1375000002154
+      },
+      "orientation": null
+    },
+    {
+      "name": "XSY_5988",
+      "degrees": 180,
+      "kind": "handwritten",
+      "scorable": false,
+      "expected": "LC787843-P1",
+      "sha256": "a3a16b2a5eafdaad203c2a0b717cb5229273fbb69e4afec1dc06ab2ece64b958",
+      "codes": [
+        "8827"
+      ],
+      "correct": false,
+      "text": "幼8827",
+      "timing": {
+        "load_ms": 716.4435000013327,
+        "detection_ms": 598.5982000001968,
+        "recognition_ms": 28.01779999936116,
+        "total_ms": 626.615999999558
+      },
+      "orientation": null
+    },
+    {
+      "name": "XSY_6454",
+      "degrees": 180,
+      "kind": "printed",
+      "scorable": true,
+      "expected": "LC7881112-P1",
+      "sha256": "572901078478d1531301b3dccbc35df03587df4d729110530d74e94f8ad653e8",
+      "codes": [
+        "782-P1"
+      ],
+      "correct": false,
+      "text": "AI IN\n \n E\n4.0\n823\n61017\n上782-P1\nSIZE S",
+      "timing": {
+        "load_ms": 716.4435000013327,
+        "detection_ms": 655.6483999993361,
+        "recognition_ms": 213.28170000015234,
+        "total_ms": 868.9300999994884
+      },
+      "orientation": null
+    },
+    {
+      "name": "XSY_2297",
+      "degrees": 270,
+      "kind": "printed",
+      "scorable": true,
+      "expected": "LC7877836-P1",
+      "sha256": "867cbf611c253f6f8fece98f7d16e41c94404aa7b12c7e796785588ef9c4ff16",
+      "codes": [
+        "LC7877836-P1"
+      ],
+      "correct": true,
+      "text": "8.8%REGENERA TED FIBRE\n16.5%POLYESTER\nLC7877836-P1\nMADE IN CHINA\n74.7% COTTON\n261103\nSIZE:S\nnid\n(G757)",
+      "timing": {
+        "load_ms": 716.4435000013327,
+        "detection_ms": 646.8767000005755,
+        "recognition_ms": 241.50620000000345,
+        "total_ms": 888.382900000579
+      },
+      "orientation": null
+    },
+    {
+      "name": "XSY_2611",
+      "degrees": 270,
+      "kind": "printed",
+      "scorable": true,
+      "expected": "LC7832852-P804",
+      "sha256": "3133c2bbc34f12fed777bc23f53a3ee08ffef61f154ee4dc81fae5eacaee2b0a",
+      "codes": [
+        "LC7832852-P804"
+      ],
+      "correct": true,
+      "text": "MADE IN CHINA\n1.5% ELASTANE\n27% POLYESTER\n71.5% COTTON\nLC7832852-P804\n261108\nSIZE:S\n571",
+      "timing": {
+        "load_ms": 716.4435000013327,
+        "detection_ms": 654.9540999985766,
+        "recognition_ms": 198.91950000055658,
+        "total_ms": 853.8735999991331
+      },
+      "orientation": null
+    },
+    {
+      "name": "XSY_2948",
+      "degrees": 270,
+      "kind": "printed",
+      "scorable": true,
+      "expected": "LC7832746-P2909",
+      "sha256": "7a984400bd7fd5f696668e6f7f9ae968c4ab4b1e44e3382058d49658674d1ad0",
+      "codes": [
+        "LC7832746-P2909"
+      ],
+      "correct": true,
+      "text": "LC7832746-P2909\nMADE IN CHINA\n261109 G123\n2% ELASTANE\n23% POLYESTER\n75% COTTON\nSIZE:S",
+      "timing": {
+        "load_ms": 716.4435000013327,
+        "detection_ms": 591.6919999999664,
+        "recognition_ms": 171.53750000034051,
+        "total_ms": 763.2295000003069
+      },
+      "orientation": null
+    },
+    {
+      "name": "XSY_3471",
+      "degrees": 270,
+      "kind": "handwritten",
+      "scorable": true,
+      "expected": "LC7832773-P805",
+      "sha256": "3a3d110aa7f518df9ee4e934cd000fe34b9b22f34b4ad4863f021ecc2fcb7e8b",
+      "codes": [
+        "7158SH",
+        "LC783277"
+      ],
+      "correct": false,
+      "text": "用线：HX117\n车板工号：\n坐围\n板类：\n面料\n尺码：\n款号\n富7158SH\n宏爵制衣厂\nLC783277\n12\n-P805",
+      "timing": {
+        "load_ms": 716.4435000013327,
+        "detection_ms": 600.5984000003082,
+        "recognition_ms": 322.1821999995882,
+        "total_ms": 922.7805999998964
+      },
+      "orientation": null
+    },
+    {
+      "name": "XSY_3843",
+      "degrees": 270,
+      "kind": "printed",
+      "scorable": true,
+      "expected": "LC7311702-P6016",
+      "sha256": "f31d3206742a94d99d792af8a9ea3ed7f012fe4375c7deac3c2c43631a5c4272",
+      "codes": [
+        "LC7311702-P6016"
+      ],
+      "correct": true,
+      "text": "LC7311702-P6016\nMADE IN CHINA\n7%Elastane\n261015\n23%Polyamide\n70%Viscose\nSIZE:S\nG388",
+      "timing": {
+        "load_ms": 716.4435000013327,
+        "detection_ms": 638.5287000011886,
+        "recognition_ms": 204.88850000037928,
+        "total_ms": 843.4172000015678
+      },
+      "orientation": null
+    },
+    {
+      "name": "XSY_4241",
+      "degrees": 270,
+      "kind": "printed",
+      "scorable": true,
+      "expected": "LC7877496-P804",
+      "sha256": "5a53e4eb259e482d3dfdfa550fe46f89fcc008d6c4efdd9dc9555a9c422de6dc",
+      "codes": [
+        "LC7877496-P804"
+      ],
+      "correct": true,
+      "text": "2% ELASTANE\n23% POLYESTER\nLC7877496-P804\n75% COTTON\n261009 G93\nSIZE:S",
+      "timing": {
+        "load_ms": 716.4435000013327,
+        "detection_ms": 641.8814000007842,
+        "recognition_ms": 149.08239999931538,
+        "total_ms": 790.9638000000996
+      },
+      "orientation": null
+    },
+    {
+      "name": "XSY_4571",
+      "degrees": 270,
+      "kind": "printed",
+      "scorable": true,
+      "expected": "LC7877554-P1410",
+      "sha256": "0028a99980261481773cc5465a7cb950761e8e02708d0f21ad15ff6e6d876e20",
+      "codes": [
+        "LC7877554-P1410"
+      ],
+      "correct": true,
+      "text": "MADE IN CHINA\nLC7877554-P1410\n2% ELASTANE\n23% POLYESTER\n261013\n75% COTTON\nSIZE:S\nG123",
+      "timing": {
+        "load_ms": 716.4435000013327,
+        "detection_ms": 647.4459000000934,
+        "recognition_ms": 194.32299999971292,
+        "total_ms": 841.7688999998063
+      },
+      "orientation": null
+    },
+    {
+      "name": "XSY_4936",
+      "degrees": 270,
+      "kind": "printed",
+      "scorable": true,
+      "expected": "LC7832886-P1",
+      "sha256": "2f081bfb2fa1cbcc7c25105ce727ea621b14a47062d2d2f3e09744e9efcff7b4",
+      "codes": [
+        "LC7832886-P1"
+      ],
+      "correct": true,
+      "text": "MADE IN CHINA\nLC7832886-P1\n1.6%ELASTANE\n25.4%POLYESTER\n73%COTTON\n261112\nSIZE:S\nG763",
+      "timing": {
+        "load_ms": 716.4435000013327,
+        "detection_ms": 559.5597999999882,
+        "recognition_ms": 204.0346000012505,
+        "total_ms": 763.5944000012387
+      },
+      "orientation": null
+    },
+    {
+      "name": "XSY_5294",
+      "degrees": 270,
+      "kind": "printed",
+      "scorable": true,
+      "expected": "LC7877529-P105",
+      "sha256": "40e36b231062b59a80b92bbc396d3d8677c8e03078b6b532c6a9342aa544ade0",
+      "codes": [
+        "LC7877529-P105"
+      ],
+      "correct": true,
+      "text": "MADE IN CHINA\n1.5% ELASTANE\n27.5% POLYESTER\nLC7877529-P105\nSAD\n71% COTTON\n261020 G93\nSIZE:S\nSAB",
+      "timing": {
+        "load_ms": 716.4435000013327,
+        "detection_ms": 573.2520000001387,
+        "recognition_ms": 227.98800000055053,
+        "total_ms": 801.2400000006892
+      },
+      "orientation": null
+    },
+    {
+      "name": "XSY_5753",
+      "degrees": 270,
+      "kind": "handwritten",
+      "scorable": true,
+      "expected": "7877842-P305",
+      "sha256": "66058e8d8ae88aa2e687a460db679c4f0dfbedd7eabc305c1fbe39cf7896885b",
+      "codes": [],
+      "correct": false,
+      "text": "纸样\n打枣\n级骨\n面线\n布号\n款号\n标出",
+      "timing": {
+        "load_ms": 716.4435000013327,
+        "detection_ms": 584.1352000006736,
+        "recognition_ms": 195.8995999993931,
+        "total_ms": 780.0348000000668
+      },
+      "orientation": null
+    },
+    {
+      "name": "XSY_5988",
+      "degrees": 270,
+      "kind": "handwritten",
+      "scorable": false,
+      "expected": "LC787843-P1",
+      "sha256": "d0ce8f6b353cd657c9569656b617173974336a7b32e93c0259a5edeaef05b1e8",
+      "codes": [
+        "L0787843-p1"
+      ],
+      "correct": false,
+      "text": "L0787843-p1拍照样",
+      "timing": {
+        "load_ms": 716.4435000013327,
+        "detection_ms": 593.9856999993935,
+        "recognition_ms": 27.666200001476682,
+        "total_ms": 621.6519000008702
+      },
+      "orientation": null
+    },
+    {
+      "name": "XSY_6454",
+      "degrees": 270,
+      "kind": "printed",
+      "scorable": true,
+      "expected": "LC7881112-P1",
+      "sha256": "a6ebb53a7e4e2a1ba8c524eb08ead21a9f77ef3cef274d29596622b80f3b6386",
+      "codes": [
+        "LC7881112-P1"
+      ],
+      "correct": true,
+      "text": "8.8%REGENERATED FIBER\n16.5% POLYESTER\n74.7%COTTON\n261017\nLC7881112-P1\nMADE IN CHINA\nSIZE: S\nG823",
+      "timing": {
+        "load_ms": 716.4435000013327,
+        "detection_ms": 576.1046999996324,
+        "recognition_ms": 196.2855000001582,
+        "total_ms": 772.3901999997906
+      },
+      "orientation": null
+    }
+  ],
+  "png": {
+    "summary": [
+      {
+        "format": "png",
+        "degrees": 0,
+        "correct": 10,
+        "scorable": 11,
+        "median_ms": 1253.7885000001552,
+        "printed_correct": 9,
+        "printed_count": 9
+      },
+      {
+        "format": "png",
+        "degrees": 90,
+        "correct": 10,
+        "scorable": 11,
+        "median_ms": 1872.6849000004222,
+        "printed_correct": 9,
+        "printed_count": 9
+      },
+      {
+        "format": "png",
+        "degrees": 180,
+        "correct": 10,
+        "scorable": 11,
+        "median_ms": 1873.2035000002725,
+        "printed_correct": 9,
+        "printed_count": 9
+      },
+      {
+        "format": "png",
+        "degrees": 270,
+        "correct": 10,
+        "scorable": 11,
+        "median_ms": 1859.763749999729,
+        "printed_correct": 9,
+        "printed_count": 9
+      }
+    ],
+    "cases": [
+      {
+        "name": "XSY_2297",
+        "degrees": 0,
+        "format": "png",
+        "kind": "printed",
+        "scorable": true,
+        "expected": "LC7877836-P1",
+        "payload_sha256": "3379f88e8fc6b8b037f3a3a0e841af2ea03bb49a33566783861d9a6d18ffd205",
+        "codes": [
+          "LC7877836-P1"
+        ],
+        "candidate_exact": true,
+        "text": "p\nSIZE:S\nLC7877836-P1\n261103\n(G757)\n74.7% COTTON\n16.5%POLYESTER\n8.8%REGENERA TED FIBRE\nMADE IN CHINA",
+        "timing": {
+          "load_ms": 784.4382000002952,
+          "detection_ms": 686.671399998886,
+          "orientation_ms": 314.05310000081954,
+          "recognition_ms": 260.00089999979537,
+          "total_ms": 1260.725399999501
+        },
+        "orientation": {
+          "votes": [
+            29.384200893459173,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "confidence": 1.0,
+          "uncertain": false,
+          "probe_lines": 6,
+          "correction_ccw_degrees": 0,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1600,
+            1067
+          ]
+        }
+      },
+      {
+        "name": "XSY_2611",
+        "degrees": 0,
+        "format": "png",
+        "kind": "printed",
+        "scorable": true,
+        "expected": "LC7832852-P804",
+        "payload_sha256": "a70c69de88cbf9371570a81889877853f3cbdedee49369d7e1d309ca22d521ef",
+        "codes": [
+          "LC7832852-P804"
+        ],
+        "candidate_exact": true,
+        "text": "SIZE:S\nLC7832852-P804\n261108\n571\n71.5% COTTON\n27% POLYESTER\n1.5% ELASTANE\nMADE IN CHINA",
+        "timing": {
+          "load_ms": 784.4382000002952,
+          "detection_ms": 634.8402000003261,
+          "orientation_ms": 346.3173000000097,
+          "recognition_ms": 268.5820999995485,
+          "total_ms": 1249.7395999998844
+        },
+        "orientation": {
+          "votes": [
+            32.679412013178975,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "confidence": 1.0,
+          "uncertain": false,
+          "probe_lines": 6,
+          "correction_ccw_degrees": 0,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1600,
+            1067
+          ]
+        }
+      },
+      {
+        "name": "XSY_2948",
+        "degrees": 0,
+        "format": "png",
+        "kind": "printed",
+        "scorable": true,
+        "expected": "LC7832746-P2909",
+        "payload_sha256": "b4cce2bbe3a5d5545c5ab3bf406f7299ea2978f9c6f6cb0a1f9d298b80069814",
+        "codes": [
+          "LC7832746-P2909"
+        ],
+        "candidate_exact": true,
+        "text": "SIZE:S\nLC7832746-P2909\n261109\nG123\n75% COTTON\n23% POLYESTER\n2% ELASTANE\nMADE IN CHINA",
+        "timing": {
+          "load_ms": 784.4382000002952,
+          "detection_ms": 609.1584000005241,
+          "orientation_ms": 316.42049999936717,
+          "recognition_ms": 200.23419999961334,
+          "total_ms": 1125.8130999995046
+        },
+        "orientation": {
+          "votes": [
+            34.057167821005265,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "confidence": 1.0,
+          "uncertain": false,
+          "probe_lines": 6,
+          "correction_ccw_degrees": 0,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1600,
+            1067
+          ]
+        }
+      },
+      {
+        "name": "XSY_3471",
+        "degrees": 0,
+        "format": "png",
+        "kind": "handwritten",
+        "scorable": true,
+        "expected": "LC7832773-P805",
+        "payload_sha256": "bc55e4df734e2254c56992802a1ba525742e427526e51465c2144498437cf2a7",
+        "codes": [
+          "LC7832773-P805"
+        ],
+        "candidate_exact": true,
+        "text": "宏爵制衣厂\n款号：LC7832773\n-P805\n尺码：\n顺富7158SH\n面料\n用线：\nHX117\n板类：\nS码\n坐围：\n车板工号：12\n8.18\n期：",
+        "timing": {
+          "load_ms": 784.4382000002952,
+          "detection_ms": 608.9842000019416,
+          "orientation_ms": 306.94019999828015,
+          "recognition_ms": 355.19380000005185,
+          "total_ms": 1271.1182000002736
+        },
+        "orientation": {
+          "votes": [
+            16.241312008935004,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "confidence": 1.0,
+          "uncertain": false,
+          "probe_lines": 6,
+          "correction_ccw_degrees": 0,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1600,
+            1067
+          ]
+        }
+      },
+      {
+        "name": "XSY_3843",
+        "degrees": 0,
+        "format": "png",
+        "kind": "printed",
+        "scorable": true,
+        "expected": "LC7311702-P6016",
+        "payload_sha256": "53dca419b0cefa1ddf58b7e9b46c67f5f86e434cd25908d6c8f913d41f4e8c38",
+        "codes": [
+          "LC7311702-P6016"
+        ],
+        "candidate_exact": true,
+        "text": "MANANVAAAINA\nSIZE:S\nLC7311702-P6016\n261015\nG388\n70%Viscose\n23%Polyamide\n7%Elastane\nMADE IN CHINA",
+        "timing": {
+          "load_ms": 784.4382000002952,
+          "detection_ms": 593.7083000026178,
+          "orientation_ms": 349.6428999987984,
+          "recognition_ms": 239.5368999987113,
+          "total_ms": 1182.8881000001275
+        },
+        "orientation": {
+          "votes": [
+            29.378879421999265,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "confidence": 1.0,
+          "uncertain": false,
+          "probe_lines": 6,
+          "correction_ccw_degrees": 0,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1600,
+            1067
+          ]
+        }
+      },
+      {
+        "name": "XSY_4241",
+        "degrees": 0,
+        "format": "png",
+        "kind": "printed",
+        "scorable": true,
+        "expected": "LC7877496-P804",
+        "payload_sha256": "c288151fd7ddbe2a74166fe8455316a3114cdf13bd7fa02334419512b7ecdf89",
+        "codes": [
+          "LC7877496-P804"
+        ],
+        "candidate_exact": true,
+        "text": "SIZE:S\nLC7877496-P804\n261009\nG93\n75% COTTON\n23% POLYESTER\n2% ELASTANE",
+        "timing": {
+          "load_ms": 784.4382000002952,
+          "detection_ms": 739.3839999986085,
+          "orientation_ms": 387.94050000069547,
+          "recognition_ms": 225.56000000076892,
+          "total_ms": 1352.8845000000729
+        },
+        "orientation": {
+          "votes": [
+            22.70029230191774,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "confidence": 1.0,
+          "uncertain": false,
+          "probe_lines": 6,
+          "correction_ccw_degrees": 0,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1600,
+            1067
+          ]
+        }
+      },
+      {
+        "name": "XSY_4571",
+        "degrees": 0,
+        "format": "png",
+        "kind": "printed",
+        "scorable": true,
+        "expected": "LC7877554-P1410",
+        "payload_sha256": "8457b2480e2bdada8d94bafd43e1ac304eaccacc01cf09fa0448d1c8266ff5d2",
+        "codes": [
+          "LC7877554-P1410"
+        ],
+        "candidate_exact": true,
+        "text": "SIZE:S\nLC7877554-P1410\n261013\nG123\n75% COTTON\n23% POLYESTER\n2% ELASTANE\nMADE IN CHINA",
+        "timing": {
+          "load_ms": 784.4382000002952,
+          "detection_ms": 684.534199999689,
+          "orientation_ms": 391.08540000052017,
+          "recognition_ms": 234.9080000003596,
+          "total_ms": 1310.5276000005688
+        },
+        "orientation": {
+          "votes": [
+            29.281394595779172,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "confidence": 1.0,
+          "uncertain": false,
+          "probe_lines": 6,
+          "correction_ccw_degrees": 0,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1600,
+            1067
+          ]
+        }
+      },
+      {
+        "name": "XSY_4936",
+        "degrees": 0,
+        "format": "png",
+        "kind": "printed",
+        "scorable": true,
+        "expected": "LC7832886-P1",
+        "payload_sha256": "464f9f69707ec8adc91c76ef50ce0fc94b2cd08182226e86776634ddf0bf273c",
+        "codes": [
+          "LC7832886-P1"
+        ],
+        "candidate_exact": true,
+        "text": "SIZE:S\nLC7832886-P1\n261112\nG763\n73%COTTON\n25.4%POLYESTER\n1.6%ELASTANE\nMADE IN CHINA",
+        "timing": {
+          "load_ms": 784.4382000002952,
+          "detection_ms": 658.4719999991648,
+          "orientation_ms": 372.77180000091903,
+          "recognition_ms": 226.59360000034212,
+          "total_ms": 1257.837400000426
+        },
+        "orientation": {
+          "votes": [
+            39.70721154910018,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "confidence": 1.0,
+          "uncertain": false,
+          "probe_lines": 6,
+          "correction_ccw_degrees": 0,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1600,
+            1067
+          ]
+        }
+      },
+      {
+        "name": "XSY_5294",
+        "degrees": 0,
+        "format": "png",
+        "kind": "printed",
+        "scorable": true,
+        "expected": "LC7877529-P105",
+        "payload_sha256": "99d518f63efb6c1220abf98d9ba74a3f45888cef8b46bdbac4bec1774cf67a5d",
+        "codes": [
+          "LC7877529-P105"
+        ],
+        "candidate_exact": true,
+        "text": "DVS\nSVS\nSIZE:S\nLC7877529-P105\n261020\nG93\n71% COTTON\n27.5% POLYESTER\n1.5% ELASTANE\nMADE IN CHINA",
+        "timing": {
+          "load_ms": 784.4382000002952,
+          "detection_ms": 607.3551999998017,
+          "orientation_ms": 321.6085000003659,
+          "recognition_ms": 260.41000000077474,
+          "total_ms": 1189.3737000009423
+        },
+        "orientation": {
+          "votes": [
+            36.10539296383577,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "confidence": 1.0,
+          "uncertain": false,
+          "probe_lines": 6,
+          "correction_ccw_degrees": 0,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1600,
+            1067
+          ]
+        }
+      },
+      {
+        "name": "XSY_5753",
+        "degrees": 0,
+        "format": "png",
+        "kind": "handwritten",
+        "scorable": true,
+        "expected": "7877842-P305",
+        "payload_sha256": "78fe19197cc2bf2aec058b8b2ce6bcbca8180373e66fa25218f891fd47481164",
+        "codes": [
+          "187842-9305",
+          "7705E",
+          "1955",
+          "1361"
+        ],
+        "candidate_exact": false,
+        "text": "187842-9305\n号：7705E\n今t\n1955\n面线\n1361\n级骨\n成眼码粉\n打枣\n纸样",
+        "timing": {
+          "load_ms": 784.4382000002952,
+          "detection_ms": 620.8636999999726,
+          "orientation_ms": 148.30480000091484,
+          "recognition_ms": 272.42159999877913,
+          "total_ms": 1041.5900999996666
+        },
+        "orientation": {
+          "votes": [
+            7.619312478652679,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "confidence": 1.0,
+          "uncertain": false,
+          "probe_lines": 3,
+          "correction_ccw_degrees": 0,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1600,
+            1067
+          ]
+        }
+      },
+      {
+        "name": "XSY_5988",
+        "degrees": 0,
+        "format": "png",
+        "kind": "handwritten",
+        "scorable": false,
+        "expected": "LC787843-P1",
+        "payload_sha256": "187314af856d803705a1ed26200fd454f593409b59aaca8efede127ec34cdd20",
+        "codes": [
+          "L0787843-p1"
+        ],
+        "candidate_exact": false,
+        "text": "L0787843-p1拍照样",
+        "timing": {
+          "load_ms": 784.4382000002952,
+          "detection_ms": 619.7018000002572,
+          "orientation_ms": 61.91279999984545,
+          "recognition_ms": 29.77180000016233,
+          "total_ms": 711.386400000265
+        },
+        "orientation": {
+          "votes": [
+            3.9868621970526874,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "confidence": 1.0,
+          "uncertain": false,
+          "probe_lines": 1,
+          "correction_ccw_degrees": 0,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1600,
+            1067
+          ]
+        }
+      },
+      {
+        "name": "XSY_6454",
+        "degrees": 0,
+        "format": "png",
+        "kind": "printed",
+        "scorable": true,
+        "expected": "LC7881112-P1",
+        "payload_sha256": "1e79b1145170d55809f69a6e80552e08cfb0323f2a44ae6445ff74c1a2671262",
+        "codes": [
+          "LC7881112-P1"
+        ],
+        "candidate_exact": true,
+        "text": "SIZE: S\nLC7881112-P1\n261017\nG823\n74.7%COTTON\n16.5% POLYESTER\n8.8%REGENERATED FIBER\nMADE IN CHINA",
+        "timing": {
+          "load_ms": 784.4382000002952,
+          "detection_ms": 693.9263000003848,
+          "orientation_ms": 364.7057999987737,
+          "recognition_ms": 250.26660000003176,
+          "total_ms": 1308.8986999991903
+        },
+        "orientation": {
+          "votes": [
+            34.55437534978674,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "confidence": 1.0,
+          "uncertain": false,
+          "probe_lines": 6,
+          "correction_ccw_degrees": 0,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1600,
+            1067
+          ]
+        }
+      },
+      {
+        "name": "XSY_2297",
+        "degrees": 90,
+        "format": "png",
+        "kind": "printed",
+        "scorable": true,
+        "expected": "LC7877836-P1",
+        "payload_sha256": "4f95a2e75b9073a9ed4ff8388b306e108bcee909857336dbc71980ab4a2e93eb",
+        "codes": [
+          "LC7877836-P1"
+        ],
+        "candidate_exact": true,
+        "text": "p\nSIZE:S\nLC7877836-P1\n261103\n(G757)\n74.7% COTTON\n16.5%POLYESTER\n8.8%REGENERA TED FIBRE\nMADE IN CHINA",
+        "timing": {
+          "load_ms": 784.4382000002952,
+          "detection_ms": 1269.6867000013299,
+          "orientation_ms": 333.78929999889806,
+          "recognition_ms": 301.8136999999115,
+          "total_ms": 1905.2897000001394
+        },
+        "orientation": {
+          "votes": [
+            0.0,
+            0.0,
+            0.0,
+            26.60753336147147
+          ],
+          "confidence": 1.0,
+          "uncertain": false,
+          "probe_lines": 6,
+          "correction_ccw_degrees": 270,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1067,
+            1600
+          ]
+        }
+      },
+      {
+        "name": "XSY_2611",
+        "degrees": 90,
+        "format": "png",
+        "kind": "printed",
+        "scorable": true,
+        "expected": "LC7832852-P804",
+        "payload_sha256": "45d06cd1dfcb71b18f0f4b6bb6970bb6a3521ca86d91d4fb9cd0f512e268c1ec",
+        "codes": [
+          "LC7832852-P804"
+        ],
+        "candidate_exact": true,
+        "text": "SIZE:S\nLC7832852-P804\n261108\n571\n71.5% COTTON\n27% POLYESTER\n1.5% ELASTANE\nMADE IN CHINA",
+        "timing": {
+          "load_ms": 784.4382000002952,
+          "detection_ms": 1270.908500000587,
+          "orientation_ms": 320.0228999994579,
+          "recognition_ms": 200.76560000052268,
+          "total_ms": 1791.6970000005676
+        },
+        "orientation": {
+          "votes": [
+            0.0,
+            0.0,
+            0.0,
+            28.819869707934103
+          ],
+          "confidence": 1.0,
+          "uncertain": false,
+          "probe_lines": 6,
+          "correction_ccw_degrees": 270,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1067,
+            1600
+          ]
+        }
+      },
+      {
+        "name": "XSY_2948",
+        "degrees": 90,
+        "format": "png",
+        "kind": "printed",
+        "scorable": true,
+        "expected": "LC7832746-P2909",
+        "payload_sha256": "27ad1c8e9a32c43ee85a820685d7ca67b61e172679db594879c27f74c89eee2c",
+        "codes": [
+          "LC7832746-P2909"
+        ],
+        "candidate_exact": true,
+        "text": "SIZE:S\nLC7832746-P2909\n261109\nG123\n75% COTTON\n23% POLYESTER\n2% ELASTANE\nMADE IN CHINA",
+        "timing": {
+          "load_ms": 784.4382000002952,
+          "detection_ms": 1275.6804999989981,
+          "orientation_ms": 301.37760000070557,
+          "recognition_ms": 225.99199999967823,
+          "total_ms": 1803.050099999382
+        },
+        "orientation": {
+          "votes": [
+            0.0,
+            0.0,
+            0.0,
+            32.1182899944684
+          ],
+          "confidence": 1.0,
+          "uncertain": false,
+          "probe_lines": 6,
+          "correction_ccw_degrees": 270,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1067,
+            1600
+          ]
+        }
+      },
+      {
+        "name": "XSY_3471",
+        "degrees": 90,
+        "format": "png",
+        "kind": "handwritten",
+        "scorable": true,
+        "expected": "LC7832773-P805",
+        "payload_sha256": "b0fc8dc83fb5c9bf51ad4dc25e99b6b04217d7edb1f90ce781fd38d22b9ba5ae",
+        "codes": [
+          "LC7832773-P805"
+        ],
+        "candidate_exact": true,
+        "text": "宏爵制衣厂\n款号：LC7832773\n-P805\n尺码：\n顺富7158SH\n面料\n用线：\nHX117\n板类：\nS码\n坐围：\n车板工号：12\n8.18\n期：",
+        "timing": {
+          "load_ms": 784.4382000002952,
+          "detection_ms": 1313.4244999982911,
+          "orientation_ms": 395.18600000155857,
+          "recognition_ms": 498.7765000005311,
+          "total_ms": 2207.387000000381
+        },
+        "orientation": {
+          "votes": [
+            0.0,
+            1.0095243337437432,
+            0.0,
+            15.887241755332761
+          ],
+          "confidence": 0.9402533994717258,
+          "uncertain": false,
+          "probe_lines": 6,
+          "correction_ccw_degrees": 270,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1067,
+            1600
+          ]
+        }
+      },
+      {
+        "name": "XSY_3843",
+        "degrees": 90,
+        "format": "png",
+        "kind": "printed",
+        "scorable": true,
+        "expected": "LC7311702-P6016",
+        "payload_sha256": "db549ec96791f8f8eda983afc53fbcae23e8ad970ad228465fd22a98e9ef47dc",
+        "codes": [
+          "LC7311702-P6016"
+        ],
+        "candidate_exact": true,
+        "text": "MANANVAAAINA\nSIZE:S\nLC7311702-P6016\n261015\nG388\n70%Viscose\n23%Polyamide\n7%Elastane\nMADE IN CHINA",
+        "timing": {
+          "load_ms": 784.4382000002952,
+          "detection_ms": 1547.492700001385,
+          "orientation_ms": 521.609699999317,
+          "recognition_ms": 410.47880000041914,
+          "total_ms": 2479.581200001121
+        },
+        "orientation": {
+          "votes": [
+            0.0,
+            0.0,
+            0.0,
+            29.212099621064777
+          ],
+          "confidence": 1.0,
+          "uncertain": false,
+          "probe_lines": 6,
+          "correction_ccw_degrees": 270,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1067,
+            1600
+          ]
+        }
+      },
+      {
+        "name": "XSY_4241",
+        "degrees": 90,
+        "format": "png",
+        "kind": "printed",
+        "scorable": true,
+        "expected": "LC7877496-P804",
+        "payload_sha256": "2b429e40037ddf58d1579d0b37cd1362ac81a6ac86ac56fc524f707e5d9a7771",
+        "codes": [
+          "LC7877496-P804"
+        ],
+        "candidate_exact": true,
+        "text": "SIZE:S\nLC7877496-P804\n261009\nG93\n75% COTTON\n23% POLYESTER\n2% ELASTANE",
+        "timing": {
+          "load_ms": 784.4382000002952,
+          "detection_ms": 1257.7830999998696,
+          "orientation_ms": 318.6040000000503,
+          "recognition_ms": 169.74130000016885,
+          "total_ms": 1746.1284000000887
+        },
+        "orientation": {
+          "votes": [
+            0.0,
+            0.0,
+            0.0,
+            17.17229954506001
+          ],
+          "confidence": 1.0,
+          "uncertain": false,
+          "probe_lines": 6,
+          "correction_ccw_degrees": 270,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1067,
+            1600
+          ]
+        }
+      },
+      {
+        "name": "XSY_4571",
+        "degrees": 90,
+        "format": "png",
+        "kind": "printed",
+        "scorable": true,
+        "expected": "LC7877554-P1410",
+        "payload_sha256": "657de6d653e8562012d8c865c67e4ec5b647cd2c7fc95b18883525c51ed835a4",
+        "codes": [
+          "LC7877554-P1410"
+        ],
+        "candidate_exact": true,
+        "text": "SIZE:S\nLC7877554-P1410\n261013\nG123\n75% COTTON\n23% POLYESTER\n2% ELASTANE\nMADE IN CHINA",
+        "timing": {
+          "load_ms": 784.4382000002952,
+          "detection_ms": 1295.23429999972,
+          "orientation_ms": 311.3087000001542,
+          "recognition_ms": 285.16839999974763,
+          "total_ms": 1891.7113999996218
+        },
+        "orientation": {
+          "votes": [
+            0.0,
+            0.0,
+            0.0,
+            30.043679867354367
+          ],
+          "confidence": 1.0,
+          "uncertain": false,
+          "probe_lines": 6,
+          "correction_ccw_degrees": 270,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1067,
+            1600
+          ]
+        }
+      },
+      {
+        "name": "XSY_4936",
+        "degrees": 90,
+        "format": "png",
+        "kind": "printed",
+        "scorable": true,
+        "expected": "LC7832886-P1",
+        "payload_sha256": "78c5ae60d6aba458304c6cfe47f11cc2e259e1f7662f94343816a58c2d3c30e1",
+        "codes": [
+          "LC7832886-P1"
+        ],
+        "candidate_exact": true,
+        "text": "SIZE:S\nLC7832886-P1\n261112\nG763\n73%COTTON\n25.4%POLYESTER\n1.6%ELASTANE\nMADE IN CHINA",
+        "timing": {
+          "load_ms": 784.4382000002952,
+          "detection_ms": 1439.2971999986912,
+          "orientation_ms": 430.2000000006956,
+          "recognition_ms": 248.01140000090527,
+          "total_ms": 2117.508600000292
+        },
+        "orientation": {
+          "votes": [
+            0.0,
+            0.0,
+            0.0,
+            35.28684535694624
+          ],
+          "confidence": 1.0,
+          "uncertain": false,
+          "probe_lines": 6,
+          "correction_ccw_degrees": 270,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1067,
+            1600
+          ]
+        }
+      },
+      {
+        "name": "XSY_5294",
+        "degrees": 90,
+        "format": "png",
+        "kind": "printed",
+        "scorable": true,
+        "expected": "LC7877529-P105",
+        "payload_sha256": "9478e2f1ace09bbcd00ce9061bc721cf5b04c9046fe33ac93115bec66bf8a124",
+        "codes": [
+          "LC7877529-P105"
+        ],
+        "candidate_exact": true,
+        "text": "DVS\nSVS\nSIZE:S\nLC7877529-P105\n261020\nG93\n71% COTTON\n27.5% POLYESTER\n1.5% ELASTANE\nMADE IN CHINA",
+        "timing": {
+          "load_ms": 784.4382000002952,
+          "detection_ms": 1257.8322000008484,
+          "orientation_ms": 317.17380000009143,
+          "recognition_ms": 279.4123999992735,
+          "total_ms": 1854.4184000002133
+        },
+        "orientation": {
+          "votes": [
+            0.0,
+            0.0,
+            0.0,
+            35.385340758141695
+          ],
+          "confidence": 1.0,
+          "uncertain": false,
+          "probe_lines": 6,
+          "correction_ccw_degrees": 270,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1067,
+            1600
+          ]
+        }
+      },
+      {
+        "name": "XSY_5753",
+        "degrees": 90,
+        "format": "png",
+        "kind": "handwritten",
+        "scorable": true,
+        "expected": "7877842-P305",
+        "payload_sha256": "cb705404533f0faec519c34dea2a9b46711ae9dd4cbca81d17e79fe0a688d628",
+        "codes": [
+          "187842-9305",
+          "7705E",
+          "1955",
+          "1361"
+        ],
+        "candidate_exact": false,
+        "text": "187842-9305\n号：7705E\n今t\n1955\n面线\n1361\n级骨\n成眼码粉\n打枣\n纸样",
+        "timing": {
+          "load_ms": 784.4382000002952,
+          "detection_ms": 1206.708499999877,
+          "orientation_ms": 218.12259999933303,
+          "recognition_ms": 252.33810000099766,
+          "total_ms": 1677.1692000002076
+        },
+        "orientation": {
+          "votes": [
+            0.0,
+            0.0,
+            0.0,
+            4.110506170960615
+          ],
+          "confidence": 1.0,
+          "uncertain": false,
+          "probe_lines": 4,
+          "correction_ccw_degrees": 270,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1067,
+            1600
+          ]
+        }
+      },
+      {
+        "name": "XSY_5988",
+        "degrees": 90,
+        "format": "png",
+        "kind": "handwritten",
+        "scorable": false,
+        "expected": "LC787843-P1",
+        "payload_sha256": "8dcddcc8fd26fca15cf9790f1ecf4e985edfe12e2bb6b6e83345e26e946ca771",
+        "codes": [
+          "L0787843-p1"
+        ],
+        "candidate_exact": false,
+        "text": "L0787843-p1拍照样",
+        "timing": {
+          "load_ms": 784.4382000002952,
+          "detection_ms": 1276.7032999981893,
+          "orientation_ms": 54.44510000052105,
+          "recognition_ms": 31.07540000019071,
+          "total_ms": 1362.223799998901
+        },
+        "orientation": {
+          "votes": [
+            0.0,
+            0.0,
+            0.0,
+            3.939386940377904
+          ],
+          "confidence": 1.0,
+          "uncertain": false,
+          "probe_lines": 1,
+          "correction_ccw_degrees": 270,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1067,
+            1600
+          ]
+        }
+      },
+      {
+        "name": "XSY_6454",
+        "degrees": 90,
+        "format": "png",
+        "kind": "printed",
+        "scorable": true,
+        "expected": "LC7881112-P1",
+        "payload_sha256": "00d467a5a137f2a622f79263cd9b74390731e2b338043e05051781ba9289c801",
+        "codes": [
+          "LC7881112-P1"
+        ],
+        "candidate_exact": true,
+        "text": "SIZE: S\nLC7881112-P1\n261017\nG823\n74.7%COTTON\n16.5% POLYESTER\n8.8%REGENERATED FIBER\nMADE IN CHINA",
+        "timing": {
+          "load_ms": 784.4382000002952,
+          "detection_ms": 1312.167000000045,
+          "orientation_ms": 351.3022999995883,
+          "recognition_ms": 227.4821000009979,
+          "total_ms": 1890.951400000631
+        },
+        "orientation": {
+          "votes": [
+            0.0,
+            0.0,
+            0.0,
+            29.585859676819933
+          ],
+          "confidence": 1.0,
+          "uncertain": false,
+          "probe_lines": 6,
+          "correction_ccw_degrees": 270,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1067,
+            1600
+          ]
+        }
+      },
+      {
+        "name": "XSY_2297",
+        "degrees": 180,
+        "format": "png",
+        "kind": "printed",
+        "scorable": true,
+        "expected": "LC7877836-P1",
+        "payload_sha256": "85ec6d7d8a5e509aed8ec57da5ffad36ed40f49b55351ebe21aef5536c523a15",
+        "codes": [
+          "LC7877836-P1"
+        ],
+        "candidate_exact": true,
+        "text": "p\nSIZE:S\nLC7877836-P1\n261103\n(G757)\n74.7% COTTON\n16.5%POLYESTER\n8.8%REGENERA TED FIBRE\nMADE IN CHINA",
+        "timing": {
+          "load_ms": 784.4382000002952,
+          "detection_ms": 1347.6118999988103,
+          "orientation_ms": 363.81620000065595,
+          "recognition_ms": 385.28039999982866,
+          "total_ms": 2096.708499999295
+        },
+        "orientation": {
+          "votes": [
+            0.0,
+            0.0,
+            29.5626664923366,
+            0.0
+          ],
+          "confidence": 1.0,
+          "uncertain": false,
+          "probe_lines": 6,
+          "correction_ccw_degrees": 180,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1600,
+            1067
+          ]
+        }
+      },
+      {
+        "name": "XSY_2611",
+        "degrees": 180,
+        "format": "png",
+        "kind": "printed",
+        "scorable": true,
+        "expected": "LC7832852-P804",
+        "payload_sha256": "007d3ca09a72f54d30a2ab1802ee5159eaccf9dad789c38f646afbdb5d40c129",
+        "codes": [
+          "LC7832852-P804"
+        ],
+        "candidate_exact": true,
+        "text": "SIZE:S\nLC7832852-P804\n261108\n571\n71.5% COTTON\n27% POLYESTER\n1.5% ELASTANE\nMADE IN CHINA",
+        "timing": {
+          "load_ms": 784.4382000002952,
+          "detection_ms": 1298.5759999992297,
+          "orientation_ms": 331.0168000007252,
+          "recognition_ms": 206.33540000017092,
+          "total_ms": 1835.9282000001258
+        },
+        "orientation": {
+          "votes": [
+            0.0,
+            0.0,
+            32.55887249956286,
+            0.0
+          ],
+          "confidence": 1.0,
+          "uncertain": false,
+          "probe_lines": 6,
+          "correction_ccw_degrees": 180,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1600,
+            1067
+          ]
+        }
+      },
+      {
+        "name": "XSY_2948",
+        "degrees": 180,
+        "format": "png",
+        "kind": "printed",
+        "scorable": true,
+        "expected": "LC7832746-P2909",
+        "payload_sha256": "c1ad45bd9fcb161ba3a0c2c4aeaa2689ddfabf0fc6b4b1f673de89753b002978",
+        "codes": [
+          "LC7832746-P2909"
+        ],
+        "candidate_exact": true,
+        "text": "SIZE:S\nLC7832746-P2909\n261109\nG123\n75% COTTON\n23% POLYESTER\n2% ELASTANE\nMADE IN CHINA",
+        "timing": {
+          "load_ms": 784.4382000002952,
+          "detection_ms": 1239.2908000001626,
+          "orientation_ms": 376.45989999873564,
+          "recognition_ms": 218.2487999998557,
+          "total_ms": 1833.999499998754
+        },
+        "orientation": {
+          "votes": [
+            0.0,
+            0.0,
+            33.787653047794045,
+            0.0
+          ],
+          "confidence": 1.0,
+          "uncertain": false,
+          "probe_lines": 6,
+          "correction_ccw_degrees": 180,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1600,
+            1067
+          ]
+        }
+      },
+      {
+        "name": "XSY_3471",
+        "degrees": 180,
+        "format": "png",
+        "kind": "handwritten",
+        "scorable": true,
+        "expected": "LC7832773-P805",
+        "payload_sha256": "7d5fcd1b383b468098a68b188e35b831442463aa6ccbf6fea3b970f1518fab0c",
+        "codes": [
+          "LC7832773-P805"
+        ],
+        "candidate_exact": true,
+        "text": "宏爵制衣厂\n款号：LC7832773\n-P805\n尺码：\n顺富7158SH\n面料\n用线：\nHX117\n板类：\nS码\n坐围：\n车板工号：12\n8.18\n期：",
+        "timing": {
+          "load_ms": 784.4382000002952,
+          "detection_ms": 1295.0168999996094,
+          "orientation_ms": 332.2561000004498,
+          "recognition_ms": 368.0519000008644,
+          "total_ms": 1995.3249000009237
+        },
+        "orientation": {
+          "votes": [
+            0.0,
+            0.0,
+            20.0954777635214,
+            0.0
+          ],
+          "confidence": 1.0,
+          "uncertain": false,
+          "probe_lines": 6,
+          "correction_ccw_degrees": 180,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1600,
+            1067
+          ]
+        }
+      },
+      {
+        "name": "XSY_3843",
+        "degrees": 180,
+        "format": "png",
+        "kind": "printed",
+        "scorable": true,
+        "expected": "LC7311702-P6016",
+        "payload_sha256": "68cbc964ae94e116ee795984f57f69822b3a8f1393d6faf478db43632adad2ff",
+        "codes": [
+          "LC7311702-P6016"
+        ],
+        "candidate_exact": true,
+        "text": "MANANVAAAINA\nSIZE:S\nLC7311702-P6016\n261015\nG388\n70%Viscose\n23%Polyamide\n7%Elastane\nMADE IN CHINA",
+        "timing": {
+          "load_ms": 784.4382000002952,
+          "detection_ms": 1246.311599999899,
+          "orientation_ms": 350.8041000004596,
+          "recognition_ms": 246.2201999987883,
+          "total_ms": 1843.335899999147
+        },
+        "orientation": {
+          "votes": [
+            0.0,
+            0.0,
+            28.947641514959237,
+            0.0
+          ],
+          "confidence": 1.0,
+          "uncertain": false,
+          "probe_lines": 6,
+          "correction_ccw_degrees": 180,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1600,
+            1067
+          ]
+        }
+      },
+      {
+        "name": "XSY_4241",
+        "degrees": 180,
+        "format": "png",
+        "kind": "printed",
+        "scorable": true,
+        "expected": "LC7877496-P804",
+        "payload_sha256": "1b30a30d27f380a915e95505ea09f96a804606e0ad2824192358ff39b6cf4ed4",
+        "codes": [
+          "LC7877496-P804"
+        ],
+        "candidate_exact": true,
+        "text": "SIZE:S\nLC7877496-P804\n261009\nG93\n75% COTTON\n23% POLYESTER\n2% ELASTANE",
+        "timing": {
+          "load_ms": 784.4382000002952,
+          "detection_ms": 1208.3495999995648,
+          "orientation_ms": 306.63989999993646,
+          "recognition_ms": 180.91409999942698,
+          "total_ms": 1695.9035999989283
+        },
+        "orientation": {
+          "votes": [
+            0.0,
+            0.0,
+            19.972256368403503,
+            0.0
+          ],
+          "confidence": 1.0,
+          "uncertain": false,
+          "probe_lines": 6,
+          "correction_ccw_degrees": 180,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1600,
+            1067
+          ]
+        }
+      },
+      {
+        "name": "XSY_4571",
+        "degrees": 180,
+        "format": "png",
+        "kind": "printed",
+        "scorable": true,
+        "expected": "LC7877554-P1410",
+        "payload_sha256": "22f79dbe93de1b705ea021bc7b1cbbb6a0680b20b258e928945e1eee9e4c1342",
+        "codes": [
+          "LC7877554-P1410"
+        ],
+        "candidate_exact": true,
+        "text": "SIZE:S\nLC7877554-P1410\n261013\nG123\n75% COTTON\n23% POLYESTER\n2% ELASTANE\nMADE IN CHINA",
+        "timing": {
+          "load_ms": 784.4382000002952,
+          "detection_ms": 1398.4217999986868,
+          "orientation_ms": 353.4876000012446,
+          "recognition_ms": 229.20699999849603,
+          "total_ms": 1981.1163999984274
+        },
+        "orientation": {
+          "votes": [
+            0.0,
+            0.0,
+            29.901276608535486,
+            0.0
+          ],
+          "confidence": 1.0,
+          "uncertain": false,
+          "probe_lines": 6,
+          "correction_ccw_degrees": 180,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1600,
+            1067
+          ]
+        }
+      },
+      {
+        "name": "XSY_4936",
+        "degrees": 180,
+        "format": "png",
+        "kind": "printed",
+        "scorable": true,
+        "expected": "LC7832886-P1",
+        "payload_sha256": "2472a5c1580c3ba8ac3cb986a67aa7dbf8b721d86cc346c836c5bc140495eecf",
+        "codes": [
+          "LC7832886-P1"
+        ],
+        "candidate_exact": true,
+        "text": "SIZE:S\nLC7832886-P1\n261112\nG763\n73%COTTON\n25.4%POLYESTER\n1.6%ELASTANE\nMADE IN CHINA",
+        "timing": {
+          "load_ms": 784.4382000002952,
+          "detection_ms": 1292.1946000005846,
+          "orientation_ms": 394.4037000001117,
+          "recognition_ms": 250.3030999996554,
+          "total_ms": 1936.9014000003517
+        },
+        "orientation": {
+          "votes": [
+            0.0,
+            0.0,
+            38.70036606736628,
+            0.0
+          ],
+          "confidence": 1.0,
+          "uncertain": false,
+          "probe_lines": 6,
+          "correction_ccw_degrees": 180,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1600,
+            1067
+          ]
+        }
+      },
+      {
+        "name": "XSY_5294",
+        "degrees": 180,
+        "format": "png",
+        "kind": "printed",
+        "scorable": true,
+        "expected": "LC7877529-P105",
+        "payload_sha256": "ce5b7866ce7f1876198dba01ef5585b2367aa96a884772a6a561793305bca268",
+        "codes": [
+          "LC7877529-P105"
+        ],
+        "candidate_exact": true,
+        "text": "DVS\nSVS\nSIZE:S\nLC7877529-P105\n261020\nG93\n71% COTTON\n27.5% POLYESTER\n1.5% ELASTANE\nMADE IN CHINA",
+        "timing": {
+          "load_ms": 784.4382000002952,
+          "detection_ms": 1239.490099998875,
+          "orientation_ms": 350.8252999999968,
+          "recognition_ms": 273.45100000093225,
+          "total_ms": 1863.766399999804
+        },
+        "orientation": {
+          "votes": [
+            0.0,
+            0.0,
+            39.396113511293265,
+            0.0
+          ],
+          "confidence": 1.0,
+          "uncertain": false,
+          "probe_lines": 6,
+          "correction_ccw_degrees": 180,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1600,
+            1067
+          ]
+        }
+      },
+      {
+        "name": "XSY_5753",
+        "degrees": 180,
+        "format": "png",
+        "kind": "handwritten",
+        "scorable": true,
+        "expected": "7877842-P305",
+        "payload_sha256": "1902d9e6a5faacc25d4dca8c9ee3493c654715b177dc4103e1ad2e98ed93aa4e",
+        "codes": [
+          "187842-9305",
+          "7705E",
+          "1955",
+          "1361"
+        ],
+        "candidate_exact": false,
+        "text": "187842-9305\n号：7705E\n今t\n1955\n面线\n1361\n级骨\n成眼码粉\n打枣\n纸样",
+        "timing": {
+          "load_ms": 784.4382000002952,
+          "detection_ms": 1438.9070000015636,
+          "orientation_ms": 248.90569999843137,
+          "recognition_ms": 329.6690999995917,
+          "total_ms": 2017.4817999995867
+        },
+        "orientation": {
+          "votes": [
+            0.0,
+            0.0,
+            2.2408138309124013,
+            0.0
+          ],
+          "confidence": 1.0,
+          "uncertain": false,
+          "probe_lines": 4,
+          "correction_ccw_degrees": 180,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1600,
+            1067
+          ]
+        }
+      },
+      {
+        "name": "XSY_5988",
+        "degrees": 180,
+        "format": "png",
+        "kind": "handwritten",
+        "scorable": false,
+        "expected": "LC787843-P1",
+        "payload_sha256": "a3a16b2a5eafdaad203c2a0b717cb5229273fbb69e4afec1dc06ab2ece64b958",
+        "codes": [
+          "L0787843-p1"
+        ],
+        "candidate_exact": false,
+        "text": "L0787843-p1拍照样",
+        "timing": {
+          "load_ms": 784.4382000002952,
+          "detection_ms": 1357.5215000000753,
+          "orientation_ms": 59.196000000156346,
+          "recognition_ms": 36.090400000830414,
+          "total_ms": 1452.807900001062
+        },
+        "orientation": {
+          "votes": [
+            0.0,
+            0.0,
+            4.018683433532715,
+            0.0
+          ],
+          "confidence": 1.0,
+          "uncertain": false,
+          "probe_lines": 1,
+          "correction_ccw_degrees": 180,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1600,
+            1067
+          ]
+        }
+      },
+      {
+        "name": "XSY_6454",
+        "degrees": 180,
+        "format": "png",
+        "kind": "printed",
+        "scorable": true,
+        "expected": "LC7881112-P1",
+        "payload_sha256": "572901078478d1531301b3dccbc35df03587df4d729110530d74e94f8ad653e8",
+        "codes": [
+          "LC7881112-P1"
+        ],
+        "candidate_exact": true,
+        "text": "SIZE: S\nLC7881112-P1\n261017\nG823\n74.7%COTTON\n16.5% POLYESTER\n8.8%REGENERATED FIBER\nMADE IN CHINA",
+        "timing": {
+          "load_ms": 784.4382000002952,
+          "detection_ms": 1277.8949000003195,
+          "orientation_ms": 363.73640000056184,
+          "recognition_ms": 241.00929999985965,
+          "total_ms": 1882.640600000741
+        },
+        "orientation": {
+          "votes": [
+            0.0,
+            0.0,
+            37.074995853617985,
+            0.0
+          ],
+          "confidence": 1.0,
+          "uncertain": false,
+          "probe_lines": 6,
+          "correction_ccw_degrees": 180,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1600,
+            1067
+          ]
+        }
+      },
+      {
+        "name": "XSY_2297",
+        "degrees": 270,
+        "format": "png",
+        "kind": "printed",
+        "scorable": true,
+        "expected": "LC7877836-P1",
+        "payload_sha256": "867cbf611c253f6f8fece98f7d16e41c94404aa7b12c7e796785588ef9c4ff16",
+        "codes": [
+          "LC7877836-P1"
+        ],
+        "candidate_exact": true,
+        "text": "p\nSIZE:S\nLC7877836-P1\n261103\n(G757)\n74.7% COTTON\n16.5%POLYESTER\n8.8%REGENERA TED FIBRE\nMADE IN CHINA",
+        "timing": {
+          "load_ms": 784.4382000002952,
+          "detection_ms": 1273.2058000001416,
+          "orientation_ms": 318.27720000001136,
+          "recognition_ms": 251.32640000083484,
+          "total_ms": 1842.8094000009878
+        },
+        "orientation": {
+          "votes": [
+            0.0,
+            25.106041431185528,
+            0.0,
+            0.0
+          ],
+          "confidence": 1.0,
+          "uncertain": false,
+          "probe_lines": 6,
+          "correction_ccw_degrees": 90,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1067,
+            1600
+          ]
+        }
+      },
+      {
+        "name": "XSY_2611",
+        "degrees": 270,
+        "format": "png",
+        "kind": "printed",
+        "scorable": true,
+        "expected": "LC7832852-P804",
+        "payload_sha256": "3133c2bbc34f12fed777bc23f53a3ee08ffef61f154ee4dc81fae5eacaee2b0a",
+        "codes": [
+          "LC7832852-P804"
+        ],
+        "candidate_exact": true,
+        "text": "SIZE:S\nLC7832852-P804\n261108\n571\n71.5% COTTON\n27% POLYESTER\n1.5% ELASTANE\nMADE IN CHINA",
+        "timing": {
+          "load_ms": 784.4382000002952,
+          "detection_ms": 1190.910499997699,
+          "orientation_ms": 288.87350000150036,
+          "recognition_ms": 227.54209999948216,
+          "total_ms": 1707.3260999986815
+        },
+        "orientation": {
+          "votes": [
+            0.0,
+            28.69426006383332,
+            0.0,
+            0.0
+          ],
+          "confidence": 1.0,
+          "uncertain": false,
+          "probe_lines": 6,
+          "correction_ccw_degrees": 90,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1067,
+            1600
+          ]
+        }
+      },
+      {
+        "name": "XSY_2948",
+        "degrees": 270,
+        "format": "png",
+        "kind": "printed",
+        "scorable": true,
+        "expected": "LC7832746-P2909",
+        "payload_sha256": "7a984400bd7fd5f696668e6f7f9ae968c4ab4b1e44e3382058d49658674d1ad0",
+        "codes": [
+          "LC7832746-P2909"
+        ],
+        "candidate_exact": true,
+        "text": "SIZE:S\nLC7832746-P2909\n261109\nG123\n75% COTTON\n23% POLYESTER\n2% ELASTANE\nMADE IN CHINA",
+        "timing": {
+          "load_ms": 784.4382000002952,
+          "detection_ms": 1327.6550999999017,
+          "orientation_ms": 417.55430000011984,
+          "recognition_ms": 274.94300000034855,
+          "total_ms": 2020.15240000037
+        },
+        "orientation": {
+          "votes": [
+            0.0,
+            31.15344219407292,
+            0.0,
+            0.0
+          ],
+          "confidence": 1.0,
+          "uncertain": false,
+          "probe_lines": 6,
+          "correction_ccw_degrees": 90,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1067,
+            1600
+          ]
+        }
+      },
+      {
+        "name": "XSY_3471",
+        "degrees": 270,
+        "format": "png",
+        "kind": "handwritten",
+        "scorable": true,
+        "expected": "LC7832773-P805",
+        "payload_sha256": "3a3d110aa7f518df9ee4e934cd000fe34b9b22f34b4ad4863f021ecc2fcb7e8b",
+        "codes": [
+          "LC7832773-P805"
+        ],
+        "candidate_exact": true,
+        "text": "宏爵制衣厂\n款号：LC7832773\n-P805\n尺码：\n顺富7158SH\n面料\n用线：\nHX117\n板类：\nS码\n坐围：\n车板工号：12\n8.18\n期：",
+        "timing": {
+          "load_ms": 784.4382000002952,
+          "detection_ms": 1287.2804999988148,
+          "orientation_ms": 373.5590000014781,
+          "recognition_ms": 379.53139999990526,
+          "total_ms": 2040.3709000001982
+        },
+        "orientation": {
+          "votes": [
+            0.0,
+            17.175685734869266,
+            0.0,
+            0.0
+          ],
+          "confidence": 1.0,
+          "uncertain": false,
+          "probe_lines": 6,
+          "correction_ccw_degrees": 90,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1067,
+            1600
+          ]
+        }
+      },
+      {
+        "name": "XSY_3843",
+        "degrees": 270,
+        "format": "png",
+        "kind": "printed",
+        "scorable": true,
+        "expected": "LC7311702-P6016",
+        "payload_sha256": "f31d3206742a94d99d792af8a9ea3ed7f012fe4375c7deac3c2c43631a5c4272",
+        "codes": [
+          "LC7311702-P6016"
+        ],
+        "candidate_exact": true,
+        "text": "MANANVAAAINA\nSIZE:S\nLC7311702-P6016\n261015\nG388\n70%Viscose\n23%Polyamide\n7%Elastane\nMADE IN CHINA",
+        "timing": {
+          "load_ms": 784.4382000002952,
+          "detection_ms": 1230.5161999993288,
+          "orientation_ms": 338.7296000000788,
+          "recognition_ms": 241.6159999993397,
+          "total_ms": 1810.8617999987473
+        },
+        "orientation": {
+          "votes": [
+            0.0,
+            30.638305583987147,
+            0.0,
+            0.0
+          ],
+          "confidence": 1.0,
+          "uncertain": false,
+          "probe_lines": 6,
+          "correction_ccw_degrees": 90,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1067,
+            1600
+          ]
+        }
+      },
+      {
+        "name": "XSY_4241",
+        "degrees": 270,
+        "format": "png",
+        "kind": "printed",
+        "scorable": true,
+        "expected": "LC7877496-P804",
+        "payload_sha256": "5a53e4eb259e482d3dfdfa550fe46f89fcc008d6c4efdd9dc9555a9c422de6dc",
+        "codes": [
+          "LC7877496-P804"
+        ],
+        "candidate_exact": true,
+        "text": "SIZE:S\nLC7877496-P804\n261009\nG93\n75% COTTON\n23% POLYESTER\n2% ELASTANE",
+        "timing": {
+          "load_ms": 784.4382000002952,
+          "detection_ms": 1369.517499999347,
+          "orientation_ms": 351.4495999988867,
+          "recognition_ms": 224.16460000022198,
+          "total_ms": 1945.1316999984556
+        },
+        "orientation": {
+          "votes": [
+            0.0,
+            21.787131498437468,
+            0.0,
+            0.0
+          ],
+          "confidence": 1.0,
+          "uncertain": false,
+          "probe_lines": 6,
+          "correction_ccw_degrees": 90,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1067,
+            1600
+          ]
+        }
+      },
+      {
+        "name": "XSY_4571",
+        "degrees": 270,
+        "format": "png",
+        "kind": "printed",
+        "scorable": true,
+        "expected": "LC7877554-P1410",
+        "payload_sha256": "0028a99980261481773cc5465a7cb950761e8e02708d0f21ad15ff6e6d876e20",
+        "codes": [
+          "LC7877554-P1410"
+        ],
+        "candidate_exact": true,
+        "text": "SIZE:S\nLC7877554-P1410\n261013\nG123\n75% COTTON\n23% POLYESTER\n2% ELASTANE\nMADE IN CHINA",
+        "timing": {
+          "load_ms": 784.4382000002952,
+          "detection_ms": 1261.8333999998868,
+          "orientation_ms": 378.5365000003367,
+          "recognition_ms": 222.34019999996235,
+          "total_ms": 1862.7101000001858
+        },
+        "orientation": {
+          "votes": [
+            0.0,
+            28.7140452627526,
+            0.0,
+            0.0
+          ],
+          "confidence": 1.0,
+          "uncertain": false,
+          "probe_lines": 6,
+          "correction_ccw_degrees": 90,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1067,
+            1600
+          ]
+        }
+      },
+      {
+        "name": "XSY_4936",
+        "degrees": 270,
+        "format": "png",
+        "kind": "printed",
+        "scorable": true,
+        "expected": "LC7832886-P1",
+        "payload_sha256": "2f081bfb2fa1cbcc7c25105ce727ea621b14a47062d2d2f3e09744e9efcff7b4",
+        "codes": [
+          "LC7832886-P1"
+        ],
+        "candidate_exact": true,
+        "text": "SIZE:S\nLC7832886-P1\n261112\nG763\n73%COTTON\n25.4%POLYESTER\n1.6%ELASTANE\nMADE IN CHINA",
+        "timing": {
+          "load_ms": 784.4382000002952,
+          "detection_ms": 1267.676900000879,
+          "orientation_ms": 400.4523999992671,
+          "recognition_ms": 241.9473999998445,
+          "total_ms": 1910.0766999999905
+        },
+        "orientation": {
+          "votes": [
+            0.0,
+            35.91299936422097,
+            0.0,
+            0.0
+          ],
+          "confidence": 1.0,
+          "uncertain": false,
+          "probe_lines": 6,
+          "correction_ccw_degrees": 90,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1067,
+            1600
+          ]
+        }
+      },
+      {
+        "name": "XSY_5294",
+        "degrees": 270,
+        "format": "png",
+        "kind": "printed",
+        "scorable": true,
+        "expected": "LC7877529-P105",
+        "payload_sha256": "40e36b231062b59a80b92bbc396d3d8677c8e03078b6b532c6a9342aa544ade0",
+        "codes": [
+          "LC7877529-P105"
+        ],
+        "candidate_exact": true,
+        "text": "DVS\nSVS\nSIZE:S\nLC7877529-P105\n261020\nG93\n71% COTTON\n27.5% POLYESTER\n1.5% ELASTANE\nMADE IN CHINA",
+        "timing": {
+          "load_ms": 784.4382000002952,
+          "detection_ms": 1250.3681999969558,
+          "orientation_ms": 321.81840000157536,
+          "recognition_ms": 284.63080000074115,
+          "total_ms": 1856.8173999992723
+        },
+        "orientation": {
+          "votes": [
+            0.0,
+            31.905871814642534,
+            0.0,
+            0.0
+          ],
+          "confidence": 1.0,
+          "uncertain": false,
+          "probe_lines": 6,
+          "correction_ccw_degrees": 90,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1067,
+            1600
+          ]
+        }
+      },
+      {
+        "name": "XSY_5753",
+        "degrees": 270,
+        "format": "png",
+        "kind": "handwritten",
+        "scorable": true,
+        "expected": "7877842-P305",
+        "payload_sha256": "66058e8d8ae88aa2e687a460db679c4f0dfbedd7eabc305c1fbe39cf7896885b",
+        "codes": [],
+        "candidate_exact": false,
+        "text": "纸样\n打枣\n级骨\n面线\n布号\n款号\n标出",
+        "timing": {
+          "load_ms": 784.4382000002952,
+          "detection_ms": 603.208700002142,
+          "orientation_ms": 56.605299998409464,
+          "recognition_ms": 244.73349999971106,
+          "total_ms": 904.5475000002625
+        },
+        "orientation": {
+          "votes": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "confidence": 0,
+          "uncertain": true,
+          "probe_lines": 1,
+          "correction_ccw_degrees": 0,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1067,
+            1600
+          ]
+        }
+      },
+      {
+        "name": "XSY_5988",
+        "degrees": 270,
+        "format": "png",
+        "kind": "handwritten",
+        "scorable": false,
+        "expected": "LC787843-P1",
+        "payload_sha256": "d0ce8f6b353cd657c9569656b617173974336a7b32e93c0259a5edeaef05b1e8",
+        "codes": [
+          "L0787843-p1"
+        ],
+        "candidate_exact": false,
+        "text": "L0787843-p1拍照样",
+        "timing": {
+          "load_ms": 784.4382000002952,
+          "detection_ms": 1285.7461999992665,
+          "orientation_ms": 52.598399999624235,
+          "recognition_ms": 31.717400001070928,
+          "total_ms": 1370.0619999999617
+        },
+        "orientation": {
+          "votes": [
+            0.0,
+            3.878326822158902,
+            0.0,
+            0.0
+          ],
+          "confidence": 1.0,
+          "uncertain": false,
+          "probe_lines": 1,
+          "correction_ccw_degrees": 90,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1067,
+            1600
+          ]
+        }
+      },
+      {
+        "name": "XSY_6454",
+        "degrees": 270,
+        "format": "png",
+        "kind": "printed",
+        "scorable": true,
+        "expected": "LC7881112-P1",
+        "payload_sha256": "a6ebb53a7e4e2a1ba8c524eb08ead21a9f77ef3cef274d29596622b80f3b6386",
+        "codes": [
+          "LC7881112-P1"
+        ],
+        "candidate_exact": true,
+        "text": "SIZE: S\nLC7881112-P1\n261017\nG823\n74.7%COTTON\n16.5% POLYESTER\n8.8%REGENERATED FIBER\nMADE IN CHINA",
+        "timing": {
+          "load_ms": 784.4382000002952,
+          "detection_ms": 1333.205299999463,
+          "orientation_ms": 359.3706999999995,
+          "recognition_ms": 245.36760000046343,
+          "total_ms": 1937.943599999926
+        },
+        "orientation": {
+          "votes": [
+            0.0,
+            32.77515302652907,
+            0.0,
+            0.0
+          ],
+          "confidence": 1.0,
+          "uncertain": false,
+          "probe_lines": 6,
+          "correction_ccw_degrees": 90,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1067,
+            1600
+          ]
+        }
+      }
+    ],
+    "sources_unchanged": true
+  },
+  "jpeg_exif": {
+    "base_images": 3,
+    "summary": [
+      {
+        "format": "jpeg",
+        "degrees": 0,
+        "correct": 3,
+        "scorable": 3,
+        "median_ms": 1223.35540000131,
+        "printed_correct": 2,
+        "printed_count": 2
+      },
+      {
+        "format": "jpeg",
+        "degrees": 90,
+        "correct": 3,
+        "scorable": 3,
+        "median_ms": 1831.1809999995603,
+        "printed_correct": 2,
+        "printed_count": 2
+      },
+      {
+        "format": "jpeg",
+        "degrees": 180,
+        "correct": 3,
+        "scorable": 3,
+        "median_ms": 1866.6051000000152,
+        "printed_correct": 2,
+        "printed_count": 2
+      },
+      {
+        "format": "jpeg",
+        "degrees": 270,
+        "correct": 2,
+        "scorable": 3,
+        "median_ms": 1806.153000001359,
+        "printed_correct": 2,
+        "printed_count": 2
+      },
+      {
+        "format": "exif",
+        "degrees": 0,
+        "correct": 3,
+        "scorable": 3,
+        "median_ms": 1175.2263999987917,
+        "printed_correct": 2,
+        "printed_count": 2
+      },
+      {
+        "format": "exif",
+        "degrees": 90,
+        "correct": 3,
+        "scorable": 3,
+        "median_ms": 1302.7225999994698,
+        "printed_correct": 2,
+        "printed_count": 2
+      },
+      {
+        "format": "exif",
+        "degrees": 180,
+        "correct": 3,
+        "scorable": 3,
+        "median_ms": 1167.3274999993737,
+        "printed_correct": 2,
+        "printed_count": 2
+      },
+      {
+        "format": "exif",
+        "degrees": 270,
+        "correct": 2,
+        "scorable": 3,
+        "median_ms": 1332.2277999996004,
+        "printed_correct": 2,
+        "printed_count": 2
+      }
+    ],
+    "cases": [
+      {
+        "name": "XSY_2297",
+        "degrees": 0,
+        "format": "jpeg",
+        "kind": "printed",
+        "scorable": true,
+        "expected": "LC7877836-P1",
+        "payload_sha256": "f66c066c4b80743fe59a00b3401de8bc81f1323daea46b55e3c05dcadbfa78f1",
+        "codes": [
+          "LC7877836-P1"
+        ],
+        "candidate_exact": true,
+        "text": "pl\nSIZE:S\nLC7877836-P1\n261103\n(G757)\n74.7% COTTON\n16.5%POLYESTER\n8.8%REGENERA TED FIBRE\nMADE IN CHINA",
+        "timing": {
+          "load_ms": 739.4081999991613,
+          "detection_ms": 602.1276999999827,
+          "orientation_ms": 331.5194999995583,
+          "recognition_ms": 270.1101999991806,
+          "total_ms": 1203.7573999987217
+        },
+        "orientation": {
+          "votes": [
+            29.968187187144345,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "confidence": 1.0,
+          "uncertain": false,
+          "probe_lines": 6,
+          "correction_ccw_degrees": 0,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1600,
+            1067
+          ]
+        }
+      },
+      {
+        "name": "XSY_3471",
+        "degrees": 0,
+        "format": "jpeg",
+        "kind": "handwritten",
+        "scorable": true,
+        "expected": "LC7832773-P805",
+        "payload_sha256": "3fb1c02d5a7e8b796dd54ef9cf31b66b8fca5be41dd7484f24fdef0f966673f8",
+        "codes": [
+          "LC7832773-P805"
+        ],
+        "candidate_exact": true,
+        "text": "宏爵制衣厂\n款号：LC7832773\n-P805\n尺码：\n顺富7158SH\n面料\n用线：\nHX117\n板类：\nS码\n坐围：\n车板工号：12\n8.18\n期：",
+        "timing": {
+          "load_ms": 739.4081999991613,
+          "detection_ms": 627.3338999999396,
+          "orientation_ms": 309.7646000005625,
+          "recognition_ms": 364.5680999998149,
+          "total_ms": 1301.666600000317
+        },
+        "orientation": {
+          "votes": [
+            16.47289660725995,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "confidence": 1.0,
+          "uncertain": false,
+          "probe_lines": 6,
+          "correction_ccw_degrees": 0,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1600,
+            1067
+          ]
+        }
+      },
+      {
+        "name": "XSY_6454",
+        "degrees": 0,
+        "format": "jpeg",
+        "kind": "printed",
+        "scorable": true,
+        "expected": "LC7881112-P1",
+        "payload_sha256": "7c47ec5f02309d05ac4c605ede759488eb1720223372f588e7f03be40c12d7a9",
+        "codes": [
+          "LC7881112-P1"
+        ],
+        "candidate_exact": true,
+        "text": "SIZE: S\nLC7881112-P1\n261017\nG823\n74.7%COTTON\n16.5% POLYESTER\n8.8%REGENERATED FIBER\nMADE IN CHINA",
+        "timing": {
+          "load_ms": 739.4081999991613,
+          "detection_ms": 634.0031999989151,
+          "orientation_ms": 365.3810000014346,
+          "recognition_ms": 223.97120000096038,
+          "total_ms": 1223.35540000131
+        },
+        "orientation": {
+          "votes": [
+            34.59644543518817,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "confidence": 1.0,
+          "uncertain": false,
+          "probe_lines": 6,
+          "correction_ccw_degrees": 0,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1600,
+            1067
+          ]
+        }
+      },
+      {
+        "name": "XSY_2297",
+        "degrees": 90,
+        "format": "jpeg",
+        "kind": "printed",
+        "scorable": true,
+        "expected": "LC7877836-P1",
+        "payload_sha256": "44389e4ba728af711e5e84d03afb4e008b35fa4890c8d37c50a12255ea70f6cf",
+        "codes": [
+          "LC7877836-P1"
+        ],
+        "candidate_exact": true,
+        "text": "l\nSIZE:S\nLC7877836-P1\n261103\n(G757)\n74.7% COTTON\n16.5%POLYESTER\n8.8%REGENERA TED FIBRE\nMADE IN CHINA",
+        "timing": {
+          "load_ms": 739.4081999991613,
+          "detection_ms": 1227.3447000006854,
+          "orientation_ms": 324.8308000001998,
+          "recognition_ms": 279.0054999986751,
+          "total_ms": 1831.1809999995603
+        },
+        "orientation": {
+          "votes": [
+            0.0,
+            0.0,
+            0.0,
+            25.925336286462954
+          ],
+          "confidence": 1.0,
+          "uncertain": false,
+          "probe_lines": 6,
+          "correction_ccw_degrees": 270,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1067,
+            1600
+          ]
+        }
+      },
+      {
+        "name": "XSY_3471",
+        "degrees": 90,
+        "format": "jpeg",
+        "kind": "handwritten",
+        "scorable": true,
+        "expected": "LC7832773-P805",
+        "payload_sha256": "aa2aa60411addde98646e78e4d28a27ab27dc9e677019d0dfd05f552011a9328",
+        "codes": [
+          "LC7832773-P805"
+        ],
+        "candidate_exact": true,
+        "text": "宏爵制衣厂\n款号：LC7832773\n-P805\n尺码：\n顺富7158SH\n面料\n用线：\nHX117\n板类：\nS码\n坐围：\n车板工号：12\n8.18\n期：",
+        "timing": {
+          "load_ms": 739.4081999991613,
+          "detection_ms": 1200.86529999935,
+          "orientation_ms": 318.6384000000544,
+          "recognition_ms": 389.42440000028,
+          "total_ms": 1908.9280999996845
+        },
+        "orientation": {
+          "votes": [
+            0.0,
+            0.0,
+            0.0,
+            15.339975384689016
+          ],
+          "confidence": 1.0,
+          "uncertain": false,
+          "probe_lines": 6,
+          "correction_ccw_degrees": 270,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1067,
+            1600
+          ]
+        }
+      },
+      {
+        "name": "XSY_6454",
+        "degrees": 90,
+        "format": "jpeg",
+        "kind": "printed",
+        "scorable": true,
+        "expected": "LC7881112-P1",
+        "payload_sha256": "db38feb1d480210e78bcac3947cfca4e4fab9aada9117c2b81d6013f83dfdaf7",
+        "codes": [
+          "LC7881112-P1"
+        ],
+        "candidate_exact": true,
+        "text": "SIZE: S\nLC7881112-P1\n261017\nG823\n74.7%COTTON\n16.5% POLYESTER\n8.8%REGENERATED FIBER\nMADE IN CHINA",
+        "timing": {
+          "load_ms": 739.4081999991613,
+          "detection_ms": 1229.8866000000999,
+          "orientation_ms": 328.8941999999224,
+          "recognition_ms": 226.49460000138788,
+          "total_ms": 1785.2754000014102
+        },
+        "orientation": {
+          "votes": [
+            0.0,
+            0.0,
+            0.0,
+            31.568351302886747
+          ],
+          "confidence": 1.0,
+          "uncertain": false,
+          "probe_lines": 6,
+          "correction_ccw_degrees": 270,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1067,
+            1600
+          ]
+        }
+      },
+      {
+        "name": "XSY_2297",
+        "degrees": 180,
+        "format": "jpeg",
+        "kind": "printed",
+        "scorable": true,
+        "expected": "LC7877836-P1",
+        "payload_sha256": "b2e31cfe7d931b0cdb636e8aaf391c71d5e8cc9338036aa092794b6427c25a4e",
+        "codes": [
+          "LC7877836-P1"
+        ],
+        "candidate_exact": true,
+        "text": "pl\nSIZE:S\nLC7877836-P1\n261103\n(G757)\n74.7% COTTON\n16.5%POLYESTER\n8.8%REGENERA TED FIBRE\nMADE IN CHINA",
+        "timing": {
+          "load_ms": 739.4081999991613,
+          "detection_ms": 1246.9025999998848,
+          "orientation_ms": 360.95229999955336,
+          "recognition_ms": 258.750200000577,
+          "total_ms": 1866.6051000000152
+        },
+        "orientation": {
+          "votes": [
+            0.0,
+            0.0,
+            29.867504840430442,
+            0.0
+          ],
+          "confidence": 1.0,
+          "uncertain": false,
+          "probe_lines": 6,
+          "correction_ccw_degrees": 180,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1600,
+            1067
+          ]
+        }
+      },
+      {
+        "name": "XSY_3471",
+        "degrees": 180,
+        "format": "jpeg",
+        "kind": "handwritten",
+        "scorable": true,
+        "expected": "LC7832773-P805",
+        "payload_sha256": "40ef854d3213d1eb28c69cb5f03efa813fc4e439c57ff098036e3ff1a6f39841",
+        "codes": [
+          "LC7832773-P805"
+        ],
+        "candidate_exact": true,
+        "text": "宏爵制衣厂\n款号：LC7832773\n-P805\n尺码：\n顺离7158SH\n面料\n用线：\n板类：\nS码\n坐围：\n车板工号：12\n8.18\n期：",
+        "timing": {
+          "load_ms": 739.4081999991613,
+          "detection_ms": 1316.4875000002212,
+          "orientation_ms": 372.1789000010176,
+          "recognition_ms": 383.0502000000706,
+          "total_ms": 2071.7166000013094
+        },
+        "orientation": {
+          "votes": [
+            0.0,
+            0.0,
+            20.349656011828237,
+            0.0
+          ],
+          "confidence": 1.0,
+          "uncertain": false,
+          "probe_lines": 6,
+          "correction_ccw_degrees": 180,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1600,
+            1067
+          ]
+        }
+      },
+      {
+        "name": "XSY_6454",
+        "degrees": 180,
+        "format": "jpeg",
+        "kind": "printed",
+        "scorable": true,
+        "expected": "LC7881112-P1",
+        "payload_sha256": "d19079638a8c5596fbc639bf2b2d04aeb0bc00000479010daf99e977d5e0b61b",
+        "codes": [
+          "LC7881112-P1"
+        ],
+        "candidate_exact": true,
+        "text": "SIZE: S\nLC7881112-P1\n261017\nG823\n74.7%COTTON\n16.5% POLYESTER\n8.8%REGENERATED FIBER\nMADE IN CHINA",
+        "timing": {
+          "load_ms": 739.4081999991613,
+          "detection_ms": 1186.6926000002422,
+          "orientation_ms": 325.54569999956584,
+          "recognition_ms": 211.8983999989723,
+          "total_ms": 1724.1366999987804
+        },
+        "orientation": {
+          "votes": [
+            0.0,
+            0.0,
+            34.69855693264882,
+            0.0
+          ],
+          "confidence": 1.0,
+          "uncertain": false,
+          "probe_lines": 6,
+          "correction_ccw_degrees": 180,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1600,
+            1067
+          ]
+        }
+      },
+      {
+        "name": "XSY_2297",
+        "degrees": 270,
+        "format": "jpeg",
+        "kind": "printed",
+        "scorable": true,
+        "expected": "LC7877836-P1",
+        "payload_sha256": "aae8b6aa4101623f29be4cd2cf0393482a02461e6c8398fcb9e97d43f9445663",
+        "codes": [
+          "LC7877836-P1"
+        ],
+        "candidate_exact": true,
+        "text": "l\nSIZE:S\nLC7877836-P1\n261103\n(G757)\n74.7% COTTON\n16.5%POLYESTER\n8.8%REGENERA TED FIBRE\nMADE IN CHINA",
+        "timing": {
+          "load_ms": 739.4081999991613,
+          "detection_ms": 1150.7444999988365,
+          "orientation_ms": 326.3313000006747,
+          "recognition_ms": 233.05360000085784,
+          "total_ms": 1710.129400000369
+        },
+        "orientation": {
+          "votes": [
+            0.0,
+            27.148726906458798,
+            0.0,
+            0.0
+          ],
+          "confidence": 1.0,
+          "uncertain": false,
+          "probe_lines": 6,
+          "correction_ccw_degrees": 90,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1067,
+            1600
+          ]
+        }
+      },
+      {
+        "name": "XSY_3471",
+        "degrees": 270,
+        "format": "jpeg",
+        "kind": "handwritten",
+        "scorable": true,
+        "expected": "LC7832773-P805",
+        "payload_sha256": "99b0ef2ef8a3ce77d12f0c8cc7a62d9e06adb53985892e20e5177420a4aa3190",
+        "codes": [
+          "LC7832773-P305"
+        ],
+        "candidate_exact": false,
+        "text": "宏爵制衣厂\n款号：LC7832773\n-P305\n尺码：\n71585H\n面料\n用线：\n板类：\nS码\n坐围：\n车板工号：12\n8.18\n期：",
+        "timing": {
+          "load_ms": 739.4081999991613,
+          "detection_ms": 1434.0435999984038,
+          "orientation_ms": 376.9119000007777,
+          "recognition_ms": 371.917399999802,
+          "total_ms": 2182.8728999989835
+        },
+        "orientation": {
+          "votes": [
+            0.0,
+            13.734371460412536,
+            0.0,
+            1.265955234314299
+          ],
+          "confidence": 0.9156048224763446,
+          "uncertain": false,
+          "probe_lines": 6,
+          "correction_ccw_degrees": 90,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1067,
+            1600
+          ]
+        }
+      },
+      {
+        "name": "XSY_6454",
+        "degrees": 270,
+        "format": "jpeg",
+        "kind": "printed",
+        "scorable": true,
+        "expected": "LC7881112-P1",
+        "payload_sha256": "feab073d76d1fe89e94f5ccf0f6fc53a522fc16cbf748fec3d912034bc6b8d23",
+        "codes": [
+          "LC7881112-P1"
+        ],
+        "candidate_exact": true,
+        "text": "SIZE: S\nLC7881112-P1\n261017\nG823\n74.7%COTTON\n16.5% POLYESTER\n8.8%REGENERATED FIBER\nMADE IN CHINA",
+        "timing": {
+          "load_ms": 739.4081999991613,
+          "detection_ms": 1253.6035000011907,
+          "orientation_ms": 339.8708999993687,
+          "recognition_ms": 212.67860000079963,
+          "total_ms": 1806.153000001359
+        },
+        "orientation": {
+          "votes": [
+            0.0,
+            32.81273424210767,
+            0.0,
+            0.0
+          ],
+          "confidence": 1.0,
+          "uncertain": false,
+          "probe_lines": 6,
+          "correction_ccw_degrees": 90,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1067,
+            1600
+          ]
+        }
+      },
+      {
+        "name": "XSY_2297",
+        "degrees": 0,
+        "format": "exif",
+        "kind": "printed",
+        "scorable": true,
+        "expected": "LC7877836-P1",
+        "payload_sha256": "f6e5cc102dec48024b28f42a7f3690be3ece61ce6d73d4c758d322031e9374b2",
+        "codes": [
+          "LC7877836-P1"
+        ],
+        "candidate_exact": true,
+        "text": "pl\nSIZE:S\nLC7877836-P1\n261103\n(G757)\n74.7% COTTON\n16.5%POLYESTER\n8.8%REGENERA TED FIBRE\nMADE IN CHINA",
+        "timing": {
+          "load_ms": 739.4081999991613,
+          "detection_ms": 609.4385999986116,
+          "orientation_ms": 322.90520000060496,
+          "recognition_ms": 242.88259999957518,
+          "total_ms": 1175.2263999987917
+        },
+        "orientation": {
+          "votes": [
+            29.968187187144345,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "confidence": 1.0,
+          "uncertain": false,
+          "probe_lines": 6,
+          "correction_ccw_degrees": 0,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1600,
+            1067
+          ]
+        }
+      },
+      {
+        "name": "XSY_3471",
+        "degrees": 0,
+        "format": "exif",
+        "kind": "handwritten",
+        "scorable": true,
+        "expected": "LC7832773-P805",
+        "payload_sha256": "e2c037469996b3b318d6cad0f30e261be06c49067a45d3e36443e54693d5f6ea",
+        "codes": [
+          "LC7832773-P805"
+        ],
+        "candidate_exact": true,
+        "text": "宏爵制衣厂\n款号：LC7832773\n-P805\n尺码：\n顺富7158SH\n面料\n用线：\nHX117\n板类：\nS码\n坐围：\n车板工号：12\n8.18\n期：",
+        "timing": {
+          "load_ms": 739.4081999991613,
+          "detection_ms": 629.7952999993868,
+          "orientation_ms": 311.72850000075414,
+          "recognition_ms": 339.3460999996023,
+          "total_ms": 1280.8698999997432
+        },
+        "orientation": {
+          "votes": [
+            16.47289660725995,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "confidence": 1.0,
+          "uncertain": false,
+          "probe_lines": 6,
+          "correction_ccw_degrees": 0,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1600,
+            1067
+          ]
+        }
+      },
+      {
+        "name": "XSY_6454",
+        "degrees": 0,
+        "format": "exif",
+        "kind": "printed",
+        "scorable": true,
+        "expected": "LC7881112-P1",
+        "payload_sha256": "f63a835e06c979160ee7815ddedc8e065e77350a8e8e70124e4c2aa0680f7c3b",
+        "codes": [
+          "LC7881112-P1"
+        ],
+        "candidate_exact": true,
+        "text": "SIZE: S\nLC7881112-P1\n261017\nG823\n74.7%COTTON\n16.5% POLYESTER\n8.8%REGENERATED FIBER\nMADE IN CHINA",
+        "timing": {
+          "load_ms": 739.4081999991613,
+          "detection_ms": 600.3514000003634,
+          "orientation_ms": 340.8669000000373,
+          "recognition_ms": 214.51929999966524,
+          "total_ms": 1155.7376000000659
+        },
+        "orientation": {
+          "votes": [
+            34.59644543518817,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "confidence": 1.0,
+          "uncertain": false,
+          "probe_lines": 6,
+          "correction_ccw_degrees": 0,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1600,
+            1067
+          ]
+        }
+      },
+      {
+        "name": "XSY_2297",
+        "degrees": 90,
+        "format": "exif",
+        "kind": "printed",
+        "scorable": true,
+        "expected": "LC7877836-P1",
+        "payload_sha256": "5a5ccedd4ef55ca995e3492670f71f1fb583ab3e700d467b1b78cfb057c7d28d",
+        "codes": [
+          "LC7877836-P1"
+        ],
+        "candidate_exact": true,
+        "text": "l\nSIZE:S\nLC7877836-P1\n261103\n(G757)\n74.7% COTTON\n16.5%POLYESTER\n8.8%REGENERA TED FIBRE\nMADE IN CHINA",
+        "timing": {
+          "load_ms": 739.4081999991613,
+          "detection_ms": 688.2227999994939,
+          "orientation_ms": 322.24130000031437,
+          "recognition_ms": 292.2584999996616,
+          "total_ms": 1302.7225999994698
+        },
+        "orientation": {
+          "votes": [
+            30.106076400023625,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "confidence": 1.0,
+          "uncertain": false,
+          "probe_lines": 6,
+          "correction_ccw_degrees": 0,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1600,
+            1067
+          ]
+        }
+      },
+      {
+        "name": "XSY_3471",
+        "degrees": 90,
+        "format": "exif",
+        "kind": "handwritten",
+        "scorable": true,
+        "expected": "LC7832773-P805",
+        "payload_sha256": "0a4f1fc1c5bd22a8a3492942664fa3bc58887557318c135de771dbe0f793fbda",
+        "codes": [
+          "LC7832773-P805"
+        ],
+        "candidate_exact": true,
+        "text": "宏爵制衣厂\n款号：LC7832773\n-P805\n尺码：\n顺富7158SH\n面料\n用线：\nHX117\n板类：\nS码\n坐围：\n车板工号：12\n8.18\n期：",
+        "timing": {
+          "load_ms": 739.4081999991613,
+          "detection_ms": 636.5599999990081,
+          "orientation_ms": 314.57310000041616,
+          "recognition_ms": 377.53710000106366,
+          "total_ms": 1328.670200000488
+        },
+        "orientation": {
+          "votes": [
+            16.380398091319517,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "confidence": 1.0,
+          "uncertain": false,
+          "probe_lines": 6,
+          "correction_ccw_degrees": 0,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1600,
+            1067
+          ]
+        }
+      },
+      {
+        "name": "XSY_6454",
+        "degrees": 90,
+        "format": "exif",
+        "kind": "printed",
+        "scorable": true,
+        "expected": "LC7881112-P1",
+        "payload_sha256": "6c8d76fbb18ed9bbfc78d0a6c0f6b789021adf288dadcfb36ea4fb5719f796f5",
+        "codes": [
+          "LC7881112-P1"
+        ],
+        "candidate_exact": true,
+        "text": "SIZE: S\nLC7881112-P1\n261017\nG823\n74.7%COTTON\n16.5% POLYESTER\n8.8%REGENERATED FIBER\nMADE IN CHINA",
+        "timing": {
+          "load_ms": 739.4081999991613,
+          "detection_ms": 605.7060999992245,
+          "orientation_ms": 321.7779000005976,
+          "recognition_ms": 215.21450000000186,
+          "total_ms": 1142.698499999824
+        },
+        "orientation": {
+          "votes": [
+            34.96160730094576,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "confidence": 1.0,
+          "uncertain": false,
+          "probe_lines": 6,
+          "correction_ccw_degrees": 0,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1600,
+            1067
+          ]
+        }
+      },
+      {
+        "name": "XSY_2297",
+        "degrees": 180,
+        "format": "exif",
+        "kind": "printed",
+        "scorable": true,
+        "expected": "LC7877836-P1",
+        "payload_sha256": "93c6869985dadfbc64d795df185300b9c17b8beb8a9eb4b8d6381dcaa58fd44d",
+        "codes": [
+          "LC7877836-P1"
+        ],
+        "candidate_exact": true,
+        "text": "pl\nSIZE:S\nLC7877836-P1\n261103\n(G757)\n74.7% COTTON\n16.5%POLYESTER\n8.8%REGENERA TED FIBRE\nMADE IN CHINA",
+        "timing": {
+          "load_ms": 739.4081999991613,
+          "detection_ms": 579.117799999949,
+          "orientation_ms": 337.1757000004436,
+          "recognition_ms": 237.51350000020466,
+          "total_ms": 1153.8070000005973
+        },
+        "orientation": {
+          "votes": [
+            30.172311406928586,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "confidence": 1.0,
+          "uncertain": false,
+          "probe_lines": 6,
+          "correction_ccw_degrees": 0,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1600,
+            1067
+          ]
+        }
+      },
+      {
+        "name": "XSY_3471",
+        "degrees": 180,
+        "format": "exif",
+        "kind": "handwritten",
+        "scorable": true,
+        "expected": "LC7832773-P805",
+        "payload_sha256": "44c911f1911906276d92ce509acd853a72b8be2ca4d474a4339cb841ebc9f418",
+        "codes": [
+          "LC7832773-P805"
+        ],
+        "candidate_exact": true,
+        "text": "宏爵制衣厂\n款号：LC7832773\n-P805\n尺码：\n顺离7158SH\n面料\n用线：\n板类：\nS码\n坐围：\n车板工号：12\n8.18\n期：",
+        "timing": {
+          "load_ms": 739.4081999991613,
+          "detection_ms": 648.39320000101,
+          "orientation_ms": 314.40889999976207,
+          "recognition_ms": 322.9611999995541,
+          "total_ms": 1285.7633000003261
+        },
+        "orientation": {
+          "votes": [
+            14.709075556747626,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "confidence": 1.0,
+          "uncertain": false,
+          "probe_lines": 6,
+          "correction_ccw_degrees": 0,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1600,
+            1067
+          ]
+        }
+      },
+      {
+        "name": "XSY_6454",
+        "degrees": 180,
+        "format": "exif",
+        "kind": "printed",
+        "scorable": true,
+        "expected": "LC7881112-P1",
+        "payload_sha256": "adc98efbe0bec2c46df1dfdbf9ff20b5d40fb6a83912363ace52859db4625380",
+        "codes": [
+          "LC7881112-P1"
+        ],
+        "candidate_exact": true,
+        "text": "SIZE: S\nLC7881112-P1\n261017\nG823\n74.7%COTTON\n16.5% POLYESTER\n8.8%REGENERATED FIBER\nMADE IN CHINA",
+        "timing": {
+          "load_ms": 739.4081999991613,
+          "detection_ms": 612.8398999990168,
+          "orientation_ms": 345.34460000031686,
+          "recognition_ms": 209.14300000004005,
+          "total_ms": 1167.3274999993737
+        },
+        "orientation": {
+          "votes": [
+            34.9947999418683,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "confidence": 1.0,
+          "uncertain": false,
+          "probe_lines": 6,
+          "correction_ccw_degrees": 0,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1600,
+            1067
+          ]
+        }
+      },
+      {
+        "name": "XSY_2297",
+        "degrees": 270,
+        "format": "exif",
+        "kind": "printed",
+        "scorable": true,
+        "expected": "LC7877836-P1",
+        "payload_sha256": "096dc24863e43e9333abb153e876412b7cd01471559d0456e54be57c92d03504",
+        "codes": [
+          "LC7877836-P1"
+        ],
+        "candidate_exact": true,
+        "text": "l\nSIZE:S\nLC7877836-P1\n261103\n(G757)\n74.7% COTTON\n16.5%POLYESTER\n8.8%REGENERA TED FIBRE\nMADE IN CHINA",
+        "timing": {
+          "load_ms": 739.4081999991613,
+          "detection_ms": 666.8220999999903,
+          "orientation_ms": 344.5246999999654,
+          "recognition_ms": 370.19359999976587,
+          "total_ms": 1381.5403999997216
+        },
+        "orientation": {
+          "votes": [
+            29.27196825485147,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "confidence": 1.0,
+          "uncertain": false,
+          "probe_lines": 6,
+          "correction_ccw_degrees": 0,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1600,
+            1067
+          ]
+        }
+      },
+      {
+        "name": "XSY_3471",
+        "degrees": 270,
+        "format": "exif",
+        "kind": "handwritten",
+        "scorable": true,
+        "expected": "LC7832773-P805",
+        "payload_sha256": "8e90b66c02cbab6a33d0393b00966270a112a5c4dcf46c04582906b23249bdbd",
+        "codes": [
+          "LC7832773-P305"
+        ],
+        "candidate_exact": false,
+        "text": "宏爵制衣厂\n款号：LC7832773\n-P305\n尺码：\n71585H\n面料\n用线：\n板类：\nS码\n坐围：\n车板工号：12\n8.18\n期：",
+        "timing": {
+          "load_ms": 739.4081999991613,
+          "detection_ms": 617.0576000004075,
+          "orientation_ms": 325.5738999996538,
+          "recognition_ms": 389.59629999953904,
+          "total_ms": 1332.2277999996004
+        },
+        "orientation": {
+          "votes": [
+            15.473160465779271,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "confidence": 1.0,
+          "uncertain": false,
+          "probe_lines": 6,
+          "correction_ccw_degrees": 0,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1600,
+            1067
+          ]
+        }
+      },
+      {
+        "name": "XSY_6454",
+        "degrees": 270,
+        "format": "exif",
+        "kind": "printed",
+        "scorable": true,
+        "expected": "LC7881112-P1",
+        "payload_sha256": "b2425c1e80ee78ea031f9e7f0393fd14a659c98b23e98962ba9e01784c3be3cd",
+        "codes": [
+          "LC7881112-P1"
+        ],
+        "candidate_exact": true,
+        "text": "SIZE: S\nLC7881112-P1\n261017\nG823\n74.7%COTTON\n16.5% POLYESTER\n8.8%REGENERATED FIBER\nMADE IN CHINA",
+        "timing": {
+          "load_ms": 739.4081999991613,
+          "detection_ms": 657.8838000004907,
+          "orientation_ms": 340.8042999999452,
+          "recognition_ms": 217.74700000059966,
+          "total_ms": 1216.4351000010356
+        },
+        "orientation": {
+          "votes": [
+            34.5911040804389,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "confidence": 1.0,
+          "uncertain": false,
+          "probe_lines": 6,
+          "correction_ccw_degrees": 0,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1600,
+            1067
+          ]
+        }
+      }
+    ],
+    "sources_unchanged": true
+  },
+  "rejected_orientation_classifier": {
+    "source": {
+      "url": "https://paddle-model-ecology.bj.bcebos.com/paddlex/official_inference_model/paddle3.0.0/PP-LCNet_x1_0_textline_ori_onnx_infer.tar",
+      "archive_sha256": "274241c75b18f4c1787915383f6a2b73a76f2b56e5023d581af1ce856ba98e1e",
+      "archive_size": 6799360,
+      "files": {
+        "inference.onnx": {
+          "size": 6777816,
+          "sha256": "38aa97cd4be591e0ad304e659f07ba30d946f27a63315433f6659c69c8778345"
+        },
+        "inference.yml": {
+          "size": 735,
+          "sha256": "8d5120d0e1a30a9df7ed46aa9119da3796ed066777089d1c1d705f132d5e90f9"
+        }
+      }
+    },
+    "reason": "本组倒置标签误判，最终未集成/未打包"
+  },
+  "build": {
+    "releaseId": "20261109043302",
+    "installer": "G:\\app\\LR\\dist\\SHIYING 数字资产全量安装器-OCR方向修复版.exe",
+    "bytes": 746234368,
+    "sha256": "2f8c96dc7f3525e73805a89a8c7ac6f2d89544381e36201af9e352a24785c6a2",
+    "offline": true,
+    "singleExe": true,
+    "qwenWeightsIncluded": false,
+    "glmWeightsIncluded": false,
+    "components": [
+      "runtime/msvcp140.dll",
+      "runtime/vcruntime140.dll",
+      "runtime/vcruntime140_1.dll",
+      "runtime/concrt140.dll",
+      "driver/install-interception.exe",
+      "driver/licenses/commercial-usage/Interception API.pdf",
+      "driver/licenses/commercial-usage/Interception.pdf",
+      "driver/licenses/non-commercial-usage/LGPL 3.0.txt",
+      "webview/MicrosoftEdgeWebView2RuntimeInstallerX64.exe",
+      "models/paddle-ocr/PP-OCRv6_small_det/inference.onnx",
+      "models/paddle-ocr/PP-OCRv6_small_det/inference.yml",
+      "models/paddle-ocr/PP-OCRv6_small_rec/inference.onnx",
+      "models/paddle-ocr/PP-OCRv6_small_rec/inference.yml",
+      "models/paddle-ocr/PP-OCRv6_medium_rec/inference.onnx",
+      "models/paddle-ocr/PP-OCRv6_medium_rec/inference.yml",
+      "models/paddle-ocr/PP-OCRv6_medium_det/inference.onnx",
+      "models/paddle-ocr/PP-OCRv6_medium_det/inference.yml"
+    ],
+    "payloadFiles": [
+      {
+        "path": "envelope.json",
+        "size": 161330,
+        "sha256": "ae4913751dbedfd060f6dae77b6d813416a8fe1cbbfdd00700bb58a1f0dd5fcd"
+      },
+      {
+        "path": "SHIYING-Windows-x64.zip",
+        "size": 327341742,
+        "sha256": "03f06d05bc0c6ea95fd36f632381ba4e65224fbb576e7dd5e58176173adc223e"
+      },
+      {
+        "path": "components/runtime/msvcp140.dll",
+        "size": 643512,
+        "sha256": "7c26614e1d733892c2deac7e245ce115504b1d80592dd0a01b08e3e5a55f89ca"
+      },
+      {
+        "path": "components/runtime/vcruntime140.dll",
+        "size": 178616,
+        "sha256": "d1f4225df2cd877dbf130d5668a021dce3f94118455ff5ec952061c30afc9ce7"
+      },
+      {
+        "path": "components/runtime/vcruntime140_1.dll",
+        "size": 50112,
+        "sha256": "a7146c08f89fe5b04541ab507cdb59ff7b44534d4ba3c668a426c6450a03434e"
+      },
+      {
+        "path": "components/runtime/concrt140.dll",
+        "size": 374200,
+        "sha256": "54716f0738af891f283d213b5c8d11b25896bb8ee3097d301eae718560cf974e"
+      },
+      {
+        "path": "components/driver/install-interception.exe",
+        "size": 470528,
+        "sha256": "e137863a79da797f08e7a137280ff2a123809044a888fd75ce9c973198915abe"
+      },
+      {
+        "path": "components/driver/licenses/commercial-usage/Interception API.pdf",
+        "size": 22419,
+        "sha256": "b6fbff2a6b20ba644632d13128589eac2a8886729f4aecf7724be4ccae17c2f9"
+      },
+      {
+        "path": "components/driver/licenses/commercial-usage/Interception.pdf",
+        "size": 78798,
+        "sha256": "f54331742d5d9bfed03822cb8a905b46960502048a1ac11e8060cc7fda7a7de9"
+      },
+      {
+        "path": "components/driver/licenses/non-commercial-usage/LGPL 3.0.txt",
+        "size": 7651,
+        "sha256": "da7eabb7bafdf7d3ae5e9f223aa5bdc1eece45ac569dc21b3b037520b4464768"
+      },
+      {
+        "path": "components/webview/MicrosoftEdgeWebView2RuntimeInstallerX64.exe",
+        "size": 214156024,
+        "sha256": "0625fb5c1e75be58a164e14f95aa58a3e5badb859b3d17c952385f3e4a9ff3e8"
+      },
+      {
+        "path": "components/models/paddle-ocr/PP-OCRv6_small_det/inference.onnx",
+        "size": 9880512,
+        "sha256": "d73e0058b7a8086bbd57f3d10b8bcd4ff95363f67e06e2762b5e814fe9c9410e"
+      },
+      {
+        "path": "components/models/paddle-ocr/PP-OCRv6_small_det/inference.yml",
+        "size": 885,
+        "sha256": "193f435274bf9f0b5f71a929bbfbcf148282df7e633b34e7c373e8f44741b516"
+      },
+      {
+        "path": "components/models/paddle-ocr/PP-OCRv6_small_rec/inference.onnx",
+        "size": 21159378,
+        "sha256": "5435fd747c9e0efe15a96d0b378d5bd157e9492ed8fd80edf08f30d02fa24634"
+      },
+      {
+        "path": "components/models/paddle-ocr/PP-OCRv6_small_rec/inference.yml",
+        "size": 150579,
+        "sha256": "ab078671bb49f06228eadccd34f1bb501e157f7a047095ffb943ba81512c77d1"
+      },
+      {
+        "path": "components/models/paddle-ocr/PP-OCRv6_medium_rec/inference.onnx",
+        "size": 76554979,
+        "sha256": "9c09abf0957f7968c7586464b7397b84ad2387a0497a351af40e9acc71b673ba"
+      },
+      {
+        "path": "components/models/paddle-ocr/PP-OCRv6_medium_rec/inference.yml",
+        "size": 150580,
+        "sha256": "991b700facf5b50a7de193468207d5f4255b538dde0d312ae3b7c7a9b6873129"
+      },
+      {
+        "path": "components/models/paddle-ocr/PP-OCRv6_medium_det/inference.onnx",
+        "size": 62032837,
+        "sha256": "eb13b44b25bb36f89528b68720af8a61d9cf381176107f465db1757b65d086e1"
+      },
+      {
+        "path": "components/models/paddle-ocr/PP-OCRv6_medium_det/inference.yml",
+        "size": 886,
+        "sha256": "7298d5ead546584af2504d03355f881ac7a7bc0eb1e282d3e159277c1d0af871"
+      }
+    ],
+    "workerRuntime": "onedir",
+    "published": false
+  },
+  "packaged_check": {
+    "releaseId": "20261109043302",
+    "signature_verified": true,
+    "package_sha256": "03f06d05bc0c6ea95fd36f632381ba4e65224fbb576e7dd5e58176173adc223e",
+    "installed_files_verified": 936,
+    "photo_preserved": true,
+    "old_model_preserved": true,
+    "glm_assets_absent": true,
+    "native_window_tested": false,
+    "native_window_note": "现用桌面实例保持运行；单实例应用不另起同标识窗口，本次校验冻结引擎真实业务接口。",
+    "new": {
+      "health": {
+        "application": "framekeep",
+        "process_id": 12300,
+        "busy": false
+      },
+      "default_model": "pp-ocrv6-medium-local",
+      "builtin_enabled": true,
+      "provider_test": {
+        "ok": true,
+        "model": "pp-ocrv6-medium-local",
+        "models": [
+          "pp-ocrv6-medium-local"
+        ],
+        "message": "纯 CPU OCR 加载通过；识别质量请使用实际样片验证"
+      },
+      "parse": {
+        "session_id": "e0f1727f011d31a71e124028",
+        "capture_id": "e45dd84ab047befc47806bee",
+        "name": "rot90-XSY_3471",
+        "reading": {
+          "text": "宏爵制衣厂\n款号：LC7832773\n-P805\n尺码：\n顺富7158SH\n面料\n用线：\nHX117\n板类：\nS码\n坐围：\n车板工号：12\n8.18\n期：",
+          "codes": [
+            "LC7832773-P805"
+          ],
+          "ocr_candidates": [
+            "LC7832773-P805",
+            "LC7832773",
+            "P805",
+            "7158SH",
+            "HX117"
+          ],
+          "confidence": 0,
+          "unscored": true,
+          "is_label": false,
+          "handwritten": false,
+          "auxiliary": {
+            "text": "宏爵制衣厂\n款号：LC7832773\n-P805\n尺码：\n顺富7158SH\n面料\n用线：\nHX117\n板类：\nS码\n坐围：\n车板工号：12\n8.18\n期：",
+            "lines": [
+              {
+                "text": "宏爵制衣厂",
+                "confidence": 0.9999111890792847,
+                "points": [
+                  [
+                    458.0,
+                    1031.0
+                  ],
+                  [
+                    458.0,
+                    779.0
+                  ],
+                  [
+                    514.0,
+                    779.0
+                  ],
+                  [
+                    514.0,
+                    1031.0
+                  ]
+                ],
+                "reading_points": [
+                  [
+                    568.0,
+                    458.0
+                  ],
+                  [
+                    820.0,
+                    458.0
+                  ],
+                  [
+                    820.0,
+                    514.0
+                  ],
+                  [
+                    568.0,
+                    514.0
+                  ]
+                ]
+              },
+              {
+                "text": "款号：LC7832773",
+                "confidence": 0.9852506518363953,
+                "points": [
+                  [
+                    513.0,
+                    1079.0
+                  ],
+                  [
+                    511.0,
+                    734.0
+                  ],
+                  [
+                    579.0,
+                    734.0
+                  ],
+                  [
+                    580.0,
+                    1079.0
+                  ]
+                ],
+                "reading_points": [
+                  [
+                    520.0,
+                    513.0
+                  ],
+                  [
+                    865.0,
+                    511.0
+                  ],
+                  [
+                    865.0,
+                    579.0
+                  ],
+                  [
+                    520.0,
+                    580.0
+                  ]
+                ]
+              },
+              {
+                "text": "-P805",
+                "confidence": 0.8531721234321594,
+                "points": [
+                  [
+                    563.0,
+                    926.0
+                  ],
+                  [
+                    563.0,
+                    756.0
+                  ],
+                  [
+                    646.0,
+                    756.0
+                  ],
+                  [
+                    646.0,
+                    926.0
+                  ]
+                ],
+                "reading_points": [
+                  [
+                    673.0,
+                    563.0
+                  ],
+                  [
+                    843.0,
+                    563.0
+                  ],
+                  [
+                    843.0,
+                    646.0
+                  ],
+                  [
+                    673.0,
+                    646.0
+                  ]
+                ]
+              },
+              {
+                "text": "尺码：",
+                "confidence": 0.9999186396598816,
+                "points": [
+                  [
+                    584.0,
+                    1079.0
+                  ],
+                  [
+                    589.0,
+                    987.0
+                  ],
+                  [
+                    629.0,
+                    989.0
+                  ],
+                  [
+                    623.0,
+                    1081.0
+                  ]
+                ],
+                "reading_points": [
+                  [
+                    520.0,
+                    584.0
+                  ],
+                  [
+                    612.0,
+                    589.0
+                  ],
+                  [
+                    610.0,
+                    629.0
+                  ],
+                  [
+                    518.0,
+                    623.0
+                  ]
+                ]
+              },
+              {
+                "text": "顺富7158SH",
+                "confidence": 0.8603681325912476,
+                "points": [
+                  [
+                    634.0,
+                    1006.0
+                  ],
+                  [
+                    639.0,
+                    723.0
+                  ],
+                  [
+                    724.0,
+                    724.0
+                  ],
+                  [
+                    719.0,
+                    1008.0
+                  ]
+                ],
+                "reading_points": [
+                  [
+                    593.0,
+                    634.0
+                  ],
+                  [
+                    876.0,
+                    639.0
+                  ],
+                  [
+                    875.0,
+                    724.0
+                  ],
+                  [
+                    591.0,
+                    719.0
+                  ]
+                ]
+              },
+              {
+                "text": "面料",
+                "confidence": 0.999959409236908,
+                "points": [
+                  [
+                    650.0,
+                    1081.0
+                  ],
+                  [
+                    654.0,
+                    1006.0
+                  ],
+                  [
+                    693.0,
+                    1008.0
+                  ],
+                  [
+                    690.0,
+                    1083.0
+                  ]
+                ],
+                "reading_points": [
+                  [
+                    518.0,
+                    650.0
+                  ],
+                  [
+                    593.0,
+                    654.0
+                  ],
+                  [
+                    591.0,
+                    693.0
+                  ],
+                  [
+                    516.0,
+                    690.0
+                  ]
+                ]
+              },
+              {
+                "text": "用线：",
+                "confidence": 0.9999455809593201,
+                "points": [
+                  [
+                    713.0,
+                    1084.0
+                  ],
+                  [
+                    717.0,
+                    988.0
+                  ],
+                  [
+                    761.0,
+                    989.0
+                  ],
+                  [
+                    757.0,
+                    1086.0
+                  ]
+                ],
+                "reading_points": [
+                  [
+                    515.0,
+                    713.0
+                  ],
+                  [
+                    611.0,
+                    717.0
+                  ],
+                  [
+                    610.0,
+                    761.0
+                  ],
+                  [
+                    513.0,
+                    757.0
+                  ]
+                ]
+              },
+              {
+                "text": "HX117",
+                "confidence": 0.9681016802787781,
+                "points": [
+                  [
+                    712.0,
+                    991.0
+                  ],
+                  [
+                    712.0,
+                    815.0
+                  ],
+                  [
+                    776.0,
+                    815.0
+                  ],
+                  [
+                    776.0,
+                    991.0
+                  ]
+                ],
+                "reading_points": [
+                  [
+                    608.0,
+                    712.0
+                  ],
+                  [
+                    784.0,
+                    712.0
+                  ],
+                  [
+                    784.0,
+                    776.0
+                  ],
+                  [
+                    608.0,
+                    776.0
+                  ]
+                ]
+              },
+              {
+                "text": "板类：",
+                "confidence": 0.9999693036079407,
+                "points": [
+                  [
+                    778.0,
+                    1086.0
+                  ],
+                  [
+                    784.0,
+                    991.0
+                  ],
+                  [
+                    825.0,
+                    994.0
+                  ],
+                  [
+                    819.0,
+                    1089.0
+                  ]
+                ],
+                "reading_points": [
+                  [
+                    513.0,
+                    778.0
+                  ],
+                  [
+                    608.0,
+                    784.0
+                  ],
+                  [
+                    605.0,
+                    825.0
+                  ],
+                  [
+                    510.0,
+                    819.0
+                  ]
+                ]
+              },
+              {
+                "text": "S码",
+                "confidence": 0.7407804727554321,
+                "points": [
+                  [
+                    782.0,
+                    951.0
+                  ],
+                  [
+                    782.0,
+                    788.0
+                  ],
+                  [
+                    883.0,
+                    788.0
+                  ],
+                  [
+                    883.0,
+                    951.0
+                  ]
+                ],
+                "reading_points": [
+                  [
+                    648.0,
+                    782.0
+                  ],
+                  [
+                    811.0,
+                    782.0
+                  ],
+                  [
+                    811.0,
+                    883.0
+                  ],
+                  [
+                    648.0,
+                    883.0
+                  ]
+                ]
+              },
+              {
+                "text": "坐围：",
+                "confidence": 0.9999755024909973,
+                "points": [
+                  [
+                    844.0,
+                    1084.0
+                  ],
+                  [
+                    844.0,
+                    994.0
+                  ],
+                  [
+                    882.0,
+                    994.0
+                  ],
+                  [
+                    882.0,
+                    1084.0
+                  ]
+                ],
+                "reading_points": [
+                  [
+                    515.0,
+                    844.0
+                  ],
+                  [
+                    605.0,
+                    844.0
+                  ],
+                  [
+                    605.0,
+                    882.0
+                  ],
+                  [
+                    515.0,
+                    882.0
+                  ]
+                ]
+              },
+              {
+                "text": "车板工号：12",
+                "confidence": 0.9848536849021912,
+                "points": [
+                  [
+                    894.0,
+                    1089.0
+                  ],
+                  [
+                    888.0,
+                    831.0
+                  ],
+                  [
+                    946.0,
+                    830.0
+                  ],
+                  [
+                    951.0,
+                    1088.0
+                  ]
+                ],
+                "reading_points": [
+                  [
+                    510.0,
+                    894.0
+                  ],
+                  [
+                    768.0,
+                    888.0
+                  ],
+                  [
+                    769.0,
+                    946.0
+                  ],
+                  [
+                    511.0,
+                    951.0
+                  ]
+                ]
+              },
+              {
+                "text": "8.18",
+                "confidence": 0.9815878868103027,
+                "points": [
+                  [
+                    933.0,
+                    939.0
+                  ],
+                  [
+                    949.0,
+                    749.0
+                  ],
+                  [
+                    1032.0,
+                    756.0
+                  ],
+                  [
+                    1016.0,
+                    947.0
+                  ]
+                ],
+                "reading_points": [
+                  [
+                    660.0,
+                    933.0
+                  ],
+                  [
+                    850.0,
+                    949.0
+                  ],
+                  [
+                    843.0,
+                    1032.0
+                  ],
+                  [
+                    652.0,
+                    1016.0
+                  ]
+                ]
+              },
+              {
+                "text": "期：",
+                "confidence": 0.9748367071151733,
+                "points": [
+                  [
+                    969.0,
+                    1045.0
+                  ],
+                  [
+                    978.0,
+                    992.0
+                  ],
+                  [
+                    1006.0,
+                    997.0
+                  ],
+                  [
+                    996.0,
+                    1050.0
+                  ]
+                ],
+                "reading_points": [
+                  [
+                    554.0,
+                    969.0
+                  ],
+                  [
+                    607.0,
+                    978.0
+                  ],
+                  [
+                    602.0,
+                    1006.0
+                  ],
+                  [
+                    549.0,
+                    996.0
+                  ]
+                ]
+              }
+            ],
+            "timing": {
+              "load_ms": 683.9563999983511,
+              "detection_ms": 1205.0386000009894,
+              "orientation_ms": 301.45900000024994,
+              "recognition_ms": 339.19369999966875,
+              "total_ms": 1845.691300000908
+            },
+            "orientation": {
+              "votes": [
+                0.0,
+                0.0,
+                0.0,
+                15.339975384689016
+              ],
+              "confidence": 1.0,
+              "uncertain": false,
+              "probe_lines": 6,
+              "correction_ccw_degrees": 270,
+              "method": "bidirectional_text_consensus",
+              "source_size": [
+                1067,
+                1600
+              ]
+            },
+            "pipeline": "cpu-ocr-rotation-v2",
+            "backend": "CPUExecutionProvider",
+            "det_input_shape": [
+              1,
+              3,
+              864,
+              1280
+            ]
+          },
+          "provider_id": "cpu-medium",
+          "model": "pp-ocrv6-medium-local",
+          "engine": "local|pp-ocrv6-medium-local",
+          "requires_sku_choice": true
+        },
+        "auto_applied": null,
+        "recommended": [
+          "LC7832773-P805"
+        ]
+      },
+      "parse_ms": 1959.53,
+      "source_unchanged": true,
+      "gpu_providers_absent": true,
+      "ok": true,
+      "test_process_stopped": true
+    },
+    "upgrade": {
+      "health": {
+        "application": "framekeep",
+        "process_id": 15708,
+        "busy": false
+      },
+      "default_model": "pp-ocrv6-medium-local",
+      "builtin_enabled": true,
+      "legacy_card_id_preserved": true,
+      "old_weights_preserved": true,
+      "provider_test": {
+        "ok": true,
+        "model": "pp-ocrv6-medium-local",
+        "models": [
+          "pp-ocrv6-medium-local"
+        ],
+        "message": "纯 CPU OCR 加载通过；识别质量请使用实际样片验证"
+      },
+      "parse": {
+        "session_id": "328b7acbf5bf3621d3fa91e1",
+        "capture_id": "e45dd84ab047befc47806bee",
+        "name": "rot90-XSY_3471",
+        "reading": {
+          "text": "宏爵制衣厂\n款号：LC7832773\n-P805\n尺码：\n顺富7158SH\n面料\n用线：\nHX117\n板类：\nS码\n坐围：\n车板工号：12\n8.18\n期：",
+          "codes": [
+            "LC7832773-P805"
+          ],
+          "ocr_candidates": [
+            "LC7832773-P805",
+            "LC7832773",
+            "P805",
+            "7158SH",
+            "HX117"
+          ],
+          "confidence": 0,
+          "unscored": true,
+          "is_label": false,
+          "handwritten": false,
+          "auxiliary": {
+            "text": "宏爵制衣厂\n款号：LC7832773\n-P805\n尺码：\n顺富7158SH\n面料\n用线：\nHX117\n板类：\nS码\n坐围：\n车板工号：12\n8.18\n期：",
+            "lines": [
+              {
+                "text": "宏爵制衣厂",
+                "confidence": 0.9999111890792847,
+                "points": [
+                  [
+                    458.0,
+                    1031.0
+                  ],
+                  [
+                    458.0,
+                    779.0
+                  ],
+                  [
+                    514.0,
+                    779.0
+                  ],
+                  [
+                    514.0,
+                    1031.0
+                  ]
+                ],
+                "reading_points": [
+                  [
+                    568.0,
+                    458.0
+                  ],
+                  [
+                    820.0,
+                    458.0
+                  ],
+                  [
+                    820.0,
+                    514.0
+                  ],
+                  [
+                    568.0,
+                    514.0
+                  ]
+                ]
+              },
+              {
+                "text": "款号：LC7832773",
+                "confidence": 0.9852506518363953,
+                "points": [
+                  [
+                    513.0,
+                    1079.0
+                  ],
+                  [
+                    511.0,
+                    734.0
+                  ],
+                  [
+                    579.0,
+                    734.0
+                  ],
+                  [
+                    580.0,
+                    1079.0
+                  ]
+                ],
+                "reading_points": [
+                  [
+                    520.0,
+                    513.0
+                  ],
+                  [
+                    865.0,
+                    511.0
+                  ],
+                  [
+                    865.0,
+                    579.0
+                  ],
+                  [
+                    520.0,
+                    580.0
+                  ]
+                ]
+              },
+              {
+                "text": "-P805",
+                "confidence": 0.8531721234321594,
+                "points": [
+                  [
+                    563.0,
+                    926.0
+                  ],
+                  [
+                    563.0,
+                    756.0
+                  ],
+                  [
+                    646.0,
+                    756.0
+                  ],
+                  [
+                    646.0,
+                    926.0
+                  ]
+                ],
+                "reading_points": [
+                  [
+                    673.0,
+                    563.0
+                  ],
+                  [
+                    843.0,
+                    563.0
+                  ],
+                  [
+                    843.0,
+                    646.0
+                  ],
+                  [
+                    673.0,
+                    646.0
+                  ]
+                ]
+              },
+              {
+                "text": "尺码：",
+                "confidence": 0.9999186396598816,
+                "points": [
+                  [
+                    584.0,
+                    1079.0
+                  ],
+                  [
+                    589.0,
+                    987.0
+                  ],
+                  [
+                    629.0,
+                    989.0
+                  ],
+                  [
+                    623.0,
+                    1081.0
+                  ]
+                ],
+                "reading_points": [
+                  [
+                    520.0,
+                    584.0
+                  ],
+                  [
+                    612.0,
+                    589.0
+                  ],
+                  [
+                    610.0,
+                    629.0
+                  ],
+                  [
+                    518.0,
+                    623.0
+                  ]
+                ]
+              },
+              {
+                "text": "顺富7158SH",
+                "confidence": 0.8603681325912476,
+                "points": [
+                  [
+                    634.0,
+                    1006.0
+                  ],
+                  [
+                    639.0,
+                    723.0
+                  ],
+                  [
+                    724.0,
+                    724.0
+                  ],
+                  [
+                    719.0,
+                    1008.0
+                  ]
+                ],
+                "reading_points": [
+                  [
+                    593.0,
+                    634.0
+                  ],
+                  [
+                    876.0,
+                    639.0
+                  ],
+                  [
+                    875.0,
+                    724.0
+                  ],
+                  [
+                    591.0,
+                    719.0
+                  ]
+                ]
+              },
+              {
+                "text": "面料",
+                "confidence": 0.999959409236908,
+                "points": [
+                  [
+                    650.0,
+                    1081.0
+                  ],
+                  [
+                    654.0,
+                    1006.0
+                  ],
+                  [
+                    693.0,
+                    1008.0
+                  ],
+                  [
+                    690.0,
+                    1083.0
+                  ]
+                ],
+                "reading_points": [
+                  [
+                    518.0,
+                    650.0
+                  ],
+                  [
+                    593.0,
+                    654.0
+                  ],
+                  [
+                    591.0,
+                    693.0
+                  ],
+                  [
+                    516.0,
+                    690.0
+                  ]
+                ]
+              },
+              {
+                "text": "用线：",
+                "confidence": 0.9999455809593201,
+                "points": [
+                  [
+                    713.0,
+                    1084.0
+                  ],
+                  [
+                    717.0,
+                    988.0
+                  ],
+                  [
+                    761.0,
+                    989.0
+                  ],
+                  [
+                    757.0,
+                    1086.0
+                  ]
+                ],
+                "reading_points": [
+                  [
+                    515.0,
+                    713.0
+                  ],
+                  [
+                    611.0,
+                    717.0
+                  ],
+                  [
+                    610.0,
+                    761.0
+                  ],
+                  [
+                    513.0,
+                    757.0
+                  ]
+                ]
+              },
+              {
+                "text": "HX117",
+                "confidence": 0.9681016802787781,
+                "points": [
+                  [
+                    712.0,
+                    991.0
+                  ],
+                  [
+                    712.0,
+                    815.0
+                  ],
+                  [
+                    776.0,
+                    815.0
+                  ],
+                  [
+                    776.0,
+                    991.0
+                  ]
+                ],
+                "reading_points": [
+                  [
+                    608.0,
+                    712.0
+                  ],
+                  [
+                    784.0,
+                    712.0
+                  ],
+                  [
+                    784.0,
+                    776.0
+                  ],
+                  [
+                    608.0,
+                    776.0
+                  ]
+                ]
+              },
+              {
+                "text": "板类：",
+                "confidence": 0.9999693036079407,
+                "points": [
+                  [
+                    778.0,
+                    1086.0
+                  ],
+                  [
+                    784.0,
+                    991.0
+                  ],
+                  [
+                    825.0,
+                    994.0
+                  ],
+                  [
+                    819.0,
+                    1089.0
+                  ]
+                ],
+                "reading_points": [
+                  [
+                    513.0,
+                    778.0
+                  ],
+                  [
+                    608.0,
+                    784.0
+                  ],
+                  [
+                    605.0,
+                    825.0
+                  ],
+                  [
+                    510.0,
+                    819.0
+                  ]
+                ]
+              },
+              {
+                "text": "S码",
+                "confidence": 0.7407804727554321,
+                "points": [
+                  [
+                    782.0,
+                    951.0
+                  ],
+                  [
+                    782.0,
+                    788.0
+                  ],
+                  [
+                    883.0,
+                    788.0
+                  ],
+                  [
+                    883.0,
+                    951.0
+                  ]
+                ],
+                "reading_points": [
+                  [
+                    648.0,
+                    782.0
+                  ],
+                  [
+                    811.0,
+                    782.0
+                  ],
+                  [
+                    811.0,
+                    883.0
+                  ],
+                  [
+                    648.0,
+                    883.0
+                  ]
+                ]
+              },
+              {
+                "text": "坐围：",
+                "confidence": 0.9999755024909973,
+                "points": [
+                  [
+                    844.0,
+                    1084.0
+                  ],
+                  [
+                    844.0,
+                    994.0
+                  ],
+                  [
+                    882.0,
+                    994.0
+                  ],
+                  [
+                    882.0,
+                    1084.0
+                  ]
+                ],
+                "reading_points": [
+                  [
+                    515.0,
+                    844.0
+                  ],
+                  [
+                    605.0,
+                    844.0
+                  ],
+                  [
+                    605.0,
+                    882.0
+                  ],
+                  [
+                    515.0,
+                    882.0
+                  ]
+                ]
+              },
+              {
+                "text": "车板工号：12",
+                "confidence": 0.9848536849021912,
+                "points": [
+                  [
+                    894.0,
+                    1089.0
+                  ],
+                  [
+                    888.0,
+                    831.0
+                  ],
+                  [
+                    946.0,
+                    830.0
+                  ],
+                  [
+                    951.0,
+                    1088.0
+                  ]
+                ],
+                "reading_points": [
+                  [
+                    510.0,
+                    894.0
+                  ],
+                  [
+                    768.0,
+                    888.0
+                  ],
+                  [
+                    769.0,
+                    946.0
+                  ],
+                  [
+                    511.0,
+                    951.0
+                  ]
+                ]
+              },
+              {
+                "text": "8.18",
+                "confidence": 0.9815878868103027,
+                "points": [
+                  [
+                    933.0,
+                    939.0
+                  ],
+                  [
+                    949.0,
+                    749.0
+                  ],
+                  [
+                    1032.0,
+                    756.0
+                  ],
+                  [
+                    1016.0,
+                    947.0
+                  ]
+                ],
+                "reading_points": [
+                  [
+                    660.0,
+                    933.0
+                  ],
+                  [
+                    850.0,
+                    949.0
+                  ],
+                  [
+                    843.0,
+                    1032.0
+                  ],
+                  [
+                    652.0,
+                    1016.0
+                  ]
+                ]
+              },
+              {
+                "text": "期：",
+                "confidence": 0.9748367071151733,
+                "points": [
+                  [
+                    969.0,
+                    1045.0
+                  ],
+                  [
+                    978.0,
+                    992.0
+                  ],
+                  [
+                    1006.0,
+                    997.0
+                  ],
+                  [
+                    996.0,
+                    1050.0
+                  ]
+                ],
+                "reading_points": [
+                  [
+                    554.0,
+                    969.0
+                  ],
+                  [
+                    607.0,
+                    978.0
+                  ],
+                  [
+                    602.0,
+                    1006.0
+                  ],
+                  [
+                    549.0,
+                    996.0
+                  ]
+                ]
+              }
+            ],
+            "timing": {
+              "load_ms": 682.2301000011066,
+              "detection_ms": 1172.787999998036,
+              "orientation_ms": 299.68410000037693,
+              "recognition_ms": 349.4008000016038,
+              "total_ms": 1821.8729000000167
+            },
+            "orientation": {
+              "votes": [
+                0.0,
+                0.0,
+                0.0,
+                15.339975384689016
+              ],
+              "confidence": 1.0,
+              "uncertain": false,
+              "probe_lines": 6,
+              "correction_ccw_degrees": 270,
+              "method": "bidirectional_text_consensus",
+              "source_size": [
+                1067,
+                1600
+              ]
+            },
+            "pipeline": "cpu-ocr-rotation-v2",
+            "backend": "CPUExecutionProvider",
+            "det_input_shape": [
+              1,
+              3,
+              864,
+              1280
+            ]
+          },
+          "provider_id": "cpu-medium",
+          "model": "pp-ocrv6-medium-local",
+          "engine": "local|pp-ocrv6-medium-local",
+          "requires_sku_choice": true
+        },
+        "auto_applied": null,
+        "recommended": [
+          "LC7832773-P805"
+        ]
+      },
+      "parse_ms": 1926.59,
+      "source_unchanged": true,
+      "gpu_providers_absent": true,
+      "ok": true,
+      "test_process_stopped": true
+    }
+  },
+  "field_machine_tested": false,
+  "published": false,
+  "cleanup": {
+    "removed_logical_bytes": 4887105118.0,
+    "free_after": 348207185920,
+    "free_before": 343641882624,
+    "retained": "新旧全量EXE、签名包、唯一完整程序目录、源码、Medium/Small和GLM Q8开发权重、基准及验证记录",
+    "free_delta": 4565303296,
+    "records": [
+      {
+        "path": "G:\\app\\LR\\build\\rotation-release-source\\build\\full-payload-check",
+        "bytes": 745538896.0
+      },
+      {
+        "path": "G:\\app\\LR\\build\\rotation-release-source\\build\\signed-rotation-check",
+        "bytes": 2325964780.0
+      },
+      {
+        "path": "G:\\app\\LR\\build\\rotation-release-source\\build\\rotated-frozen-check",
+        "bytes": 143992682.0
+      },
+      {
+        "path": "G:\\app\\LR\\build\\rotation-release-source\\build\\engine-dist",
+        "bytes": 746762385.0
+      },
+      {
+        "path": "G:\\app\\LR\\build\\rotation-release-source\\build\\framekeep-engine",
+        "bytes": 26702832.0
+      },
+      {
+        "path": "G:\\app\\LR\\build\\rotation-release-source\\build\\update-worker-dist",
+        "bytes": 32122789.0
+      },
+      {
+        "path": "G:\\app\\LR\\build\\rotation-release-source\\build\\update-worker",
+        "bytes": 7152320.0
+      },
+      {
+        "path": "G:\\app\\LR\\build\\rotation-release-source\\build\\update-tools",
+        "bytes": 97747261.0
+      },
+      {
+        "path": "G:\\app\\LR\\build\\rotation-release-source\\build\\release-web",
+        "bytes": 1311213.0
+      },
+      {
+        "path": "G:\\app\\LR\\build\\rotation-release-source\\build\\single-installer\\20261109043302\\offline-payload.zip",
+        "bytes": 713418946
+      },
+      {
+        "path": "G:\\app\\LR\\build\\rotation-release-source\\dist\\SHIYING 数字资产安装器.exe",
+        "bytes": 32812544
+      },
+      {
+        "path": "G:\\app\\LR\\.runtime\\models\\paddle-ocr\\PP-LCNet_x1_0_textline_ori",
+        "bytes": 6779110.0
+      },
+      {
+        "path": "G:\\app\\LR\\.runtime\\models\\paddle-ocr\\PP-LCNet_x1_0_textline_ori.tar",
+        "bytes": 6799360
+      }
+    ]
+  },
+  "final_exe_hash_reverified": true
+}

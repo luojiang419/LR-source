@@ -12,7 +12,7 @@ const startWorkbenchUi=()=>{
   document.querySelector('.right-panel').setAttribute('aria-label','现场评级和照片信息');
   const folderFooter=document.createElement('div');folderFooter.className='folder-sidebar-footer';
   folderFooter.setAttribute('role','group');folderFooter.setAttribute('aria-label','文件夹与监控操作');
-  folderFooter.append($('open-folder'),$('canon-tether-open'),$('folder-watch'));
+  folderFooter.append($('open-folder'),$('folder-watch'));
   $('add-folder-row').remove();
   document.querySelector('.left-panel').append(folderFooter);
   // 底部保留页面导航，选片筛选并入顶栏以腾出图片区高度。
@@ -23,7 +23,6 @@ const startWorkbenchUi=()=>{
     'selection-tab':'<rect x="3" y="3" width="18" height="18" rx="2"/><path d="m3 16 5-5 4 4 4-6 5 7"/><circle cx="8" cy="7" r="1"/>',
     'sku-open':'<path d="M8 3h8v4H8zM8 5H5v16h14V5h-3M8 12h8M8 16h5"/>',
     'asset-archive-open':'<path d="M3 4h18v5H3zM5 9v12h14V9M9 13h6"/>',
-    'asset-analysis-open':'<path d="M8 3h8l4 4v14H4V3zM15 3v5h5M8 12h8M8 16h5"/>',
     'app-settings-open':'<path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3"/><circle cx="15" cy="17" r="3"/>'
   };
   tabs.append($('app-settings-open'));
@@ -55,8 +54,7 @@ const startWorkbenchUi=()=>{
   const headings=new Map([
     ['retrieval',document.querySelector('#asset-retrieval-page>.retrieval-heading')],
     ['archive',document.querySelector('#asset-archive-dialog>.catalog-heading')],
-    ['sku-database',document.querySelector('#sku-database-page>.catalog-heading')],
-    ['analysis',document.querySelector('#analysis-dialog>.analysis-heading')]
+    ['sku-database',document.querySelector('#sku-database-page>.catalog-heading')]
   ]);
   for(const [name,heading] of headings){
     if(!heading)continue;
@@ -79,11 +77,17 @@ const startWorkbenchUi=()=>{
   parsing.setAttribute('role','status');parsing.setAttribute('aria-live','polite');
   parsing.innerHTML='<span id="capture-ocr-status">OCR 未解析</span><span id="capture-sku-result">SKU:—</span><span id="capture-multimodal-status" data-status="unparsed"><i class="parsing-status-light" aria-hidden="true"></i><span>多模态 未解析</span></span>';
   $('loupe-name').after(parsing);
+  const skuWrite=document.createElement('span');skuWrite.id='capture-metadata-status';parsing.append(skuWrite);
+  const skuRetry=document.createElement('button');skuRetry.id='capture-metadata-retry';skuRetry.textContent='重试款号写入';skuRetry.hidden=true;parsing.append(skuRetry);let metadataOperations=[];
+  skuRetry.onclick=async()=>{skuRetry.disabled=true;try{await Promise.all(metadataOperations.map(id=>FramekeepIO.api('/api/metadata/retry',{operation_id:id})));await syncParsing(true)}catch(error){skuWrite.textContent='款号写入重试失败：'+error.message}finally{skuRetry.disabled=false}};
   const parsed=new Set(['completed','matched','confirmed']);
   function parsingLabel(status){return parsed.has(status)?'已解析':({queued:'排队中',retry:'等待重试',waiting_model:'等待模型',paused:'已暂停',manual:'等待手动开始',running:'解析中',review:'待核对',unmatched:'未匹配',failed:'解析失败',cancelled:'已取消',ignored:'已忽略',stale:'已失效',loading:'读取中',unknown:'状态不可用'}[status]||'未解析')}
   function paintParsing(data){
     document.dispatchEvent(new CustomEvent('framekeep:capture-status',{detail:{session_id:parsingSession,capture_id:parsingCapture,...data}}));
     const ocr=data.ocr||{},multi=data.multimodal||{};
+    const metadata=data.metadata||{};metadataOperations=metadata.operation_ids||[];
+    skuWrite.textContent=({queued:'款号待写入',writing:'款号写入中',applied:'款号元数据已写入',failed:'款号写入未完成',missing:'款号已入库，等待补写'}[metadata.status]||'')+(metadata.total?` ${metadata.applied}/${metadata.total}`:'');
+    skuWrite.title=(metadata.jobs||[]).filter(j=>j.reason).map(j=>j.path+'：'+j.reason).join('\n');skuRetry.hidden=metadata.status!=='failed'||!metadataOperations.length;
     $('capture-ocr-status').textContent='OCR '+parsingLabel(ocr.status);
     $('capture-ocr-status').title=ocr.reason||'';
     const codes=Array.isArray(ocr.codes)?ocr.codes:[];

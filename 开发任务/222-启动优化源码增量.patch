@@ -1,0 +1,679 @@
+diff --git a/演示方案/boot.js b/演示方案/boot.js
+index 61d9d550a991471c6a035d411b56c39afa4717a4..35f040e59a9570589e12de80180ce41a9070ecda 100644
+--- a/演示方案/boot.js
++++ b/演示方案/boot.js
+@@ -12,17 +12,80 @@
+   function stage(message,step){status.textContent=message;screen.dataset.step=String(step)}
+   function script(src){return new Promise((resolve,reject)=>{const element=document.createElement('script');element.src=src;element.onload=resolve;element.onerror=()=>reject(new Error('工作台模块读取失败，请重试'));document.body.append(element)})}
+   const bundle=document.createElement('link');bundle.rel='preload';bundle.as='script';bundle.href='/workbench.js';document.head.append(bundle);
++  let launchPhoto=null,arrival=null,arrivalImage=null,arrivalTimer=null,disposed=false;
++  let servicesResolve=null,captureResolve=null;
++  function firstPhoto(){if(boot.firstPhotoReady==null&&!boot.loading){boot.firstPhotoReady=performance.now();document.dispatchEvent(new CustomEvent('framekeep:first-photo'))}}
++  const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
++  function dismissArrival(){arrival?.remove();arrival=null;arrivalImage=null}
++  function showArrival(){
++    if(!launchPhoto||boot.loading||window.FramekeepWorkspace?.current()!=='selection')return;
++    const current=window.FRAMEKEEP_SESSION;
++    if(current?.id&&!current.restoring&&current.root!==launchPhoto.folder){dismissArrival();return}
++    const matched=window.DEMO_PHOTOS?.find(photo=>[photo.jpg,photo.raw].some(path=>path?.replaceAll('\\','/').split('/').pop()===launchPhoto.name));
++    if(matched){dismissArrival();return}
++    if(!arrival){
++      arrival=document.createElement('div');arrival.id='startup-arrival';arrival.setAttribute('role','status');
++      arrival.style.cssText='position:absolute;inset:76px 0 52px;z-index:8;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--bg,#151b18);padding:16px;pointer-events:none';
++      arrivalImage=document.createElement('img');arrivalImage.alt=launchPhoto.name;arrivalImage.style.cssText='min-height:0;max-height:calc(100% - 32px);max-width:100%;object-fit:contain';
++      arrivalImage.onload=firstPhoto;
++      const caption=document.createElement('span');caption.textContent='照片已接入，正在开启现场监控…';caption.style.marginTop='12px';arrival.append(arrivalImage,caption);
++      const host=document.querySelector('.library-main');if(getComputedStyle(host).position==='static')host.style.position='relative';host.append(arrival);
++    }
++    if(arrivalImage.dataset.identity!==launchPhoto.id||(!arrivalImage.naturalWidth&&arrivalImage.complete)){
++      arrivalImage.dataset.identity=launchPhoto.id;arrivalImage.src=launchPhoto.preview;
++    }
++  }
++  async function pollArrival(){
++    if(disposed)return;
++    try{
++      const response=await fetch('/api/startup',{signal:AbortSignal.timeout(3000)});
++      if(!response.ok)return;
++      const state=await response.json();if(state.photo)launchPhoto=state.photo;
++      if(state.capture_ready||state.ready){boot.captureLoaded=true;captureResolve?.(true);captureResolve=null}
++      if(state.ready&&!boot.servicesLoaded){boot.servicesLoaded=true;servicesResolve?.(true);servicesResolve=null;document.dispatchEvent(new CustomEvent('framekeep:services-ready'));complete(window.FRAMEKEEP_SESSION?.requestToken)}
++      if(state.failed){captureResolve?.(false);servicesResolve?.(false);captureResolve=servicesResolve=null;window.Framekeep?.notify(state.error);return}
++      showArrival();
++      if(boot.servicesLoaded&&!boot.restoring&&!arrival)return;
++    }catch{/* 传输中的照片由下一次轮询重试，不能阻挡工作面。 */}
++    arrivalTimer=setTimeout(pollArrival,250);
++  }
++  async function restore(){
++    try{
++      let data;
++      do{
++        const response=await fetch('/api/bootstrap',{signal:AbortSignal.timeout(180000)});
++        if(!response.ok)throw new Error('照片恢复失败，请重新打开文件夹或重启软件');
++        data=await response.json();if(data.pending)await pause(100);
++      }while(data.pending&&!disposed);
++      if(disposed)return;
++      window.FramekeepIO.restoreStartup(data);
++      boot.dataReady=performance.now();boot.restoring=false;showArrival();
++      document.dispatchEvent(new CustomEvent('framekeep:restore-ready'));
++      if(boot.servicesLoaded)complete(data.request_token);
++    }catch(error){
++      boot.restoring=false;document.querySelector('.session-title').textContent='照片恢复暂未完成';
++      window.Framekeep?.notify(error.message||'照片恢复失败，请重试');
++    }
++  }
++  function complete(token){if(token)fetch('/api/boot/complete',{method:'POST',headers:{'Content-Type':'application/json','X-Framekeep-Token':token},body:'{}'}).catch(()=>{})}
++  document.addEventListener('framekeep:selection',()=>{if(!boot.loading)showArrival()});
++  document.addEventListener('framekeep:receiving-preview',event=>{if(event.detail.active){firstPhoto();dismissArrival();launchPhoto=null}});
++  document.addEventListener('framekeep:watch',event=>{if(event.detail.enabled&&boot.monitorReady==null){boot.monitorReady=performance.now();document.dispatchEvent(new CustomEvent('framekeep:monitor-ready'))}});
++  document.getElementById('photos').addEventListener('load',event=>{if(event.target.naturalWidth&&event.target.getBoundingClientRect().height>0)firstPhoto()},true);
++  document.addEventListener('framekeep:workspace',()=>{if(window.FramekeepWorkspace?.current()!=='selection')dismissArrival();else showArrival()});
++  window.addEventListener('pagehide',()=>{disposed=true;captureResolve?.(false);servicesResolve?.(false);clearTimeout(arrivalTimer);dismissArrival()},{once:true});
+   async function start(){
+     try{
+-      stage('正在打开上次的照片…',1);
+-      const response=await fetch('/api/bootstrap',{signal:AbortSignal.timeout(30000)});
+-      let token=null,bundled=false;
++      stage('正在打开工作台…',1);
++      const response=await fetch('/api/bootstrap?shell=1',{signal:AbortSignal.timeout(30000)});
++      let token=null,bundled=false,progressive=false;
+       if(response.status===404){await script('assets/demo-data.js')}
+       else{
+         if(!response.ok)throw new Error('照片资料暂时无法读取，请重试');
+         const data=await response.json();window.FRAMEKEEP_SESSION=data.session;window.DEMO_PHOTOS=data.photos;token=data.request_token;bundled=data.workbench_bundle===true;
++        progressive=data.progressive===true;boot.restoring=progressive;
+       }
+-      boot.dataReady=performance.now();stage('正在整理您的工作台…',2);
++      if(!progressive)boot.dataReady=performance.now();else{boot.servicesLoaded=false;boot.servicesReady=new Promise(resolve=>{servicesResolve=resolve});boot.captureReady=new Promise(resolve=>{captureResolve=resolve});pollArrival()}stage('正在整理您的工作台…',2);
+       if(bundled)await script('/workbench.js');else for(const name of modules)await script(name);
+       if(errors.length)throw new Error('工作台初始化失败，请重试');
+       try{const last=localStorage.getItem('framekeep.last-workspace');if(['selection','progress','archive','inventory','sku-database','retrieval','analysis','settings'].includes(last)&&window.FramekeepWorkspace?.current()!==last)window.FramekeepWorkspace?.show(last)}catch{}
+@@ -30,9 +93,10 @@
+       document.body.removeAttribute('data-boot-loading');document.querySelector('.workbench').removeAttribute('inert');
+       await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+       boot.loading=false;boot.workbenchReady=performance.now();
++      if(launchPhoto)window.FramekeepWorkspace?.show('selection');showArrival();
+       screen.classList.add('is-leaving');document.dispatchEvent(new CustomEvent('framekeep:boot-ready'));
+       setTimeout(()=>screen.remove(),350);
+-      if(token)fetch('/api/boot/complete',{method:'POST',headers:{'Content-Type':'application/json','X-Framekeep-Token':token},body:'{}'}).catch(()=>{});
++      if(progressive)restore();else complete(token);
+       window.removeEventListener('error',recordError);
+     }catch(error){
+       stage('工作台还没有准备好',0);document.getElementById('startup-error').textContent=error.message||'连接暂时中断，请重试';
+diff --git a/演示方案/desktop.js b/演示方案/desktop.js
+index 8a30a7d62c30cbeeb5a86bb5c2718ef2726d41ef..bad76859a5aefef0ff62569fee7aaa450120db6f 100644
+--- a/演示方案/desktop.js
++++ b/演示方案/desktop.js
+@@ -116,8 +116,12 @@
+   if(window.__framekeepHasPendingClose)FramekeepDesktop.close(window.__framekeepPendingClose);
+   // 原生启动页也使用同一关闭流程，但工作台就绪指标仅由 HTTP 工作台上报。
+   if(location.hostname!=='127.0.0.1')return;
+-  const ready=()=>requestAnimationFrame(()=>requestAnimationFrame(()=>{const boot=window.FramekeepBoot;invoke('desktop_ready',{timings:boot?{shell_ready_ms:boot.shellReady,data_ready_ms:boot.dataReady,workbench_ready_ms:boot.workbenchReady}:null}).catch(()=>{})}));
++  const ready=()=>requestAnimationFrame(()=>requestAnimationFrame(()=>{const boot=window.FramekeepBoot;invoke('desktop_ready',{timings:boot?{shell_ready_ms:boot.shellReady,data_ready_ms:boot.dataReady,workbench_ready_ms:boot.workbenchReady,first_photo_ready_ms:boot.firstPhotoReady??null,monitor_ready_ms:boot.monitorReady??null,services_ready:boot.servicesLoaded??true}:null}).catch(()=>{})}));
+   if(window.FramekeepBoot?.loading)document.addEventListener('framekeep:boot-ready',ready,{once:true});
+   else if(document.readyState==='loading')window.addEventListener('DOMContentLoaded',ready,{once:true});
+   else ready();
++  document.addEventListener('framekeep:restore-ready',ready,{once:true});
++  document.addEventListener('framekeep:first-photo',ready,{once:true});
++  document.addEventListener('framekeep:services-ready',ready,{once:true});
++  document.addEventListener('framekeep:monitor-ready',ready,{once:true});
+ })();
+diff --git a/演示方案/formal.js b/演示方案/formal.js
+index 2f4c2fc29e5f2b2b8d5fb4fea34f853eb03a092e..6b7f42fabd184e7b6af71d52ffc02c909d79aee5 100644
+--- a/演示方案/formal.js
++++ b/演示方案/formal.js
+@@ -18,6 +18,11 @@
+   }
+   let token=session.requestToken||null,revision=session.revision,timer=null,conflicted=false,lastSaved=canonical(sharedState(session.saved,session.sharedRatings)),saving=Promise.resolve(),bridgeTimer=null;
+   async function api(path,body,timeout=20000,signal=null,fresh=false){
++    const capturePath=new URL(path,location.href).pathname;
++    const captureRead=body===undefined&&['/api/state','/api/folders','/api/watch','/api/watch/direct'].includes(capturePath);
++    const captureWrite=body!==undefined&&['/api/activate','/api/watch/start','/api/watch/stop'].includes(capturePath);
++    const ready=captureRead||captureWrite?window.FramekeepBoot?.captureReady:window.FramekeepBoot?.servicesReady;
++    if(ready&&await ready===false)throw new Error('后台服务未能启动，请重启软件');
+     const views=window.FramekeepViewCache;
+     if(body===undefined&&!fresh&&views?.accepts(path))return views.read(path,nextSignal=>api(path,undefined,timeout,nextSignal,true),signal);
+     const finish=window.FramekeepTaskStatus?.begin(path,body);
+@@ -64,6 +69,16 @@
+     lastSaved=canonical(Framekeep.persistedState());stash();sessionDetails();
+   }
+   window.FramekeepIO={flush,api,openSession,refreshFolders,refreshLive,reloadRatings,
++    restoreStartup(data){
++      // 用户或现场监控已进入其它会话时，迟到的历史恢复不能切回旧目录。
++      if(!session.restoring||session.id||switching){if(session.id)session.restoring=false;return false}
++      const next=data.session;
++      revision=next.revision;conflicted=false;
++      Framekeep.loadSession({...next,restoring:false},data.photos);
++      lastSaved=canonical(Framekeep.persistedState());sessionDetails();folderSelection();
++      document.dispatchEvent(new CustomEvent('framekeep:session-restored'));
++      return true;
++    },
+     async followSync(sid){
+       if(!sid||switching)return false;
+       await window.FramekeepPaging?.whenIdle();
+@@ -260,6 +275,11 @@
+   $('queue-bridge').addEventListener('click',async()=>{try{await flush();await api('/api/bridge',{});await bridgeStatus();Framekeep.notify('已发送，等待 LR 中预览确认')}catch(e){Framekeep.notify(e.message)}});
+   $('install-bridge').addEventListener('click',async()=>{try{const result=await api('/api/bridge/install',{});$('bridge-status').textContent=`已安装到 ${result.path}\n请在 LR 增效工具管理器添加/重新加载插件，再运行“连接SHIYING工作台”。`}catch(e){Framekeep.notify(e.message)}});
+   refreshFolders().catch(()=>{});
++  document.addEventListener('framekeep:services-ready',()=>{
++    window.FramekeepViewCache?.invalidate('/api/folders');
++    refreshFolders().catch(()=>{});
++    if(session.id)reloadRatings().catch(error=>Framekeep.notify(error.message));
++  },{once:true});
+   sessionDetails();
+   schedule();
+ })();
+diff --git a/桌面程序/src/main.rs b/桌面程序/src/main.rs
+index ec6cc52dd513be74c0a5fa56ecac8be7ccf9a5e2..3e0cff82ccbfc9ece913cc67ceec1b36aa4d0ce0 100644
+--- a/桌面程序/src/main.rs
++++ b/桌面程序/src/main.rs
+@@ -151,8 +151,18 @@
+ #[tauri::command]
+ fn desktop_ready(engine: tauri::State<'_, Arc<Engine>>, timings: Option<serde_json::Value>) {
+     let elapsed=engine.started.elapsed().as_millis();
+-    let _ = fs::write(engine.data.join("desktop-metrics.json"), serde_json::json!({"first_document_ready_ms":elapsed,"first_workbench_ready_ms":elapsed,"startup_animation_visible_ms":*engine.splash_visible.lock().unwrap(),"web_timings":timings,"desktop_pid":std::process::id()}).to_string());
+-    if engine.ready.load(Ordering::SeqCst) {
++    let metrics=engine.data.join("desktop-metrics.json");
++    let previous=fs::read_to_string(&metrics).ok().and_then(|v|serde_json::from_str::<serde_json::Value>(&v).ok())
++        .filter(|v|v["desktop_pid"].as_u64()==Some(std::process::id() as u64));
++    let first=previous.as_ref().and_then(|v|v["first_workbench_ready_ms"].as_u64()).map(u128::from).unwrap_or(elapsed);
++    let restored=timings.as_ref().and_then(|v|v["data_ready_ms"].as_f64()).is_some();
++    let first_photo=previous.as_ref().and_then(|v|v["first_photo_visible_ms"].as_u64()).map(u128::from)
++        .or_else(||timings.as_ref().and_then(|v|v["first_photo_ready_ms"].as_f64()).map(|_|elapsed));
++    let photos_restored=previous.as_ref().and_then(|v|v["photos_restored_ms"].as_u64()).map(u128::from).or(if restored{Some(elapsed)}else{None});
++    let monitor_ready=previous.as_ref().and_then(|v|v["capture_monitor_ready_ms"].as_u64()).map(u128::from)
++        .or_else(||timings.as_ref().and_then(|v|v["monitor_ready_ms"].as_f64()).map(|_|elapsed));
++    let _ = fs::write(metrics, serde_json::json!({"first_document_ready_ms":first,"first_workbench_ready_ms":first,"first_photo_visible_ms":first_photo,"capture_monitor_ready_ms":monitor_ready,"photos_restored_ms":photos_restored,"startup_animation_visible_ms":*engine.splash_visible.lock().unwrap(),"web_timings":timings,"desktop_pid":std::process::id()}).to_string());
++    if engine.ready.load(Ordering::SeqCst) && restored && timings.as_ref().and_then(|v|v["services_ready"].as_bool())!=Some(false) {
+         if let (Some(file), Ok(config)) = (std::env::var_os("FRAMEKEEP_UPDATE_HEALTH_FILE"), fs::read_to_string(engine.app_root.join("update-config.json"))) {
+             if let Ok(identity) = serde_json::from_str::<serde_json::Value>(&config) {
+                 let target=PathBuf::from(file);
+@@ -217,6 +227,7 @@
+                 if let Ok(payload)=fs::read_to_string(&path) {
+                     match self.post_json("/api/desktop/canon",&payload) {
+                         Ok(result)=>{
++                            if result["pending"].as_bool()==Some(true) {break;}
+                             if result.get("error").is_some() {let _=fs::rename(&path,path.with_extension("rejected"));}
+                             else {let _=fs::remove_file(&path);}
+                         }
+@@ -618,7 +629,7 @@
+     let cleanup = engine.clone();
+     let app=tauri::Builder::default()
+         .plugin(tauri_plugin_single_instance::init(move |app,args,cwd|{
+-            if queue_photos(&inbox_data,&args,Path::new(&cwd)){return;}
++            if queue_photos(&inbox_data,&args,Path::new(&cwd)){show_main(app);return;}
+             if !desktop_preferences::startup_launch(&args) && !desktop_preferences::silent_start(&args) { show_main(app); }
+         }))
+         .plugin(tauri_plugin_dialog::init()).manage(engine.clone()).manage(FullscreenRestore::default()).manage(quick_search::SearchHotkey::default()).manage(preferences)
+@@ -645,10 +656,20 @@
+             thread::spawn(move || {
+                 match engine.start() {
+                     Ok(())=>{
+-                        let shortcut=engine.request("/api/intelligence/search-state",false).ok()
++                        // 先进入工作台；检索配置及第二个 WebView 不得阻挡 EOS 拉起。
++                        let delivery=engine.clone();thread::spawn(move||delivery.deliver_photos());
++                        let _=window.navigate(format!("http://127.0.0.1:{}/",engine.port).parse().unwrap());
++                        let quick_engine=engine.clone();let quick_handle=handle.clone();
++                        thread::spawn(move || {
++                        while !quick_engine.closing.load(Ordering::SeqCst) {
++                            if quick_engine.request("/api/ready",false).ok().and_then(|v|v["services_ready"].as_bool()).unwrap_or(false) {break;}
++                            thread::sleep(Duration::from_millis(200));
++                        }
++                        if quick_engine.closing.load(Ordering::SeqCst) {return;}
++                        let shortcut=quick_engine.request("/api/intelligence/search-state",false).ok()
+                             .and_then(|v|v.get("config")?.get("shortcut")?.as_str().map(str::to_owned))
+                             .unwrap_or_else(||"Ctrl+Shift+Space".into());
+-                        let search_handle=handle.clone();let search_port=engine.port;
++                        let search_handle=quick_handle;let search_port=quick_engine.port;
+                         // Windows WebView2 创建须由后台线程发起，避免阻塞主线程消息循环。
+                         {
+                             if let Err(error)=quick_search::create(&search_handle,search_port){
+@@ -658,8 +679,7 @@
+                                 search_handle.dialog().message(error).title("快捷搜索按键注册失败").show(|_|{});
+                             }
+                         }
+-                        let delivery=engine.clone();thread::spawn(move||delivery.deliver_photos());
+-                        let _=window.navigate(format!("http://127.0.0.1:{}/",engine.port).parse().unwrap());
++                        });
+                         // 原生交接检查不依赖页面定时器，最小化到托盘或前端轮询失败也可更新。
+                         let update_engine=engine.clone();let update_window=window.clone();
+                         thread::spawn(move || {
+diff --git a/选片助手/server.py b/选片助手/server.py
+index ad8b04138f858fecec8848809c3ad97ab2e0e538..3d82fa9e4de63c7c9583853c809804703497553c 100644
+--- a/选片助手/server.py
++++ b/选片助手/server.py
+@@ -48,42 +48,19 @@
+ from pathlib import Path
+ from urllib.parse import urlsplit,parse_qs,unquote,quote
+ import assistant_config
+-import task_status
+ import media_engine as media
+-from mouse_remote import MouseRemote
+ from eos_monitor import EosMonitor
+ from folder_watch import FolderWatch
+ from direct_channel import DirectImageChannel,send_original_jpeg
+-from model_providers import Providers
+-import local_inference
+-from component_setup import ComponentManager
+-from mouse_native.driver_setup import DriverSetup
+-from sku_service import SkuService
+ from catalog_store import Store,now,stable_json
+-from asset_archive import AssetArchive
+-from asset_catalog import AssetCatalog
+ from catalog_search_requests import CatalogSearchRequests,SearchCancelled,SearchBusy
+-from asset_analysis import AssetAnalysis
+-from asset_intelligence import AssetIntelligence
+-from analysis_workflow import AnalysisWorkflow
+-from lan_workspace import LanWorkspace
+-from lan_capture_sync import LanCaptureSync
+-from inventory_service import InventoryService,XLSX_MIME
+-from vision_scheduler import VisionScheduler
+-from raw_reconcile import RawReconcile
+-from archive_pipeline import ArchivePipeline
+-from everything_search import EverythingSearch
+-from file_reveal import reveal_capture,open_session_folder
+-from update_client import UpdateClient
+ from direct_previews import preview_bytes as file_preview_bytes,state as direct_preview_state
+-from reference_library import ReferenceLibrary
+-import reference_api
+ import re
+ import session_browser
+-import folder_archive_api
+-import archive_capture_api
+-from legacy_recovery_cleanup import LegacyRecoveryCleanup,configured_roots
+ from preview_codec import image_mime
++from startup_lazy import install_services
++install_services(globals())
++XLSX_MIME='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+ 
+ 
+ class ThreadingHTTPServer(_ThreadingHTTPServer):
+@@ -129,6 +106,7 @@
+ REFERENCES=None
+ BOOT_TASKS=None
+ WORKFLOW=None
++BOOT_GATE=None
+ 
+ 
+ def preparation_groups(path, body):
+@@ -163,7 +141,7 @@
+     session=STORE.session(sid)
+     if not session:return None,[]
+     records=STORE.records(session['id'])
+-    if ARCHIVE:session=ARCHIVE.ratings.session(session,records)
++    if ARCHIVE and (not BOOT_GATE or BOOT_GATE.ready.is_set()):session=ARCHIVE.ratings.session(session,records)
+     session['browser']={'continuous':True,'total':len(records)}
+     return session,ui_photos(session['id'],records=records)
+ 
+@@ -184,20 +162,28 @@
+     return {**CATALOG.thumbnail_settings.state(),'visited_mode':bool(getattr(CATALOG,'visits',None))}
+ 
+ 
+-def bootstrap_state():
++def bootstrap_state(*,include_views=True):
+     session,rows=browse_state()
+     data={'id':session['id'],'name':session['name'],'root':session['root'],'snapshot':session['snapshot'],
+           'revision':session['revision'],'saved':session['state'],'sharedRatings':session.get('sharedRatings',{}),
+           'browser':session.get('browser'),'demo':False,'requestToken':TOKEN} if session else {
+           'id':None,'name':'未打开文件夹','root':'','snapshot':'','revision':0,'saved':{},'demo':False,'requestToken':TOKEN}
+     if DIRECT:data['directPreview']=DIRECT.public()
+-    if CATALOG and getattr(CATALOG,'startup',None):
++    if include_views and CATALOG and getattr(CATALOG,'startup',None):
+         options=getattr(CATALOG,'thumbnail_settings',None)
+         data['archiveBootstrap']=CATALOG.startup.boot(include_thumbnails=False) if options is not None and not options.cache_enabled else CATALOG.startup.boot()
+-    if CATALOG and getattr(CATALOG,'thumbnail_settings',None):data['archiveThumbnailSettings']=archive_thumbnail_settings()
+-    views=workbench_views()
++    if CATALOG and (not BOOT_GATE or BOOT_GATE.ready.is_set()) and getattr(CATALOG,'thumbnail_settings',None):data['archiveThumbnailSettings']=archive_thumbnail_settings()
++    views=workbench_views() if include_views else None
+     if views:data['viewBootstrap']=views.bootstrap(data['id'])
+     return {'session':data,'photos':rows,'request_token':TOKEN,'workbench_bundle':True}
++
++
++def capture_folder_state():
++    if not BOOT_GATE or BOOT_GATE.ready.is_set():return STORE.folder_state()
++    session=STORE.session()
++    rows=[{key:session[key] for key in ('id','name','root','updated')}] if session else []
++    if rows:rows[0]['capture_count']=session_browser.count(STORE,session['id'])
++    return {'sessions':rows,'scans':[],'archive_sessions':[]}
+ 
+ def shooting_export_name(name):
+     if __import__('re').fullmatch(r'\d{4}-\d{2}-\d{2}\.xlsx',str(name)):return Path(name).name
+@@ -292,6 +278,20 @@
+         global BRIDGE_LAST_SEEN
+         if not self.trusted():return self.reply({'error':'本机 Host 不匹配'},403)
+         url=urlsplit(self.path);path=unquote(url.path)
++        if BOOT_GATE:
++            if path=='/api/startup':
++                photo=BOOT_GATE.latest_photo()
++                return self.reply({**BOOT_GATE.state(),'photo':photo})
++            if path=='/api/startup/photo':
++                try:return self.reply(BOOT_GATE.preview(parse_qs(url.query).get('id',[''])[0]),kind='image/jpeg')
++                except (OSError,ValueError,RuntimeError):return self.reply({'error':'照片正在传输，请稍后重试'},409)
++            if path=='/api/bootstrap' and parse_qs(url.query).get('shell')==['1']:
++                return self.reply({'session':{'id':None,'name':'正在恢复照片','root':'','snapshot':'','revision':0,'saved':{},'demo':False,'requestToken':TOKEN,'restoring':True},
++                                   'photos':[],'request_token':TOKEN,'workbench_bundle':True,'progressive':True})
++            capture_path=path in ('/api/bootstrap','/api/state','/api/folders','/api/watch','/api/watch/direct') or path.startswith(('/api/preview/','/api/watch/preview/'))
++            available=BOOT_GATE.wait_capture if capture_path else BOOT_GATE.wait
++            if path.startswith(('/api/','/bridge/')) and path!='/api/ready' and not available():
++                return self.reply({'error':BOOT_GATE.state()['error'] or '服务仍在准备，请稍后重试'},503)
+         from workbench_views import PATHS
+         if path in PATHS:
+             views=workbench_views();self.view_epoch=views.epoch if views else None
+@@ -315,7 +315,7 @@
+             if path=='/api/view-bootstrap':
+                 views=workbench_views();scope='' if parse_qs(url.query).get('scope',[''])[0]=='quick' else (STORE.active_id() or '')
+                 return self.reply({**(views.bootstrap(scope) if views else {}),'request_token':TOKEN})
+-            if path=='/api/ready':return self.reply({'application':'framekeep','process_id':os.getpid(),'ready':True})
++            if path=='/api/ready':return self.reply({'application':'framekeep','process_id':os.getpid(),'ready':True,'services_ready':not BOOT_GATE or BOOT_GATE.ready.is_set() and not BOOT_GATE.error})
+             if path=='/api/lan-sync':return self.reply(CAPTURESYNC.state() if CAPTURESYNC else {'enabled':False,'receiving':False})
+             if path.startswith('/api/inventory/'):
+                 if INVENTORY is None:return self.reply({'error':'出入库服务尚未启动'},503)
+@@ -329,8 +329,10 @@
+                 if path=='/api/inventory/export':return self.reply(INVENTORY.export(query),kind=XLSX_MIME,filename='SHIYING 库存管理.xlsx')
+                 return self.reply({'error':'出入库接口不存在'},404)
+             if path=='/api/bootstrap':
++                if BOOT_GATE and any((DATA/'canon-link/inbox').glob('*.json')):
++                    return self.reply({'pending':True},202)
+                 with PREVIEWS.foreground() if PREVIEWS else nullcontext():
+-                    return self.reply(bootstrap_state())
++                    return self.reply(bootstrap_state(include_views=False) if BOOT_GATE else bootstrap_state())
+             if path.startswith('/api/reference/'):
+                 query={key:values[0] for key,values in parse_qs(url.query,max_num_fields=16).items()}
+                 result=reference_api.local_get(REFERENCES,path.removeprefix('/api/reference/'),query)
+@@ -358,13 +360,13 @@
+                     ids=WATCH.delta(sid,params.get('live_generation',''),int(params['live_after']))
+                     if ids is not None:
+                         session=STORE.session(sid);records=STORE.records(sid,ids=ids) if ids else []
+-                        if ARCHIVE:session=ARCHIVE.ratings.session(session,records)
++                        if ARCHIVE and (not BOOT_GATE or BOOT_GATE.ready.is_set()):session=ARCHIVE.ratings.session(session,records)
+                         session['browser']={'continuous':True,'total':session_browser.count(STORE,sid)}
+                         return self.reply({'session':session,'catalog':ui_photos(sid,records=records),'catalog_delta':True})
+                 session,rows=browse_state(sid,params)
+                 if sid and not session:return self.reply({'error':'文件夹会话不存在'},404)
+                 catalog=[dict(r,captured_at_local=r.get('time')) for r in rows];browser=session.get('browser',{}) if session else {}
+-                return self.reply({'demo':False,'database':'SQLite','session':session,**STORE.folder_state(),'catalog':catalog,'indexed_captures':browser.get('total',len(rows)),'indexed_files':browser.get('files',sum(r.get('fileCount',0) for r in rows)),'snapshot_hash':session['snapshot'] if session else '', 'request_token':TOKEN,'bridge':{'last_seen':BRIDGE_LAST_SEEN,'latest_job':self.bridge_job()}})
++                return self.reply({'demo':False,'database':'SQLite','session':session,**capture_folder_state(),'catalog':catalog,'indexed_captures':browser.get('total',len(rows)),'indexed_files':browser.get('files',sum(r.get('fileCount',0) for r in rows)),'snapshot_hash':session['snapshot'] if session else '', 'request_token':TOKEN,'bridge':{'last_seen':BRIDGE_LAST_SEEN,'latest_job':self.bridge_job()}})
+             if path=='/api/config':return self.reply(assistant_config.public_config())
+             if path=='/api/selection/tree':
+                 from selection_folders import tree
+@@ -557,7 +559,7 @@
+                 return self.reply(SKU.exports.state(parse_qs(url.query).get('job_id',[''])[0]))
+             if path=='/api/mouse':return self.reply(MOUSE.state(refresh=True) if MOUSE else {'active':False,'devices':[],'message':'鼠标输入服务未启动'})
+             if path=='/api/mouse/options':return self.reply(MOUSE.state() if MOUSE else {'active':False,'options':{},'message':'鼠标输入服务未启动'})
+-            if path=='/api/folders':return self.reply(STORE.folder_state())
++            if path=='/api/folders':return self.reply(capture_folder_state())
+             if path=='/api/watch/direct':
+                 if not WATCH:return self.reply({'enabled':False,'event_id':0,'receiving':None,'last_photo_id':None})
+                 params=parse_qs(url.query)
+@@ -635,12 +637,14 @@
+         if path=='/api/desktop/shutdown':
+             secret=os.environ.get('FRAMEKEEP_DESKTOP_TOKEN')
+             if not secret or not secrets.compare_digest(self.headers.get('X-Framekeep-Desktop',''),secret):return self.reply({'error':'桌面实例不匹配'},403)
+-            for job in STORE.folder_state()['scans']:
++            if BOOT_GATE:BOOT_GATE.closed.set()
++            for job in STORE.folder_state()['scans'] if STORE else []:
+                 if job['status'] in ('queued','running'):STORE.cancel_scan(job['id'])
+             self.reply({'ok':True});threading.Thread(target=self.server.shutdown,daemon=True).start();return
+         if path=='/api/desktop/canon':
+             secret=os.environ.get('FRAMEKEEP_DESKTOP_TOKEN')
+             if not secret or not secrets.compare_digest(self.headers.get('X-Framekeep-Desktop',''),secret):return self.reply({'error':'桌面实例不匹配'},403)
++            if BOOT_GATE and not BOOT_GATE.capture_ready.is_set():return self.reply({'pending':True},503)
+             try:
+                 length=int(self.headers.get('Content-Length','0'))
+                 if not 0<length<=65536:raise ValueError('无效的照片通知')
+@@ -654,6 +658,11 @@
+         if bridge:
+             if self.headers.get('X-Framekeep-Bridge')!=BRIDGE_TOKEN:return self.reply({'error':'桥接令牌无效'},403)
+         elif self.headers.get('X-Framekeep-Token')!=TOKEN or self.headers.get('Origin',f'http://127.0.0.1:{self.server.server_port}')!=f'http://127.0.0.1:{self.server.server_port}':return self.reply({'error':'请从本机工作台发起操作'},403)
++        if BOOT_GATE:
++            available=BOOT_GATE.wait_capture if path in ('/api/activate','/api/watch/start','/api/watch/stop') else BOOT_GATE.wait
++            if not available():return self.reply({'error':BOOT_GATE.state()['error'] or '服务仍在准备，请稍后重试'},503)
++            if BOOT_GATE.capture_readonly and not BOOT_GATE.ready.is_set() and path.startswith('/api/watch/'):
++                return self.reply({'error':'正在单向接收，请退出同步后修改本机资料'},423)
+         try:
+             length=int(self.headers.get('Content-Length','0'))
+             if path=='/api/intelligence/reference':
+@@ -1019,6 +1028,7 @@
+ 
+ 
+ def _run_server(startup):
++    global BOOT_GATE
+     global STORE,MOUSE,WATCH,DIRECT,MODELS,SKU,ARCHIVE,ANALYSIS,INTELLIGENCE,LANWORKSPACE,CAPTURESYNC,INVENTORY,RAWLINK,FILESEARCH,UPDATES,CATALOG,COMPONENTS,DRIVER,PREVIEWS,CANON,STORAGE,REFERENCES,BOOT_TASKS,WORKFLOW
+     startup_checkpoint=startup.checkpoint
+     parser=argparse.ArgumentParser();parser.add_argument('--port',type=int,default=8769);parser.add_argument('--folder');parser.add_argument('--browser',action='store_true');parser.add_argument('--no-browser',action='store_true');parser.add_argument('--install-bridge',action='store_true');args=parser.parse_args()
+@@ -1034,9 +1044,47 @@
+             webbrowser.open(f'http://127.0.0.1:{args.port}/')
+         return
+     server.daemon_threads=True
++    from startup_gate import StartupGate
++    BOOT_GATE=StartupGate(DATA,ROOT)
++    server._startup_http_thread=threading.Thread(target=server.serve_forever,name='startup-http',daemon=True)
++    server._startup_http_thread.start()
++    startup_checkpoint('shell ready')
++    watch_desktop_parent(server)
++    try:_initialize_server(server,args,startup)
++    except BaseException as error:
++        BOOT_GATE.error=type(error).__name__
++        raise
++    finally:
++        BOOT_GATE.closed.set();BOOT_GATE.ready.set();BOOT_GATE.capture_ready.set()
++        if BOOT_GATE.error:
++            if WATCH:WATCH.close()
++            if DIRECT:DIRECT.close()
++        server.shutdown();server.server_close();server._startup_http_thread.join(2)
++        BOOT_GATE=None
++
++
++def _initialize_server(server,args,startup):
++    global STORE,MOUSE,WATCH,DIRECT,MODELS,SKU,ARCHIVE,ANALYSIS,INTELLIGENCE,LANWORKSPACE,CAPTURESYNC,INVENTORY,RAWLINK,FILESEARCH,UPDATES,CATALOG,COMPONENTS,DRIVER,PREVIEWS,CANON,STORAGE,REFERENCES,BOOT_TASKS,WORKFLOW
++    startup_checkpoint=startup.checkpoint
++    STORE=Store(DATA,ROOT)
++    # 拍摄接入只依赖轻量会话库；大归档库及模型仍在后续初始化。
++    sync_path=DATA/'lan-capture-sync.json'
++    sync_config=json.loads(sync_path.read_text('utf8')) if sync_path.is_file() else {}
++    receiving=bool(sync_config.get('enabled') and sync_config.get('remote'))
++    BOOT_GATE.capture_readonly=receiving
++    pending_eos=any((DATA/'canon-link/inbox').glob('*.json'))
++    WATCH=FolderWatch(STORE,autostart=False,restore=not pending_eos and not receiving)
++    DIRECT=DirectImageChannel(WATCH,f'http://127.0.0.1:{server.server_port}')
++    CANON=EosMonitor(STORE,WATCH)
++    if receiving:CANON.pause()
++    from catalog_notifications import CatalogNotifications
++    live_notifications=CatalogNotifications(lambda sid,records:catalog_changed(sid,records),autostart=False)
++    STORE.on_catalog=live_notifications.request;STORE.on_live_catalog=live_notifications.request
++    WATCH.on_arrivals=BOOT_GATE.capture_arrivals
++    WATCH.thread.start()
++    BOOT_GATE.capture_ready.set();startup_checkpoint('capture ready')
+     import gpu_media,gpu_video
+     from video_preview import find_tool
+-    STORE=Store(DATA,ROOT)
+     CATALOG=AssetCatalog(DATA,keep_wal_open=True)
+     from archive_visits import ArchiveVisits
+     CATALOG.visits=ArchiveVisits(CATALOG)
+@@ -1047,8 +1095,6 @@
+     STORE.on_previews=None
+     CATALOG.on_previews=None
+     MOUSE=MouseRemote(settings_path=DATA/'mouse-remote.json')
+-    WATCH=FolderWatch(STORE,autostart=False)
+-    DIRECT=DirectImageChannel(WATCH,f'http://127.0.0.1:{server.server_port}')
+     MODELS=Providers(DATA,legacy=assistant_config.load_config)
+     COMPONENTS=ComponentManager(DATA,seeds=[ROOT/'runtime/components',ROOT/'.runtime/component-seed',ROOT/'.runtime',ROOT.parent.parent/'.runtime'])
+     DRIVER=DriverSetup(COMPONENTS,DATA,activator=MOUSE.activate_driver)
+@@ -1056,7 +1102,8 @@
+     scheduler=VisionScheduler()
+     ARCHIVE=AssetArchive(STORE,autostart=False)
+     # 后台归档可能长时间持锁读取照片，须先完成共享评级初始化。
+-    for session in STORE.sessions():ARCHIVE.ratings.seed_session(session['id'])
++    active=STORE.active_id()
++    if active:ARCHIVE.ratings.seed_session(active)
+     startup_checkpoint('ratings ready')
+     FILESEARCH=EverythingSearch(ARCHIVE)
+     STORE.discovery=FILESEARCH
+@@ -1068,7 +1115,6 @@
+     ARCHIVE.sku=SKU
+     from archive_capture_service import ArchiveCaptureService
+     capture_service=ArchiveCaptureService(STORE,ARCHIVE,CATALOG,SKU,watch=WATCH,autostart=False,readonly=lambda:bool(CAPTURESYNC and CAPTURESYNC.receiving))
+-    WATCH.on_arrivals=SKU.live_arrivals
+     ANALYSIS=AssetAnalysis(ARCHIVE,MODELS,scheduler,autostart=False)
+     startup_checkpoint('analysis ready')
+     INTELLIGENCE=AssetIntelligence(CATALOG,MODELS,SKU,autostart=False)
+@@ -1098,11 +1144,8 @@
+     from sku_metadata_sync import attach
+     metadata_sync=attach(SKU,CATALOG,RAWLINK,autostart=False)
+     STORE.on_catalog=catalog_changed
+-    from catalog_notifications import CatalogNotifications
+-    live_notifications=CatalogNotifications(catalog_changed)
+-    STORE.on_live_catalog=live_notifications.request
++    live_notifications.thread.start()
+     STORE.on_external_metadata=ARCHIVE.ratings.observe_sidecars
+-    CANON=EosMonitor(STORE,WATCH)
+     def before_sync_receive():
+         CANON.pause()
+         WATCH.stop()
+@@ -1112,7 +1155,7 @@
+     CAPTURESYNC=LanCaptureSync(STORE,SKU,ARCHIVE,before_receive=before_sync_receive,on_update=capture_sync_updated,
+                                host_state=lambda:{'watch':WATCH.state(),'shooting_context':SKU.shooting_context()})
+     if CAPTURESYNC.receiving:before_sync_receive()
+-    watch_desktop_parent(server)
++    BOOT_GATE.bind_arrivals(STORE,SKU.live_arrivals)
+     if args.folder:STORE.scan(args.folder)
+     recovery_cleanup=LegacyRecoveryCleanup(DATA,lambda:configured_roots(STORE,CATALOG,WATCH,REFERENCES))
+     from startup_tasks import StartupTasks
+@@ -1121,15 +1164,20 @@
+         if tool:gpu_video.warmup(tool)
+     def warm_models():
+         if MODELS.public().get('builtin_enabled'):local_inference.preload(MODELS.selected('ocr'))
++    def seed_history():
++        for session in STORE.sessions():
++            if BOOT_TASKS.closed.is_set():return
++            ARCHIVE.ratings.seed_session(session['id'])
+     tasks=[('catalog-wal-maintenance',CATALOG.wal_maintenance.start),
+            ('catalog-wal-recovery',CATALOG.wal_maintenance.wait_for_startup_recovery),
++           ('historical-ratings',seed_history),
+            ('archive',ARCHIVE.thread.start),('ratings',ARCHIVE.ratings.sync.thread.start),
+            ('pipeline',PIPELINE.thread.start),('sku',SKU.thread.start),('rawlink',RAWLINK.thread.start),('archive-capture',capture_service.thread.start),
+            *[(f'analysis-{i}',thread.start) for i,thread in enumerate((*ANALYSIS.threads,ANALYSIS.auto_thread))],
+            *([('quick-file-index',INTELLIGENCE.quick_index.start)] if INTELLIGENCE.quick_index else []),
+            ('literal-search-index',CATALOG.literal_index.start),('metadata',CATALOG.metadata.start),('natural-search-index',INTELLIGENCE.search_index.start),
+            ('reference',REFERENCES.start),('analysis-workflow',WORKFLOW.start),
+-           ('watch',WATCH.thread.start),('gpu-images',gpu_media.warmup),('gpu-video',warm_video),
++           ('gpu-images',gpu_media.warmup),('gpu-video',warm_video),
+            *[(f'intelligence-{i}',thread.start) for i,thread in enumerate((*INTELLIGENCE.threads,INTELLIGENCE.discovery))],
+            ('models',warm_models),('cleanup',recovery_cleanup.start)]
+     from sku_library_index import for_sku
+@@ -1140,11 +1188,12 @@
+     # 文件持久队列独立恢复，不等待首屏释放、历史扫描或 WAL 回收任务。
+     ARCHIVE.start_metadata()
+     startup_checkpoint('http ready')
++    BOOT_GATE.ready.set()
+     url=f'http://127.0.0.1:{args.port}/';print('SHIYING工作台：'+url,flush=True)
+     if not args.no_browser and (args.browser or getattr(sys,'frozen',False)):
+         import webbrowser
+         webbrowser.open(url)
+-    try:server.serve_forever()
++    try:server._startup_http_thread.join()
+     except KeyboardInterrupt:pass
+     finally:
+         CAPTURESYNC.close()
+diff --git a/选片助手/catalog_store.py b/选片助手/catalog_store.py
+index 896b85092afbe0ba3d7bf95e2004a115209854d1..d63f9f186b549ecd75dadb06e1f7101c9bbd43a8 100644
+--- a/选片助手/catalog_store.py
++++ b/选片助手/catalog_store.py
+@@ -278,12 +278,14 @@
+         if not root.is_dir():raise ValueError('请选择照片传入文件夹。')
+         sid=hashlib.sha256(str(root).casefold().encode()).hexdigest()[:24]
+         # 将已有的有效评级冻结为基础值，追加新照片不改变原来的末帧推荐。
+-        ratings={r['id']:(-1 if r['excluded'] else r['rating']) for r in self.manifest(False,sid)['captures']} if self.session(sid) else {}
++        with self.connect() as c:
++            legacy=c.execute("SELECT 1 FROM captures WHERE session=? AND json_type(data,'$.liveRating') IS NULL LIMIT 1",(sid,)).fetchone()
++        ratings={r['id']:(-1 if r['excluded'] else r['rating']) for r in self.manifest(False,sid)['captures']} if legacy else {}
+         with self.connect() as c:
+             c.execute('BEGIN IMMEDIATE')
+             c.execute('INSERT OR IGNORE INTO sessions VALUES (?,?,?,?,?,?,?)',(sid,str(root),folder_name(root),'',0,'{}',now()))
+             c.execute('DELETE FROM settings WHERE key=?',('removed_session:'+sid,))
+-            for row in c.execute('SELECT id,data FROM captures WHERE session=?',(sid,)).fetchall():
++            for row in c.execute("SELECT id,data FROM captures WHERE session=? AND json_type(data,'$.liveRating') IS NULL",(sid,)).fetchall():
+                 r=json.loads(row['data'])
+                 if 'liveRating' not in r:
+                     r['liveRating']=ratings.get(r['id'],0)
+diff --git a/选片助手/folder_watch.py b/选片助手/folder_watch.py
+index 5c1890cbd5a9f85d9a09910925d6c9fff0e9a90c..ce93cf485f6a2054f0d3766960f90bb8e4aaf1ed 100644
+--- a/选片助手/folder_watch.py
++++ b/选片助手/folder_watch.py
+@@ -86,7 +86,7 @@
+     STABLE_SECONDS=.08
+     RESCAN_SECONDS=2.0
+ 
+-    def __init__(self,store,*,clock=time.monotonic,autostart=True):
++    def __init__(self,store,*,clock=time.monotonic,autostart=True,restore=True):
+         self.store=store;self.clock=clock;self.lock=threading.RLock();self.tick_lock=threading.Lock()
+         self.on_arrivals=None
+         self.condition=threading.Condition(self.lock);self.wake=threading.Event();self.metadata=None;self.existing=None
+@@ -96,7 +96,7 @@
+         self.config=store.data/'folder-watch.json'
+         self.info={'enabled':False,'folder':'','recursive':True,'session_id':None,'generation':uuid.uuid4().hex,
+                    'version':0,'event_id':0,'canon_event':'','arrivals':0,'last_photo_id':None,'pending':0,'initializing':False,'error':'','message':'未开启现场监控','source':'manual','receiving':None}
+-        if self.config.is_file():
++        if restore and self.config.is_file():
+             try:
+                 saved=json.loads(self.config.read_text(encoding='utf8'))
+                 if saved.get('enabled'):
+@@ -155,7 +155,8 @@
+         if not isinstance(folder,str) or not folder.strip():raise ValueError('请选择照片传入文件夹。')
+         root=Path(folder.strip().strip('"')).resolve(strict=True)
+         photo_directory(root,self.store.data)
+-        for job in self.store.folder_state()['scans']:
++        with self.store.lock:scans=[dict(job) for job in self.store.jobs.values()]
++        for job in scans:
+             if job['status'] in ('queued','running','cancelling') and str(root).casefold()==str(Path(job['folder'])).casefold():
+                 raise ValueError('此文件夹正在索引，请等待索引结束后开启现场监控。')
+         sid=self.store.ensure_live_session(root)
+diff --git a/选片助手/startup_tasks.py b/选片助手/startup_tasks.py
+index 5a501e01abc64bd32f1d1acb562d54b3ba5cc982..76d34c00d880b7dce2f3aadabea34c8ff7199f25 100644
+--- a/选片助手/startup_tasks.py
++++ b/选片助手/startup_tasks.py
+@@ -3,8 +3,9 @@
+ 
+ 
+ class StartupTasks:
+-    def __init__(self,tasks,*,fallback_seconds=15):
++    def __init__(self,tasks,*,fallback_seconds=15,stagger_seconds=.15):
+         self.tasks=tasks;self.fallback_seconds=fallback_seconds
++        self.stagger_seconds=stagger_seconds
+         self.foreground=threading.Event();self.closed=threading.Event()
+         self.thread=threading.Thread(target=self._run,name='startup-background',daemon=True)
+ 
+@@ -18,6 +19,7 @@
+             if self.closed.is_set():return
+             try:run()
+             except Exception as error:print(f'[startup background] {name}: {type(error).__name__}: {error}',flush=True)
++            if self.closed.wait(self.stagger_seconds):return
+ 
+     def close(self):
+         self.closed.set();self.foreground.set()
+diff --git a/选片助手/startup_status.py b/选片助手/startup_status.py
+index 348375f5f45bf23f7a0063a4b3c29e556b6b53c9..779a6f0d7bf3e60892b8aacaf7c259e4c344e8f3 100644
+--- a/选片助手/startup_status.py
++++ b/选片助手/startup_status.py
+@@ -10,6 +10,8 @@
+ from file_safety import atomic_write
+ 
+ MESSAGES={
++    'shell ready':'工作台已打开，正在后台恢复服务…',
++    'capture ready':'现场监控已就绪，其他服务正在后台加载…',
+     'initializing':'正在读取照片资料…',
+     'catalog ready':'正在恢复图片缓存…',
+     'preview queue ready':'正在恢复选片设置与星级…',
+diff --git a/选片助手/build_release.py b/选片助手/build_release.py
+index dee1b8f0ce7b5964faf9510c7b1edf3376a1410c..ff4d4d055d273a4a7cef99f09a753c20fe6ea59d 100644
+--- a/选片助手/build_release.py
++++ b/选片助手/build_release.py
+@@ -37,6 +37,9 @@
+     command=[sys.executable,'-m','PyInstaller','--noconfirm','--log-level','WARN','--distpath',str(dist),'--onedir','--windowed','--name','framekeep-engine','--paths',str(ROOT/'选片助手'),'--paths',str(ROOT/'更新系统'),'--add-data',str(ROOT/'更新系统/update-config.json')+';更新系统','--collect-binaries','rawpy','--copy-metadata','rawpy','--copy-metadata','numpy','--copy-metadata','Pillow','--collect-data','jsonschema_specifications','--add-data',str(web)+';演示方案']
+     command+=['--additional-hooks-dir',str(ROOT/'选片助手/pyinstaller-hooks'),
+               '--add-data',str(ROOT/'选片助手/third-party/PaddleOCR-LICENSE.txt')+';third-party']
++    from startup_lazy import FACTORIES,MODULES
++    for module in sorted({value[0] for value in FACTORIES.values()}|set(MODULES)):
++        command+=['--hidden-import',module]
+     for module in ('tkinter','rawpy.enhance','torch','scipy','skimage','matplotlib','pytest','IPython','PyQt5','PySide6','PyQt6','webview','sitecustomize'):
+         command+=['--exclude-module',module]
+     command+=['--add-data',str(ROOT/'选片助手/component-manifest.json')+';.',

@@ -1,0 +1,127 @@
+{
+  "health": {
+    "application": "framekeep",
+    "process_id": 49164,
+    "busy": false
+  },
+  "default_model": "pp-ocrv6-medium-local",
+  "builtin_enabled": true,
+  "legacy_card_id_preserved": true,
+  "old_weights_preserved": true,
+  "provider_test": {
+    "ok": true,
+    "model": "pp-ocrv6-medium-local",
+    "models": [
+      "pp-ocrv6-medium-local"
+    ],
+    "message": "纯 CPU OCR 加载通过；识别质量请使用实际样片验证"
+  },
+  "parse": {
+    "session_id": "210c35b399665654e8f49ea5",
+    "capture_id": "9f6fff18ed5659d11bc0a7b4",
+    "name": "cpu-label",
+    "reading": {
+      "text": "LC7832773-P805",
+      "codes": [
+        "LC7832773-P805"
+      ],
+      "ocr_candidates": [
+        "LC7832773-P805"
+      ],
+      "confidence": 0,
+      "unscored": true,
+      "is_label": false,
+      "handwritten": false,
+      "auxiliary": {
+        "text": "LC7832773-P805",
+        "lines": [
+          {
+            "text": "LC7832773-P805",
+            "confidence": 0.9999964833259583,
+            "points": [
+              [
+                77.0,
+                150.0
+              ],
+              [
+                782.0,
+                150.0
+              ],
+              [
+                782.0,
+                230.0
+              ],
+              [
+                77.0,
+                230.0
+              ]
+            ],
+            "reading_points": [
+              [
+                77.0,
+                150.0
+              ],
+              [
+                782.0,
+                150.0
+              ],
+              [
+                782.0,
+                230.0
+              ],
+              [
+                77.0,
+                230.0
+              ]
+            ]
+          }
+        ],
+        "timing": {
+          "load_ms": 660.8973000002152,
+          "detection_ms": 234.12420000022394,
+          "orientation_ms": 67.33349999922211,
+          "recognition_ms": 33.10050000072806,
+          "total_ms": 334.5582000001741
+        },
+        "orientation": {
+          "votes": [
+            8.070104670255386,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "confidence": 1.0,
+          "uncertain": false,
+          "probe_lines": 1,
+          "correction_ccw_degrees": 0,
+          "method": "bidirectional_text_consensus",
+          "source_size": [
+            1600,
+            427
+          ]
+        },
+        "pipeline": "cpu-ocr-rotation-v2",
+        "backend": "CPUExecutionProvider",
+        "det_input_shape": [
+          1,
+          3,
+          352,
+          1280
+        ]
+      },
+      "provider_id": "cpu-medium",
+      "model": "pp-ocrv6-medium-local",
+      "engine": "local|pp-ocrv6-medium-local",
+      "requires_sku_choice": true
+    },
+    "auto_applied": null,
+    "recommended": [
+      "LC7832773-P805"
+    ]
+  },
+  "parse_ms": 609.14,
+  "source_unchanged": true,
+  "gpu_providers_absent": true,
+  "ok": true,
+  "test_process_stopped": true
+}

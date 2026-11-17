@@ -1,0 +1,97 @@
+{
+  "releaseId": "20261114062655",
+  "version": "1.0.1",
+  "published": false,
+  "signedFilesVerified": 963,
+  "workerRuntimeFilesVerified": 75,
+  "frozenWorkerMatchesSources": {
+    "installedWorker": true,
+    "installerWorker": true
+  },
+  "formalUpdatePublicKeyPreserved": true,
+  "nativeRuntime": {
+    "exitCode": 0,
+    "output": "",
+    "error": "",
+    "planCreated": true
+  },
+  "frozenSmoke": {
+    "success": {
+      "status": "complete",
+      "elapsedSeconds": 9.969,
+      "forceExit": true,
+      "programFilesVerified": true,
+      "userDataPreserved": true,
+      "workerSurvivedParentExit": true
+    },
+    "rollback": {
+      "status": "rolled-back",
+      "elapsedSeconds": 9.719,
+      "forceExit": true,
+      "programFilesVerified": true,
+      "userDataPreserved": true,
+      "workerSurvivedParentExit": true
+    }
+  },
+  "updaterTests": 87,
+  "clientAndBrowserTests": 12,
+  "installer": {
+    "path": "G:\\app\\LR\\dist\\SHIYING-更新卡住修复-无模型安装包-20261114\\SHIYING 数字资产安装器.exe",
+    "bytes": 32823296,
+    "sha256": "302bbd0b115b82cef4ac059f0c820fc324186c7108cb0cc5ac797a47fb971f1e"
+  },
+  "bundle": {
+    "path": "G:\\app\\LR\\dist\\SHIYING-更新卡住修复-无模型安装包-20261114.zip",
+    "bytes": 345127111,
+    "sha256": "daa3b97de3996860b47782289a14a87d61a208097e0ace5eb4bdfb1a0056b8e2"
+  },
+  "cleanup": {
+    "scope": "本轮生成的废弃打包副本、隔离验证解包文件和运行时；保留正式交付、源码和验证记录",
+    "preserved": [],
+    "removedBytes": 2134116041.0,
+    "freeBefore": 207505707008,
+    "freeAfter": 209643208704,
+    "removed": [
+      {
+        "path": "G:\\app\\LR\\build\\task235-superseded-installer",
+        "bytes": 365943028
+      },
+      {
+        "path": "G:\\app\\LR\\build\\task235-superseded-installer.zip",
+        "bytes": 345126891
+      },
+      {
+        "path": "G:\\app\\LR\\build\\task235-package-verification",
+        "bytes": 1198057532
+      },
+      {
+        "path": "G:\\app\\LR\\build\\task235-installer-runtime",
+        "bytes": 32133984
+      },
+      {
+        "path": "G:\\app\\LR\\build\\task235-installer-runtime-final",
+        "bytes": 32133938
+      },
+      {
+        "path": "G:\\app\\LR\\build\\task235-frozen-smoke\\success\\runtime",
+        "bytes": 32144152
+      },
+      {
+        "path": "G:\\app\\LR\\build\\task235-frozen-smoke-r2\\success\\runtime",
+        "bytes": 32144152
+      },
+      {
+        "path": "G:\\app\\LR\\build\\task235-frozen-smoke-r2\\rollback\\runtime",
+        "bytes": 32144152
+      },
+      {
+        "path": "G:\\app\\LR\\build\\task235-frozen-smoke-final\\success\\runtime",
+        "bytes": 32144106
+      },
+      {
+        "path": "G:\\app\\LR\\build\\task235-frozen-smoke-final\\rollback\\runtime",
+        "bytes": 32144106
+      }
+    ]
+  }
+}

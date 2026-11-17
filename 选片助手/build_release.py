@@ -11,27 +11,58 @@ import types
 
 ROOT=Path(__file__).resolve().parents[1]
 TARGET=ROOT/'build/tauri-target'
-WORKBENCH_FILES=('reference-search.js','reference-search.css','lan-workspace.html','lan-workspace.js','lan-workspace.css','lan-sharing.js','asset-retrieval.js','asset-retrieval.css','quick-search.html','asset-loading.js','preview-histogram.js','preview-histogram.css','session-paging.js','split-capture.js','split-capture.css','ocr-feedback.js','ocr-feedback.css','selection-folders.js','selection-folders.css','asset-workspace.css','workbench.css','classic-themes.css','view-menu.css','toolbar-layout.css','workbench-ui.js','sidebar-resize.js','update.js','component-ui.js','preview-empty.js','preview-empty.css','sku-media-pool.js','sku-media-pool.css','desktop-lifecycle.css')
+WORKBENCH_FILES=('archive-analysis.js','archive-analysis.css','receiving-preview.js','reference-search.js','reference-search.css','lan-workspace.html','lan-workspace.js','lan-workspace.css','lan-quick-search.js','lan-quick-search.css','lan-sharing.js','asset-retrieval.js','asset-retrieval.css','quick-search.html','quick-search-appearance.js','asset-loading.js','preview-histogram.js','preview-histogram.css','session-paging.js','split-capture.js','split-capture.css','ocr-feedback.js','ocr-feedback.css','selection-folders.js','selection-folders.css','asset-workspace.css','workbench.css','classic-themes.css','view-menu.css','toolbar-layout.css','workbench-ui.js','sidebar-resize.js','update.js','component-ui.js','preview-empty.js','preview-empty.css','sku-media-pool.js','sku-media-pool.css','desktop-lifecycle.css')
+WORKBENCH_FILES+=('multidimensional-workflow.js','shooting-export.js','shooting-export.css')
+WORKBENCH_FILES+=('inventory.js','inventory.css')
+WORKBENCH_FILES+=('lan-capture-sync.js','lan-capture-sync.css')
+WORKBENCH_FILES+=('archive-capture.js',)
+WORKBENCH_FILES+=('automatic-backup.js','automatic-backup.css')
+WORKBENCH_FILES+=('archive-explorer.js',)
+WORKBENCH_FILES+=('thumbnail-memory.js',)
+WORKBENCH_FILES+=('folder-archive.js','folder-archive.css','view-cache.js')
 CAMERA_ASSETS=('camera-iris.svg','camera-transfer.svg','camera-framing.svg','camera-iris-still.svg','camera-transfer-still.svg')
-STARTUP_ASSETS=('boot.js','startup.css','startup.svg','startup-visual.js')
+STARTUP_ASSETS=('brand.svg','boot.js','startup.css','startup.svg','startup-visual.js')
 
-def build_engine():
+def stage_material_runtime():
+    """只收集模型进程所需源码，避免源码缓存或冻结包半成品命名空间混入。"""
+    directory=ROOT/'build/release-material-search-runtime'
+    if directory.exists():
+        assert directory.resolve().parent==(ROOT/'build').resolve()
+        assert not directory.is_symlink() and not directory.is_junction()
+        shutil.rmtree(directory)
+    directory.mkdir(parents=True)
+    for name in ('material_search_worker.py','material_search_preview.py','material_search_detail.py','design_preview.py','preview_errors.py'):
+        shutil.copy2(ROOT/'选片助手'/name,directory/name)
+    vendor=directory/'vendor/materialsearch_core';vendor.mkdir(parents=True)
+    for source in (ROOT/'选片助手/vendor/materialsearch_core').iterdir():
+        if source.is_file() and (source.suffix=='.py' or source.name in ('LICENSE','SOURCE.json')):shutil.copy2(source,vendor/source.name)
+    return directory
+
+
+def build_engine(dist=None):
+    dist=Path(dist or ROOT/'build/engine-dist').resolve();dist.relative_to((ROOT/'build').resolve())
     web=ROOT/'build/release-web/演示方案'
     if web.exists():
         web.resolve().relative_to(ROOT.resolve())
         shutil.rmtree(web)
     web.mkdir(parents=True,exist_ok=True)
-    for name in ('index.html','style.css','theme.css','theme.js','motion.css','app.js','image-viewer.js','formal.js','task-status.js','assistant-settings.js','desktop.js','mouse-remote.js','folder-watch.js','sku-reconciliation.js','asset-metadata.js','asset-viewer.js','asset-library.js','asset-analysis.js','raw-reconcile.js','workbench-layout.js'):shutil.copy2(ROOT/'演示方案'/name,web/name)
+    for name in ('index.html','style.css','theme.css','theme.js','motion.css','app.js','image-viewer.js','formal.js','task-status.js','assistant-settings.js','desktop.js','mouse-remote.js','folder-watch.js','sku-reconciliation.js','asset-metadata.js','asset-viewer.js','asset-library.js','model-advanced.js','raw-reconcile.js','workbench-layout.js'):shutil.copy2(ROOT/'演示方案'/name,web/name)
     for name in WORKBENCH_FILES:shutil.copy2(ROOT/'演示方案'/name,web/name)
     for name in STARTUP_ASSETS:shutil.copy2(ROOT/'演示方案'/name,web/name)
     (web/'assets').mkdir(exist_ok=True);(web/'assets/demo-data.js').write_text('window.DEMO_PHOTOS=[];',encoding='utf8')
     for name in CAMERA_ASSETS:shutil.copy2(ROOT/'演示方案/assets'/name,web/'assets'/name)
-    command=[sys.executable,'-m','PyInstaller','--noconfirm','--log-level','WARN','--distpath',str(ROOT/'build/engine-dist'),'--onedir','--windowed','--name','framekeep-engine','--paths',str(ROOT/'选片助手'),'--paths',str(ROOT/'更新系统'),'--add-data',str(ROOT/'更新系统/update-config.json')+';更新系统','--collect-binaries','rawpy','--copy-metadata','rawpy','--copy-metadata','numpy','--copy-metadata','Pillow','--collect-data','jsonschema_specifications','--add-data',str(web)+';演示方案']
-    for module in ('tkinter','rawpy.enhance','torch','scipy','skimage','matplotlib','pytest','IPython','PyQt5','PySide6','PyQt6','webview'):
+    command=[sys.executable,'-m','PyInstaller','--noconfirm','--log-level','WARN','--distpath',str(dist),'--onedir','--windowed','--name','framekeep-engine','--paths',str(ROOT/'选片助手'),'--paths',str(ROOT/'更新系统'),'--add-data',str(ROOT/'更新系统/update-config.json')+';更新系统','--collect-binaries','rawpy','--copy-metadata','rawpy','--copy-metadata','numpy','--copy-metadata','Pillow','--collect-data','jsonschema_specifications','--add-data',str(web)+';演示方案']
+    command+=['--additional-hooks-dir',str(ROOT/'选片助手/pyinstaller-hooks'),
+              '--add-data',str(ROOT/'选片助手/third-party/PaddleOCR-LICENSE.txt')+';third-party']
+    from startup_lazy import FACTORIES,MODULES
+    for module in sorted({value[0] for value in FACTORIES.values()}|set(MODULES)):
+        command+=['--hidden-import',module]
+    for module in ('tkinter','rawpy.enhance','torch','scipy','skimage','matplotlib','pytest','IPython','PyQt5','PySide6','PyQt6','webview','sitecustomize'):
         command+=['--exclude-module',module]
     command+=['--add-data',str(ROOT/'选片助手/component-manifest.json')+';.',
-              '--add-data',str(ROOT/'选片助手/canon_probe.ps1')+';.',
+              '--add-data',str(ROOT/'选片助手/metadata_memory_worker.pl')+';.',
               '--add-data',str(ROOT/'选片助手/clip_worker.py')+';.',
+              '--add-data',str(stage_material_runtime())+';material-search-runtime',
               '--add-data',str(ROOT/'.runtime/component-seed')+';component-seed']
     from setup_ffmpeg import verify_runtime
     runtime=ROOT/'.runtime/ffmpeg'
@@ -45,7 +76,7 @@ def build_engine():
         if not verify(dependency):raise RuntimeError('GPU 组件未就绪，请运行 setup_gpu.py 和 setup_gpu_video.py：'+folder)
         command+=['--add-data',str(dependency)+';runtime/'+folder]
     command.append(str(ROOT/'选片助手/server.py'));subprocess.run(command,cwd=ROOT,check=True)
-    return ROOT/'build/engine-dist/framekeep-engine'
+    return dist/'framekeep-engine'
 
 def build_desktop():
     env=os.environ.copy();env['CARGO_TARGET_DIR']=str(TARGET)
@@ -53,9 +84,10 @@ def build_desktop():
     return TARGET/'release/framekeep-desktop.exe'
 
 def stage_release(engine,desktop):
-    release=ROOT/'build/tauri-release/末帧选片';release.mkdir(parents=True,exist_ok=True)
-    shutil.copy2(desktop,release/'末帧选片.exe');shutil.copytree(engine,release/'engine',dirs_exist_ok=True)
-    (release/'engine/_internal/演示方案/ai-panel.js').unlink(missing_ok=True)
+    release=ROOT/'build/tauri-release/SHIYING 数字资产';release.mkdir(parents=True,exist_ok=True)
+    shutil.copy2(desktop,release/'SHIYING 数字资产.exe');shutil.copytree(engine,release/'engine',dirs_exist_ok=True)
+    for name in ('ai-panel.js','asset-analysis.js'):
+        (release/'engine/_internal/演示方案'/name).unlink(missing_ok=True)
     shutil.copytree(ROOT/'FramekeepBridge.lrplugin',release/'FramekeepBridge.lrplugin',dirs_exist_ok=True)
     shutil.copytree(ROOT/'.runtime/exiftool',release/'runtime/exiftool',dirs_exist_ok=True)
     if (ROOT/'.runtime/everything/Everything64.dll').is_file():
@@ -63,9 +95,23 @@ def stage_release(engine,desktop):
         shutil.copytree(ROOT/'.runtime/everything',release/'runtime/everything',dirs_exist_ok=True)
     shutil.copy2(ROOT/'README.md',release/'完整使用说明.md')
     shutil.copy2(ROOT/'更新系统/update-config.json',release/'update-config.json')
-    shutil.copytree(ROOT/'build/update-tools',release/'update',dirs_exist_ok=True)
+    shutil.copytree(ROOT/'build/update-tools',release/'update',dirs_exist_ok=True,ignore=shutil.ignore_patterns('worker-runtime.zip'))
+    # USB 配套直接携带当前 SDK 的 ADB 与许可，运行时无需安装 Android 开发环境。
+    adb_candidates=[shutil.which('adb')]
+    for key in ('ANDROID_HOME','ANDROID_SDK_ROOT'):
+        if os.environ.get(key):adb_candidates.append(str(Path(os.environ[key])/'platform-tools/adb.exe'))
+    adb_candidates.append('D:/Android/Sdk/platform-tools/adb.exe')
+    adb=next((Path(p) for p in adb_candidates if p and Path(p).is_file()),None)
+    if adb:
+        target=release/'engine/_internal/runtime/adb';target.mkdir(parents=True,exist_ok=True)
+        for name in ('adb.exe','AdbWinApi.dll','AdbWinUsbApi.dll','NOTICE.txt','source.properties'):
+            source=adb.parent/name
+            if source.is_file():shutil.copy2(source,target/name)
+    # 构建缓存可能留有旧品牌工具，只分发本轮工具，避免安装目录出现重复入口。
+    for legacy in ('末帧更新器.exe','卸载末帧选片.exe'):(release/'update'/legacy).unlink(missing_ok=True)
     shutil.copy2(ROOT/'选片助手/component-manifest.json',release/'update/component-manifest.json')
-    (release/'使用说明.txt').write_text('末帧选片 1.0.0 · Tauri 桌面版\n\n双击末帧选片.exe打开独立Windows窗口，不需要浏览器或Python。请保留整个文件夹。\n使用系统WebView2运行时；本机已安装的Edge WebView2可直接使用。\n照片索引、评级和设置保存在.framekeep。项目根启动器沿用原项目数据库。\n窗口关闭前保存评级，并结束自己启动的本机选片引擎。重复启动会聚焦已有窗口。\nAI助手配置和LR桥接使用方式见完整使用说明，预览只读；标星自动入库并同步 XMP，JPG 同时更新内嵌评级；资产备案按所选策略写入元数据。\n\n许可证：Tauri/Rust生态 (MIT/Apache等)、Python (PSF)、Pillow (HPND)、NumPy (BSD)、rawpy (MIT)/LibRaw (LGPL/CDDL)、ExifTool (Artistic/GPL)。运行时许可证随相应目录及包元数据保留。\n',encoding='utf8')
+    release_version=json.loads((release/'update-config.json').read_text(encoding='utf8'))['version']
+    (release/'使用说明.txt').write_text(f'SHIYING 数字资产 {release_version} · Tauri 桌面版\n\n双击SHIYING 数字资产.exe打开独立Windows窗口，不需要浏览器或Python。请保留整个文件夹。\n使用系统WebView2运行时；本机已安装的Edge WebView2可直接使用。\n照片索引、评级和设置保存在.framekeep。项目根启动器沿用原项目数据库。\n窗口关闭前保存评级，并结束自己启动的本机选片引擎。重复启动会聚焦已有窗口。\nAI助手配置和LR桥接使用方式见完整使用说明，预览只读；标星自动入库并同步 XMP，JPG 同时更新内嵌评级；资产备案按所选策略写入元数据。\n\n许可证：Tauri/Rust生态 (MIT/Apache等)、Python (PSF)、Pillow (HPND)、NumPy (BSD)、rawpy (MIT)/LibRaw (LGPL/CDDL)、ExifTool (Artistic/GPL)。运行时许可证随相应目录及包元数据保留。\n',encoding='utf8')
     instructions=release/'使用说明.txt'
     instructions.write_text(instructions.read_text(encoding='utf8').replace('照片索引、评级和设置保存在.framekeep。项目根启动器沿用原项目数据库。','正式安装提供桌面、开始菜单和 Windows 应用卸载入口。新安装和便携版资料、模型、缓存统一保存在安装目录 data；升级核验迁移旧资料，卸载保留 data 和照片。项目根启动器的显式开发资料路径兼容。'),encoding='utf8')
     config=json.loads((release/'update-config.json').read_text(encoding='utf8'))
@@ -102,6 +148,8 @@ def validate_workbench_sources(web):
 
 def validate_release(release):
     validate_metadata_engine(release/'engine/framekeep-engine.exe')
+    helper=release/'engine/_internal/metadata_memory_worker.pl'
+    if not helper.is_file() or helper.read_bytes()!=(ROOT/'选片助手/metadata_memory_worker.pl').read_bytes():raise RuntimeError('发行包元数据内存编辑器缺失或版本不一致')
     web=release/'engine/_internal/演示方案'
     validate_workbench_sources(web)
     if not all((web/name).is_file() for name in STARTUP_ASSETS):raise RuntimeError('发行包缺少异步首屏或 SVG 启动资源')
@@ -115,8 +163,8 @@ def validate_release(release):
         seed=release/'engine/_internal/component-seed'/record['path']
         if not seed.is_file() or seed.stat().st_size!=record['size'] or hashlib.sha256(seed.read_bytes()).hexdigest()!=record['sha256']:
             raise RuntimeError('发行包缺少经过校验的轻量安装组件，请先准备 .runtime/component-seed：'+record['path'])
-    if not all((release/name).is_file() for name in ('update/卸载末帧选片.exe','update/install-layout.json')):raise RuntimeError('发行包缺少卸载程序或安装清单。')
-    if (web/'ai-panel.js').exists():raise RuntimeError('发行包仍包含 AI 选片入口。')
+    if not all((release/name).is_file() for name in ('update/卸载SHIYING 数字资产.exe','update/install-layout.json')):raise RuntimeError('发行包缺少卸载程序或安装清单。')
+    if any((web/name).exists() for name in ('ai-panel.js','asset-analysis.js')):raise RuntimeError('发行包仍包含已移除的 AI 选片或解析任务页面。')
     if not (web/'assistant-settings.js').is_file():raise RuntimeError('发行包缺少 AI 助手配置。')
     if not (web/'image-viewer.js').is_file():raise RuntimeError('发行包缺少图片缩放和平移模块。')
     if not (web/'task-status.js').is_file():raise RuntimeError('发行包缺少导航任务状态模块。')
@@ -130,17 +178,19 @@ def validate_release(release):
     if not all((web/'assets'/name).is_file() for name in CAMERA_ASSETS):raise RuntimeError('发行包缺少联机拍摄 SVG 动画。')
     if not (web/'workbench-layout.js').is_file():raise RuntimeError('发行包缺少折叠布局与实时缩略图模块。')
     if not (web/'sku-reconciliation.js').is_file():raise RuntimeError('发行包缺少 SKU 对账模块。')
-    if not all((web/name).is_file() for name in ['asset-metadata.js','asset-library.js','asset-analysis.js','raw-reconcile.js']):raise RuntimeError('发行包缺少资产备案/本地视觉模块。')
+    if not all((web/name).is_file() for name in ['asset-metadata.js','asset-library.js','model-advanced.js','raw-reconcile.js']):raise RuntimeError('发行包缺少资产备案/本地视觉模块。')
     if list(web.rglob('*.jpg')) or list(web.rglob('*.png')):raise RuntimeError('发行包包含示例图片。')
     for path in release.rglob('*'):
         if path.name in ('.framekeep','api key.md') or path.suffix in ('.sqlite3','.db'):raise RuntimeError('发行包包含用户数据或配置：'+str(path))
 
 def deploy_release(release):
-    destination=ROOT/'dist/末帧选片';destination.mkdir(parents=True,exist_ok=True)
+    destination=ROOT/'dist/SHIYING 数字资产';destination.mkdir(parents=True,exist_ok=True)
     # 若旧程序仍占用主程序则立即失败，不修改其余运行文件。
-    shutil.copy2(release/'末帧选片.exe',destination/'末帧选片.exe')
+    shutil.copy2(release/'SHIYING 数字资产.exe',destination/'SHIYING 数字资产.exe')
     shutil.copytree(release,destination,dirs_exist_ok=True)
-    (destination/'engine/_internal/演示方案/ai-panel.js').unlink(missing_ok=True)
+    for legacy in ('末帧更新器.exe','卸载末帧选片.exe'):(destination/'update'/legacy).unlink(missing_ok=True)
+    for name in ('ai-panel.js','asset-analysis.js'):
+        (destination/'engine/_internal/演示方案'/name).unlink(missing_ok=True)
     legacy=destination/'_internal'
     if legacy.is_dir() and (legacy/'python312.dll').is_file():
         assert legacy.resolve().parent==destination.resolve()
@@ -148,8 +198,8 @@ def deploy_release(release):
     return destination
 
 def main():
-    parser=argparse.ArgumentParser();parser.add_argument('--stage-only',action='store_true');parser.add_argument('--engine-only',action='store_true');args=parser.parse_args()
-    engine=build_engine()
+    parser=argparse.ArgumentParser();parser.add_argument('--stage-only',action='store_true');parser.add_argument('--engine-only',action='store_true');parser.add_argument('--engine-dist',type=Path);args=parser.parse_args()
+    engine=build_engine(args.engine_dist)
     if args.engine_only:print(engine);return
     release=stage_release(engine,build_desktop())
     print(release if args.stage_only else deploy_release(release))

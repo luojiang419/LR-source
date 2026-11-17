@@ -3,21 +3,28 @@ import hashlib
 import json
 import time
 
-from sku_intervals import partition
+from sku_intervals import partition,frozen_contexts
 
 
 def group_context(archive,sku,sid,cid,selection):
     session=archive.store.session(sid)
     records=archive.store.records(sid) if session else []
+    frozen=sku.shooting_context(sid,cid) if sku else None
+    if frozen:
+        with sku.connect() as c:members={r[0] for r in c.execute('SELECT capture FROM shooting_captures WHERE session=? AND project=? AND scope=?',(sid,frozen['project'],frozen['scope']))}
+        records=[r for r in records if r['id'] in members]
     by_id={r['id']:r for r in records}
     if cid not in by_id:raise ValueError('当前照片不存在，请重新选择')
-    overrides=session['state'].get('overrides',{})
+    overrides=dict(session['state'].get('overrides',{}))
+    overrides.update(archive.ratings.session(session,records)['sharedRatings'])
     boundaries={r['id']:None for r in records if overrides.get(r['id'],r.get('existingRating',0))==2}
     with archive.connect() as c:
         links={r['capture']:dict(r) for r in c.execute('SELECT k.capture,a.* FROM catalog_links k JOIN assets a ON a.id=k.asset WHERE k.session=?',(sid,))}
         segments=[dict(r) for r in c.execute("SELECT g.*,b.capture FROM segments g JOIN streams s ON s.id=g.stream JOIN bindings b ON b.stream=s.id AND b.asset=g.label WHERE s.session=? AND g.status NOT IN ('cancelled','superseded') ORDER BY g.created",(sid,))]
-    for segment in segments:boundaries[segment['capture']]=segment
-    interval=next((g for g in partition(records,boundaries) if cid in g['members']),None)
+    for segment in segments:
+        if segment['capture'] in by_id:boundaries[segment['capture']]=segment
+    intervals=partition(records,boundaries,contexts=frozen_contexts(sku,sid))
+    interval=next((g for g in intervals if cid in g['members']),None)
     if interval:
         members=interval['members'];label=interval['label'];segment=interval['boundary']
         kind='interval';segment_id=segment['id'] if segment else ''
@@ -25,7 +32,7 @@ def group_context(archive,sku,sid,cid,selection):
         members=list(dict.fromkeys(selection or [cid]));label=cid;kind='selection';segment_id=''
         if not members or len(members)>2000 or any(member not in by_id for member in members):raise ValueError('所选照片已变化，请重新选择')
         # 已有其他款边界的图片不能混进未封口尾部的手动选择。
-        sealed={member for g in partition(records,boundaries) for member in g['members']}
+        sealed={member for g in intervals for member in g['members']}
         if any(member in sealed for member in members):raise ValueError('所选照片跨越其他款，请从目标款的一张照片进入修改')
     assigned=[links[member] for member in members if member in links]
     values={a['sku'] for a in assigned if a['sku']}
@@ -41,8 +48,11 @@ def group_context(archive,sku,sid,cid,selection):
 
 
 def preview_group(archive,sku,sid,cid,selection,code,scope,project=''):
+    if getattr(archive,'capture_service',None):archive.capture_service.prepare_live(sid)
     with archive.lock:
         group=group_context(archive,sku,sid,cid,selection)
+        frozen=sku.shooting_context(sid,cid) if sku else None
+        if frozen:scope=frozen['scope'];project=frozen['project']
         # 侧栏输入作为草稿；空草稿沿用现有整款归属。
         code=code or group['sku']
         scope=(group['scope'] or scope) if group['kind']=='interval' else (scope or group['scope'])
@@ -91,7 +101,9 @@ def confirm_group(archive,sku,sid,cid,selection,code,scope='',project=''):
     if not isinstance(code,str) or not normalize(code) or len(code.strip())>80 or any(ord(ch)<32 for ch in code):raise ValueError('请填写正确 SKU（最多 80 字符）')
     if not sku:raise ValueError('款号服务尚未就绪')
     with sku.lock,archive.lock:
+        frozen=sku.shooting_context(sid,cid)
+        if frozen:project=frozen['project'];scope=frozen['scope']
         p=sku.project(project or None)
-        if not p or p['session_id']!=sid:p=sku._automatic_project(sid)
+        if not p or (p['session_id']!=sid and not frozen):p=sku._automatic_project(sid)
         preview=preview_group(archive,sku,sid,cid,selection,code.strip(),scope or p['scope'] or '现场记录',p['id'])
         return apply_group(archive,sku,preview['preview_id'],code.strip())

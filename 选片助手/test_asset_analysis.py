@@ -4,6 +4,7 @@ from pathlib import Path
 import threading
 import time
 import unittest
+from unittest.mock import patch
 from concurrent.futures import ThreadPoolExecutor
 from test_asset_archive import AssetTests
 from asset_analysis import AssetAnalysis
@@ -65,6 +66,19 @@ class AnalysisTests(AssetTests):
             self.assertEqual(scheduler.active,2);gate.set()
             for f in [first,second,ordinary,label]:f.result(timeout=5)
         self.assertLess(entered.index('label'),entered.index('ordinary'))
+
+    def test_truncated_model_response_has_actionable_error(self):
+        import io
+        from PIL import Image
+        from asset_analysis import vision
+        output=io.BytesIO();Image.new('RGB',(20,20),'red').save(output,'JPEG')
+        provider={'protocol':'chat','url':'http://127.0.0.1:1','model':'fixture','json_mode':False}
+        response={'choices':[{'message':{'content':'{}'},'finish_reason':'length'}]}
+        with patch('asset_analysis.request_json',return_value=response):
+            with self.assertRaisesRegex(ValueError,'输出达到上限'):vision(provider,output.getvalue(),'读取图片',{'type':'object'})
+        response['choices'][0]['finish_reason']='stop'
+        with patch('asset_analysis.request_json',return_value=response):
+            self.assertEqual(vision(provider,output.getvalue(),'读取图片',{'type':'object'}),'{}')
 
 # unittest 不把工具基类导入成重复测试集；分析类只保留此文件的用例。
 for _name in list(AssetTests.__dict__):

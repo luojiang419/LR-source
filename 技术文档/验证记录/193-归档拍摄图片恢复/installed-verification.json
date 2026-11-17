@@ -1,0 +1,20 @@
+{
+  "rows": 56,
+  "shot": 56,
+  "product_images": 56,
+  "label_images": 56,
+  "loaded_table_images": 112,
+  "label_large_size": [
+    2048,
+    1365
+  ],
+  "exported_embedded_images": 112,
+  "js_errors": [],
+  "database_shot": 56,
+  "added_versions": 56,
+  "jobs_unchanged": true,
+  "source_values_unchanged": true,
+  "exported_media_resources": 168,
+  "export_product_images": 56,
+  "export_label_images": 56
+}

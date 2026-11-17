@@ -1,0 +1,21 @@
+{
+  "android_release_sha256": "ffba1c2af9d5e6f2e7515400821279f6b24b232d062bba454e0e633067c0af75",
+  "android_installed_release_matches": true,
+  "source_tests": 41,
+  "frozen_tests": 41,
+  "frozen_modules": 120,
+  "web_files": 73,
+  "offline_no_network_verified": true,
+  "cloud_real_sku": "LC7877529-P105",
+  "double_image_mobile_xlsx_verified": true,
+  "camera_capture_and_torch_verified": true,
+  "phone_upload_verified": true,
+  "computer_pull_verified": true,
+  "duplicate_sync_verified": true,
+  "desktop_portable_built": true,
+  "desktop_installed_updated": false,
+  "desktop_update_blocker": "现有安装版仍在使用；窗口控制报告用户输入，保留运行程序与业务资料",
+  "git_push": false,
+  "android_debuggable": false,
+  "usb_helper_verified": true
+}

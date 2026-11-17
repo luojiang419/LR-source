@@ -5,11 +5,11 @@
 .lan-page button:not(.primary):not([role=tab]):not(.lan-card) {border:1px solid var(--theme-border);border-radius:6px;background:var(--glass-button,var(--theme-control));}
 .lan-page input:not([type=file]),.lan-page select {min-height:35px;padding:8px 10px;border:1px solid var(--theme-border);border-radius:6px;background:var(--glass-field,var(--theme-control));color:var(--theme-text);font:inherit;min-width:0;}
 .lan-page label {display:flex;flex-direction:column;gap:6px;font-size:11px;color:var(--theme-text-soft);}
-.lan-login {min-height:100dvh;display:grid;place-items:center;padding:24px;}
-.lan-login-card {width:min(400px,100%);padding:32px;border:1px solid var(--theme-border);border-radius:14px;background:var(--glass-panel,var(--theme-panel));box-shadow:0 12px 42px var(--theme-shadow);}
+.lan-startup {min-height:100dvh;display:grid;place-items:center;padding:24px;}
+.lan-startup-card {width:min(400px,100%);padding:32px;border:1px solid var(--theme-border);border-radius:14px;background:var(--glass-panel,var(--theme-panel));box-shadow:0 12px 42px var(--theme-shadow);}
 .lan-brand {font-size:23px;font-weight:650;letter-spacing:-.5px;color:var(--theme-text);white-space:nowrap;}
-.lan-login h1 {font-size:22px;margin:24px 0 8px;}.lan-login p {color:var(--theme-muted);line-height:1.8;margin:8px 0 20px;}
-.lan-login label {margin-top:26px;}.lan-login input,.lan-login button {width:100%;margin-top:10px;}.lan-login #login-message {min-height:24px;margin:18px 0 0;font-size:11px;}
+.lan-startup h1 {font-size:22px;margin:24px 0 8px;}.lan-startup p {color:var(--theme-muted);line-height:1.8;margin:8px 0 20px;}
+.lan-startup button {width:100%;margin-top:10px;}
 .lan-app {max-width:1800px;min-height:100dvh;margin:auto;display:flex;flex-direction:column;}
 .lan-header {display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 24px;border-bottom:1px solid var(--theme-border);background:var(--glass-panel,var(--theme-panel));}
 .lan-identity {display:flex;align-items:center;gap:16px;}.lan-identity>strong {font-size:15px;font-weight:500;}.lan-readonly {padding:4px 8px;border:1px solid var(--theme-border);border-radius:5px;font-size:10px;color:var(--theme-muted);}
@@ -27,7 +27,7 @@
 .lan-progress-table th {padding:12px 16px;font-size:11px;font-weight:500;color:var(--theme-muted);background:var(--theme-soft);}.lan-progress-table td {padding:10px 16px;border-top:1px solid var(--theme-border);font-size:12px;}.lan-progress-table img {width:54px;height:64px;object-fit:contain;background:var(--theme-control);border-radius:4px;}.lan-progress-table td:first-child {width:90px;}
 .lan-shot,.lan-pending {display:inline-block;padding:4px 8px;border-radius:5px;font-size:11px;}.lan-shot {background:var(--theme-success-soft);color:var(--theme-success);}.lan-pending {background:var(--theme-warning-soft);color:var(--theme-warning);}
 .lan-searchbar {align-items:center;}.lan-search-layout {display:grid;grid-template-columns:220px minmax(0,1fr);border:1px solid var(--theme-border);margin-top:14px;min-height:480px;}.lan-filters {padding:16px;border-right:1px solid var(--theme-border);background:var(--glass-panel,var(--theme-panel));}.lan-filters h3 {font-size:12px;margin:0 0 12px;}.lan-filters h3:not(:first-child) {margin-top:24px;}.lan-filters label {margin-bottom:14px;}.lan-filters select {width:100%;}.lan-filters p {font-size:11px;line-height:1.8;color:var(--theme-muted);margin-top:20px;}
-.lan-results {min-width:0;background:var(--theme-soft);}.lan-result-status {padding:12px;font-size:11px;min-height:38px;color:var(--theme-muted);line-height:1.6;}.lan-result-status.error,#login-message.error {color:var(--theme-danger);}
+.lan-results {min-width:0;background:var(--theme-soft);}.lan-result-status {padding:12px;font-size:11px;min-height:38px;color:var(--theme-muted);line-height:1.6;}.lan-result-status.error,#startup-message.error {color:var(--theme-danger);}
 .lan-grid {display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:1px;background:var(--theme-border);align-content:start;}
 html[data-hardcore-layout] .lan-grid .lan-card {display:block;min-width:0;border:0;border-radius:0;padding:10px;text-align:left;background:var(--glass-panel,var(--theme-panel));color:var(--theme-text);white-space:normal;}
 .lan-grid .lan-card:hover,.lan-grid .lan-card:focus-visible {background:var(--theme-selected);color:var(--theme-selected-text);}.lan-card img {width:100%;aspect-ratio:1;display:block;object-fit:contain;background:var(--theme-control);}.lan-card strong,.lan-card small {display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:7px;}.lan-card strong {font-size:12px;font-weight:600;}.lan-card small {font-size:10px;color:var(--theme-muted);}.lan-empty {grid-column:1/-1;padding:55px 20px;text-align:center;color:var(--theme-muted);line-height:1.9;background:var(--glass-panel,var(--theme-panel));}

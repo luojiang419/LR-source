@@ -32,20 +32,23 @@ class ShootVersionTests(unittest.TestCase):
         self.assertEqual(second['sku'],fixture.CODE+'-A')
         return second
 
-    def test_first_repeat_and_retry_preserve_two_intervals_original_plan_and_current_image(self):
+    def test_first_repeat_and_retry_preserve_two_independent_rows_and_intervals(self):
         second=self.two_shoots()
         self.assertEqual(second['base_sku'],fixture.CODE);self.assertEqual(second['shoot_version'],'A')
         with self.archive.connect() as c:
             self.assertEqual(c.execute('SELECT count(*) FROM assets WHERE sku=?',(fixture.CODE,)).fetchone()[0],2)
             self.assertEqual(c.execute('SELECT count(*) FROM assets WHERE sku=?',(fixture.CODE+'-A',)).fetchone()[0],2)
         row=next(r for r in self.sku.state()['rows'] if r['sheet']=='模特图' and r['sku']==fixture.CODE)
-        self.assertEqual(row['shoot_sku'],fixture.CODE+'-A')
-        self.assertEqual(row['sku_image']['capture_id'],self.ids[2])
-        self.assertEqual(row['completion']['capture_id'],self.ids[3])
-        self.assertFalse([r for r in self.sku.rows(self.pid) if r['sku']==fixture.CODE+'-A'])
+        self.assertEqual(row['shoot_sku'],fixture.CODE)
+        self.assertEqual(row['sku_image']['capture_id'],self.ids[0])
+        self.assertEqual(row['completion']['capture_id'],self.ids[1])
+        separate=next(r for r in self.sku.state()['rows'] if r['sku']==fixture.CODE+'-A')
+        self.assertEqual(separate['sku_image']['capture_id'],self.ids[2])
+        self.assertEqual(separate['completion']['capture_id'],self.ids[3])
         self.assertEqual(self.choose(cid=self.ids[3])['sku'],fixture.CODE+'-A')
         self.assertEqual(self.choose(fixture.CODE+'-A',cid=self.ids[3])['sku'],fixture.CODE+'-A')
-        self.assertEqual(gallery(self.sku,self.pid,fixture.CODE)['total'],2)
+        self.assertEqual(gallery(self.sku,self.pid,fixture.CODE)['total'],1)
+        self.assertEqual(gallery(self.sku,self.pid,fixture.CODE+'-A')['total'],1)
         self.assertIn(fixture.CODE,self.sku.ocr_details(self.sid,self.ids[3])['text'])
         with self.sku.connect() as c:self.assertEqual(c.execute('SELECT count(*) FROM sku_shoot_versions').fetchone()[0],2)
 
@@ -87,10 +90,11 @@ class ShootVersionTests(unittest.TestCase):
                 if index==2:continue
                 value=fixture.CODE+'-'+chr(64+index)
                 c.execute('INSERT INTO sku_shoot_versions VALUES (?,?,?,?,?,?)',('reserved-'+str(index),normalize(fixture.CODE),fixture.CODE,value,index,0))
+                c.execute("INSERT INTO sku_shoot_days VALUES(?,?,?,'ocr')",('reserved-'+str(index),normalize(fixture.CODE),'2026-10-21'))
         from sku_shoot_versions import allocate
         with self.sku.connect() as c:
             c.execute('BEGIN IMMEDIATE')
-            with self.assertRaisesRegex(ValueError,'A–Z'):allocate(c,self.archive,'new-asset',self.sid,'new-capture',fixture.CODE,0)
+            with self.assertRaisesRegex(ValueError,'A–Z'):allocate(c,self.archive,'new-asset',self.sid,self.ids[0],fixture.CODE,0)
 
     def test_versions_backup_roundtrip_and_old_backup_compatibility(self):
         self.two_shoots();backup=export_metadata(self.sku)['backup']
@@ -114,7 +118,7 @@ class ShootVersionTests(unittest.TestCase):
         from sku_shoot_versions import allocate
         with self.sku.connect() as c:
             c.execute('BEGIN IMMEDIATE')
-            result=allocate(c,self.archive,'third-label',self.sid,'third-capture',fixture.CODE,0)
+            result=allocate(c,self.archive,'third-label',self.sid,self.ids[0],fixture.CODE,0)
             self.assertEqual(result['sku'],fixture.CODE+'-B')
             self.assertEqual(allocate(c,self.archive,'third-label','another-session','another-capture',fixture.CODE,1),result)
 
@@ -127,7 +131,7 @@ class ShootVersionTests(unittest.TestCase):
         status=capture_status(self.store,self.sku,self.archive,None,self.sid,self.ids[1])['ocr']
         self.assertEqual(status['status'],'review');self.assertIn('A–Z',status['reason'])
 
-    def test_browser_repeat_shows_confirmed_version_and_progress_without_changing_plan(self):
+    def test_browser_repeat_shows_independent_variant_in_progress_and_overview(self):
         self.sku.set_sku_rules([{'kind':'contains','value':'LC'}]);self.parse()
         values=dict(STORE=self.store,DATA=self.store.data,MODELS=self.providers,SKU=self.sku,ARCHIVE=self.archive,CATALOG=None,ANALYSIS=None,WATCH=None,MOUSE=None,RAWLINK=None,FILESEARCH=None,UPDATES=None,COMPONENTS=None,DRIVER=None)
         http=ThreadingHTTPServer(('127.0.0.1',0),server.Handler);http.daemon_threads=True
@@ -144,13 +148,17 @@ class ShootVersionTests(unittest.TestCase):
                         page.locator('#asset-parse-sku').click()
                         page.wait_for_function('(code)=>document.querySelector("#asset-ocr-feedback").dataset.status==="completed"&&document.querySelector("#asset-ocr-feedback").textContent.includes(code)',arg=fixture.CODE+'-A')
                         page.wait_for_function('()=>document.querySelectorAll("#asset-ocr-codes [aria-pressed=true]").length===1')
-                        out=fixture.ROOT/'build/sku-shoot-versions';out.mkdir(parents=True,exist_ok=True)
+                        out=fixture.ROOT/'build/duplicate-labels';out.mkdir(parents=True,exist_ok=True)
                         page.screenshot(path=str(out/'repeat-confirmed.png'),full_page=True)
                         page.locator('#asset-parse-sku').click()
                         page.wait_for_function('(code)=>document.querySelector("#asset-message").textContent.includes("保留已有拍摄版本")&&document.querySelector("#asset-message").textContent.includes(code)',arg=fixture.CODE+'-A')
                         page.locator('#sku-open').click()
+                        page.locator('[data-progress-sheet="临时插拍"]').click()
                         page.wait_for_function('(code)=>document.querySelector("#sku-rows").textContent.includes(code)',arg=fixture.CODE+'-A')
                         page.screenshot(path=str(out/'repeat-progress.png'),full_page=True)
+                        page.locator('[data-all-view]').click()
+                        page.wait_for_function('(code)=>{const values=[...document.querySelectorAll("#sku-rows [data-edit-sku]")].map(e=>e.textContent);return values.includes(code)&&values.includes(code+"-A")}',arg=fixture.CODE)
+                        page.screenshot(path=str(out/'separate-overview.png'),full_page=True)
                         self.assertFalse(errors,errors)
                     finally:browser.close()
             finally:http.shutdown();http.server_close()

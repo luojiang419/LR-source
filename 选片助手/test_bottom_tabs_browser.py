@@ -49,8 +49,8 @@ class BottomTabsTests(unittest.TestCase):
                         page=browser.new_page(viewport={'width':1680,'height':1050},reduced_motion='reduce');errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
                         page.add_init_script("localStorage.setItem('framekeep-layout-v1',JSON.stringify({selection:{header:true,left:false,right:false,tools:true,film:true,sections:{}},monitor:{header:true,left:false,right:false,tools:false,film:true,sections:{}}}))")
                         page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='domcontentloaded');page.wait_for_function('()=>window.FramekeepBoot?.loading===false')
-                        tabs=['selection-tab','asset-retrieval-open','sku-open','asset-archive-open','sku-database-open','asset-analysis-open','app-settings-open']
-                        panels=['selection-page','asset-retrieval-page','sku-dialog','asset-archive-dialog','sku-database-page','analysis-dialog','app-settings-page']
+                        tabs=['selection-tab','sku-open','asset-archive-open','inventory-open','sku-database-open','asset-retrieval-open','app-settings-open']
+                        panels=['selection-page','sku-dialog','asset-archive-dialog','inventory-page','sku-database-page','asset-retrieval-page','app-settings-page']
                         self.assertEqual(page.locator('.workspace-bottom-bar [role=tab]').evaluate_all('(nodes)=>nodes.map(n=>n.id)'),tabs)
                         self.assertEqual(page.locator('.app-header .workspace-tabs,.film-panel,#filmstrip,#layout-film').count(),0)
                         self.assertTrue(page.locator('#watch-thumbnails').is_visible());self.assertTrue(page.locator('#watch-follow-toggle').is_hidden())
@@ -68,8 +68,8 @@ class BottomTabsTests(unittest.TestCase):
                         page.locator('#search').fill('');self.assertEqual(page.evaluate('Framekeep.photoItems()[0].photo.jpg'),'007.JPG')
                         page.locator('#asset-sku').fill('DRAFT-033')
                         page.locator('#selection-tab').press('End');self.assertTrue(page.locator('#app-settings-page').is_visible())
-                        page.locator('#app-settings-open').press('ArrowLeft');self.assertTrue(page.locator('#analysis-dialog').is_visible())
-                        page.locator('#asset-analysis-open').press('Home');self.assertTrue(page.locator('#selection-page').is_visible())
+                        page.locator('#app-settings-open').press('ArrowLeft');self.assertTrue(page.locator('#asset-retrieval-page').is_visible())
+                        page.locator('#asset-retrieval-open').press('Home');self.assertTrue(page.locator('#selection-page').is_visible())
                         self.assertEqual(page.locator('#asset-sku').input_value(),'DRAFT-033');self.assertEqual(page.evaluate('Framekeep.remoteTarget().photoId'),selected)
                         self.assertEqual(page.locator('#stars .on').count(),4)
                         checks=[]

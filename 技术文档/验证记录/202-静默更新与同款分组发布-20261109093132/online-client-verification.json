@@ -1,0 +1,27 @@
+{
+  "latest_matches_signed_snapshot": true,
+  "releaseId": "20261109093132",
+  "clients": [
+    {
+      "case": "previous-public",
+      "currentReleaseId": "20261109053053",
+      "available": true,
+      "releaseId": "20261109093132",
+      "message": "发现新版本"
+    },
+    {
+      "case": "installed",
+      "currentReleaseId": "20261109015625",
+      "available": true,
+      "releaseId": "20261109093132",
+      "message": "发现新版本"
+    },
+    {
+      "case": "new",
+      "currentReleaseId": "20261109093132",
+      "available": false,
+      "releaseId": "20261109093132",
+      "message": "当前已是最新版本"
+    }
+  ]
+}

@@ -10,6 +10,8 @@ class OcrProgress:
 
     @contextmanager
     def track(self,kind,jid,token):
+        from pipeline_metrics import enabled,record
+        tracing=enabled();phases=[]
         key=(kind,jid,token)
         state={'phase':'image','started':time.time(),'phase_started':time.time(),'percent':None}
         with self.lock:self.active[key]=state
@@ -18,8 +20,10 @@ class OcrProgress:
                 if self.active.get(key) is not state:return
                 state.update(phase=phase,phase_started=time.time())
                 if provider:state.update(model=provider.get('model',''),protocol=provider.get('protocol',''))
+                if tracing:phases.append({'phase':phase,'at':state['phase_started'],'model':state.get('model','')})
         try:yield update
         finally:
+            if tracing:record('ocr',job_kind=kind,job_id=jid,attempt=token,started=state['started'],phases=phases)
             with self.lock:
                 if self.active.get(key) is state:self.active.pop(key,None)
 

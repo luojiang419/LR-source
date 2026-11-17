@@ -1,0 +1,11 @@
+PaddleOCR Android SDK and PP-OCR model weights
+Copyright (c) PaddlePaddle Authors.
+Licensed under the Apache License, Version 2.0; see PaddleOCR-LICENSE.txt.
+SDK source: https://github.com/PaddlePaddle/PaddleOCR
+Pinned SDK commit: dab3fe35379033fdcb2d0e9572fac0b36c9a9ebf
+Local modifications: build integration, synchronous bridge, model file caching,
+model selection and confidence handling. Upstream copyright headers are retained.
+
+OpenCV is provided by the OpenCV project under the Apache License, Version 2.0.
+ONNX Runtime is provided by Microsoft under the MIT License.
+These dependencies are distributed with their corresponding upstream notices.

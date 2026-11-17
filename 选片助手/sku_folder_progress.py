@@ -6,12 +6,16 @@ import uuid
 
 from sku_match import normalize
 from sku_progress import completion_order
+from shooting_documents import managed_sheets
 
 
 def evidence(sku,c,sid):
     session=sku.store.session(sid) if sid else None
     if not session:return [],None
-    records=sku.store.records(sid);overrides=session['state'].get('overrides',{})
+    records=sku.store.records(sid);overrides=dict(session['state'].get('overrides',{}))
+    if sku.archive:
+        # 与照片浏览使用同一份持久评级；断连/重启后不依赖遥控刷新会话。
+        overrides.update(sku.archive.ratings.session(session,records)['sharedRatings'])
     starred={r['id']:r for r in records if overrides.get(r['id'],r.get('existingRating',0))==2}
     choices={r['capture_id']:r['sku'] for r in c.execute('SELECT capture_id,sku FROM ocr_choices WHERE session_id=?',(sid,))}
     jobs={}
@@ -35,9 +39,10 @@ def evidence(sku,c,sid):
             change=c.execute('SELECT after FROM metadata_versions WHERE session=? AND capture=? AND before=?',(sid,cid,fingerprint)).fetchone()
             if not change:break
             fingerprint=change[0]
-        if fingerprint!=record['fingerprint']:continue
+        if fingerprint!=record['fingerprint'] and not (sku.archive and sku.archive.capture_metadata_busy(sid,cid)):continue
         bases=versions.get(code,set());base=next(iter(bases)) if len(bases)==1 else code
-        result.append({'job':job,'record':record,'sku':code,'base':base,'normalized':normalize(base)})
+        # 后缀属于独立拍摄组，清单及导出使用实际款号，不再按原 OCR 款号合并。
+        result.append({'job':job,'record':record,'sku':code,'base':code,'base_sku':base,'normalized':normalize(code)})
     summary={'session_id':sid,'folder':session['root'],'two_star':len(starred),'confirmed_labels':len(result),
              'confirmed_skus':len({r['normalized'] for r in result}),'pending_labels':len(starred)-len(result)}
     return result,summary
@@ -48,9 +53,13 @@ def signature(sku,c,project):
     if not session:return (sid,None)
     with sku.store.connect() as db:
         generation=tuple(db.execute('SELECT generation,data_generation FROM browser_versions WHERE session=?',(sid,)).fetchone() or ())
+    rating_version=None
+    if sku.archive:
+        with sku.archive.ratings.archive.connect() as db:
+            rating_version=db.execute('SELECT value FROM rating_view_version WHERE id=1').fetchone()[0]
     choices=tuple(tuple(r) for r in c.execute('SELECT capture_id,sku,updated FROM ocr_choices WHERE session_id=? ORDER BY capture_id',(sid,)))
     jobs=tuple(tuple(r) for r in c.execute('SELECT id,status,fingerprint,scope,updated,captured_at,result,targets FROM jobs WHERE session_id=? ORDER BY id',(sid,)))
-    return (sid,session['revision'],session['snapshot'],generation,choices,jobs,
+    return (sid,session['revision'],session['snapshot'],generation,rating_version,choices,jobs,
             json.dumps(project['metadata'].get('sheets',[]),sort_keys=True),project['metadata'].get('managed_sheet'),
             c.execute('SELECT count(*) FROM sku_rows WHERE project=?',(project['id'],)).fetchone()[0])
 
@@ -59,7 +68,7 @@ def reconcile(sku,c,project,rows):
     """返回当前目录覆盖的照片身份和行→原作业关联；原作业不移动、不克隆。"""
     sid=project.get('session_id');items,summary=evidence(sku,c,sid)
     targets={};handled={(sid,item['job']['capture_id']) for item in items}
-    metadata=project['metadata'];managed=metadata.get('managed_sheet')
+    metadata=project['metadata'];managed=metadata.get('managed_sheet');dynamic=managed_sheets(metadata)
     sheets={s['name'] for s in metadata['sheets'] if not s.get('skipped')}
     def put(row,job):
         if row['baseline']=='已拍摄' and not row.get('completion_job') and job['project']!=project['id'] and max(job['created'],job['updated'])<=project['created']:
@@ -79,6 +88,19 @@ def reconcile(sku,c,project,rows):
     changed=False
     for item in items:
         job=item['job'];key=item['normalized'];scope=job['scope']
+        if scope in dynamic:
+            # 自建类型严格按文档和工作表投影；同款不同类型不得互相记账。
+            if job['project']!=project['id']:continue
+            matches=[r for r in rows if r['normalized']==key and r['sheet']==scope]
+            if not matches:
+                number=max([r['excel_row'] for r in rows if r['sheet']==scope]+[1])+1
+                stamp=datetime.fromtimestamp(job['created'],timezone.utc).astimezone().isoformat(timespec='seconds')
+                values={'A':item['base'],'B':item['record'].get('jpg') or item['record'].get('raw'),'C':Path(summary['folder']).name,'D':stamp,'_label':{'session_id':sid,'capture_id':job['capture_id']}}
+                row={'id':uuid.uuid4().hex,'project':project['id'],'sheet':scope,'excel_row':number,'sku':item['base'],'normalized':key,'baseline':'未拍摄','status':'未拍摄','baseline_completed_at':'','completed_at':'','completion_job':''}
+                c.execute('INSERT INTO sku_rows(id,project,sheet,excel_row,sku,normalized,baseline,status,source_values) VALUES (?,?,?,?,?,?,?,?,?)',(row['id'],project['id'],scope,number,item['base'],key,'未拍摄','未拍摄',json.dumps(values,ensure_ascii=False)))
+                rows.append(row);matches=[row];changed=True
+            for row in matches:put(row,job)
+            continue
         planned=[r for r in rows if r['normalized']==key and r['sheet']!=managed]
         scoped=[r for r in planned if r['sheet']==scope]
         if scope in sheets and scope!=managed:
@@ -98,11 +120,12 @@ def reconcile(sku,c,project,rows):
                 c.execute('UPDATE projects SET metadata=? WHERE id=?',(json.dumps(metadata,ensure_ascii=False),project['id']))
             number=max([r['excel_row'] for r in rows if r['sheet']==managed]+[1])+1
             stamp=datetime.fromtimestamp(job['created'],timezone.utc).astimezone().isoformat(timespec='seconds')
-            values={'A':item['base'],'B':item['record'].get('jpg') or item['record'].get('raw'),'C':Path(summary['folder']).name,'D':stamp}
+            values={'A':item['base'],'B':item['record'].get('jpg') or item['record'].get('raw'),'C':Path(summary['folder']).name,'D':stamp,
+                    '_label':{'session_id':sid,'capture_id':job['capture_id']}}
             row={'id':uuid.uuid4().hex,'project':project['id'],'sheet':managed,'excel_row':number,'sku':item['base'],
                  'normalized':key,'baseline':'未拍摄','status':'未拍摄','baseline_completed_at':'','completed_at':'','completion_job':''}
             c.execute('INSERT INTO sku_rows(id,project,sheet,excel_row,sku,normalized,baseline,status,source_values) VALUES (?,?,?,?,?,?,?,?,?)',
                       (row['id'],project['id'],managed,number,item['base'],key,'未拍摄','未拍摄',json.dumps(values,ensure_ascii=False)))
             rows.append(row);matches=[row];changed=True
         for row in matches:put(row,job)
-    return targets,handled,summary,changed
+    return targets,handled,summary,changed,items

@@ -2,12 +2,16 @@
 const startSplitCapture= async () => {
   'use strict';
   const $ = id => document.getElementById(id);
+  const searchClient='split-sku-'+(crypto.randomUUID?.()||Date.now().toString(36)+Math.random().toString(36).slice(2));
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const pin = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="m15 3 6 6-3 1-3 5v3l-3-3-5 3 1-5-3-3h3l5-3zM8 16l-5 5"/></svg>';
+  const previewScanner = '<svg class="split-preview-scanner" viewBox="0 0 160 100" preserveAspectRatio="none" aria-hidden="true"><rect class="split-scanner-wash" width="160" height="100"/><g class="split-scanner-grid"><path d="M0 25H160M0 50H160M0 75H160M40 0V100M80 0V100M120 0V100"/></g><g class="split-scanner-corners"><path d="M18 34V20H38M122 20H142V34M142 66V80H122M38 80H18V66"/></g><rect class="split-scanner-frame" x="43" y="24" width="74" height="52" rx="3"/><g class="split-scanner-shutter"><path d="M80 35 93 43 88 58 72 58 67 43Z"/><path d="M80 35v30M67 43l26 15M93 43 67 58"/></g><path class="split-scanner-beam" d="M30 50H130"/><g class="split-scanner-ticks"><path d="M56 87h8M68 87h8M80 87h8M92 87h8"/></g></svg>';
   const icon = (name) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">${name==='folder'?'<path d="M3 7V5h6l2 2h10v13H3z"/>':name==='server'?'<rect x="3" y="3" width="18" height="7" rx="2"/><rect x="3" y="14" width="18" height="7" rx="2"/><path d="M7 6h1M7 17h1M14 7h4M14 18h4"/>':'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 14h18M7 17h2"/>'}</svg>`;
   const api = (path, body) => FramekeepIO.api('/api/reference/'+path, body, 45000);
+  const assetSearch = params => FramekeepIO.api('/api/intelligence/search?'+new URLSearchParams(params),undefined,45000);
   const page = $('selection-page'), layout = page.querySelector('.library-layout'), surface = layout.querySelector('.preview-surface');
   let sources = [], scope = null, rows = [], offset = 0, cursors = [''], active = null, config = null, requestId = 0, submittedSearch = '', indexTimer;
+  let searchTimer,searchComposing=false;
   let preferencesReady=false,preferencesToken='',preferencesTimer,preferencesSaving=Promise.resolve(),preferencesSaved='';
   let referenceGeneration=0,referenceTaskReady=false,lastReferenceTask='';
   let references = [], referenceIndex = 0, referenceHovered = false, trayCollapsed = false, referenceSignature = '';
@@ -17,6 +21,7 @@ const startSplitCapture= async () => {
   let searchScope='all',submittedScope='all',layoutTouched=false;
   try{searchScope=localStorage.getItem('framekeep-reference-search-scope')==='current'?'current':'all';}catch{}
   let zoom = 1, panX = 0, panY = 0, drag = null, paintedUrl = '', enabled = false, focusState = null, originalSides = null;
+  let referenceFullscreen=null,referenceMotion=[],referenceRefreshPending=false;
   let resultView='grid',gridScale=100,previewCollection='results',resultTotal=0;
   const fadeCurves={smooth:'ease-in-out',linear:'linear',easeIn:'ease-in',easeOut:'ease-out',none:null};
   let fadeCurve='smooth',displayedUrl='',displayedTransform='',fadeAnimations=[],lastBrowseWheel=-Infinity;
@@ -34,16 +39,16 @@ const startSplitCapture= async () => {
   } catch {}
   let videoPosterRevision='';
   document.addEventListener('framekeep:video-preview',event=>{videoPosterRevision=String(event.detail.frame_number);if(enabled){paintImage();}});
-  const imageUrl = (item, size=1800) => '/api/reference/library/preview?'+new URLSearchParams({device:item.device,root:item.root,file:item.relative,size,v:item.fingerprint||'',poster_revision:videoPosterRevision,cache_generation:referenceGeneration});
+  const imageUrl = (item, size=1800) => item.url || '/api/reference/library/preview?'+new URLSearchParams({device:item.device,root:item.root,file:item.relative,size,v:item.fingerprint||'',poster_revision:videoPosterRevision,cache_generation:referenceGeneration});
   const call = async (route, params) => api('library/'+route+'?'+new URLSearchParams({...params,cache_generation:referenceGeneration}));
-  const reference = document.createElement('section'); reference.id='split-reference'; reference.setAttribute('aria-label','参考图片工作区');
+  const reference = document.createElement('section'); reference.id='split-reference'; reference.classList.add('resources-collapsed'); reference.setAttribute('aria-label','参考图片工作区');
   reference.innerHTML=`<div class="split-resource-dock">
     <button id="split-resource-rail" class="panel-edge-toggle" type="button" aria-controls="split-resource-panel" aria-expanded="true" aria-label="收起参考资源"><span aria-hidden="true">‹</span></button>
     <aside id="split-resource-panel" class="split-tree-panel catalog-tree-panel"><header><strong>参考资源</strong><button id="split-add-root" aria-label="添加参考分区或文件夹" title="添加分区或文件夹">＋</button></header><div id="split-tree" class="catalog-tree" aria-label="参考资源目录"></div><footer><button id="split-api-settings">${icon('server')}设备与 API</button><div class="split-index-summary"><span id="split-index-status">正在连接数据库…</span><strong id="split-index-percent" hidden>0%</strong></div><progress id="split-index-progress" max="100" value="0" aria-label="后台索引进度" hidden></progress></footer></aside>
-    <aside class="split-thumbnails"><header><strong>资源浏览</strong><button id="split-hide-resources" aria-label="收起参考资源面板" title="收起资源双栏">‹</button></header><form class="split-search" id="split-search-form" role="search" aria-label="参考资源搜索"><div class="split-search-controls"><input id="split-search" type="search" aria-label="搜索参考文件数据库" placeholder="输入后点击搜索"><button id="split-search-submit" type="submit" disabled>搜索</button></div><span id="split-search-scope">当前目录</span></form><div id="split-results" role="status"></div><div id="split-grid" aria-label="参考图片缩略图"></div><div class="split-pagination"><button id="split-prev-page">上一页</button><button id="split-next-page">下一页</button></div></aside>
-  </div><main class="split-reference-main"><header class="split-preview-heading"><span><i></i>参考图片</span><div><button id="split-show-resources" aria-label="展开参考资源面板" title="展开参考资源">☷</button><button id="split-import" title="加载本机参考图片">加载图片</button><button id="split-reference-focus" aria-label="仅显示参考预览" title="收起或恢复参考侧模块">⛶</button></div></header>
+    <aside class="split-thumbnails"><header><strong>资源浏览</strong><button id="split-hide-resources" aria-label="收起参考资源面板" title="收起资源双栏">‹</button></header><div id="split-results" role="status"></div><div id="split-grid" aria-label="参考图片缩略图"></div><div class="split-pagination"><button id="split-prev-page">上一页</button><button id="split-next-page">下一页</button></div></aside>
+  </div><main class="split-reference-main"><header class="split-preview-heading"><form class="split-search" id="split-search-form" role="search" aria-label="参考资源搜索"><div class="split-search-controls"><input id="split-search" type="search" aria-label="搜索参考文件数据库" placeholder="输入关键词自动搜索"><button id="split-search-submit" type="submit" disabled>搜索</button></div><span id="split-search-scope">当前目录</span></form><div><button id="split-show-resources" aria-label="展开参考资源面板" title="展开参考资源">☷</button><button id="split-import" title="加载本机参考图片">加载图片</button><button id="split-reference-focus" aria-label="全屏参考图" title="全屏参考图 · 滚轮缩放 · 左右键切换 · Esc 退出" aria-pressed="false">⛶</button></div></header>
   <div class="split-result-toolbar"><div class="split-result-views" role="group" aria-label="参考结果视图"><button id="split-view-grid" type="button" aria-controls="split-preview-grid">网格</button><button id="split-view-single" type="button" aria-controls="split-reference-stage">大图</button></div><label id="split-grid-scale-control" for="split-grid-scale">缩略图<input id="split-grid-scale" type="range" min="10" max="400" step="10" value="100" aria-label="参考缩略图显示比例"><output id="split-grid-scale-value" for="split-grid-scale">100%</output></label><div id="split-result-paging"><button id="split-result-prev" type="button" aria-label="参考结果上一页" disabled>‹</button><span id="split-result-page" role="status">0 / 0</span><button id="split-result-next" type="button" aria-label="参考结果下一页" disabled>›</button></div></div>
-  <div id="split-preview-grid" class="split-preview-grid" tabindex="0" role="region" aria-label="参考搜索结果网格，滚轮浏览，Ctrl＋滚轮调整缩略图比例"><p class="split-empty">选择参考目录，或输入关键词后点击搜索</p></div>
+  <div id="split-preview-grid" class="split-preview-grid" tabindex="0" role="region" aria-label="参考搜索结果网格，滚轮浏览，Ctrl＋滚轮调整缩略图比例"><p class="split-empty">选择参考目录，或输入关键词自动搜索</p></div>
   <div id="split-reference-stage" tabindex="0" aria-label="参考图片预览，滚轮缩放"><img id="split-reference-image" alt="参考图片" hidden><div id="split-reference-empty">选择一张参考图片<small>从资源库浏览，或加载本机图片</small></div><button id="split-pin-large" class="split-pin" aria-label="将当前大图固定为参考" aria-pressed="false" title="固定为参考">${pin}</button><span id="split-pin-state" hidden>已固定参考</span><button id="split-reference-prev" class="split-reference-switch" aria-label="上一张参考图">‹</button><button id="split-reference-next" class="split-reference-switch" aria-label="下一张参考图">›</button><button id="split-zoom-reset" title="重置参考图缩放">适应</button></div>
   <footer class="split-reference-caption"><strong id="split-reference-name">尚未选择参考</strong><span id="split-reference-source">只读浏览 · 不改动参考图片</span></footer>
   <details id="split-reference-tray" open><summary><span>参考图 <b id="split-reference-count">0</b></span><small>鼠标移入左侧后，使用 ← → 切换</small><button id="split-clear-reference" type="button" disabled title="清理当前选中的参考图及其临时缓存">清理参考图</button></summary><div id="split-reference-thumbnails" role="list" aria-label="已固定的参考图片"></div></details></main>`;
@@ -53,9 +58,10 @@ const startSplitCapture= async () => {
   reference.querySelector('.split-result-toolbar').insertAdjacentHTML('afterend','<section id="split-index-overview" aria-label="参考库扫描进度" hidden><div class="split-index-summary"><span id="split-index-overview-status"></span><strong id="split-index-overview-percent"></strong></div><progress id="split-index-overview-progress" max="100" value="0" aria-label="参考库扫描进度"></progress></section>');
   $('split-reference-stage').setAttribute('aria-label','参考图片预览，滚轮切图，Ctrl＋滚轮缩放');
   $('split-reference-image').insertAdjacentHTML('beforebegin','<img id="split-reference-outgoing" alt="" aria-hidden="true" hidden>');
+  $('split-results').before($('split-search-scope'));
   $('split-search-scope').insertAdjacentHTML('beforebegin','<select id="split-search-range" aria-label="参考搜索范围"><option value="all">全部已添加目录</option><option value="current">当前目录及子目录</option></select>');
   $('split-search-range').value=searchScope;
-  $('split-search-range').onchange=event=>{searchScope=event.target.value;try{localStorage.setItem('framekeep-reference-search-scope',searchScope);}catch{}};
+  $('split-search-range').onchange=event=>{searchScope=event.target.value;try{localStorage.setItem('framekeep-reference-search-scope',searchScope);}catch{}queueSearch();};
   $('split-reference-tray').open=!trayCollapsed;
   const rightHeading = document.createElement('header'); rightHeading.className='split-live-heading';
   rightHeading.innerHTML='<span><i></i>当前拍摄</span><div><button id="split-right-folders" aria-label="折叠或展开拍摄缩略图">拍摄目录</button><button id="split-right-info" aria-label="折叠或展开当前拍摄信息">拍摄信息</button><button id="split-immersive" aria-pressed="false">沉浸对比</button><button id="split-exit" aria-label="退出分屏拍摄">×</button></div>';
@@ -71,7 +77,7 @@ const startSplitCapture= async () => {
   function preferencesSnapshot(){const saved=references.filter(item=>!item.url),current=references[referenceIndex],index=current?saved.findIndex(item=>referenceId(item)===referenceId(current)):-1;return {references:saved,index:Math.max(0,index),collapsed:!$('split-reference-tray').open,split_enabled:enabled,cache_generation:referenceGeneration};}
   function flushReferencePreferences(){clearTimeout(preferencesTimer);if(!preferencesReady)return preferencesSaving;const snapshot=preferencesSnapshot(),serialized=JSON.stringify(snapshot);if(serialized===preferencesSaved)return preferencesSaving;preferencesSaving=preferencesSaving.catch(()=>{}).then(async()=>{await api('preferences',snapshot);preferencesSaved=serialized;});return preferencesSaving;}
   const flushSelection=FramekeepIO.flush;FramekeepIO.flush=async()=>{await flushSelection();await flushReferencePreferences();};
-  window.addEventListener('pagehide',()=>{clearTimeout(preferencesTimer);clearTimeout(indexTimer);if(preferencesReady&&preferencesToken)fetch('/api/reference/preferences',{method:'POST',headers:{'Content-Type':'application/json','X-Framekeep-Token':preferencesToken},body:JSON.stringify(preferencesSnapshot()),keepalive:true}).catch(()=>{});},{once:true});
+  window.addEventListener('pagehide',()=>{clearTimeout(preferencesTimer);clearTimeout(indexTimer);clearTimeout(searchTimer);if(preferencesReady&&preferencesToken)fetch('/api/reference/preferences',{method:'POST',headers:{'Content-Type':'application/json','X-Framekeep-Token':preferencesToken},body:JSON.stringify(preferencesSnapshot()),keepalive:true}).catch(()=>{});},{once:true});
   function shown() { return active || references[referenceIndex]; }
   function saveView(){try{localStorage.setItem(viewKey,JSON.stringify({view:resultView,scale:gridScale,curve:fadeCurve}));}catch{}}
   function setReferenceView(view,remember=true){
@@ -95,10 +101,19 @@ const startSplitCapture= async () => {
       card.classList.toggle('is-filename-hidden',filenameMeasure.measureText(label.textContent).width>available);
     }
   }
+  function wireSplitPreviews(){
+    for(const image of reference.querySelectorAll('.split-card-preview img')){
+      const preview=image.closest('.split-card-preview');
+      image.addEventListener('load',()=>preview.dataset.previewState='ready',{once:true});
+      image.addEventListener('error',()=>preview.dataset.previewState='error',{once:true});
+      if(image.complete&&image.naturalWidth)preview.dataset.previewState='ready';
+    }
+  }
   const filenameResize=new ResizeObserver(updateFilenames);filenameResize.observe($('split-grid'));filenameResize.observe($('split-preview-grid'));
   window.addEventListener('pagehide',()=>filenameResize.disconnect(),{once:true});
   function resultIndex(){return previewCollection==='results'&&active?rows.findIndex(row=>referenceId({device:scope?.device,root:scope?.root,...row})===referenceId(active)):-1;}
   function browsePreview(step){
+    if(referenceFullscreen){switchReference(step);return;}
     if(previewCollection==='results'){const index=resultIndex();if(index>=0)choose(Math.max(0,Math.min(rows.length-1,index+step)));}
     else switchReference(step);
   }
@@ -127,6 +142,10 @@ const startSplitCapture= async () => {
   $('split-clear-reference').onclick=async event=>{event.preventDefault();event.stopPropagation();const item=references[referenceIndex];if(!item)return;removeReference(referenceIndex);try{await flushReferencePreferences();Framekeep.notify('已清理参考图：'+item.name);}catch(error){report(error);}};
   reference.addEventListener('pointerenter',()=>{referenceHovered=true;});reference.addEventListener('pointerleave',()=>{referenceHovered=false;});window.addEventListener('blur',()=>{referenceHovered=false;});
   document.addEventListener('keydown',event=>{
+    if(enabled&&!page.classList.contains('hidden')&&referenceFullscreen&&menu.hidden&&!document.querySelector('dialog[open]')){
+      if(event.key==='Escape'){event.preventDefault();event.stopImmediatePropagation();setReferenceFullscreen(false);return;}
+      if(['ArrowLeft','ArrowRight'].includes(event.key)&&!event.ctrlKey&&!event.metaKey&&!event.altKey&&!event.shiftKey&&!/INPUT|TEXTAREA|SELECT/.test(event.target.tagName)&&!event.target.isContentEditable){event.preventDefault();event.stopImmediatePropagation();browsePreview(event.key==='ArrowRight'?1:-1);return;}
+    }
     if(!enabled||page.classList.contains('hidden')||(!referenceHovered&&!reference.contains(document.activeElement))||event.ctrlKey||event.metaKey||event.altKey||event.shiftKey||document.querySelector('dialog[open]')||/INPUT|TEXTAREA|SELECT/.test(event.target.tagName)||event.target.isContentEditable)return;
     if(event.key==='Escape'&&resultView==='single'&&menu.hidden){event.preventDefault();event.stopImmediatePropagation();setReferenceView('grid');const index=resultIndex();($('split-preview-grid').querySelector(`[data-row="${index}"]`)||$('split-preview-grid')).focus();}
     else if(['ArrowLeft','ArrowRight'].includes(event.key)){
@@ -137,8 +156,9 @@ const startSplitCapture= async () => {
   },true);
   function paintImage() {
     const item=shown(),pinned=referenceOf(item)>=0,image=$('split-reference-image'),nextUrl=item&&(item.url||imageUrl(item));
-    if(nextUrl!==paintedUrl){paintedUrl=nextUrl;zoom=1;panX=panY=0;image.style.transform='scale(1)';}
+    if(nextUrl!==paintedUrl){cancelReferenceMotion();finishReferenceDrag();paintedUrl=nextUrl;zoom=1;panX=panY=0;$('split-reference-stage').classList.remove('is-zoomed');image.style.transform='scale(1)';}
     image.hidden=!item;$('split-reference-empty').hidden=!!item;$('split-pin-large').disabled=!item;
+    $('split-reference-focus').disabled=!item;
     if(item){if(referenceTaskReady&&resultView==='single'&&image.getAttribute('src')!==nextUrl){clearFade();const outgoing=$('split-reference-outgoing');if(displayedUrl&&displayedUrl!==nextUrl){outgoing.src=displayedUrl;outgoing.style.transform=displayedTransform;outgoing.hidden=false;outgoing.style.opacity='1';image.style.opacity='0';}image.src=nextUrl;}image.alt=item.name;$('split-reference-name').textContent=item.name;$('split-reference-source').textContent=(pinned?'固定参考 · ':'正在浏览 · ')+(item.source||'本机加载')+' · 滚轮切图 · Ctrl＋滚轮缩放';}else{clearFade();displayedUrl='';image.removeAttribute('src');}
     if(resultView==='grid'){$('split-reference-name').textContent=`${resultTotal} 张图片 · 当前页 ${rows.length} 张`;$('split-reference-source').textContent=(submittedSearch?'搜索：'+submittedSearch+' · ':'')+'双击查看大图 · 滚轮浏览 · Ctrl＋滚轮缩放 10%–400% · 图钉加入底部参考区';}
     $('split-pin-large').setAttribute('aria-pressed',String(!!pinned));$('split-pin-large').setAttribute('aria-label',pinned?'取消固定参考':'将当前大图固定为参考');$('split-pin-large').title=pinned?'取消固定参考':'固定为参考';$('split-pin-state').hidden=!pinned;$('split-zoom-reset').textContent=zoom===1?'适应':Math.round(zoom*100)+'%';
@@ -170,11 +190,47 @@ const startSplitCapture= async () => {
       fadeAnimations[1].onfinish=()=>clearFade();
     }else clearFade();
   };
-  function paintZoom(){if(zoom===1)panX=panY=0;clearFade();$('split-reference-image').style.transform=`translate(${panX}px,${panY}px) scale(${zoom})`;if($('split-reference-image').getAttribute('src')===displayedUrl)displayedTransform=$('split-reference-image').style.transform;$('split-zoom-reset').textContent=zoom===1?'适应':Math.round(zoom*100)+'%';}
-  $('split-reference-stage').addEventListener('wheel',event=>{if(!shown()||!event.deltaY)return;event.preventDefault();event.stopPropagation();if(event.ctrlKey){zoom=Math.max(1,Math.min(8,zoom*(event.deltaY>0?.9:1.1)));paintZoom();}else if(event.timeStamp-lastBrowseWheel>=160){lastBrowseWheel=event.timeStamp;browsePreview(event.deltaY>0?1:-1);}},{passive:false});
-  $('split-reference-stage').onpointerdown=event=>{if(zoom<=1||event.target.closest('button'))return;drag={x:event.clientX-panX,y:event.clientY-panY};event.currentTarget.setPointerCapture(event.pointerId);};
-  $('split-reference-stage').onpointermove=event=>{if(!drag)return;const box=event.currentTarget.getBoundingClientRect();panX=Math.max(-box.width*(zoom-1)/2,Math.min(box.width*(zoom-1)/2,event.clientX-drag.x));panY=Math.max(-box.height*(zoom-1)/2,Math.min(box.height*(zoom-1)/2,event.clientY-drag.y));paintZoom();};
-  $('split-reference-stage').onpointerup=()=>{drag=null;};$('split-reference-stage').onpointercancel=()=>{drag=null;};
+  function cancelReferenceMotion(){for(const animation of referenceMotion){animation.onfinish=null;animation.cancel();}referenceMotion=[];reference.classList.remove('reference-transitioning');}
+  function imageBounds(image){const box=image?.getBoundingClientRect();if(!box?.width||!box.height||!image.naturalWidth)return null;const scale=Math.min(box.width/image.naturalWidth,box.height/image.naturalHeight),width=image.naturalWidth*scale,height=image.naturalHeight*scale;return {width,height,x:box.x+(box.width-width)/2,y:box.y+(box.height-height)/2};}
+  function animateReferenceLayout(before){
+    if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+    const image=$('split-reference-image'),after=imageBounds(image),options={duration:280,easing:'cubic-bezier(.22,1,.36,1)'};
+    reference.classList.add('reference-transitioning');
+    if(before&&after){const scale=before.width/after.width,x=before.x+before.width/2-after.x-after.width/2,y=before.y+before.height/2-after.y-after.height/2;referenceMotion.push(image.animate([{translate:`${x}px ${y}px`,scale},{translate:'0px 0px',scale:1}],options));}
+    else referenceMotion.push((resultView==='grid'?$('split-preview-grid'):$('split-reference-stage')).animate([{opacity:.4,translate:'0px 6px'},{opacity:1,translate:'0px 0px'}],options));
+    if(!referenceFullscreen)for(const element of [reference.querySelector('.split-resource-dock'),reference.querySelector('.split-preview-heading'),reference.querySelector('.split-result-toolbar'),$('split-reference-tray')])if(element.getClientRects().length)referenceMotion.push(element.animate([{opacity:0},{opacity:1}],options));
+    const last=referenceMotion[referenceMotion.length-1];last.onfinish=()=>cancelReferenceMotion();
+  }
+  function setReferenceFullscreen(value){
+    if(value===!!referenceFullscreen||value&&(!enabled||!shown()))return;
+    const image=$('split-reference-image'),before=imageBounds(resultView==='single'?image:$('split-preview-grid').querySelector(`[data-row="${resultIndex()}"] img`));
+    cancelReferenceMotion();clearFade();finishReferenceDrag();reference.classList.add('reference-layout-changing');
+    if(value){
+      referenceFullscreen={view:resultView,zoom,panX,panY,item:shown()?referenceId(shown()):'',focus:document.activeElement};
+      clearTimeout(searchTimer);referenceRefreshPending||=$('split-results').textContent==='正在检索…';requestId++;menu.hidden=true;
+      const selected=referenceOf(shown());if(selected>=0)referenceIndex=selected;
+      if(references.length){active=references[referenceIndex];previewCollection='references';}
+      reference.classList.add('reference-fullscreen');setReferenceView('single',false);zoom=1;panX=panY=0;
+      $('split-reference-stage').setAttribute('aria-label','全屏参考图，滚轮缩放，拖拽平移，左右键切换已选参考图，Esc 退出');$('split-reference-stage').focus({preventScroll:true});
+    }else{
+      const saved=referenceFullscreen;referenceFullscreen=null;reference.classList.remove('reference-fullscreen');setReferenceView(saved.view,false);
+      const same=shown()&&referenceId(shown())===saved.item;zoom=same?saved.zoom:1;panX=same?saved.panX:0;panY=same?saved.panY:0;
+      $('split-reference-stage').setAttribute('aria-label','参考图片预览，滚轮切图，Ctrl＋滚轮缩放');
+      const focus=saved.focus?.isConnected&&saved.focus.getClientRects().length?saved.focus:resultView==='grid'?$('split-preview-grid'):$('split-reference-stage');focus.focus({preventScroll:true});
+      if($('split-search').value.trim()!==submittedSearch||searchScope!==submittedScope)queueSearch();
+      else if(referenceRefreshPending)loadItems();
+      referenceRefreshPending=false;
+    }
+    $('split-reference-focus').setAttribute('aria-pressed',String(!!referenceFullscreen));paintZoom();animateReferenceLayout(before);reference.classList.remove('reference-layout-changing');window.dispatchEvent(new Event('resize'));
+  }
+  function clampReferencePan(){const stage=$('split-reference-stage'),image=$('split-reference-image'),style=getComputedStyle(stage),width=stage.clientWidth-parseFloat(style.paddingLeft)-parseFloat(style.paddingRight),height=stage.clientHeight-parseFloat(style.paddingTop)-parseFloat(style.paddingBottom),ratio=image.naturalWidth/image.naturalHeight||width/height,fitWidth=Math.min(width,height*ratio),fitHeight=fitWidth/ratio,maxX=Math.max(0,(fitWidth*zoom-width)/2),maxY=Math.max(0,(fitHeight*zoom-height)/2);panX=Math.max(-maxX,Math.min(maxX,panX));panY=Math.max(-maxY,Math.min(maxY,panY));}
+  function paintZoom(){cancelReferenceMotion();if(zoom===1)panX=panY=0;else clampReferencePan();clearFade();$('split-reference-stage').classList.toggle('is-zoomed',zoom>1);$('split-reference-image').style.transform=`translate(${panX}px,${panY}px) scale(${zoom})`;if($('split-reference-image').getAttribute('src')===displayedUrl)displayedTransform=$('split-reference-image').style.transform;$('split-zoom-reset').textContent=zoom===1?'适应':Math.round(zoom*100)+'%';}
+  $('split-reference-stage').addEventListener('wheel',event=>{if(!shown()||!event.deltaY)return;event.preventDefault();event.stopPropagation();if(referenceFullscreen||event.ctrlKey){const previous=zoom;zoom=Math.max(1,Math.min(8,zoom*(referenceFullscreen?Math.exp(-event.deltaY*.0016):event.deltaY>0?.9:1.1)));if(referenceFullscreen){const box=event.currentTarget.getBoundingClientRect(),ratio=zoom/previous;panX=panX*ratio+(event.clientX-box.left-box.width/2)*(1-ratio);panY=panY*ratio+(event.clientY-box.top-box.height/2)*(1-ratio);}paintZoom();}else if(event.timeStamp-lastBrowseWheel>=160){lastBrowseWheel=event.timeStamp;browsePreview(event.deltaY>0?1:-1);}},{passive:false});
+  function finishReferenceDrag(){const pointer=drag?.pointerId;drag=null;$('split-reference-stage').classList.remove('is-dragging');if(pointer!==undefined&&$('split-reference-stage').hasPointerCapture(pointer))$('split-reference-stage').releasePointerCapture(pointer);}
+  $('split-reference-stage').onpointerdown=event=>{if(zoom<=1||event.target.closest('button')||![0,1].includes(event.button))return;event.preventDefault();cancelReferenceMotion();drag={x:event.clientX-panX,y:event.clientY-panY,pointerId:event.pointerId};event.currentTarget.classList.add('is-dragging');event.currentTarget.setPointerCapture(event.pointerId);};
+  $('split-reference-stage').onpointermove=event=>{if(!drag)return;panX=event.clientX-drag.x;panY=event.clientY-drag.y;paintZoom();};
+  for(const event of ['pointerup','pointercancel','lostpointercapture'])$('split-reference-stage').addEventListener(event,finishReferenceDrag);
+  $('split-reference-stage').ondblclick=event=>{if(!event.target.closest('button'))setReferenceFullscreen(!referenceFullscreen);};
   $('split-zoom-reset').onclick=()=>{zoom=1;paintZoom();};
   const input=document.createElement('input');input.type='file';input.accept='image/*';input.multiple=true;input.hidden=true;document.body.append(input);
   const objectUrls=new Set();
@@ -189,40 +245,53 @@ const startSplitCapture= async () => {
   function referenceMenu(event,item){event.preventDefault();menu.hidden=true;if(item?.device!=='local')return;contextItem=item;menu.hidden=false;menu.style.left=Math.min(innerWidth-180,event.clientX)+'px';menu.style.top=Math.min(innerHeight-80,event.clientY)+'px';$('split-context-pin').focus();}
   $('split-grid').oncontextmenu=event=>{const card=event.target.closest('[data-row]');if(card)referenceMenu(event,{device:scope?.device,root:scope?.root,source:scope?.label,...rows[Number(card.dataset.row)]});else event.preventDefault();};
   $('split-preview-grid').oncontextmenu=$('split-grid').oncontextmenu;
-  $('split-reference-stage').oncontextmenu=event=>referenceMenu(event,shown());
+  $('split-reference-stage').oncontextmenu=event=>{if(referenceFullscreen)event.preventDefault();else referenceMenu(event,shown());};
   $('split-reference-thumbnails').oncontextmenu=event=>{const card=event.target.closest('.split-saved-reference'),button=card?.querySelector('[data-show-reference]');referenceMenu(event,button?references[Number(button.dataset.showReference)]:null);};
   $('split-context-pin').onclick=()=>{active=contextItem;previewCollection='results';addReference(active);menu.hidden=true;};
   $('split-context-reveal').onclick=async()=>{const item=contextItem;menu.hidden=true;if(!item)return;try{await api('reveal',{device:item.device,root:item.root,file:item.relative});}catch(error){report(error);}};
   document.addEventListener('pointerdown',event=>{if(!menu.contains(event.target))menu.hidden=true;});
   document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!menu.hidden){event.stopImmediatePropagation();menu.hidden=true;}},true);
   async function loadItems() {
-    const text=submittedSearch,all=!!text&&submittedScope==='all';if(!scope&&!all)return;
+    if(referenceFullscreen){referenceRefreshPending=true;return;}
+    const text=submittedSearch,all=!!text&&submittedScope==='all',skuSearch=!!text;if(!scope&&!all&&!skuSearch)return;
     const sequence=++requestId,chosen={...scope};
+    for(const image of document.querySelectorAll('#split-grid img,#split-preview-grid img'))image.removeAttribute('src');
     $('split-results').textContent='正在检索…';
     try {
-      const result=all?await api('search?'+new URLSearchParams({q:text,cursor:cursors[Math.floor(offset/60)]||'',cache_generation:referenceGeneration})):await call('items',{device:chosen.device,root:chosen.root,folder:chosen.folder,q:text,offset,cursor:cursors[Math.floor(offset/60)]||''});
+      const result=skuSearch?await assetSearch({q:text,quick:'1',limit:'60',cursor:cursors[Math.floor(offset/60)]||'',client:searchClient,sequence:String(sequence),facets:'{}'}):await call('items',{device:chosen.device,root:chosen.root,folder:chosen.folder,q:'',offset,cursor:cursors[Math.floor(offset/60)]||''});
       if(sequence!==requestId)return;
+      if(result.indexing||result.pending){
+        $('split-results').textContent='正在准备检索索引…';
+        setTimeout(()=>{if(sequence===requestId)loadItems()},350);
+        return;
+      }
+      if(skuSearch){
+        result.rows=result.rows.map(row=>({...row,device:'asset',relative:row.path,url:row.preview,source:'SKU 资产检索'}));
+        result.total=result.rows.length;result.engine='共享 SKU 检索';result.note='复用资产检索的 SKU 优先级和文件名匹配';
+      }
       const groups=new Map();
       for(const row of result.rows){
         const device=row.device||chosen.device,root=row.root||chosen.root,path=String(row.relative||row.name).replace(/\\/g,'/').split('/').slice(0,-1).join('/'),key=JSON.stringify([device,root,path]);
-        if(!groups.has(key)){const source=folderLabel(device,root);groups.set(key,{name:path.split('/').pop()||source.split(' / ').pop(),title:source+(path?' / '+path:''),rows:[]});}
+        if(!groups.has(key)){const source=row.source||folderLabel(device,root);groups.set(key,{name:path.split('/').pop()||source.split(' / ').pop(),title:source+(path?' / '+path:''),rows:[]});}
         groups.get(key).rows.push(row);
       }
       rows=[...groups.values()].flatMap(group=>group.rows);resultTotal=result.total;
-      $('split-results').textContent=`${result.total} 张图片${['queued','scanning'].includes(result.status)?' · 后台索引中':` · ${result.elapsed_ms} ms`}${result.errors?.length?' · 部分位置不可用':''}`;
+      $('split-results').textContent=`${result.total} 张图片${result.has_more?' · 还有更多':''}${['queued','scanning'].includes(result.status)?' · 后台索引中':` · ${result.elapsed_ms} ms`}${result.errors?.length?' · 部分位置不可用':''}`;
       if(result.has_more)cursors[Math.floor(offset/60)+1]=result.next_cursor;
-      $('split-search-scope').textContent=text?(all?'全部已添加目录':'当前目录及子目录')+' · '+result.engine:'当前目录 · '+result.engine;
+      $('split-search-scope').textContent=skuSearch?'资产检索 · SKU / 文件名 / 路径 · '+result.engine:'当前目录 · '+result.engine;
       $('split-search-scope').title=result.note;
-      $('split-grid').innerHTML=rows.length?rows.map((row,index)=>`<article class="split-resource-card" data-row="${index}" tabindex="0" role="button" aria-label="浏览参考 ${esc(row.name)}" title="${esc(row.name)}"><div><img src="${esc(imageUrl({device:chosen.device,root:chosen.root,...row},420))}" alt="${esc(row.name)}" loading="lazy"><button class="split-pin" data-pin-row="${index}" aria-label="固定 ${esc(row.name)} 为参考" title="设为参考">${pin}</button><span class="split-card-pinned">已固定</span></div><span title="${esc(row.relative)}">${esc(row.name)}</span></article>`).join(''):'<p class="split-empty">'+(all?'已添加目录没有匹配图片':'此目录没有匹配图片')+'<br>可更改关键词或搜索范围</p>';
+      $('split-grid').innerHTML=rows.length?rows.map((row,index)=>`<article class="split-resource-card" data-row="${index}" tabindex="0" role="button" aria-label="浏览参考 ${esc(row.name)}" title="${esc(row.path||row.name)}"><div class="split-card-preview" data-preview-state="loading">${previewScanner}<span class="split-preview-error">预览暂不可用</span><img src="${esc(imageUrl({device:chosen.device,root:chosen.root,...row},420))}" alt="${esc(row.name)}" loading="eager" fetchpriority="high"><button class="split-pin" data-pin-row="${index}" aria-label="固定 ${esc(row.name)} 为参考" title="设为参考">${pin}</button><span class="split-card-pinned">已固定</span></div>${row.sku?`<strong class="split-card-sku">${esc(row.sku)}</strong>`:''}<span title="${esc(row.path||row.relative)}">${esc(row.name)}</span><small title="${esc(row.path||row.relative)}">${esc(row.path||row.relative)}</small></article>`).join(''):'<p class="split-empty">'+(all?'已添加目录没有匹配图片':'此目录没有匹配图片')+'<br>可更改关键词或搜索范围</p>';
       $('split-prev-page').disabled=offset===0;$('split-next-page').disabled=!result.has_more;
       const cards=[...$('split-grid').children];let first=0;
       $('split-preview-grid').innerHTML=rows.length?[...groups.values()].map(group=>{const html=`<div class="split-folder-divider" role="heading" aria-level="3" title="${esc(group.title)}"><span>${esc(group.name)}</span><i aria-hidden="true"></i></div>`+cards.slice(first,first+group.rows.length).map(card=>card.outerHTML).join('');first+=group.rows.length;return html;}).join(''):$('split-grid').innerHTML;
+      wireSplitPreviews();
       updateFilenames();
       $('split-result-prev').disabled=offset===0;$('split-result-next').disabled=!result.has_more;$('split-result-page').textContent=result.total?`${Math.floor(offset/60)+1} / ${Math.ceil(result.total/60)}`:'0 / 0';
       if(previewCollection==='results'){active=null;if(rows.length)choose(0);else paintImage();}else paintImage();
     } catch(error) { if(sequence===requestId){$('split-results').textContent='检索失败';$('split-grid').textContent=error.message;$('split-preview-grid').textContent=error.message;} }
   }
   async function selectFolder(device,root,folder,label) {
+    clearTimeout(searchTimer);
     scope={device,root,folder,label};offset=0;cursors=[''];submittedSearch='';
     $('split-search').value='';
     $('split-search-submit').disabled=false;
@@ -257,6 +326,7 @@ const startSplitCapture= async () => {
   function indexMarkup(root){const info=indexInfo(root);return info.running?`<div class="split-root-index" title="${esc(info.title)}"><span>${esc(info.detail)} · ${info.label}</span><progress max="100" value="${info.percent}" aria-label="${esc(root.name)}扫描进度"></progress></div>`:'';}
   function scheduleIndexRefresh(){
     clearTimeout(indexTimer);
+    if(!shown()&&$('app-settings-page').classList.contains('hidden'))return;
     if(config?.index_storage?.job?.status==='running'||config?.roots.some(root=>indexInfo(root).running)||sources.some(device=>device.roots?.some(root=>indexInfo(root).running)))indexTimer=setTimeout(async()=>{try{await Promise.all([loadSources(),refreshSettings()]);if(config?.index_storage?.job?.status!=='running'&&scope&&!submittedSearch&&!$('split-search').value.trim())await loadItems();}catch(error){report(error);scheduleIndexRefresh();}},1500);
   }
   function folderLabel(device,root){const source=sources.find(row=>row.id===device),item=source?.roots.find(row=>row.id===root);return (source?.name||'参考资源')+' / '+(item?.name||'共享目录');}
@@ -297,6 +367,7 @@ const startSplitCapture= async () => {
     for(const [key,node] of existing)if(!keys.has(key))node.remove();
     if(!keys.size){const empty=document.createElement('p');empty.className='split-empty';empty.textContent='点击 ＋ 添加本机参考目录，或在「设备与 API」连接其他设备';tree.replaceChildren(empty);}
     paintIndexProgress();scheduleIndexRefresh();
+    if(!shown())return;
     await Promise.all(sources.flatMap(device=>(device.roots||[]).map(root=>loadDirectory(device.id,root.id,folderViews.get(rootKey(device.id,root.id))?.folder||'').catch(error=>{const group=[...$('split-tree').querySelectorAll('[data-resource-group]')].find(node=>node.dataset.resourceGroup===rootKey(device.id,root.id));if(group){const container=group.querySelector('.catalog-drive-folders');container.textContent=error.message;delete container.dataset.content;}}))));
   }
   $('split-tree').onclick=async event=>{
@@ -307,25 +378,32 @@ const startSplitCapture= async () => {
       else if(select){const d=select.dataset,view=folderViews.get(rootKey(d.device,d.root)),sequence=++view.sequence;await selectFolder(d.device,d.root,d.folder,folderLabel(d.device,d.root));const result=await call('folders',{device:d.device,root:d.root,folder:d.folder});if(view.sequence!==sequence)return;if(result.folders.length){view.folder=d.folder;view.children=result.folders;}paintDirectory(d.device,d.root);}
     } catch(error) { report(error); }
   };
-  $('split-search-form').onsubmit=event=>{event.preventDefault();if(!scope&&searchScope!=='all')return;submittedSearch=$('split-search').value.trim();submittedScope=searchScope;offset=0;cursors=[''];previewCollection='results';setReferenceView('grid');loadItems();};
+  function submitSearch(){
+    clearTimeout(searchTimer);
+    if(searchComposing)return;
+    const text=$('split-search').value.trim();
+    if(!scope){
+      if(searchScope!=='all')return;
+      if(!text){const device=sources.find(device=>device.roots?.length),root=device?.roots[0];if(!root)return;scope={device:device.id,root:root.id,folder:'',label:folderLabel(device.id,root.id)};}
+    }
+    submittedSearch=text;submittedScope=searchScope;offset=0;cursors=[''];previewCollection='results';setReferenceView('grid');loadItems();
+  }
+  function queueSearch(event){clearTimeout(searchTimer);requestId++;if(searchComposing||event?.isComposing)return;searchTimer=setTimeout(submitSearch,300);}
+  $('split-search-form').onsubmit=event=>{event.preventDefault();submitSearch();};
+  $('split-search').oninput=queueSearch;
+  $('split-search').addEventListener('compositionstart',()=>{searchComposing=true;clearTimeout(searchTimer);requestId++;});
+  $('split-search').addEventListener('compositionend',()=>{searchComposing=false;queueSearch();});
   $('split-search').onkeydown=event=>{event.stopPropagation();if(event.key==='Enter'&&event.isComposing)event.preventDefault();};
-  $('split-prev-page').onclick=()=>{offset=Math.max(0,offset-60);loadItems();};$('split-next-page').onclick=()=>{offset+=60;loadItems();};
+  function changeResultPage(step){if(searchComposing)return;clearTimeout(searchTimer);if($('split-search').value.trim()!==submittedSearch||searchScope!==submittedScope){submitSearch();return;}offset=Math.max(0,offset+step*60);loadItems();}
+  $('split-prev-page').onclick=()=>changeResultPage(-1);$('split-next-page').onclick=()=>changeResultPage(1);
   $('split-result-prev').onclick=()=>$('split-prev-page').click();$('split-result-next').onclick=()=>$('split-next-page').click();
   setReferenceView(resultView,false);setGridScale(gridScale);
   function referenceTaskKey(){return JSON.stringify([window.FRAMEKEEP_SESSION?.id||'',window.FramekeepSku?.shootingTypes()?.project_id||'']);}
   function checkReferenceTask(){
     if(!preferencesReady)return;
-    const key=referenceTaskKey();if(key===lastReferenceTask)return;lastReferenceTask=key;clearTimeout(preferencesTimer);
+    const key=referenceTaskKey();if(key===lastReferenceTask)return;lastReferenceTask=key;
     preferencesSaving=preferencesSaving.catch(()=>{}).then(async()=>{
       const state=await api('task',{});referenceGeneration=state.cache_generation;
-      if(!state.changed)return;
-      references=[];referenceIndex=0;active=null;rows=[];resultTotal=0;scope=null;offset=0;cursors=[''];submittedSearch='';requestId++;menu.hidden=true;
-      for(const url of objectUrls)URL.revokeObjectURL(url);objectUrls.clear();
-      $('split-search').value='';$('split-search-submit').disabled=true;$('split-grid').replaceChildren();$('split-preview-grid').innerHTML='<p class="split-empty">新拍摄任务，请选择参考目录后搜索</p>';
-      for(const id of ['split-prev-page','split-next-page','split-result-prev','split-result-next'])$(id).disabled=true;
-      $('split-result-page').textContent='0 / 0';$('split-results').textContent='临时参考图已清理';referenceSignature='';previewCollection='results';
-      for(const button of $('split-tree').querySelectorAll('[data-resource-root]')){button.setAttribute('aria-expanded','false');closedRoots.add(rootKey(button.dataset.device,button.dataset.root));button.closest('.split-resource-group').querySelector('.catalog-drive-folders').hidden=true;}
-      setReferenceView('grid');preferencesSaved=JSON.stringify(preferencesSnapshot());try{localStorage.setItem(cacheKey,preferencesSaved);}catch{}
     });preferencesSaving.catch(report);
   }
   for(const event of ['framekeep:selection','framekeep:sku-project'])document.addEventListener(event,checkReferenceTask);
@@ -334,7 +412,7 @@ const startSplitCapture= async () => {
   for(const [name,label] of [['tree','目录'],['thumbs','素材']]){const button=document.createElement('button');button.textContent=label;button.id='split-toggle-'+name;button.setAttribute('aria-label','折叠或展开参考'+label);$('split-show-resources').before(button);button.onclick=()=>{if(reference.classList.contains('resources-collapsed'))resources(true);else {reference.classList.toggle(name+'-collapsed');syncResourceControls();}};}
   $('split-resource-rail').onclick=()=>$('split-toggle-tree').click();
   $('split-hide-resources').onclick=()=>resources(false);$('split-show-resources').onclick=()=>resources(reference.classList.contains('resources-collapsed'));
-  $('split-reference-focus').onclick=()=>resources(reference.classList.contains('resources-collapsed'));
+  $('split-reference-focus').onclick=()=>setReferenceFullscreen(!referenceFullscreen);
   $('split-right-folders').onclick=()=>$('layout-left').click();$('split-right-info').onclick=()=>$('layout-right').click();
   function immersive() {
     if(focusState){for(const flag of ['resources-collapsed','tree-collapsed','thumbs-collapsed'])reference.classList.toggle(flag,focusState.flags.includes(flag));$('split-reference-tray').open=focusState.tray;syncResourceControls();for(const side of ['left','right'])if(page.classList.contains(side+'-collapsed')!==focusState[side])$('layout-'+side).click();focusState=null;}
@@ -344,12 +422,15 @@ const startSplitCapture= async () => {
   $('split-immersive').onclick=immersive;
   function toggleSplit(value) {
     if(value===enabled){syncResourceControls();return;}
+    if(!value&&referenceFullscreen)setReferenceFullscreen(false);
     enabled=value;page.classList.toggle('split-enabled',value);$('layout-split').setAttribute('aria-pressed',String(value));$('layout-split').setAttribute('aria-checked',String(value));
-    if(value){originalSides={left:page.classList.contains('left-collapsed'),right:page.classList.contains('right-collapsed')};if(!originalSides.right)$('layout-right').click();const current=Framekeep.getSnapshot().selectedId||Framekeep.photoItems()[0]?.photo.id;if(current)Framekeep.browsePhoto(current);}
+    if(value){resources(false);originalSides={left:page.classList.contains('left-collapsed'),right:page.classList.contains('right-collapsed')};if(!originalSides.right)$('layout-right').click();const current=Framekeep.getSnapshot().selectedId||Framekeep.photoItems()[0]?.photo.id;if(current)Framekeep.browsePhoto(current);}
     else {if(focusState)immersive();if(originalSides)for(const side of ['left','right'])if(page.classList.contains(side+'-collapsed')!==originalSides[side])$('layout-'+side).click();}
     window.dispatchEvent(new Event('resize'));
     saveReferences();
+    if(shown())loadSources().then(()=>{if(scope&&!submittedSearch)loadItems()}).catch(report);
   }
+  document.addEventListener('framekeep:workspace',()=>{if(shown())loadSources().catch(report);else if($('app-settings-page').classList.contains('hidden'))clearTimeout(indexTimer)});
   $('layout-split').onclick=()=>{layoutTouched=true;toggleSplit(!enabled);};$('split-exit').onclick=()=>{layoutTouched=true;toggleSplit(false);};
   // 将提示归属于实际预览容器；折叠、拖动栏宽和分屏时无需计算全窗中心。
   const toast=$('toast');
@@ -360,11 +441,12 @@ const startSplitCapture= async () => {
   settings.innerHTML=`<div class="settings-section-heading"><h3>文件数据库与 API</h3><p>把参考资料留在原设备，通过局域网只读检索和浏览。</p></div>
     <form id="split-sharing-form" class="split-service-note"><div><strong>允许局域网设备调用本机数据库</strong><p id="split-sharing-status">共享服务已关闭</p></div><label class="split-visibility-control"><input id="split-sharing-enabled" type="checkbox" role="switch"><span class="split-switch-track" aria-hidden="true"></span><span>启用共享</span></label><label>端口 <input id="split-sharing-port" type="number" min="1024" max="65535" value="8770" required aria-label="局域网共享端口"></label><button type="submit">应用</button></form>
     <section class="split-settings-card"><header><div><h4>本机文件数据库</h4><p>添加允许浏览的分区或文件夹，支持独立的本机快速索引。</p></div><button id="split-settings-add-root">＋ 添加分区</button></header><div id="split-shared-roots"></div><div class="split-service-note"><div><strong>调用 Everything 数据库</strong><p id="split-everything-status" class="split-muted"></p></div><label class="split-visibility-control"><input id="split-everything-enabled" type="checkbox" role="switch" aria-label="调用 Everything 数据库"><span class="split-switch-track" aria-hidden="true"></span><span>启用调用</span></label></div><p id="split-everything-message" role="status" class="split-muted"></p></section>
-    <section class="split-settings-card" id="split-preview-cache"><header><div><h4>缩略图缓存</h4><p>本机监控与资产归档共用的图片缓存，包含缩略图及大图预览；同一素材的不同尺寸分别计数。</p></div></header><p id="split-preview-cache-state" role="status">正在读取缓存…</p><p class="split-muted">数量与空间自动刷新，缓存上限及迁移可在“预览与缓存”中设置。</p></section>
+    <section class="split-settings-card" id="split-preview-cache"><header><div><h4>缩略图缓存</h4><p>本机监控与资产归档共用的图片缓存，包含缩略图及大图预览；同一素材的不同尺寸分别计数。</p></div><button id="split-preview-cache-migrate" type="button">迁移缓存位置</button></header><p id="split-preview-cache-state" role="status">正在读取缓存…</p><p class="split-muted">选择独立空文件夹后复制、逐文件校验并切换位置；迁移过程显示文件、容量和百分比。</p></section>
     <section class="split-settings-card" id="split-index-storage"><header><div><h4>文件索引数据库存储</h4><p>可迁移到 SSD 加快本机索引读写；迁移期间暂缓搜索，完成后自动恢复。</p></div></header><p>当前路径：<code id="split-index-storage-current"></code></p><label class="split-storage-label" for="split-index-storage-path">目标目录（空目录）</label><div class="split-storage-actions"><input id="split-index-storage-path" placeholder="选择高速硬盘上的空文件夹" autocomplete="off"><button id="split-index-storage-browse">选择目录</button><button id="split-index-storage-migrate" class="primary">迁移数据库</button></div><progress id="split-index-storage-progress" max="100" hidden aria-label="文件索引数据库迁移进度"></progress><p id="split-index-storage-message" role="status" class="split-muted"></p><p id="split-index-storage-previous" class="split-muted"></p><p class="split-muted">校验成功后立即切换，重启继续使用新位置，原数据库保留。迁移文件索引及倒排索引；原图和 SKU / 解析记录仍在原位置。预览缓存请在“预览与缓存”中迁移。Everything 自身数据库的位置由 Everything 管理。</p></section>
     <section class="split-settings-card"><header><div><h4>API Key</h4><p>按调用方命名和分配目录，可随时查看、复制或停用。</p></div><button id="split-create-key" class="primary">创建密钥</button></header><div class="split-endpoint"><span>本机只读接口</span><code id="split-local-endpoint"></code></div><div id="split-key-list"></div></section>
     <section class="split-settings-card"><header><div><h4>调用其他设备的文件数据库</h4><p>输入对方 IP + 端口，自动补齐前缀与接口后缀。</p></div></header><form id="split-peer-form"><div class="split-form-grid"><label>设备名称<input id="split-peer-name" placeholder="例如：摄影工作站 B" required maxlength="48"></label><label>IP + 端口<input id="split-peer-address" placeholder="192.168.1.23:8770" required></label><label class="split-full">对方 API Key<input id="split-peer-key" type="password" placeholder="fk_…" required autocomplete="off"></label></div><p id="split-address-preview" class="split-muted">http://IP:端口/api/library/v1</p><div class="split-form-actions"><span id="split-peer-message" role="status"></span><button type="submit" class="primary">连接并添加设备</button></div></form><div id="split-peer-list"></div></section>`;
   function showSettings(){ $('app-settings-open').click();document.querySelector('[data-settings-section="library"]').click();refreshSettings().catch(report); }
+  $('split-preview-cache-migrate').onclick=()=>document.dispatchEvent(new CustomEvent('framekeep:open-cache-migration'));
   $('split-api-settings').onclick=showSettings;
   const dialog=document.createElement('dialog');dialog.id='split-manage-dialog';document.body.append(dialog);
   function openDialog(title,content,handler){dialog.innerHTML=`<div class="dialog-heading"><h2>${title}</h2><button type="button" id="split-dialog-close" aria-label="关闭资源配置">×</button></div><form id="split-manage-form">${content}<p id="split-manage-message" role="status"></p><div class="dialog-actions"><button type="button" id="split-dialog-cancel">取消</button><button class="primary" type="submit">${title}</button></div></form>`;for(const id of ['split-dialog-close','split-dialog-cancel'])$(id).onclick=()=>dialog.close();$('split-manage-form').onsubmit=async event=>{event.preventDefault();const button=event.submitter;button.disabled=true;try{await handler();}catch(error){$('split-manage-message').textContent=error.message;}finally{button.disabled=false;}};dialog.showModal();}
@@ -453,7 +535,7 @@ const startSplitCapture= async () => {
   }
   $('split-create-key').onclick=async()=>{await refreshSettings();openDialog('创建 API 密钥',`<label>分配给调用方<input id="split-key-name" maxlength="48" placeholder="例如：摄影工作站 B" required></label><p class="split-muted">可先创建密钥，稍后通过“分配目录”设置允许调用的位置。未分配目录时不开放资源访问。</p><fieldset><legend>允许调用的目录 · 只读 · 可选</legend>${config.roots.map(root=>`<label class="split-checkbox"><input type="checkbox" name="key-root" value="${root.id}" checked>${esc(root.name)}</label>`).join('')}</fieldset>`,async()=>{const result=await api('create-key',{name:$('split-key-name').value,roots:[...dialog.querySelectorAll('[name=key-root]:checked')].map(el=>el.value)});dialog.close();await refreshSettings();showKey(result.api_key);});};
   function showKey(value){dialog.innerHTML=`<div class="dialog-heading"><h2>API 密钥</h2><button id="split-key-done" aria-label="关闭密钥查看">×</button></div><p class="split-muted">可分配给指定调用方；之后仍可在本机查看。仅具有分配目录的读取权限。</p><code class="split-secret-value">${esc(value)}</code><div class="dialog-actions"><button id="split-secret-copy" class="primary">复制密钥</button></div>`;$('split-key-done').onclick=()=>dialog.close();$('split-secret-copy').onclick=async()=>{try{await navigator.clipboard.writeText(value);$('split-secret-copy').textContent='已复制';}catch{dialog.querySelector('.split-secret-value').focus();}};dialog.showModal();}
-  function clearRootScope(id){if(scope?.device==='local'&&scope.root===id){scope=null;rows=[];resultTotal=0;requestId++;$('split-search-submit').disabled=true;$('split-grid').replaceChildren();$('split-preview-grid').replaceChildren();for(const id of ['split-prev-page','split-next-page','split-result-prev','split-result-next'])$(id).disabled=true;$('split-result-page').textContent='0 / 0';$('split-results').textContent='请选择参考目录';paintImage();}}
+  function clearRootScope(id){if(scope?.device==='local'&&scope.root===id){clearTimeout(searchTimer);scope=null;rows=[];resultTotal=0;requestId++;$('split-search-submit').disabled=true;$('split-grid').replaceChildren();$('split-preview-grid').replaceChildren();for(const id of ['split-prev-page','split-next-page','split-result-prev','split-result-next'])$(id).disabled=true;$('split-result-page').textContent='0 / 0';$('split-results').textContent='请选择参考目录';paintImage();}}
   settings.addEventListener('change',async event=>{
     const control=event.target.closest('[data-root-visibility]');if(!control)return;
     const visible=control.checked,id=control.dataset.rootVisibility;control.disabled=true;
@@ -481,7 +563,8 @@ const startSplitCapture= async () => {
     const device=sources.find(d=>d.id==='local'),root=device?.roots[0];
     if(root&&!scope){
       if(submittedSearch||$('split-search').value.trim())scope={device:'local',root:root.id,folder:'',label:folderLabel('local',root.id)};
-      else await selectFolder('local',root.id,'',folderLabel('local',root.id));
+      else if(saved.split_enabled&&!page.classList.contains('hidden'))await selectFolder('local',root.id,'',folderLabel('local',root.id));
+      else scope={device:'local',root:root.id,folder:'',label:folderLabel('local',root.id)};
     }
     if(!layoutTouched)toggleSplit(saved.split_enabled===true);paintImage();lastReferenceTask=referenceTaskKey();preferencesReady=true;saveReferences();syncResourceControls();
   }catch(error){report(error);}

@@ -1,0 +1,158 @@
+{
+  "task": 180,
+  "completed_local": true,
+  "published": false,
+  "customer_machine_verified": false,
+  "baseline": {
+    "passed": true,
+    "groups": 4,
+    "photos": 16,
+    "all_visible_seconds": 3.736,
+    "all_written_seconds": 36.414,
+    "per_group": [
+      {
+        "sku": "LC7877529-P105",
+        "submit_seconds": 0.161,
+        "database_seconds": 2.714,
+        "writeback_seconds": 13.283
+      },
+      {
+        "sku": "LC7877836-P1",
+        "submit_seconds": 0.118,
+        "database_seconds": 2.479,
+        "writeback_seconds": 28.42
+      },
+      {
+        "sku": "LC7832852-P305",
+        "submit_seconds": 0.107,
+        "database_seconds": 3.059,
+        "writeback_seconds": 20.646
+      },
+      {
+        "sku": "LC7832852-P804",
+        "submit_seconds": 0.095,
+        "database_seconds": 2.904,
+        "writeback_seconds": 35.842
+      }
+    ],
+    "fields_correct": true,
+    "pixels_unchanged": true,
+    "originals_unchanged": true,
+    "writeback_hints_cleared": true,
+    "page_errors": [],
+    "exit_code": 0
+  },
+  "final_installed": {
+    "passed": true,
+    "groups": 4,
+    "photos": 16,
+    "all_visible_seconds": 2.779,
+    "all_written_seconds": 11.077,
+    "per_group": [
+      {
+        "sku": "LC7877529-P105",
+        "submit_seconds": 0.155,
+        "database_seconds": 1.433,
+        "writeback_seconds": 4.283
+      },
+      {
+        "sku": "LC7877836-P1",
+        "submit_seconds": 0.091,
+        "database_seconds": 1.202,
+        "writeback_seconds": 8.566
+      },
+      {
+        "sku": "LC7832852-P305",
+        "submit_seconds": 0.087,
+        "database_seconds": 1.467,
+        "writeback_seconds": 6.328
+      },
+      {
+        "sku": "LC7832852-P804",
+        "submit_seconds": 0.087,
+        "database_seconds": 1.337,
+        "writeback_seconds": 10.542
+      }
+    ],
+    "fields_correct": true,
+    "pixels_unchanged": true,
+    "originals_unchanged": true,
+    "writeback_hints_cleared": true,
+    "page_errors": [],
+    "exit_code": 0
+  },
+  "isolated_write_profile": {
+    "before_seconds": 7.733953099988867,
+    "after_seconds": 2.0618789000000106,
+    "before_exiftool_processes": 29,
+    "before_subprocess_seconds": 6.15,
+    "before_disk_commit_seconds": 0.046
+  },
+  "installation": {
+    "installed": "D:\\Program Files\\Framekeep",
+    "transaction": "D:\\Program Files\\Framekeep\\.update-state\\local-metadata-latency-20261104-174343",
+    "changed_files": [
+      "engine/_internal/base_library.zip",
+      "engine/_internal/metadata_memory_worker.pl",
+      "engine/framekeep-engine.exe",
+      "update/install-layout.json"
+    ],
+    "all_program_files_verified": 836,
+    "business_databases_unchanged": true,
+    "version": "1.0.0",
+    "releaseId": "20261104071740",
+    "started": false
+  },
+  "frozen": {
+    "passed": true,
+    "frozen_modules": 116,
+    "entrypoint_checked": true,
+    "source_mismatches": [],
+    "web_files": 71,
+    "tests": 23,
+    "failures": 0,
+    "errors": 0,
+    "skips": 1
+  },
+  "restart": {
+    "passed": true,
+    "counts": [
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4
+    ],
+    "jobs_before": 4,
+    "jobs_after": 4,
+    "states": {
+      "confirmed": 4
+    },
+    "written": {
+      "applied": 16
+    },
+    "exit_code": 0
+  },
+  "package": {
+    "passed": true,
+    "files": 836,
+    "signature_verified": true,
+    "published": false,
+    "bundle": "G:\\app\\LR\\dist\\末帧选片-元数据写入提速修复-本地-20261104.zip",
+    "bytes": 288778287,
+    "sha256": "cb8130965a6e0f6c34d147535d974992f221c67c9b6864ff633ed6a8b9ed9b90"
+  },
+  "validation_notes": [
+    "核心25项通过；内存/文件保护10项通过；现场9项8通过/1缺真实RAW跳过。分组有重叠，不累加。",
+    "冻结23项22通过/1缺真实RAW跳过。",
+    "HEAD复现旧测试的外部改图种子、过期成功提示断言及无关缓存发布竞态；修正相关测试种子及提示断言，缓存实现未修改。",
+    "原RAW内嵌处理保留CLI回退；不宣称验证所有RAW格式。"
+  ]
+}

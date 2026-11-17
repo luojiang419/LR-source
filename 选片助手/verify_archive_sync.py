@@ -28,7 +28,7 @@ def verify(samples,output,engine=None):
     url=f'http://127.0.0.1:{port}';secret=secrets.token_urlsafe(24)
     env={k:v for k,v in os.environ.items() if not k.startswith('FRAMEKEEP_')}
     env.update(FRAMEKEEP_DATA=str(output/'data'),FRAMEKEEP_CONFIG=str(output/'no-config.md'),FRAMEKEEP_DESKTOP_TOKEN=secret)
-    if engine:env['FRAMEKEEP_APP_ROOT']=str(ROOT/'dist/末帧选片')
+    if engine:env['FRAMEKEEP_APP_ROOT']=str(ROOT/'dist/SHIYING 数字资产')
     command=[str(Path(engine).resolve())] if engine else [sys.executable,'-X','utf8',str(ROOT/'选片助手/server.py')]
     log=(output/'engine.log').open('w',encoding='utf-8');process=None
     def start():

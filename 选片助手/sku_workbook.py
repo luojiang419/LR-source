@@ -129,13 +129,16 @@ def inspect_workbook(path,allow_empty=False):
             if len(statuses)>1:raise ValueError(f'{sheet.get("name")} 有多个拍摄状态列，请先整理')
             status_col=col_number(statuses[0]) if statuses else active+1
             pictures=[ref for ref,v in values.items() if statuses and v.strip()=='款号图片' and int(re.sub('[A-Z]','',ref))==header_row and col_number(ref)==status_col+1]
-            image_col=status_col+1 if pictures else None
-            time_col=status_col+(2 if image_col else 1)
+            managed={c.get('key'):col_number(c.get('ref')) for c in layout.findall('column')} if layout is not None else {}
+            image_col=managed.get('photo') or (status_col+1 if pictures else None)
+            label_col=managed.get('label') or (status_col+2 if image_col==status_col+1 and values.get(f'{col_name(status_col+2)}{header_row}','').strip()=='标签图片' else None)
+            time_col=managed.get('time') or status_col+1+int(image_col==status_col+1)+int(label_col==status_col+2)
             if time_col>16384:raise ValueError('工作表没有可追加状态和完成时间的空列')
             times=[ref for ref,v in values.items() if v.strip()=='拍摄完成时间' and int(re.sub('[A-Z]','',ref))==header_row]
             if len(times)>1 or (times and col_number(times[0])!=time_col):raise ValueError(f'{sheet.get("name")} 的拍摄完成时间须紧邻拍摄状态右侧，请先整理该列')
             if not times and any(col_number(ref)==time_col and (values[ref]!='' or cell.find('m:f',N) is not None) for ref,cell in cells.items()):raise ValueError(f'{sheet.get("name")} 的拍摄状态右侧已有内容，请先插入空列，避免覆盖原数据')
-            columns=[{'index':i,'letter':col_name(i),'title':values.get(f'{col_name(i)}{header_row}','').strip() or col_name(i)} for i in range(1,active+1) if i not in (status_col,time_col,image_col)]
+            seq_col=managed.get('seq') or (sku_col-1 if values.get(f'{col_name(sku_col-1)}{header_row}','').strip()=='序号' else None)
+            columns=[{'index':i,'letter':col_name(i),'title':values.get(f'{col_name(i)}{header_row}','').strip() or col_name(i)} for i in range(1,active+1) if i not in (status_col,time_col,image_col,label_col,seq_col)]
             rows=[]
             for ref,value in values.items():
                 row=int(re.sub('[A-Z]','',ref))
@@ -147,7 +150,7 @@ def inspect_workbook(path,allow_empty=False):
                 rows.append({'excel_row':row,'sku':value,'normalized':key,'baseline':status,'baseline_completed_at':values.get(f'{col_name(time_col)}{row}','').strip(),
                              'cells':{col['letter']:values.get(f"{col['letter']}{row}",'') for col in columns}})
             result.append({'name':sheet.get('name'),'path':target,'header_row':header_row,'sku_col':sku_col,'status_col':status_col,
-                           'status_letter':col_name(status_col),'new_status':not bool(statuses),'time_col':time_col,'time_letter':col_name(time_col),'image_col':image_col,'columns':columns,'rows':rows,
+                           'status_letter':col_name(status_col),'new_status':not bool(statuses),'time_col':time_col,'time_letter':col_name(time_col),'image_col':image_col,'label_col':label_col,'seq_col':seq_col,'columns':columns,'rows':rows,
                            'images':_sheet_images(z,target,doc,cells,strings,catalog),'header_aliases':header_aliases})
     if not allow_empty and not any(s['rows'] for s in result):raise ValueError('表格中未找到有效款号行')
     return result
@@ -194,7 +197,7 @@ def export_workbook(source,output,sheets,statuses,completed_times=None,*,capture
                 plan=plans[info.filename];xml=content.decode('utf-8-sig');root=re.search(r'<((?:\w+:)?)worksheet\b',xml)
                 if not root:raise ValueError('暂不支持此工作表 XML 格式')
                 prefix=root.group(1);time_col=plan.get('time_col',plan['status_col']+1)
-                updates={r['excel_row']:{plan['status_col']:statuses.get((plan['name'],r['excel_row']),r['baseline']),time_col:(completed_times or {}).get((plan['name'],r['excel_row']),r.get('baseline_completed_at',''))} for r in plan['rows']}
+                updates={r['excel_row']:{plan['sku_col']:r['sku'],plan['status_col']:statuses.get((plan['name'],r['excel_row']),r['baseline']),time_col:(completed_times or {}).get((plan['name'],r['excel_row']),r.get('baseline_completed_at',''))} for r in plan['rows']}
                 updates[plan['header_row']]={plan['status_col']:'拍摄状态',time_col:'拍摄完成时间'}
                 def patch_row(match):
                     attrs=match.group('attrs');number=re.search(r'\br=["\'](\d+)["\']',attrs)

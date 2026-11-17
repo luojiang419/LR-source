@@ -1,4 +1,4 @@
-"""末帧独立更新事务，改编自 VoxCPM 成熟更新器。"""
+"""SHIYING独立更新事务，改编自 VoxCPM 成熟更新器。"""
 from __future__ import annotations
 
 import argparse
@@ -21,6 +21,10 @@ from contextlib import contextmanager
 
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 import installation
+from process_control import ApplicationProcesses
+
+GRACEFUL_EXIT_TIMEOUT = 8
+FORCED_EXIT_TIMEOUT = 5
 
 TRUST = json.loads((Path(getattr(sys, '_MEIPASS', Path(__file__).parent)) / '更新系统/update-config.json' if getattr(sys, 'frozen', False) else Path(__file__).parent / 'update-config.json').read_text('utf-8'))
 
@@ -138,8 +142,8 @@ def validate(session: Path, settings):
     config = read_json(stage / 'update-config.json')
     if config['version'] != manifest['version'] or config['releaseId'] != release_id:
         raise ValueError('应用身份与签名清单不一致')
-    required = {'末帧选片.exe', 'engine/framekeep-engine.exe', 'update/末帧更新器.exe', 'update/update-worker.exe', 'update-config.json'}
-    if not required.issubset(names):
+    required = {'engine/framekeep-engine.exe', 'update/update-worker.exe', 'update-config.json'}
+    if not required.issubset(names) or not ({installation.ENTRY.lower(),installation.LEGACY_ENTRY.lower()} & names) or not ({'update/shiying 更新器.exe','update/末帧更新器.exe'} & names):
         raise ValueError('更新包缺少必要组件')
     return manifest
 
@@ -173,6 +177,44 @@ def wait_exit(pid, timeout=120, cancel=None):
         if time.monotonic() >= deadline:
             raise TimeoutError("软件尚未退出，已取消安装，请关闭软件后重新尝试")
         time.sleep(0.2)
+
+
+def wait_for_application_exit(root, session, settings, manifest):
+    """保存退出有统一期限；超时后只终止经安装路径核验的进程及其后台子进程。"""
+    def check_cancel():
+        if (session/'cancel.json').exists():raise RuntimeError('主程序已取消本次安装')
+    check_cancel()
+    # 退出通知之前保留句柄，覆盖桌面先退出、引擎或文件写入子进程残留的情况。
+    with ApplicationProcesses(root) as processes:
+        parent=settings.get('parentPid',0)
+        if parent:
+            write_json(session/'ready.json',{'session':str(session),'pid':os.getpid(),'releaseId':manifest['releaseId']})
+            if settings.get('data'):
+                write_json(Path(settings['data'])/'maintenance/updates/handoff.json',{
+                    'session':str(session),'root':str(root),'parentPid':parent,'enginePid':settings.get('enginePid',0)})
+        emit(f'已校验完成，正在退出软件；{GRACEFUL_EXIT_TIMEOUT} 秒内未退出将自动强制结束进程…',25)
+        deadline=time.monotonic()+GRACEFUL_EXIT_TIMEOUT
+        while processes.alive():
+            check_cancel()
+            if time.monotonic()>=deadline:break
+            time.sleep(.1)
+        check_cancel();processes.refresh()
+        if processes.alive():
+            emit('正在强制结束旧版工作台、引擎和后台进程，随后继续更新…',27)
+            write_json(session/'forced-exit.json',{'processes':[{'pid':p.pid,'path':p.path} for p in processes.alive()]})
+            processes.terminate(before_each=check_cancel)
+            deadline=time.monotonic()+FORCED_EXIT_TIMEOUT
+            while True:
+                check_cancel()
+                processes.refresh()
+                if not processes.alive():break
+                if time.monotonic()>=deadline:
+                    raise TimeoutError('旧版软件进程强制退出后仍未释放，未替换文件；请使用相同账户或管理员权限重试')
+                processes.terminate(before_each=check_cancel)
+                time.sleep(.1)
+    check_cancel()
+    if installation.running_application(root):raise RuntimeError('此安装目录仍有程序运行，未替换文件；请退出剩余实例后重试')
+    installation.require_port_free(settings.get('port',8769))
 
 
 def replace_program_file(source, target):
@@ -226,6 +268,10 @@ def install(root: Path, session: Path, manifest, fail_after=None):
             relative = record["path"]
             target = destination(root, relative)
             existed = target.is_file()
+            # ADB等运行文件即使内容相同也可能被Windows映像锁占用，保持已校验文件即可。
+            if existed and target.stat().st_size == record['size'] and sha256(target) == record['sha256']:
+                emit(f"已校验，保留相同文件 {index + 1}/{len(manifest['files'])}", 30 + int((index + 1) * 55 / len(manifest['files'])))
+                continue
             if existed:
                 backup = session / "backup" / relative
                 backup.parent.mkdir(parents=True, exist_ok=True)
@@ -268,7 +314,7 @@ def restart(root, session, health=True):
     env['FRAMEKEEP_PORT'] = str(settings.get('port', 8769))
     if settings.get('data'): env['FRAMEKEEP_DATA'] = settings['data']
     if health: env['FRAMEKEEP_UPDATE_HEALTH_FILE'] = str(session / 'healthy.json')
-    return subprocess.Popen([str(root / '末帧选片.exe')], cwd=root, env=env,
+    return subprocess.Popen([str(installation.executable(root))], cwd=root, env=env,
                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 
@@ -290,16 +336,32 @@ def verify_envelope(envelope):
     return manifest
 
 
-def fetch_envelope():
+def fetch_envelope(timeout=30):
     request = urllib.request.Request(TRUST['manifestUrl'], headers={'Cache-Control': 'no-cache', 'Range': 'bytes=0-'})
-    with urllib.request.urlopen(request, timeout=30) as response:
+    with urllib.request.urlopen(request, timeout=timeout) as response:
         raw = response.read(16 * 1024**2 + 1)
     if len(raw) > 16 * 1024**2: raise ValueError('清单超过大小限制')
     envelope = json.loads(raw)
     return envelope, verify_envelope(envelope)
 
 
-def download(meta, target):
+def select_install_release(settings):
+    if not settings.get('localEnvelope'):return fetch_envelope()
+    envelope=read_json(Path(settings['localEnvelope']));manifest=verify_envelope(envelope)
+    if settings.get('preferLatest'):
+        try:
+            latest,remote=fetch_envelope(timeout=5)
+            if (version(remote['version']),remote['releaseId'])>(version(manifest['version']),manifest['releaseId']):
+                settings.pop('localPackage',None)
+                emit('发现更新的已签名版本，自动下载最新版',5)
+                return latest,remote
+        except Exception as error:
+            # 内置包先通过签名验证；离线或远端无效时继续可靠的本地版本。
+            emit('在线版本检查未完成，继续安装已校验的内置版本',5)
+    return envelope,manifest
+
+
+def download(meta, target, *, quiet=False):
     """沿用 VoxCPM 的分片保留、Range 对齐及完整哈希检查。"""
     target = Path(target); part = target.with_suffix('.part')
     if target.is_file() and target.stat().st_size == meta['size'] and sha256(target) == meta['sha256']:
@@ -324,7 +386,7 @@ def download(meta, target):
                         done += len(block)
                         if done > meta['size']: raise ValueError('下载超出预期大小')
                         output.write(block)
-                        if time.monotonic() - last_emit > .3:
+                        if not quiet and time.monotonic() - last_emit > .3:
                             emit(f"正在下载 {done/1024**2:.1f} / {meta['size']/1024**2:.1f} MB", int(done*18/meta['size']))
                             last_emit = time.monotonic()
                     output.flush(); os.fsync(output.fileno())
@@ -357,7 +419,7 @@ def check_root(root, install_mode):
         if parent.is_symlink() or parent.is_junction(): raise ValueError('安装目录父路径不能是链接')
     if len(root.parts) < 3: raise ValueError('请选择独立的软件子目录')
     if root.exists() and not root.is_dir(): raise ValueError('安装目录已被文件占用')
-    known = (root / '末帧选片.exe').is_file()
+    known = installation.has_application(root)
     # 安装允许非空目录；只覆盖签名清单内文件，由安装事务备份并在失败时恢复。
     if not install_mode and not known: raise ValueError('原软件目录无效')
 
@@ -373,7 +435,7 @@ def retire_pending(root,receipt):
 
 def completed_uninstall_receipt(root,pending,home=None):
     """兼容旧版成功卸载后的遗留指针，必须有同目录且晚于事务的完成证据。"""
-    if (root/installation.MARKER).exists() or (root/'末帧选片.exe').exists():return None
+    if (root/installation.MARKER).exists() or installation.has_application(root):return None
     home=Path(home) if home is not None else installation.user_data().parent/'uninstall'
     if not home.is_dir():return None
     since=pending.stat().st_mtime
@@ -469,7 +531,11 @@ def release_completed_payload(session):
     journal=read_json(session/'journal.json')
     if state.get('status')!='complete' or journal.get('status')!='complete':return False
     if session.is_symlink() or session.is_junction():raise ValueError('更新会话不能为链接')
-    for name in ('package.zip','stage','backup'):
+    names=['package.zip','stage','backup']
+    setup=read_json(session/'session.json') if (session/'session.json').is_file() else {}
+    if setup.get('embeddedPayload') and installation.same_path(setup.get('componentSeed',''),session/'components') and installation.same_path(setup.get('localEnvelope',''),session/'envelope.json'):
+        names+=['SHIYING-Windows-x64.zip','components']
+    for name in names:
         path=session/name
         if path.is_symlink() or path.is_junction():raise ValueError('更新载荷不能为链接')
         if path.is_dir():
@@ -492,29 +558,25 @@ def run(session):
                         session=str(session), root=str(root))
         write_json(session/'session.json', settings)
         emit('正在检查魔搭签名更新清单…', 0)
-        if settings.get('localEnvelope'):
-            envelope=read_json(Path(settings['localEnvelope']));manifest=verify_envelope(envelope)
-        else:envelope, manifest = fetch_envelope()
+        envelope, manifest = select_install_release(settings)
         if version(manifest['version']) < version(current['version']) or (
             version(manifest['version']) == version(current['version']) and manifest['releaseId'] < current['releaseId']):
             raise ValueError('拒绝降级已安装的新版')
         if not install_mode and (manifest['version'],manifest['releaseId']) == (current['version'],current['releaseId']):
             raise ValueError('当前已是最新版本')
         if install_mode and os.name == 'nt':
-            # 不强制结束用户程序；安装/修复前要求本目录进程已正常关闭。
-            script = "$p=Get-CimInstance Win32_Process | Where-Object {$_.ExecutablePath -and ($_.ExecutablePath -eq $env:FRAMEKEEP_EXE -or $_.ExecutablePath -eq $env:FRAMEKEEP_ENGINE)};if($p){exit 2}"
-            result = subprocess.run(['powershell.exe','-NoProfile','-NonInteractive','-Command',script],
-                env={**os.environ,'FRAMEKEEP_EXE':str(root/'末帧选片.exe'),'FRAMEKEEP_ENGINE':str(root/'engine/framekeep-engine.exe')},
-                capture_output=True,creationflags=subprocess.CREATE_NO_WINDOW)
-            if result.returncode: raise RuntimeError('请先保存任务并关闭此安装目录的末帧选片，再重试安装或修复')
-        if install_mode:installation.require_port_free(settings.get('port',8769))
+            active=installation.active_installation(root,allow_unresponsive=True)
+            if active:
+                settings.update(active);write_json(session/'session.json',settings)
+                emit('已识别运行中的旧版本，校验后退出软件；超时自动强制结束进程',5)
+        if install_mode and not settings.get('parentPid') and not settings.get('enginePid'):installation.require_port_free(settings.get('port',8769))
         write_json(session/'envelope.json', envelope)
         if not installation.writable_directory(root):raise OSError('安装目录不可写，请选择无需管理员权限的目录')
         check_storage(root,session,manifest)
         backend=installation.integration_backend()
         if install_mode and settings.get('integration',True) and backend:
             previous_root=backend.preferences().get('InstallLocation','')
-            if previous_root and not installation.same_path(previous_root,root) and installation.running_application(previous_root):raise RuntimeError('请先保存并关闭旧安装位置的末帧选片，再安装到新目录')
+            if previous_root and not installation.same_path(previous_root,root) and installation.running_application(previous_root):raise RuntimeError('请先保存并关闭旧安装位置的SHIYING 数字资产，再安装到新目录')
         data=installation.data_directory(root,settings.get('data'),backend)
         if not installation.writable_directory(data):raise OSError('资料目录不可写，未创建空数据库，请调整原资料目录权限')
         settings['data']=str(data);write_json(session/'session.json',settings)
@@ -525,12 +587,7 @@ def run(session):
         else:download(manifest['package'], session/'package.zip')
         emit('正在验证签名及全部文件…', 20)
         manifest = validate(session, settings)
-        parent = settings.get('parentPid', 0)
-        if parent:
-            write_json(session/'ready.json', {'session': str(session), 'pid': os.getpid(), 'releaseId': manifest['releaseId']})
-            emit('已校验完成，等待工作台保存并正常退出…', 25)
-            wait_exit(parent, cancel=session/'cancel.json')
-            if settings.get('enginePid'): wait_exit(settings['enginePid'], 30)
+        wait_for_application_exit(root,session,settings,manifest)
         pending = root/'.update-state/pending.json'
         write_json(pending, {'session': str(session), 'pid': os.getpid()})
         child = None

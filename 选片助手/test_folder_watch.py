@@ -134,6 +134,22 @@ class FolderWatchTests(unittest.TestCase):
         self.assertEqual(self.clock[0],0)
         self.clock[0]+=.1;self.watch.tick();self.assertEqual(len(self.store.records(self.sid)),2)
 
+    def test_full_rescan_clears_pending_and_initializing_after_partial_hint(self):
+        waiting=self.photos/'wait.JPG';waiting.write_bytes(b'incomplete JPEG')
+        self.watch.tick();self.assertEqual(self.watch.state()['pending'],1)
+        self.assertTrue(self.watch.state()['initializing'])
+        ready=self.image('ready.JPG');self.watch.tick([ready]);self.assertEqual(self.watch.state()['pending'],1)
+        self.image('wait.JPG');self.clock[0]+=.1;self.watch.tick()
+        self.assertEqual(self.watch.state()['pending'],0);self.assertFalse(self.watch.state()['initializing'])
+        waiting.unlink();self.watch.tick();self.assertNotIn(str(waiting),self.watch.observed)
+
+    def test_existing_snapshot_does_not_probe_missing_sidecars_per_photo(self):
+        self.image();self.watch.tick()
+        self.watch.accepted.clear()
+        with patch('rating_xmp.sidecar_paths',side_effect=AssertionError('重复网络侧车探测')):
+            self.watch.tick()
+        self.assertEqual(self.watch.state()['error'],'');self.assertEqual(self.watch.state()['arrivals'],1)
+
     def test_delta_accumulates_bursts_and_rejects_old_generations_or_gaps(self):
         generation=self.watch.state()['generation']
         self.image('one.JPG');self.watch.tick();first=self.store.records(self.sid)[0]['id']
@@ -244,7 +260,7 @@ class LiveBrowserTests(unittest.TestCase):
                             page.locator('#app-settings-open').click();page.locator('[data-settings-section=remote]').click();page.locator('#mouse-remote').click();page.locator('#mouse-start').click()
                             page.wait_for_function('() => !document.getElementById("mouse-dialog").open')
                             def wait_photo(name):
-                                page.wait_for_function('(name) => document.getElementById("filename").textContent===name',arg=name)
+                                page.wait_for_function('(name) => document.getElementById("filename").textContent===name&&!window.FramekeepReceiving?.active&&document.querySelector("#photos [data-loupe] img")?.alt===name',arg=name)
                             def stars(n):page.wait_for_function('(n) => document.querySelectorAll("#stars .on").length===n',arg=n)
                             def image(name,color):Image.new('RGB',(600,400),color).save(photos/name)
                             image('001.JPG',(80,100,120));wait_photo('001.JPG');stars(0)

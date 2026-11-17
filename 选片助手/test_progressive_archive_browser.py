@@ -5,6 +5,7 @@ from io import BytesIO
 from pathlib import Path
 import tempfile
 import threading
+import time
 import unittest
 from unittest.mock import patch
 from urllib.parse import urlparse, parse_qs
@@ -74,8 +75,13 @@ class ProgressiveArchiveBrowserTests(unittest.TestCase):
                         page.goto(f'http://127.0.0.1:{http.server_port}', wait_until='domcontentloaded')
                         page.locator('#asset-archive-open').click()
                         page.wait_for_function('()=>document.querySelectorAll("#catalog-grid .catalog-card").length===48')
+                        # 卡片挂载早于首次 IntersectionObserver/启动遮罩退出；等待
+                        # 实际发起请求后再核验并发上限，不能把固定 150ms 当就绪信号。
+                        deadline = time.monotonic() + 8
+                        while len([r for r in requests if r[0] == 420]) < 4 and time.monotonic() < deadline:
+                            page.wait_for_timeout(20)
                         page.wait_for_timeout(150)
-                        self.assertEqual(len([r for r in requests if r[0] == 420]), 3)
+                        self.assertEqual(len([r for r in requests if r[0] == 420]), 4)
                         self.assertGreater(page.locator('.catalog-thumb[data-preview-state=loading] .asset-loading-art').count(), 0)
                         page.screenshot(path=str(out / 'cold-grid.png'))
                         first = page.locator('#catalog-grid .catalog-card').first

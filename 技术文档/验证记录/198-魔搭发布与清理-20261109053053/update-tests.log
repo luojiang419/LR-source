@@ -1,0 +1,151 @@
+test_error_and_missing_capability_never_report_ready (test_components.ComponentWorkerTests.test_error_and_missing_capability_never_report_ready) ... ok
+test_first_install_accepts_nonempty_directory_without_desktop_exe (test_components.ComponentWorkerTests.test_first_install_accepts_nonempty_directory_without_desktop_exe) ... ok
+test_install_root_cannot_be_a_file (test_components.ComponentWorkerTests.test_install_root_cannot_be_a_file) ... ok
+test_success_passes_offline_seed_and_explicit_driver_policy (test_components.ComponentWorkerTests.test_success_passes_offline_seed_and_explicit_driver_policy) ... ok
+test_bad_database_fails_without_publishing_or_changing_original (test_data_storage.DataStorageTests.test_bad_database_fails_without_publishing_or_changing_original) ... ok
+test_completed_update_payload_released_but_incomplete_preserved (test_data_storage.DataStorageTests.test_completed_update_payload_released_but_incomplete_preserved) ... ok
+test_legacy_full_photo_backup_becomes_field_record_only_if_hash_matches (test_data_storage.DataStorageTests.test_legacy_full_photo_backup_becomes_field_record_only_if_hash_matches) ... ok
+test_low_space_does_not_publish_partial_migration (test_data_storage.DataStorageTests.test_low_space_does_not_publish_partial_migration) ... ok
+test_migration_includes_committed_wal_and_preserves_source_and_external_paths (test_data_storage.DataStorageTests.test_migration_includes_committed_wal_and_preserves_source_and_external_paths) ... ok
+test_missing_old_data_fails_instead_of_creating_empty_database (test_data_storage.DataStorageTests.test_missing_old_data_fails_instead_of_creating_empty_database) ... ok
+test_new_install_and_reinstall_use_local_data_and_uninstall_preserves_it (test_data_storage.DataStorageTests.test_new_install_and_reinstall_use_local_data_and_uninstall_preserves_it) ... ok
+test_nonempty_target_and_overlap_cannot_overwrite_data (test_data_storage.DataStorageTests.test_nonempty_target_and_overlap_cannot_overwrite_data) ... ok
+test_retry_after_application_rollback_reuses_verified_copy_but_not_changed_source (test_data_storage.DataStorageTests.test_retry_after_application_rollback_reuses_verified_copy_but_not_changed_source) ... ok
+test_retry_detects_source_changes_still_only_in_wal (test_data_storage.DataStorageTests.test_retry_detects_source_changes_still_only_in_wal) ... ok
+test_active_instance_requires_process_and_http_identity (test_install_automation.InstallAutomationTests.test_active_instance_requires_process_and_http_identity) ... ok
+test_completed_embedded_payload_is_cleaned_but_external_seed_is_retained (test_install_automation.InstallAutomationTests.test_completed_embedded_payload_is_cleaned_but_external_seed_is_retained) ... ok
+test_default_d_and_permission_request_keep_same_target (test_install_automation.InstallAutomationTests.test_default_d_and_permission_request_keep_same_target) ... ok
+test_invalid_embedded_signature_is_never_used (test_install_automation.InstallAutomationTests.test_invalid_embedded_signature_is_never_used) ... ok
+test_latest_signed_release_replaces_local_package_but_never_downgrades (test_install_automation.InstallAutomationTests.test_latest_signed_release_replaces_local_package_but_never_downgrades) ... {"message": "\u53d1\u73b0\u66f4\u65b0\u7684\u5df2\u7b7e\u540d\u7248\u672c\uff0c\u81ea\u52a8\u4e0b\u8f7d\u6700\u65b0\u7248", "progress": 5}
+{"message": "\u5728\u7ebf\u7248\u672c\u68c0\u67e5\u672a\u5b8c\u6210\uff0c\u7ee7\u7eed\u5b89\u88c5\u5df2\u6821\u9a8c\u7684\u5185\u7f6e\u7248\u672c", "progress": 5}
+ok
+test_partial_install_keeps_directory_and_requires_permission_instead_of_relocating (test_install_automation.InstallAutomationTests.test_partial_install_keeps_directory_and_requires_permission_instead_of_relocating) ... ok
+test_registry_alternative_and_known_path_are_detected (test_install_automation.InstallAutomationTests.test_registry_alternative_and_known_path_are_detected) ... ok
+test_d_then_e_then_user_directory_with_space_and_permission_checks (test_installation.InstallPolicyTests.test_d_then_e_then_user_directory_with_space_and_permission_checks) ... ok
+test_existing_install_reused_and_user_fallback_needs_space (test_installation.InstallPolicyTests.test_existing_install_reused_and_user_fallback_needs_space) ... ok
+test_explicit_marker_and_legacy_data_are_preserved (test_installation.InstallPolicyTests.test_explicit_marker_and_legacy_data_are_preserved) ... ok
+test_installing_to_new_partition_keeps_registered_legacy_data (test_installation.InstallPolicyTests.test_installing_to_new_partition_keeps_registered_legacy_data) ... ok
+test_portable_data_is_independent_of_parent_development_project (test_installation.InstallPolicyTests.test_portable_data_is_independent_of_parent_development_project) ... ok
+test_registration_refresh_keeps_persistent_data_during_isolated_run (test_installation.InstallPolicyTests.test_registration_refresh_keeps_persistent_data_during_isolated_run) ... ok
+test_registration_refresh_without_marker_keeps_registered_data (test_installation.InstallPolicyTests.test_registration_refresh_without_marker_keeps_registered_data) ... ok
+test_running_portable_workbench_is_detected_before_install (test_installation.InstallPolicyTests.test_running_portable_workbench_is_detected_before_install) ... ok
+test_foreign_root_and_traversal_are_rejected_before_deleting (test_installation.ManagedUninstallTests.test_foreign_root_and_traversal_are_rejected_before_deleting) ... ok
+test_junction_never_deletes_files_outside_installation (test_installation.ManagedUninstallTests.test_junction_never_deletes_files_outside_installation) ... ok
+test_running_application_blocks_every_delete (test_installation.ManagedUninstallTests.test_running_application_blocks_every_delete) ... ok
+test_uninstall_preserves_data_models_unknown_and_changed_files (test_installation.ManagedUninstallTests.test_uninstall_preserves_data_models_unknown_and_changed_files) ... ok
+test_upgrade_remembers_old_managed_files_for_later_uninstall (test_installation.ManagedUninstallTests.test_upgrade_remembers_old_managed_files_for_later_uninstall) ... ok
+test_brand_upgrade_migrates_shortcuts_and_startup_and_rolls_back (test_installation.WindowsRegistrationTests.test_brand_upgrade_migrates_shortcuts_and_startup_and_rolls_back) ... ok
+test_failed_registration_restores_old_values_and_shortcuts (test_installation.WindowsRegistrationTests.test_failed_registration_restores_old_values_and_shortcuts) ... ok
+test_legacy_registration_snapshot_can_be_recovered_after_rename (test_installation.WindowsRegistrationTests.test_legacy_registration_snapshot_can_be_recovered_after_rename) ... ok
+test_persisted_registration_snapshot_restores_after_interruption (test_installation.WindowsRegistrationTests.test_persisted_registration_snapshot_restores_after_interruption) ... ok
+test_real_registry_shortcuts_repair_and_uninstall (test_installation.WindowsRegistrationTests.test_real_registry_shortcuts_repair_and_uninstall) ... ok
+test_uninstall_old_copy_keeps_other_registered_install (test_installation.WindowsRegistrationTests.test_uninstall_old_copy_keeps_other_registered_install) ... ok
+test_uninstall_removes_only_its_own_startup_entry (test_installation.WindowsRegistrationTests.test_uninstall_removes_only_its_own_startup_entry) ... ok
+test_existing_remote_component_can_be_verified_without_local_archive (test_release_components.ReleaseComponentTests.test_existing_remote_component_can_be_verified_without_local_archive) ... ok
+test_existing_remote_hash_mismatch_aborts_before_activation (test_release_components.ReleaseComponentTests.test_existing_remote_hash_mismatch_aborts_before_activation) ... ok
+test_missing_remote_component_requires_a_verified_local_archive (test_release_components.ReleaseComponentTests.test_missing_remote_component_requires_a_verified_local_archive) ... ok
+test_missing_remote_uploads_local_verified_content_then_checks_anonymous_bytes (test_release_components.ReleaseComponentTests.test_missing_remote_uploads_local_verified_content_then_checks_anonymous_bytes) ... ok
+test_package_build_rejects_stale_engine_before_creating_output (test_release_components.ReleaseComponentTests.test_package_build_rejects_stale_engine_before_creating_output) ... ok
+test_download_resume_and_cache (test_update.UpdateTests.test_download_resume_and_cache) ... ok
+test_duplicate_case_rejected (test_update.UpdateTests.test_duplicate_case_rejected) ... ok
+test_failed_uninstall_does_not_archive_pending (test_update.UpdateTests.test_failed_uninstall_does_not_archive_pending) ... {"message": "\u6b63\u5728\u68c0\u67e5\u5b89\u88c5\u8bb0\u5f55\u548c\u8fd0\u884c\u72b6\u6001\u2026", "progress": 10}
+ok
+test_handoff_waits_for_both_processes_and_checks_directory_and_port (test_update.UpdateTests.test_handoff_waits_for_both_processes_and_checks_directory_and_port) ... {"message": "\u5df2\u6821\u9a8c\u5b8c\u6210\uff0c\u6b63\u5728\u4fdd\u5b58\u5e76\u81ea\u52a8\u9000\u51fa\u5de5\u4f5c\u53f0\u4e0e\u672c\u5730\u5f15\u64ce\u2026", "progress": 25}
+ok
+test_install_controller_upgrades_running_instance_preserves_data_and_completes (test_update.UpdateTests.test_install_controller_upgrades_running_instance_preserves_data_and_completes) ... {"message": "\u6b63\u5728\u68c0\u67e5\u9b54\u642d\u7b7e\u540d\u66f4\u65b0\u6e05\u5355\u2026", "progress": 0}
+{"message": "\u5df2\u8bc6\u522b\u8fd0\u884c\u4e2d\u7684\u65e7\u7248\u672c\uff0c\u6821\u9a8c\u5b89\u88c5\u5305\u540e\u81ea\u52a8\u4fdd\u5b58\u5e76\u6b63\u5e38\u9000\u51fa", "progress": 5}
+{"message": "\u6b63\u5728\u9a8c\u8bc1\u7b7e\u540d\u53ca\u5168\u90e8\u6587\u4ef6\u2026", "progress": 20}
+{"message": "\u6b63\u5728\u5b89\u88c5 1/5", "progress": 41}
+{"message": "\u6b63\u5728\u5b89\u88c5 2/5", "progress": 52}
+{"message": "\u6b63\u5728\u5b89\u88c5 3/5", "progress": 63}
+{"message": "\u6b63\u5728\u5b89\u88c5 4/5", "progress": 74}
+{"message": "\u6b63\u5728\u5b89\u88c5 5/5", "progress": 85}
+{"message": "\u6b63\u5728\u6838\u9a8c\u5b89\u88c5\u76ee\u5f55 data \u8d44\u6599\u2026", "progress": 85}
+{"message": "\u6b63\u5728\u542f\u52a8\u65b0\u7248\u5e76\u9a8c\u8bc1\u5de5\u4f5c\u53f0\u548c\u5f15\u64ce\u2026", "progress": 90}
+{"message": "\u5b89\u88c5\u66f4\u65b0\u5b8c\u6210\uff0c\u5de5\u4f5c\u53f0\u4e0e\u672c\u5730\u5f15\u64ce\u5747\u5df2\u5c31\u7eea\u3002", "progress": 100}
+ok
+test_invalid_signature_rejected (test_update.UpdateTests.test_invalid_signature_rejected) ... ok
+test_legacy_signed_package_and_install_directory_remain_supported (test_update.UpdateTests.test_legacy_signed_package_and_install_directory_remain_supported) ... {"message": "\u6b63\u5728\u5b89\u88c5 1/5", "progress": 41}
+{"message": "\u6b63\u5728\u5b89\u88c5 2/5", "progress": 52}
+{"message": "\u6b63\u5728\u5b89\u88c5 3/5", "progress": 63}
+{"message": "\u6b63\u5728\u5b89\u88c5 4/5", "progress": 74}
+{"message": "\u6b63\u5728\u5b89\u88c5 5/5", "progress": 85}
+ok
+test_legacy_successful_uninstall_retires_pending_without_resurrecting_old_app (test_update.UpdateTests.test_legacy_successful_uninstall_retires_pending_without_resurrecting_old_app) ... {"message": "\u5df2\u786e\u8ba4\u65e7\u7248\u6210\u529f\u5378\u8f7d\uff0c\u65e7\u6062\u590d\u8bb0\u5f55\u548c\u5907\u4efd\u4fdd\u7559\uff0c\u7ee7\u7eed\u91cd\u65b0\u5b89\u88c5\u3002", "progress": 0}
+ok
+test_link_destination_rejected (test_update.UpdateTests.test_link_destination_rejected) ... ok
+test_locked_unchanged_file_does_not_break_rollback (test_update.UpdateTests.test_locked_unchanged_file_does_not_break_rollback) ... {"message": "\u6b63\u5728\u5b89\u88c5 1/6", "progress": 39}
+{"message": "\u6b63\u5728\u5b89\u88c5 2/6", "progress": 48}
+{"message": "\u6b63\u5728\u5b89\u88c5 3/6", "progress": 57}
+{"message": "\u6b63\u5728\u5b89\u88c5 4/6", "progress": 66}
+{"message": "\u6b63\u5728\u5b89\u88c5 5/6", "progress": 75}
+ok
+test_missing_required_component_rejected (test_update.UpdateTests.test_missing_required_component_rejected) ... ok
+test_nonempty_first_install_failure_restores_overwritten_files (test_update.UpdateTests.test_nonempty_first_install_failure_restores_overwritten_files) ... {"message": "\u6b63\u5728\u5b89\u88c5 1/5", "progress": 41}
+{"message": "\u6b63\u5728\u5b89\u88c5 2/5", "progress": 52}
+{"message": "\u6b63\u5728\u5b89\u88c5 3/5", "progress": 63}
+ok
+test_old_and_same_release_rejected (test_update.UpdateTests.test_old_and_same_release_rejected) ... ok
+test_package_cannot_write_user_data_or_traversal (test_update.UpdateTests.test_package_cannot_write_user_data_or_traversal) ... ok
+test_real_windows_locked_helper_rolls_back_other_files (test_update.UpdateTests.test_real_windows_locked_helper_rolls_back_other_files) ... {"message": "\u6b63\u5728\u5b89\u88c5 1/6", "progress": 39}
+{"message": "\u6b63\u5728\u5b89\u88c5 2/6", "progress": 48}
+{"message": "\u6b63\u5728\u5b89\u88c5 3/6", "progress": 57}
+{"message": "\u6b63\u5728\u5b89\u88c5 4/6", "progress": 66}
+{"message": "\u6b63\u5728\u5b89\u88c5 5/6", "progress": 75}
+ok
+test_recovery_recreates_removed_parent_directories (test_update.UpdateTests.test_recovery_recreates_removed_parent_directories) ... {"message": "\u6b63\u5728\u5b89\u88c5 1/5", "progress": 41}
+{"message": "\u6b63\u5728\u5b89\u88c5 2/5", "progress": 52}
+{"message": "\u6b63\u5728\u5b89\u88c5 3/5", "progress": 63}
+{"message": "\u6b63\u5728\u5b89\u88c5 4/5", "progress": 74}
+{"message": "\u6b63\u5728\u5b89\u88c5 5/5", "progress": 85}
+{"message": "\u6b63\u5728\u6062\u590d\u4e0a\u6b21\u4e2d\u65ad\u7684\u66f4\u65b0\u2026", "progress": 0}
+ok
+test_recovery_restores_interrupted_transaction (test_update.UpdateTests.test_recovery_restores_interrupted_transaction) ... {"message": "\u6b63\u5728\u5b89\u88c5 1/5", "progress": 41}
+{"message": "\u6b63\u5728\u5b89\u88c5 2/5", "progress": 52}
+{"message": "\u6b63\u5728\u5b89\u88c5 3/5", "progress": 63}
+{"message": "\u6b63\u5728\u5b89\u88c5 4/5", "progress": 74}
+{"message": "\u6b63\u5728\u5b89\u88c5 5/5", "progress": 85}
+{"message": "\u6b63\u5728\u6062\u590d\u4e0a\u6b21\u4e2d\u65ad\u7684\u66f4\u65b0\u2026", "progress": 0}
+ok
+test_recovery_restores_previous_user_data_marker (test_update.UpdateTests.test_recovery_restores_previous_user_data_marker) ... {"message": "\u6b63\u5728\u5b89\u88c5 1/5", "progress": 41}
+{"message": "\u6b63\u5728\u5b89\u88c5 2/5", "progress": 52}
+{"message": "\u6b63\u5728\u5b89\u88c5 3/5", "progress": 63}
+{"message": "\u6b63\u5728\u5b89\u88c5 4/5", "progress": 74}
+{"message": "\u6b63\u5728\u5b89\u88c5 5/5", "progress": 85}
+{"message": "\u6b63\u5728\u6062\u590d\u4e0a\u6b21\u4e2d\u65ad\u7684\u66f4\u65b0\u2026", "progress": 0}
+ok
+test_registered_healthy_install_is_not_rolled_back_after_interruption (test_update.UpdateTests.test_registered_healthy_install_is_not_rolled_back_after_interruption) ... {"message": "\u6b63\u5728\u5b89\u88c5 1/5", "progress": 41}
+{"message": "\u6b63\u5728\u5b89\u88c5 2/5", "progress": 52}
+{"message": "\u6b63\u5728\u5b89\u88c5 3/5", "progress": 63}
+{"message": "\u6b63\u5728\u5b89\u88c5 4/5", "progress": 74}
+{"message": "\u6b63\u5728\u5b89\u88c5 5/5", "progress": 85}
+ok
+test_remaining_instance_or_cancel_prevents_install_even_without_parent (test_update.UpdateTests.test_remaining_instance_or_cancel_prevents_install_even_without_parent) ... ok
+test_same_release_repair_allowed (test_update.UpdateTests.test_same_release_repair_allowed) ... ok
+test_signed_data_path_rejected (test_update.UpdateTests.test_signed_data_path_rejected) ... ok
+test_successful_uninstall_archives_pending_and_keeps_backups (test_update.UpdateTests.test_successful_uninstall_archives_pending_and_keeps_backups) ... {"message": "\u6b63\u5728\u68c0\u67e5\u5b89\u88c5\u8bb0\u5f55\u548c\u8fd0\u884c\u72b6\u6001\u2026", "progress": 10}
+{"message": "\u5df2\u5378\u8f7d\u5e94\u7528\uff1b\u7167\u7247\u3001\u8bc4\u7ea7\u3001\u8bbe\u7f6e\u53ca\u6a21\u578b\u8d44\u6599\u5df2\u4fdd\u7559\u3002", "progress": 100}
+ok
+test_tampered_package_rejected (test_update.UpdateTests.test_tampered_package_rejected) ... ok
+test_transient_program_file_lock_is_retried (test_update.UpdateTests.test_transient_program_file_lock_is_retried) ... ok
+test_unrelated_old_failed_receipts_cannot_disable_recovery (test_update.UpdateTests.test_unrelated_old_failed_receipts_cannot_disable_recovery) ... ok
+test_valid_signed_install_preserves_data (test_update.UpdateTests.test_valid_signed_install_preserves_data) ... {"message": "\u6b63\u5728\u5b89\u88c5 1/5", "progress": 41}
+{"message": "\u6b63\u5728\u5b89\u88c5 2/5", "progress": 52}
+{"message": "\u6b63\u5728\u5b89\u88c5 3/5", "progress": 63}
+{"message": "\u6b63\u5728\u5b89\u88c5 4/5", "progress": 74}
+{"message": "\u6b63\u5728\u5b89\u88c5 5/5", "progress": 85}
+ok
+test_write_failure_rolls_back_old_and_new_files (test_update.UpdateTests.test_write_failure_rolls_back_old_and_new_files) ... {"message": "\u6b63\u5728\u5b89\u88c5 1/5", "progress": 41}
+{"message": "\u6b63\u5728\u5b89\u88c5 2/5", "progress": 52}
+{"message": "\u6b63\u5728\u5b89\u88c5 3/5", "progress": 63}
+ok
+test_wrong_product_rejected (test_update.UpdateTests.test_wrong_product_rejected) ... ok
+test_bundle_stores_files_without_deflate_and_copies_verified_runtime (test_worker_runtime.WorkerRuntimeTests.test_bundle_stores_files_without_deflate_and_copies_verified_runtime) ... ok
+test_corrupt_source_stops_handoff_without_changing_source (test_worker_runtime.WorkerRuntimeTests.test_corrupt_source_stops_handoff_without_changing_source) ... ok
+test_legacy_single_worker_remains_compatible (test_worker_runtime.WorkerRuntimeTests.test_legacy_single_worker_remains_compatible) ... ok
+test_path_traversal_and_missing_manifest_fail (test_worker_runtime.WorkerRuntimeTests.test_path_traversal_and_missing_manifest_fail) ... ok
+
+----------------------------------------------------------------------
+Ran 79 tests in 8.472s
+
+OK

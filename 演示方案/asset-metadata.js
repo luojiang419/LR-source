@@ -6,7 +6,7 @@
   const rawLines=text=>String(text||'').split(/\r?\n/).map(line=>line.trim()).filter(Boolean);
   window.FramekeepOcrUI={codeButtons,rawLines};
   const panel=document.createElement('details');panel.id='sku-asset-panel';panel.className='side-section asset-panel';panel.open=true;
-  panel.innerHTML='<summary>款号备案 <span id="asset-count"></span></summary><div class="side-body asset-panel-body"><p class="dialog-copy">Shift 连选 · Ctrl 加选，与照片星级独立</p><label>SKU 款号<input id="asset-sku" maxlength="80" placeholder="输入后点击确定，更新当前整款 SKU"></label><button id="asset-preview" class="primary" aria-describedby="asset-write-help">写入 SKU 元数据</button><p id="asset-write-help" class="dialog-copy">输入正确款号后点击确定，整款 RAW / JPG 同步更新；清空输入可重新进行 OCR 识别。</p><p id="asset-message" role="status" class="dialog-copy"></p></div>';
+  panel.innerHTML='<summary>款号备案 <span id="asset-count"></span></summary><div class="side-body asset-panel-body"><p class="dialog-copy">Shift 连选 · Ctrl 加选，与照片星级独立</p><label>SKU 款号<input id="asset-sku" maxlength="80" placeholder="输入任意文本，按 Enter 或点击确定"></label><p id="asset-write-help" class="dialog-copy">支持中文、数字、字母、符号及组合，最多 80 字符。手动输入后按 Enter 或点击确定，整款图片同步写入元数据；也可清空输入后进行 OCR 解析。</p><p id="asset-message" role="status" class="dialog-copy"></p></div>';
   document.querySelector('.right-panel').append(panel);
   const ocrControls=document.createElement('div');ocrControls.className='asset-ocr-controls';ocrControls.innerHTML='<button id="asset-parse-sku" class="bordered" title="使用已选 OCR 模型读取当前图，不要求二星">OCR 解析当前图</button><div id="asset-ocr-result" class="asset-ocr-result" hidden><div id="asset-ocr-codes" class="asset-actions" role="group" aria-label="推荐款号，点击即应用"></div><details open><summary>OCR 原文</summary><div id="asset-ocr-text" class="asset-ocr-raw" role="group" aria-label="原文识别项，点击即应用"></div></details></div>';$('asset-sku').parentElement.after(ocrControls);
   const settingsButton=document.createElement('button');settingsButton.id='app-settings-open';settingsButton.textContent='设置';settingsButton.setAttribute('role','tab');settingsButton.setAttribute('aria-controls','app-settings-page');settingsButton.setAttribute('aria-selected','false');settingsButton.tabIndex=-1;document.querySelector('.workspace-tabs').append(settingsButton);
@@ -20,14 +20,20 @@
     <button type="button" data-settings-section="streams" aria-controls="settings-streams">SKU 自动区间</button>
     <span class="settings-nav-heading">操作与显示</span>
     <button type="button" data-settings-section="remote" aria-controls="settings-remote">鼠标遥控</button>
+    <button type="button" data-settings-section="quick" aria-controls="settings-quick">快捷搜索</button>
     <button type="button" data-settings-section="preview" aria-controls="settings-preview">预览显示</button>
     <button type="button" data-settings-section="table" aria-controls="settings-table">表格显示</button>
     <span class="settings-nav-heading">数据与迁移</span>
+    <button type="button" data-settings-section="sync" aria-controls="settings-sync">局域网同步</button>
+    <button type="button" data-settings-section="backup" aria-controls="settings-backup">自动备份</button>
     <button type="button" data-settings-section="library" aria-controls="settings-library">文件数据库与 API</button>
     <button type="button" data-settings-section="database" aria-controls="settings-database">数据库管理</button>
     <button type="button" data-settings-section="general" aria-controls="settings-general">启动与关闭</button>
   </nav><div class="app-settings-grid">
+  <section id="settings-quick" class="app-settings-section" aria-labelledby="settings-quick-title"><div class="settings-section-heading"><h3 id="settings-quick-title">快捷搜索</h3><p>选择居中极简搜索或全能搜索，调整屏幕背景的模糊与亮度。</p></div><div id="quick-appearance-controls" class="workspace-card quick-appearance-settings">正在读取快捷搜索设置…</div></section>
   <section id="settings-library" class="app-settings-section" aria-label="文件数据库与 API"></section>
+  <section id="settings-sync" class="app-settings-section" aria-label="局域网同步"><div id="lan-sync-controls" class="workspace-card"></div></section>
+  <section id="settings-backup" class="app-settings-section" aria-labelledby="settings-backup-title"><div class="settings-section-heading"><h3 id="settings-backup-title">自动备份</h3><p>将现场拍摄文件夹及随行元数据一起备份，其他用户可直接添加到资产归档浏览。</p></div><div id="automatic-backup-controls" class="workspace-card"></div></section>
   <section id="settings-general" class="app-settings-section" aria-labelledby="settings-general-title"><div class="settings-section-heading"><h3 id="settings-general-title">启动与关闭</h3><p>设置关闭窗口后的行为与开机启动方式。</p></div><div class="workspace-card"><h4>关闭行为</h4><div class="workspace-fields"><label for="desktop-close-behavior">点击窗口关闭按钮时<select id="desktop-close-behavior" disabled><option value="ask">每次询问（默认）</option><option value="tray">最小化到托盘</option><option value="exit">退出程序</option></select></label></div><p class="workspace-caption">最小化到托盘后继续处理后台任务，点击托盘图标恢复窗口；托盘菜单可随时退出程序。</p></div><div class="workspace-card"><h4>开机启动</h4><div class="workspace-fields"><label for="desktop-startup-mode">登录 Windows 后<select id="desktop-startup-mode" disabled><option value="disabled">不启动（默认）</option><option value="window">自动启动并显示窗口</option><option value="tray">自动启动并静默到托盘</option></select></label></div><p class="workspace-caption">静默启动不弹出主窗口，后台任务正常运行。手动打开软件时始终显示窗口。</p></div><p id="desktop-preferences-message" class="workspace-caption" role="status">请在 Windows 桌面版中修改启动与关闭设置。</p></section>
   <section id="settings-models" class="app-settings-section" aria-labelledby="settings-models-title"><div class="settings-section-heading"><h3 id="settings-models-title">AI 与模型</h3><p>管理识别能力与模型服务连接。</p></div>
     <div id="full-auto-ocr-card" class="mouse-auto-card"><div class="mouse-auto-heading"><div><span class="mouse-auto-eyebrow">逐图识别与入库</span><h4 id="full-auto-ocr-title">全自动 OCR 模式</h4></div><input id="full-auto-ocr" class="toggle-switch" type="checkbox" role="switch" aria-labelledby="full-auto-ocr-title" aria-describedby="full-auto-ocr-help" disabled></div><p id="full-auto-ocr-help">无需导入文档，打开照片目录即可启用。</p><div class="mouse-auto-footer"><span id="full-auto-ocr-status" role="status">正在读取配置…</span></div></div>
@@ -46,8 +52,8 @@
   </section>
   <section id="settings-preview" class="app-settings-section" aria-labelledby="settings-preview-title"><div class="settings-section-heading"><h3 id="settings-preview-title">预览显示</h3><p>设置照片预览区的浮动控件。</p></div>
     <div class="workspace-card"><header><h4>视频封面</h4></header><form id="video-preview-form" class="workspace-fields"><label for="video-preview-frame">封面帧序号<input id="video-preview-frame" type="number" min="1" max="1000" step="1" value="3" required disabled aria-describedby="video-preview-help"></label><p id="video-preview-help" class="workspace-caption">默认使用第 3 帧，避开素材开头的黑屏；第 1 帧表示视频开头第一幅画面。支持 1–1000 帧，短于所选帧数时使用最后可解码帧。保存后重新打开素材列表即可更新封面，原视频保持不变。</p><button id="video-preview-save" class="bordered" type="submit" disabled>保存视频封面设置</button><p id="video-preview-status" role="status" class="workspace-caption">正在检查视频解码组件…</p><p id="video-preview-message" role="status" class="workspace-caption"></p></form></div>
-    <div class="workspace-card"><header><h4>图片缓存</h4></header><form id="preview-cache-form" class="workspace-fields"><label for="preview-cache-limit">图片缓存上限（GB）<input id="preview-cache-limit" type="number" min="1" max="256" step="1" value="10" required aria-describedby="preview-cache-help" disabled></label><p id="preview-cache-help" class="workspace-caption">可设置 1–256 GB，监控与资产归档共用总额度。添加文件夹后并行读取或生成缩略图，重启后继续复用；容量不足时淘汰最久未使用的预览。</p><button id="preview-cache-save" class="bordered" type="submit" disabled>保存缓存上限</button><p id="preview-cache-state" class="workspace-caption" role="status">正在读取缓存…</p><p id="preview-cache-message" class="workspace-caption" role="status"></p></form></div>
-    <div id="cache-storage-card" class="workspace-card"><header><h4>缓存数据库与迁移</h4></header><div class="workspace-fields"><p id="cache-storage-current" class="workspace-caption"></p><label for="cache-storage-path">缓存目标路径<input id="cache-storage-path" placeholder="选择独立的空文件夹，例如 E:\\FramekeepCache" spellcheck="false"></label><div class="asset-actions"><button id="cache-storage-browse" type="button" class="bordered">选择文件夹</button><button id="cache-storage-migrate" type="button" class="bordered">迁移缓存并切换路径</button><button id="cache-storage-clean" type="button" class="bordered" disabled>清理旧位置图片缓存</button></div><p class="workspace-caption">先复制并校验数据库与图片，成功后切换，重启保持；原位置保留恢复副本。建议使用本机高速 SSD，目标须为空且与照片、软件资料目录独立。确认迁移结果后可清理旧位置已登记的缓存图片；评级数据库、原照片与未知文件保留。</p><label for="cache-backup-folder">备份保存文件夹<input id="cache-backup-folder" placeholder="备份磁盘中的已有文件夹" spellcheck="false"></label><div class="asset-actions"><button id="cache-backup-browse" type="button" class="bordered">选择备份文件夹</button><button id="cache-backup-export" type="button" class="bordered">导出缓存数据库与图片</button></div><label for="cache-backup-file">缓存备份文件<input id="cache-backup-file" placeholder="末帧图片缓存-日期.framekeep-cache.zip" spellcheck="false"></label><div class="asset-actions"><button id="cache-backup-pick" type="button" class="bordered">选择备份文件</button><button id="cache-backup-import" type="button" class="bordered">导入并合并缓存</button><button id="cache-storage-prepare" type="button" class="bordered">补齐已有缓存的迁移指纹</button></div><p class="workspace-caption">换机时先导入缓存备份，再添加资产归档；也可先添加归档再导入缓存。按完整文件内容 SHA-256 匹配，不依赖盘符、目录或文件名；首次匹配需要读取文件内容，无需重新解码已匹配的预览。备份包含缩略图、预览及数据库清单，不包含原照片、评级、模型或密钥；业务元数据请在“数据库管理”另行备份。</p><p class="workspace-caption">文件规范：previews / catalog_previews 分类保存，64 位哈希文件名，数据库登记生成参数与 SHA-256；容量由总额度统一管理，未知文件不会自动删除。</p><p id="cache-storage-status" class="workspace-caption" role="status"></p></div></div>
+    <div class="workspace-card"><header><h4>图片缓存</h4></header><form id="preview-cache-form" class="workspace-fields"><label class="table-lines-switch" for="preview-cache-enabled"><span>启用后台缓存解码</span><input id="preview-cache-enabled" class="toggle-switch" type="checkbox" role="switch" aria-describedby="preview-cache-enabled-help" disabled></label><p id="preview-cache-enabled-help" class="workspace-caption">关闭后不再读取 NAS 生成新缓存，已缓存的缩略图和预览仍可正常使用；重新开启后才恢复待解码队列。</p><label for="preview-cache-limit">图片缓存上限（GB）<input id="preview-cache-limit" type="number" min="1" max="256" step="1" value="10" required aria-describedby="preview-cache-help" disabled></label><p id="preview-cache-help" class="workspace-caption">可设置 1–256 GB，监控与资产归档共用总额度。添加文件夹后并行读取或生成缩略图，重启后继续复用；容量不足时淘汰最久未使用的预览。</p><button id="preview-cache-save" class="bordered" type="submit" disabled>保存缓存上限</button><p id="preview-cache-state" class="workspace-caption" role="status">正在读取缓存…</p><p id="preview-cache-message" class="workspace-caption" role="status"></p></form></div>
+    <div id="cache-storage-card" class="workspace-card"><header><h4>缓存数据库与迁移</h4></header><div class="workspace-fields"><p id="cache-storage-current" class="workspace-caption"></p><label for="cache-storage-path">缓存目标路径<input id="cache-storage-path" placeholder="选择独立的空文件夹，例如 E:\\SHIYINGCache" spellcheck="false"></label><div class="asset-actions"><button id="cache-storage-browse" type="button" class="bordered">选择文件夹</button><button id="cache-storage-migrate" type="button" class="bordered">迁移缓存并切换路径</button><button id="cache-storage-clean" type="button" class="bordered" disabled>清理旧位置图片缓存</button></div><progress id="cache-storage-progress" max="100" value="0" hidden aria-label="缩略图缓存迁移进度"></progress><p class="workspace-caption">先复制并校验数据库与图片，成功后切换，重启保持；原位置保留恢复副本。建议使用本机高速 SSD，目标须为空且与照片、软件资料目录独立。确认迁移结果后可清理旧位置已登记的缓存图片；评级数据库、原照片与未知文件保留。</p><label for="cache-backup-folder">备份保存文件夹<input id="cache-backup-folder" placeholder="备份磁盘中的已有文件夹" spellcheck="false"></label><div class="asset-actions"><button id="cache-backup-browse" type="button" class="bordered">选择备份文件夹</button><button id="cache-backup-export" type="button" class="bordered">导出缓存备份</button></div><label for="cache-backup-file">缓存备份文件<input id="cache-backup-file" placeholder="SHIYING 图片缓存-日期.framekeep-cache.zip" spellcheck="false"></label><div class="asset-actions"><button id="cache-backup-pick" type="button" class="bordered">选择备份文件</button><button id="cache-backup-import" type="button" class="bordered">导入并合并缓存</button><button id="cache-storage-prepare" type="button" class="bordered">补齐已有缓存的迁移指纹</button></div><p id="cache-storage-status" class="workspace-caption" role="status"></p></div></div>
     <div class="workspace-card"><div class="workspace-fields"><label for="preview-rating-position">星标位置<select id="preview-rating-position" aria-describedby="preview-rating-position-help"><option value="bottom-left">左下角（默认）</option><option value="top-left">左上角</option><option value="top-right">右上角</option><option value="bottom-right">右下角</option><option value="hidden">隐藏</option></select></label><p id="preview-rating-position-help" class="workspace-caption">调整大预览区星级控件的位置，立即生效并记忆。与缩放滑杆靠近时自动避让；隐藏后仍可用数字键标星。</p><label for="preview-rating-transparency">星标透明度<span class="preview-transparency-control"><input id="preview-rating-transparency" type="range" min="0" max="100" step="1" value="0" aria-describedby="preview-transparency-help"><output id="preview-rating-transparency-value" for="preview-rating-transparency">0%</output></span></label></div></div>
     <div class="workspace-card"><div class="workspace-fields"><label for="preview-zoom-position">缩放滑杆显示位置<select id="preview-zoom-position" aria-describedby="preview-zoom-position-help"><option value="hidden">隐藏（默认）</option><option value="top-left">左上角</option><option value="top-right">右上角</option><option value="bottom-left">左下角</option><option value="bottom-right">右下角</option></select></label><p id="preview-zoom-position-help" class="workspace-caption">选择位置后，移入照片预览区时显示。隐藏滑杆后仍可用滚轮缩放大图。</p><label for="preview-zoom-transparency">缩放滑杆透明度<span class="preview-transparency-control"><input id="preview-zoom-transparency" type="range" min="0" max="100" step="1" value="0" aria-describedby="preview-transparency-help"><output id="preview-zoom-transparency-value" for="preview-zoom-transparency">0%</output></span></label></div></div>
     <div class="workspace-card"><div class="workspace-fields"><label for="preview-histogram-position">直方图位置<select id="preview-histogram-position" aria-describedby="preview-histogram-position-help"><option value="bottom-right">右下角（默认）</option><option value="top-left">左上角</option><option value="top-right">右上角</option><option value="bottom-left">左下角</option><option value="hidden">隐藏</option></select></label><p id="preview-histogram-position-help" class="workspace-caption">选择直方图的位置，与星标、缩放滑杆及解析提示靠近时自动避让；设置立即生效并自动保存。</p><label for="preview-histogram-transparency">直方图透明度<span class="preview-transparency-control"><input id="preview-histogram-transparency" type="range" min="0" max="100" step="1" value="0" aria-describedby="preview-transparency-help"><output id="preview-histogram-transparency-value" for="preview-histogram-transparency">0%</output></span></label></div></div>
@@ -134,11 +140,39 @@
   }
   function paintCache(state){
     if(!cacheLoaded){$('preview-cache-limit').value=String(state.limit_gb);cacheLoaded=true}
-    $('preview-cache-state').textContent=`已用 ${(state.bytes/1024**3).toFixed(2)} / ${state.limit_gb} GB · ${state.images} 份预览 · 待生成 ${state.pending}${state.failed?' · 失败 '+state.failed:''}`;
+    $('preview-cache-enabled').checked=state.decode_enabled!==false;$('preview-cache-enabled').disabled=cacheSaving||state.job?.status==='running';
+    $('preview-cache-state').textContent=`${state.decode_enabled===false?'后台解码已关闭':'后台解码已启用'} · 已用 ${(state.bytes/1024**3).toFixed(2)} / ${state.limit_gb} GB · ${state.images} 份预览 · 待生成 ${state.pending}${state.failed?' · 失败 '+state.failed:''}`;
     if($('split-preview-cache-state'))$('split-preview-cache-state').textContent=`当前缓存：${state.images.toLocaleString('zh-CN')} 份图片 · 占用空间：${cacheBytes(state.bytes)}`;
     $('preview-cache-limit').disabled=cacheSaving;$('preview-cache-save').disabled=cacheSaving;
     paintCacheStorage(state);
   }
+  const thumbnailCard=document.createElement('div');thumbnailCard.className='workspace-card';
+  thumbnailCard.innerHTML='<header><h4>图片预览</h4></header><p id="direct-preview-mode" class="workspace-caption">文件直读 · 缩略图优先读取文件内嵌图，清晰预览按需读取源文件。</p>';
+  $('preview-cache-form').closest('.workspace-card').before(thumbnailCard);
+  $('preview-cache-form').closest('.workspace-card').hidden=true;$('cache-storage-card').hidden=true;
+  const repairCard=document.createElement('div');repairCard.id='preview-repair-card';repairCard.className='workspace-card';
+  repairCard.innerHTML='<header><h4>补齐历史设计文件缩略图</h4></header><p class="workspace-caption">检查 PSD / PSB，复用已有预览，只为缺失或损坏的缩略图排队重建。原文件保持不变；首次启动自动检查一次。</p><button id="preview-repair-missing" type="button" class="bordered">重新解码缺失缩略图</button><p id="preview-repair-status" class="workspace-caption" role="status"></p>';
+  $('settings-preview').append(repairCard);repairCard.hidden=true;
+  let repairStarting=false,repairLoading=false,repairTracking=false,repairLastJob='';
+  function paintDesignRepair(job){
+    repairTracking=job.status==='running';$('preview-repair-missing').disabled=repairStarting||repairTracking;
+    if(job.status==='failed')$('preview-repair-status').textContent='检查未完成：'+job.error;
+    else if(job.status==='running')$('preview-repair-status').textContent=`正在检查 PSD / PSB：已检查 ${job.checked} 项，缺失 ${job.queued} 项…`;
+    else if(job.status==='completed'){
+      $('preview-repair-status').textContent=`已检查 ${job.checked} 项，复用 ${job.cached} 项，${job.queued?'已将 '+job.queued+' 项缺失缩略图加入重建队列':'没有缺失缩略图'}。${job.paused?'当前解码已暂停，继续解码后构建。':'已刷新设计文件缩略图显示。'}`;
+      if(job.id&&job.id!==repairLastJob){repairLastJob=job.id;if(window.FramekeepDesignPreviews)FramekeepDesignPreviews.revision=job.id;document.dispatchEvent(new CustomEvent('framekeep:design-previews-repaired'))}
+    }
+  }
+  async function loadDesignRepair(){
+    if(repairLoading||repairStarting)return;repairLoading=true;
+    try{paintDesignRepair(await api('/api/catalog/thumbnails/repair'))}catch{}finally{repairLoading=false}
+  }
+  $('preview-repair-missing').onclick=async()=>{
+    if(repairStarting||repairTracking)return;repairStarting=true;$('preview-repair-missing').disabled=true;$('preview-repair-status').textContent='正在检查缺失的 PSD / PSB 缩略图…';
+    try{const job=await api('/api/catalog/thumbnails/repair',{});repairStarting=false;paintDesignRepair(job)}
+    catch(error){$('preview-repair-status').textContent='无法启动检查：'+error.message}
+    finally{repairStarting=false;$('preview-repair-missing').disabled=repairTracking;loadDesignRepair()}
+  };
   let storageStarting=false,storageLastJob='',storageTracking=false;
   function paintCacheStorage(state){
     $('cache-storage-current').textContent=state.path?`当前缓存位置：${state.path} · 已登记迁移指纹 ${state.portable_images||0} 份预览${state.warning?' · '+state.warning:''}`:'当前服务未启用缓存迁移';
@@ -146,13 +180,16 @@
     $('preview-cache-limit').disabled=busy||cacheSaving;$('preview-cache-save').disabled=busy||cacheSaving;
     if(job.action==='resize'&&job.status==='completed'&&!cacheSaving)$('preview-cache-limit').value=String(state.limit_gb);
     storageTracking=job.status==='running';
+    const progress=$('cache-storage-progress'),percent=Number(job.percent);
+    progress.hidden=job.action!=='migrate'||!['running','completed'].includes(job.status);if(!progress.hidden)progress.value=Number.isFinite(percent)?percent:0;
     for(const element of $('cache-storage-card').querySelectorAll('button,input'))element.disabled=busy||!state.path;
     $('cache-storage-clean').disabled=busy||!state.previous_path;
     if(job.id){
       const detail=job.file?` · 备份：${job.file}`:job.path?` · 新位置：${job.path}`:'';
-      const counts=job.imported!==undefined?` · 已合并 ${job.imported}，内容复用 ${job.reused||0}，容量跳过 ${job.skipped||0}，文件冲突 ${job.conflicts||0}`:job.done?` · ${job.done}${job.total?' / '+job.total:''}`:'';
+      const bytes=value=>value===undefined?'':value>=1024**3?(value/1024**3).toFixed(2)+' GB':(value/1024**2).toFixed(1)+' MB';
+      const counts=job.imported!==undefined?` · 已合并 ${job.imported}，内容复用 ${job.reused||0}，容量跳过 ${job.skipped||0}，文件冲突 ${job.conflicts||0}`:job.done!==undefined?` · ${job.done} / ${job.total||'?'} 项${job.copied_bytes!==undefined?' · '+bytes(job.copied_bytes)+' / '+bytes(job.total_bytes||0):''}${Number.isFinite(percent)?' · '+percent+'%':''}`:'';
       $('cache-storage-status').textContent=(job.status==='failed'?'操作未完成：':'')+job.message+counts+detail+(job.unavailable?` · ${job.unavailable} 份缓存原图不可校验，已保留原缓存`: '');
-      if(job.status==='completed'&&job.id!==storageLastJob){storageLastJob=job.id;document.dispatchEvent(new CustomEvent('framekeep:cache-imported'))}
+      if(job.status==='completed'&&job.id!==storageLastJob){storageLastJob=job.id;if(['import','migrate'].includes(job.action))document.dispatchEvent(new CustomEvent('framekeep:cache-imported'))}
     }
   }
   async function cacheOperation(action,path=''){
@@ -172,14 +209,12 @@
   $('cache-backup-import').onclick=()=>cacheOperation('import',$('cache-backup-file').value);
   $('cache-storage-prepare').onclick=()=>cacheOperation('prepare');
   $('cache-storage-clean').onclick=()=>cacheOperation('clean_previous');
+  document.addEventListener('framekeep:open-cache-migration',()=>{
+    $('app-settings-open').click();document.querySelector('[data-settings-section="preview"]')?.click();setTimeout(()=>$('cache-storage-path').focus(),0);
+  });
   async function loadCache(){
-    if(cacheSaving||cacheLoading)return;cacheLoading=true;
-    try{const state=await api('/api/preview-cache');if(!cacheSaving)paintCache(state);
-      if(Date.now()-gpuChecked>5000){gpuChecked=Date.now();loadGpuStatus()}
-      if(Date.now()-discoveryChecked>15000){discoveryChecked=Date.now();api('/api/search/status').then(s=>{discoveryStatus.textContent=s.available?`Everything ${s.version} 已自动连接 · 新增文件夹优先加载索引候选，再扫描补齐`:`目录扫描模式 · ${s.message||'Everything 暂不可用'}；检测到可用索引后自动加速`}).catch(()=>{discoveryStatus.textContent='目录扫描模式 · 正常读取照片与已保存缓存'})}
-    }
-    catch(error){$('preview-cache-message').textContent='读取缓存失败：'+error.message;if($('split-preview-cache-state'))$('split-preview-cache-state').textContent='读取缓存失败：'+error.message}
-    finally{cacheLoading=false}
+    if($('split-preview-cache-state'))$('split-preview-cache-state').textContent='文件直读 · 图片按需加载';
+    if(Date.now()-gpuChecked>5000){gpuChecked=Date.now();loadGpuStatus()}
   }
   $('preview-cache-form').addEventListener('submit',async event=>{
     event.preventDefault();const input=$('preview-cache-limit');if(cacheSaving||!input.reportValidity())return;
@@ -188,14 +223,22 @@
     catch(error){$('preview-cache-message').textContent='保存失败：'+error.message}
     finally{cacheSaving=false;input.disabled=false;$('preview-cache-save').disabled=false;loadCache()}
   });
+  $('preview-cache-enabled').onchange=async event=>{
+    const enabled=event.target.checked;event.target.disabled=true;$('preview-cache-message').textContent=enabled?'正在恢复后台缓存解码…':'正在停止后台缓存解码…';
+    try{await api('/api/catalog/decode',{action:enabled?'resume':'pause'});await loadCache();$('preview-cache-message').textContent=enabled?'后台缓存解码已开启':'后台缓存解码已关闭，现有缓存仍可正常使用'}
+    catch(error){event.target.checked=!enabled;$('preview-cache-message').textContent='切换失败：'+error.message}
+    finally{event.target.disabled=false}
+  };
   document.addEventListener('framekeep:cache-imported',()=>{
     for(const image of document.querySelectorAll('img[src*="/api/preview/"],img[src*="/api/catalog/preview/"]')){
-      if(image.naturalWidth)continue;const url=new URL(image.src,location.href);url.searchParams.set('cache_revision',String(Date.now()));image.src=url.href;
+      if(!image.complete||image.naturalWidth)continue;const url=new URL(image.src,location.href);url.searchParams.set('cache_revision',String(Date.now()));
+      if(window.FramekeepAssetLoading?.retry(image,url.href))continue;
+      image.src=url.href;
     }
   });
   document.querySelector('[data-settings-section="library"]').addEventListener('click',loadCache);
   document.addEventListener('framekeep:workspace',()=>{if(FramekeepWorkspace.current()==='settings')loadCache()});
-  const cacheTimer=setInterval(()=>{if(!document.hidden&&(storageTracking||!settings.classList.contains('hidden')&&(!$('settings-preview').hidden||!$('settings-library').hidden)))loadCache()},2000);
+  const cacheTimer=setInterval(()=>{if(!document.hidden&&(storageTracking||repairTracking||!settings.classList.contains('hidden')&&(!$('settings-preview').hidden||!$('settings-library').hidden)))loadCache()},2000);
   window.addEventListener('pagehide',()=>clearInterval(cacheTimer),{once:true});loadCache();
   const tableDisplayKey='framekeep-table-display-v1',tableLines=$('table-lines-visible'),tableTransparency=$('table-lines-transparency');
   function applyTableDisplay(value){
@@ -215,7 +258,7 @@
   function paintFullAuto(state){
     fullAutoState=state;const bound=state.session_id===FRAMEKEEP_SESSION.id,busy=window.FramekeepSku?.isBusy();
     for(const id of ['full-auto-ocr','shooting-full-auto']){$(id).checked=fullAutoSaving?fullAutoDesired:state.enabled===true;$(id).disabled=fullAutoSaving||busy||(!state.can_enable||!bound)&&!state.enabled}
-    for(const id of ['sku-import','shooting-import','sku-projects','sku-live-scope','sku-panel-scope','sku-bind-current','sku-auto'])$(id).disabled=fullAutoSaving||busy||(id==='sku-auto'&&!state.project_id);
+    for(const id of ['sku-import','shooting-import','sku-projects','sku-live-scope','sku-panel-scope','sku-bind-current'])$(id).disabled=fullAutoSaving||busy;
     $('full-auto-ocr-card').classList.toggle('is-enabled',state.enabled===true);
     $('shooting-automation').classList.toggle('is-enabled',state.enabled===true);
     $('full-auto-ocr-help').textContent=state.reason||(!bound?'请先打开当前照片目录。':`${state.model_message?state.model_message+'。':''}${state.document} · ${state.scope}。${state.requires_sku_choice||state.without_document?"逐张保存 OCR 资料，无需导入文档；公司前后缀规则唯一命中自动应用，其他款号保留选择，辅助文字可搜索。":"逐张扫描已有和后续图片，精确或唯一高相似度匹配后自动入库；候选冲突和已有归属保留复核，照片星级保持。"}`);
@@ -279,6 +322,12 @@
     metadataMessage('元数据已导出：'+output.name);
   });
   $('sku-metadata-import').onclick=()=>{if(!metadataBusy)$('sku-metadata-file').click()};
+  const importMode=document.createElement('label');importMode.className='workspace-inline';importMode.innerHTML='导入方式<select id="sku-metadata-import-mode" aria-label="数据库导入方式"><option value="merge" selected>合并数据库（默认）</option><option value="replace">替换数据库</option></select>';
+  $('sku-metadata-import').parentElement.before(importMode);
+  const importHelp=document.createElement('p');importHelp.className='workspace-caption';importHelp.id='sku-metadata-import-help';importMode.after(importHelp);
+  function paintImportMode(){importHelp.textContent=$('sku-metadata-import-mode').value==='replace'?'以备份替换业务资料；原照片、模型和本机设置保留。导入后重新加载工作台。':'保留本机资料并合并其他设备的新增内容，相同记录跳过；同编号内容冲突时保留本机并报告。';}
+  $('sku-metadata-import-mode').onchange=paintImportMode;paintImportMode();
+  try{const last=sessionStorage.getItem('framekeep-database-import-result');if(last){metadataMessage(last);sessionStorage.removeItem('framekeep-database-import-result')}}catch{}
   $('sku-metadata-file').onchange=event=>{
     const file=event.target.files[0];event.target.value='';if(!file)return;
     metadataAction(async()=>{
@@ -286,11 +335,13 @@
       if(file.size>200000000)throw new Error('元数据文件不能超过 200 MB');
       metadataMessage('正在校验并导入元数据…');
       const content=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result.split(',')[1]);reader.onerror=()=>reject(new Error('无法读取元数据文件'));reader.readAsDataURL(file)});
-      const result=await api('/api/sku/metadata/import',{content_base64:content},120000);
-      metadataMessage(result.already_imported?'该备份已经导入，无需重复添加':`元数据导入完成：新增 ${result.records} 条记录、${result.projects} 份拍摄文档。可打开 SKU 数据库查看。`);
-      if(result.sync){paintMetadataSync(result.sync);metadataMessage(result.already_imported?'数据库已加载，继续核对本机归档同步':'数据库导入完成，已开始自动同步本机资产归档')}
+      const mode=$('sku-metadata-import-mode').value,result=await api('/api/sku/metadata/import',{content_base64:content,mode},120000);
+      const text=result.already_imported?'该备份已经导入，无需重复添加':`数据库${mode==='replace'?'替换':'合并'}导入完成：新增 ${result.records} 条，跳过 ${result.skipped||0} 条${result.conflicts?'，'+result.conflicts+' 项内容冲突保留本机':''}。`;
+      metadataMessage(text);
+      if(result.sync)paintMetadataSync(result.sync);
       FramekeepIO.refreshFolders().catch(()=>{});window.FramekeepSkuLibrary?.refresh().catch(()=>{});
       document.dispatchEvent(new CustomEvent('framekeep:metadata-imported'));
+      if(mode==='replace'){try{sessionStorage.setItem('framekeep-database-import-result',text)}catch{}window.location.reload()}
     });
   };
   const settingsCategoryKey='framekeep-settings-category-v1';
@@ -325,12 +376,11 @@
   let settingsReturn='selection';
   document.addEventListener('framekeep:workspace',event=>{if(event.detail.page!=='settings')settingsReturn=event.detail.page});
   function settingsContext(){const type=window.FramekeepSku?.currentType()||'尚未选择';$('settings-current-context').textContent=`当前拍摄：${type} · 所选 ${selection().length} 张\n${FRAMEKEEP_SESSION.root||'尚未打开照片目录'}`}
-  function syncShootingTypes(){previewId=null;if(preview.open)preview.close();settingsContext()}
+  function syncShootingTypes(){settingsContext()}
   document.addEventListener('framekeep:sku-project',syncShootingTypes);
   document.addEventListener('framekeep:shooting-type',syncShootingTypes);
   $('app-settings-close').onclick=()=>FramekeepWorkspace.show(settingsReturn);
   $('settings-current-shooting').onclick=()=>{FramekeepWorkspace.show('selection');window.FramekeepSidebar?.show('shooting')};
-  const preview=document.createElement('dialog');preview.id='asset-preview-dialog';preview.setAttribute('aria-labelledby','asset-write-title');preview.innerHTML='<div class="dialog-heading"><h2 id="asset-write-title">修改整款 SKU 元数据</h2><button data-close aria-label="关闭编辑">×</button></div><p class="dialog-copy">可直接修改款号，更新后写入下方整款图片的 RAW / JPG，无需再次确认。</p><label class="field-label" for="asset-group-sku">SKU 款号</label><input id="asset-group-sku" maxlength="80" autocomplete="off" placeholder="输入正确的 SKU 款号"><div id="asset-preview-content"></div><p id="asset-group-message" class="dialog-copy" role="status"></p><div class="dialog-actions"><button data-close>取消</button><button id="asset-apply" class="primary">更新整款元数据</button></div>';document.body.append(preview);let groupEdit=null,groupWriting=false;
   const archiveTab=document.createElement('button');archiveTab.id='asset-archive-open';archiveTab.textContent='资产归档';archiveTab.setAttribute('role','tab');archiveTab.setAttribute('aria-selected','false');archiveTab.setAttribute('aria-controls','asset-archive-dialog');archiveTab.tabIndex=-1;document.querySelector('.workspace-tabs').append(archiveTab);
   const archive=document.createElement('section');archive.id='asset-archive-dialog';archive.className='asset-workspace hidden';archive.setAttribute('role','tabpanel');archive.setAttribute('aria-labelledby',archiveTab.id);
   archive.innerHTML=`<div class="asset-workspace-heading"><div><h2>资产归档</h2><p>按款号整理拍摄资产，追踪文件位置与元数据写入。</p></div><button id="archive-export" class="bordered">导出当前页 JSON</button></div>
@@ -352,11 +402,11 @@
     $('archive-inspector').hidden=false;$('archive-detail').textContent=JSON.stringify(data,null,2);
     $('archive-detail-summary').innerHTML=data.sku!==undefined?`<strong>${esc(data.sku||'待备案')}</strong><p>${esc(data.scope||'未填写类型')} · ${esc(statusName(data.role))}</p>${(data.files||[]).map(f=>`<p>${esc(f.path)}<br><small>${esc(f.component)}</small></p>`).join('')}`:`<strong>${esc(statusName(data.operation?.status||data.status||''))}</strong><p>${(data.jobs||[]).length} 个文件任务</p>${(data.jobs||[]).map(j=>`<p>${esc(statusName(j.status))} · ${esc(j.path)}${j.reason?'<br>'+esc(j.reason):''}</p>`).join('')}`;
   }
-  let selected=[],anchor=null,lastFocus=null,lastContext='',previewId=null,operation=null,stream=null,busy=false,queryRows=[];
+  let selected=[],anchor=null,lastFocus=null,lastContext='',operation=null,stream=null,busy=false,queryRows=[];
   let skuEdited=false,selectionRead='',archiveVersion='',readSequence=0,skuEditVersion=0,parsing=false,ocrContext='',ocrSnapshot=null,ocrApplying=false;
   let reviewKey='',reviewRequest=null;
   let manualSkuDraft=false,settingSku=false,confirming=false,manualGeneration=0,activeParseFeedback=null,activeParseController=null;
-  $('asset-sku').addEventListener('input',()=>{skuEdited=true;skuEditVersion++;previewId=null;if(!settingSku)manualSkuDraft=true;paint()});
+  $('asset-sku').addEventListener('input',()=>{skuEdited=true;skuEditVersion++;if(!settingSku)manualSkuDraft=true;paint()});
   syncShootingTypes();
   let cursors=[''],pageIndex=0,nextCursor='',fileOffset=0,fileText='';
   function resetPage(){cursors=[''];pageIndex=0;nextCursor=''}
@@ -371,12 +421,12 @@
     button.disabled=confirming||!current()||(!draft&&(parsing||Framekeep.remoteTarget().paused));
     button.textContent=confirming?'确定中…':draft?'确定':parsing?'OCR 解析中…':'OCR 解析当前图';
     button.dataset.action=draft?'confirm':'ocr';
-    button.title=draft?'将输入的款号应用到当前 SKU 区间全部图片':'使用已选 OCR 模型读取当前图，不要求二星';
+    button.title=draft?'将输入文本作为 SKU 写入当前整款图片，无需 OCR 解析':'使用已选 OCR 模型读取当前图，不要求二星';
   }
   function changed(){
     const context=JSON.stringify(Framekeep.browseContext()),focus=current();
-    if(context!==lastContext){selected=focus?[focus]:[];anchor=focus;lastContext=context;previewId=null;resetSelection()}
-    else if(lastFocus!==focus){selected=focus?[focus]:[];anchor=focus;previewId=null;resetSelection()}
+    if(context!==lastContext){selected=focus?[focus]:[];anchor=focus;lastContext=context;resetSelection()}
+    else if(lastFocus!==focus){selected=focus?[focus]:[];anchor=focus;resetSelection()}
     lastFocus=focus;paint();
   }
   $('selection-page').addEventListener('click',event=>{
@@ -387,7 +437,7 @@
       const a=order.indexOf(anchor),b=order.indexOf(target);selected=order.slice(Math.min(a,b),Math.max(a,b)+1);
     }else if(event.ctrlKey||event.metaKey){selected=selection().includes(target)?selection().filter(x=>x!==target):[...selection(),target];anchor=target}
     else {selected=[target];anchor=target}
-    lastFocus=target;previewId=null;resetSelection();
+    lastFocus=target;resetSelection();
   },true);
   document.addEventListener('framekeep:selection',changed);changed();
   window.FramekeepAssets={selection:()=>selection().slice(),resolve:async()=>{
@@ -397,7 +447,7 @@
   function resetSelection(){
     reviewKey='';reviewRequest?.controller.abort();reviewRequest=null;
     manualSkuDraft=false;manualGeneration++;skuEdited=false;selectionRead='';readSequence++;skuEditVersion++;$('asset-sku').value='';ocrContext='';ocrSnapshot=null;$('asset-ocr-result').hidden=true;$('asset-ocr-codes').replaceChildren();$('asset-ocr-text').textContent='';
-    $('asset-sku').placeholder='输入后点击确定，更新当前整款 SKU';
+    $('asset-sku').placeholder='输入任意文本，按 Enter 或点击确定';
   }
   async function fillSelection(force=false){
     const key=JSON.stringify([FRAMEKEEP_SESSION.id,selection(),archiveVersion]);
@@ -406,9 +456,9 @@
     if(request!==readSequence||key!==JSON.stringify([FRAMEKEEP_SESSION.id,selection(),archiveVersion])||(!force&&skuEdited))return;
     const skus=[...new Set(assets.map(a=>a.sku))],scopes=[...new Set(assets.map(a=>a.scope))];
     $('asset-sku').value=skus.length===1?skus[0]:'';
-    $('asset-sku').placeholder=skus.length>1?'所选款号不同，输入后可批量修改':'输入后点击确定，更新当前整款 SKU';
+    $('asset-sku').placeholder=skus.length>1?'所选款号不同，输入任意文本批量修改':'输入任意文本，按 Enter 或点击确定';
     if(force)msg(`所选 ${assets.length} 张：SKU ${skus.length===1?(skus[0]||'未备案'):'混合值'}；类型 ${scopes.length===1?(scopes[0]||'未填写'):'混合值'}`);
-    skuEdited=false;selectionRead=key;previewId=null;
+    skuEdited=false;selectionRead=key;
   }
   $('asset-read').onclick=()=>act(()=>fillSelection(true));
   const parseContext=()=>JSON.stringify([FRAMEKEEP_SESSION.id,current(),selection()]);
@@ -523,30 +573,8 @@
   }
   $('asset-parse-sku').onclick=()=>manualSkuDraft&&$('asset-sku').value.trim()?confirmManualSku():parseSku();
   $('asset-sku').addEventListener('keydown',event=>{if(event.key==='Enter'&&!event.isComposing&&manualSkuDraft&&$('asset-sku').value.trim()){event.preventDefault();confirmManualSku()}});
-  $('asset-preview').onclick=()=>act(async()=>{
-    const source=window.FramekeepSku?.shootingTypes(),scope=window.FramekeepSku?.currentType();
-    const context=()=>JSON.stringify([FRAMEKEEP_SESSION.id,selection(),FramekeepSku.currentType(),FramekeepSku.shootingTypes()?.project_id,$('asset-sku').value.trim(),$('asset-mode').value,$('asset-overwrite').checked]),before=context();
-    const data=await api('/api/metadata/group/preview',{session_id:FRAMEKEEP_SESSION.id,capture_id:current(),capture_ids:selection(),sku:$('asset-sku').value.trim(),scope,project:source?.project_id||''});
-    if(before!==context())throw new Error('当前拍摄或所选照片已变化，请重新打开编辑');groupEdit=data;previewId=data.preview_id;$('asset-group-sku').value=data.sku;$('asset-group-message').textContent='';
-    $('asset-preview-content').innerHTML=`<p>类型：${esc(data.scope)} · ${data.targets.length} 张 / ${data.targets.reduce((n,t)=>n+t.files.length,0)} 个文件</p><div class="sku-table-wrap"><table><thead><tr><th>资产</th><th>原归属</th><th>处理</th><th>写入文件</th></tr></thead><tbody>${data.targets.map(t=>`<tr><td>${esc(t.files[0]?.path.split(/[\\/]/).at(-1)||t.id)}</td><td>${esc(t.before.sku||'未备案')} / ${esc(t.before.scope)}</td><td>${t.apply?'将备案':'冲突，跳过'}</td><td>${t.files.map(f=>`<div>${esc(f.path.split(/[\\/]/).at(-1))} · ${f.capability==='embedded'?'文件内部元数据':f.capability==='sidecar'?'XMP 侧车档案':'此格式暂不支持'}${f.online?'':' · 离线'}</div>`).join('')}</td></tr>`).join('')}</tbody></table></div><p>RAW 的 SKU 与备案字段保存到同名 XMP 小档案，JPG 更新文件元数据；保留原有星级和图像数据。撤销只记录字段，不长期复制整张照片。离线文件会单独记录失败。</p>`;
-    const summary=document.createElement('p');summary.className='dialog-copy';summary.textContent=data.group.kind==='interval'?`已定位完整拍摄区间，共 ${data.targets.length} 张，包含款末标签；修改将应用到整款。`:`尚无款末区间，本次使用手动选择的 ${data.targets.length} 张照片。`;$('asset-preview-content').prepend(summary);
-    $('asset-write-title').textContent=data.group.kind==='interval'?'修改整款 SKU 元数据':'修改所选 SKU 元数据';$('asset-apply').textContent=data.group.kind==='interval'?'更新整款元数据':'更新所选元数据';
-    $('asset-apply').disabled=!data.targets.length;preview.showModal();
-  });
-  $('asset-apply').onclick=async()=>{
-    if(groupWriting||!groupEdit)return;const edit=groupEdit,code=$('asset-group-sku').value.trim();groupWriting=true;$('asset-apply').disabled=true;$('asset-group-sku').disabled=true;$('asset-group-message').textContent='正在更新整款 SKU 并提交元数据写入…';
-    try{
-      if(edit.group.session_id!==FRAMEKEEP_SESSION.id||edit.group.capture_id!==current())throw new Error('当前照片已变化，请重新打开编辑');
-      const result=await api('/api/metadata/group/apply',{preview_id:edit.preview_id,sku:code});operation=result.operation.id;
-      document.dispatchEvent(new CustomEvent('framekeep:ocr-choice',{detail:result}));document.dispatchEvent(new CustomEvent('framekeep:ocr-result',{detail:result}));
-      if(edit.group.session_id===FRAMEKEEP_SESSION.id&&edit.group.capture_id===current())useOcrCode(result.sku);
-      preview.close();groupEdit=null;previewId=null;skuEdited=false;selectionRead='';msg(`已更新 SKU ${result.sku}，${result.capture_count} 张照片的 RAW / JPG 元数据写入已排队`);
-    }catch(error){$('asset-group-message').textContent=error.message;msg(error.message)}
-    finally{groupWriting=false;$('asset-apply').disabled=false;$('asset-group-sku').disabled=false}
-  };
-  preview.addEventListener('cancel',event=>{if(groupWriting)event.preventDefault()});
   $('asset-start').onclick=()=>act(async()=>{const s=await api('/api/archive/start',{session_id:FRAMEKEEP_SESSION.id,mode:$('asset-mode').value});stream=s.streams.find(s=>s.state==='active'&&s.session===FRAMEKEEP_SESSION.id);msg('已接续未归组照片，等待款末标签')});
-  $('asset-mode').onchange=()=>act(async()=>{previewId=null;if(stream)await api('/api/archive/configure',{stream_id:stream.id,mode:$('asset-mode').value})});
+  $('asset-mode').onchange=()=>act(async()=>{if(stream)await api('/api/archive/configure',{stream_id:stream.id,mode:$('asset-mode').value})});
   $('asset-close-stream').onclick=()=>act(async()=>{const sid=FRAMEKEEP_SESSION.id,sku=$('asset-stream-sku').value.trim()||$('asset-sku').value.trim();await history();if(sid!==FRAMEKEEP_SESSION.id)throw new Error('当前目录已变化，请重新操作');if(!stream)throw new Error('请先开始拍摄段');await api('/api/archive/close',{stream_id:stream.id,sku});msg('当前未结束图片已封口，请在归档库查看区间')});
   async function search(){const data=await api('/api/assets/search?'+new URLSearchParams({sku:$('archive-sku').value,scope:$('archive-scope').value,project:$('archive-project').value,mode:$('archive-match').value,cursor:cursors[pageIndex]}));queryRows=data.rows;$('archive-total').textContent=data.rows.length;nextCursor=data.next_cursor;$('archive-page').textContent=`第 ${pageIndex+1} 页 · ${data.rows.length} 项 · ${data.elapsed_ms} ms`;$('archive-prev').disabled=pageIndex===0;$('archive-next').disabled=!data.has_more;
     $('archive-results').innerHTML=data.rows.length?'<table><thead><tr><th>图片</th><th>SKU / 类型</th><th>位置</th><th>操作</th></tr></thead><tbody>'+data.rows.map(r=>`<tr><td>${r.preview?`<img class="archive-thumb" src="${esc(r.preview)}" loading="lazy" alt="资产缩略图">`:''}</td><td>${esc(r.sku||'待备案')}<br>${esc(r.scope)}<br><small>${esc(statusName(r.role))}</small></td><td>${r.locations.map(l=>esc(l.path)+' · '+esc(statusName(l.status))).join('<br>')}</td><td><button data-asset-detail="${r.id}">详情</button></td></tr>`).join('')+'</tbody></table>':empty('暂无匹配资产','调整检索条件，或在选片页完成 SKU 备案后查看。');
@@ -579,7 +607,6 @@
     if(b.dataset.segmentApply){await api('/api/archive/segment-apply',{segment_id:b.dataset.segmentApply});await history();await search()}
   }));
   $('archive-export').onclick=()=>{const blob=new Blob([JSON.stringify(queryRows,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='资产归档.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};
-  preview.querySelectorAll('[data-close]').forEach(button=>button.onclick=()=>{if(!groupWriting)preview.close()});
   async function poll(){
     try{if(!busy){
       await history();

@@ -2,20 +2,6 @@
   "schema": 1,
   "assets": [
     {
-      "path": "models/ocr/GLM-OCR-f16.gguf",
-      "group": "glm-ocr-local",
-      "size": 1785771648,
-      "sha256": "b06675e983db9593db78603b06f097e48c0cf078b37731c0a09612f4a249cf6f",
-      "url": "https://modelscope.cn/api/v1/models/ggml-org/GLM-OCR-GGUF/repo?Revision=3ed9f460089d7d655134c5344496a63c03a1f13f&FilePath=GLM-OCR-f16.gguf"
-    },
-    {
-      "path": "models/ocr/mmproj-GLM-OCR-Q8_0.gguf",
-      "group": "glm-ocr-local",
-      "size": 484403648,
-      "sha256": "9c4b58e33e316ed142eb5dcb41abec3844d3e6e5dc361ffb782c3fa9d175141f",
-      "url": "https://modelscope.cn/api/v1/models/ggml-org/GLM-OCR-GGUF/repo?Revision=1a7f70d594ab0236ea41c7832faa58681bb7f044&FilePath=mmproj-GLM-OCR-Q8_0.gguf"
-    },
-    {
       "path": "models/qwen/Qwen2.5-VL-7B-Instruct-Q4_K_M.gguf",
       "group": "qwen2.5-vl-7b-q4",
       "size": 4683072032,
@@ -336,6 +322,68 @@
       "size": 214156024,
       "sha256": "0625fb5c1e75be58a164e14f95aa58a3e5badb859b3d17c952385f3e4a9ff3e8",
       "url": "https://modelscope.cn/api/v1/models/jiangjiang419/framekeep-updates/repo?Revision=master&FilePath=components%2F0625fb5c1e75be58a164e14f95aa58a3e5badb859b3d17c952385f3e4a9ff3e8%2FMicrosoftEdgeWebView2RuntimeInstallerX64.exe"
+    },
+    {
+      "path": "models/paddle-ocr/PP-OCRv6_small_det/inference.onnx",
+      "group": "pp-ocrv6-small-local",
+      "size": 9880512,
+      "sha256": "d73e0058b7a8086bbd57f3d10b8bcd4ff95363f67e06e2762b5e814fe9c9410e",
+      "archive": "PP-OCRv6_small_det.tar",
+      "role": "detector"
+    },
+    {
+      "path": "models/paddle-ocr/PP-OCRv6_small_det/inference.yml",
+      "group": "pp-ocrv6-small-local",
+      "size": 885,
+      "sha256": "193f435274bf9f0b5f71a929bbfbcf148282df7e633b34e7c373e8f44741b516",
+      "archive": "PP-OCRv6_small_det.tar"
+    },
+    {
+      "path": "models/paddle-ocr/PP-OCRv6_small_rec/inference.onnx",
+      "group": "pp-ocrv6-small-local",
+      "size": 21159378,
+      "sha256": "5435fd747c9e0efe15a96d0b378d5bd157e9492ed8fd80edf08f30d02fa24634",
+      "archive": "PP-OCRv6_small_rec.tar",
+      "role": "recognizer"
+    },
+    {
+      "path": "models/paddle-ocr/PP-OCRv6_small_rec/inference.yml",
+      "group": "pp-ocrv6-small-local",
+      "size": 150579,
+      "sha256": "ab078671bb49f06228eadccd34f1bb501e157f7a047095ffb943ba81512c77d1",
+      "archive": "PP-OCRv6_small_rec.tar",
+      "role": "dictionary"
+    },
+    {
+      "path": "models/paddle-ocr/PP-OCRv6_medium_rec/inference.onnx",
+      "group": "pp-ocrv6-medium-local",
+      "size": 76554979,
+      "sha256": "9c09abf0957f7968c7586464b7397b84ad2387a0497a351af40e9acc71b673ba",
+      "archive": "PP-OCRv6_medium_rec.tar",
+      "role": "recognizer"
+    },
+    {
+      "path": "models/paddle-ocr/PP-OCRv6_medium_rec/inference.yml",
+      "group": "pp-ocrv6-medium-local",
+      "size": 150580,
+      "sha256": "991b700facf5b50a7de193468207d5f4255b538dde0d312ae3b7c7a9b6873129",
+      "archive": "PP-OCRv6_medium_rec.tar",
+      "role": "dictionary"
+    },
+    {
+      "path": "models/paddle-ocr/PP-OCRv6_medium_det/inference.onnx",
+      "group": "pp-ocrv6-medium-local",
+      "size": 62032837,
+      "sha256": "eb13b44b25bb36f89528b68720af8a61d9cf381176107f465db1757b65d086e1",
+      "archive": "PP-OCRv6_medium_det.tar",
+      "role": "detector"
+    },
+    {
+      "path": "models/paddle-ocr/PP-OCRv6_medium_det/inference.yml",
+      "group": "pp-ocrv6-medium-local",
+      "size": 886,
+      "sha256": "7298d5ead546584af2504d03355f881ac7a7bc0eb1e282d3e159277c1d0af871",
+      "archive": "PP-OCRv6_medium_det.tar"
     }
   ],
   "archives": [
@@ -344,6 +392,40 @@
       "sha256": "52d1df764521fb4fc071665dfdf889c3529c78e5438bfb66029eb19cd29e8ea9",
       "size": 694127530,
       "url": "https://modelscope.cn/api/v1/models/jiangjiang419/framekeep-updates/repo?Revision=master&FilePath=components%2F52d1df764521fb4fc071665dfdf889c3529c78e5438bfb66029eb19cd29e8ea9%2Fllama-b11773-framekeep-win-x64.zip"
+    }
+  ],
+  "model_archives": [
+    {
+      "name": "PP-OCRv6_small_det.tar",
+      "group": "pp-ocrv6-small-local",
+      "url": "https://modelscope.cn/api/v1/models/jiangjiang419/framekeep-updates/repo?Revision=master&FilePath=components%2Fd218f6fbf0f1c23d2161bd6ac7f5eaa6104fa89955c09290497e31008e2618e4%2FPP-OCRv6_small_det.tar",
+      "sha256": "d218f6fbf0f1c23d2161bd6ac7f5eaa6104fa89955c09290497e31008e2618e4",
+      "source_url": "https://paddle-model-ecology.bj.bcebos.com/paddlex/official_inference_model/paddle3.0.0/PP-OCRv6_small_det_onnx_infer.tar",
+      "size": 9891840
+    },
+    {
+      "name": "PP-OCRv6_small_rec.tar",
+      "group": "pp-ocrv6-small-local",
+      "url": "https://modelscope.cn/api/v1/models/jiangjiang419/framekeep-updates/repo?Revision=master&FilePath=components%2Fd267ab077a44a0eedb1ea8f8c542d263f211de8e9d7a029bf9fcfff7e5a88fb1%2FPP-OCRv6_small_rec.tar",
+      "sha256": "d267ab077a44a0eedb1ea8f8c542d263f211de8e9d7a029bf9fcfff7e5a88fb1",
+      "source_url": "https://paddle-model-ecology.bj.bcebos.com/paddlex/official_inference_model/paddle3.0.0/PP-OCRv6_small_rec_onnx_infer.tar",
+      "size": 21319680
+    },
+    {
+      "name": "PP-OCRv6_medium_rec.tar",
+      "group": "pp-ocrv6-medium-local",
+      "url": "https://modelscope.cn/api/v1/models/jiangjiang419/framekeep-updates/repo?Revision=master&FilePath=components%2Fd8cc46c7163c83a151aef8fce5856b965860df90a875029216d605b0f607eaec%2FPP-OCRv6_medium_rec.tar",
+      "sha256": "d8cc46c7163c83a151aef8fce5856b965860df90a875029216d605b0f607eaec",
+      "source_url": "https://paddle-model-ecology.bj.bcebos.com/paddlex/official_inference_model/paddle3.0.0/PP-OCRv6_medium_rec_onnx_infer.tar",
+      "size": 76718080
+    },
+    {
+      "name": "PP-OCRv6_medium_det.tar",
+      "group": "pp-ocrv6-medium-local",
+      "url": "https://modelscope.cn/api/v1/models/jiangjiang419/framekeep-updates/repo?Revision=master&FilePath=components%2Fc5adb0b15de1b1838934eba1dd72e7529e7d80132216c6ee6d26eba6fa054fcf%2FPP-OCRv6_medium_det.tar",
+      "sha256": "c5adb0b15de1b1838934eba1dd72e7529e7d80132216c6ee6d26eba6fa054fcf",
+      "source_url": "https://paddle-model-ecology.bj.bcebos.com/paddlex/official_inference_model/paddle3.0.0/PP-OCRv6_medium_det_onnx_infer.tar",
+      "size": 62044160
     }
   ]
 }

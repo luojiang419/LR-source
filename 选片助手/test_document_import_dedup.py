@@ -111,7 +111,7 @@ class ImportDedupTests(unittest.TestCase):
                             with page.expect_response('**/api/sku/import') as response:page.locator('#sku-file').set_input_files({'name':name,'mimeType':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','buffer':self.content})
                             self.assertEqual(response.value.status,200);self.assertTrue(response.value.json()['already_imported'])
                             page.wait_for_function('()=>document.getElementById("sku-message").textContent.includes("复用")')
-                        self.assertEqual(page.locator('#sku-projects option:not([value=""])').count(),1)
+                        self.assertEqual(page.locator('#sku-projects option:not([value=""]):not([value="__history__"])').count(),1)
                         out=fixture.ROOT/'build/document-import-dedup';out.mkdir(parents=True,exist_ok=True)
                         page.screenshot(path=str(out/'reused-document.png'),full_page=True)
                         self.assertEqual(errors,[])

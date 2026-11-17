@@ -1,0 +1,3 @@
+.ocr-model-select{display:block;width:100%;margin-top:7px;background:var(--control);color:var(--text);border:1px solid var(--border);border-radius:11px;padding:12px;font:inherit;font-size:13px}
+.ocr-model-select option{background:var(--bg);color:var(--text)}
+.ocr-model-select:focus-visible{outline:2px solid var(--warm);outline-offset:3px}

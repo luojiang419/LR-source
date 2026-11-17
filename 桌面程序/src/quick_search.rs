@@ -22,10 +22,23 @@ impl SearchHotkey {
 
 pub fn show(app: &AppHandle) -> Result<(), String> {
     let window = app.get_webview_window("asset-search").ok_or("快捷搜索窗口尚未就绪")?;
+    if window.is_visible().unwrap_or(false) {
+        window.set_focus().map_err(|e|e.to_string())?;
+        let _=window.eval("window.FramekeepRetrieval?.wake?.()");
+        return Ok(());
+    }
     if let Some(main) = app.get_webview_window("main") {
         if let Ok(Some(monitor)) = main.current_monitor() {
             let _ = window.set_position(*monitor.position());
             let _ = window.set_size(*monitor.size());
+            #[cfg(windows)]
+            {
+                let position=monitor.position();let size=monitor.size();
+                let backdrop=crate::desktop_backdrop::capture(position.x,position.y,size.width,size.height);
+                if let Err(error)=&backdrop {eprintln!("快捷搜索背景采样失败: {error}");}
+                let source=backdrop.unwrap_or_default();
+                let _=window.eval(format!("window.FramekeepQuickAppearance?.setBackdrop({})",serde_json::to_string(&source).unwrap()));
+            }
         }
     }
     window.show().map_err(|e| e.to_string())?;
@@ -37,17 +50,12 @@ pub fn show(app: &AppHandle) -> Result<(), String> {
 pub fn create(app: &AppHandle, port: u16) -> Result<(), Box<dyn std::error::Error>> {
     let url = format!("http://127.0.0.1:{port}/quick-search.html").parse()?;
     let window = tauri::WebviewWindowBuilder::new(app, "asset-search", WebviewUrl::External(url))
-        .title("末帧 · 快捷资产检索").visible(false).decorations(false).transparent(true)
+        .title("SHIYING 数字资产 · 快捷资产检索").visible(false).decorations(false).transparent(true)
         .always_on_top(true).skip_taskbar(true).inner_size(1440., 900.).resizable(false)
         .disable_drag_drop_handler()
         .on_navigation(move |url| url.scheme()=="http" && url.host_str()==Some("127.0.0.1") && url.port_or_known_default()==Some(port))
         .build()?;
-    #[cfg(windows)]
-    {
-        // 原生 Acrylic 模糊窗口后方桌面；HTML 只绘制中央搜索面板。
-        let _ = window.set_effects(tauri::window::EffectsBuilder::new()
-            .effect(tauri::window::Effect::Acrylic).color((15, 20, 30, 100).into()).build());
-    }
+    // 不使用半径固定的 Acrylic；透明页面对唤起时的桌面画面做可调模糊。
     let closing = window.clone();
     window.on_window_event(move |event| {
         if let tauri::WindowEvent::CloseRequested { api, .. } = event {
@@ -145,12 +153,13 @@ pub fn search_shortcut(app: AppHandle, hotkey: tauri::State<'_, SearchHotkey>, s
 }
 
 #[tauri::command]
-pub fn search_open_asset(app: AppHandle, item_id: String) -> Result<(), String> {
+pub fn search_open_asset(app: AppHandle, item_id: String, frame: Option<u32>) -> Result<(), String> {
     if item_id.len() != 32 || !item_id.chars().all(|c| c.is_ascii_hexdigit()) { return Err("资产标识无效".into()); }
     let main = app.get_webview_window("main").ok_or("主窗口尚未就绪")?;
     main.unminimize().map_err(|e| e.to_string())?;main.show().map_err(|e| e.to_string())?;
     main.set_focus().map_err(|e| e.to_string())?;
-    main.eval(format!("window.FramekeepRetrieval?.previewAsset('{}')", item_id)).map_err(|e| e.to_string())?;
+    let frame_argument=frame.map(|value|value.to_string()).unwrap_or_else(||"null".into());
+    main.eval(format!("window.FramekeepRetrieval?.previewAsset('{}',{})", item_id,frame_argument)).map_err(|e| e.to_string())?;
     if let Some(search) = app.get_webview_window("asset-search") { let _ = search.hide(); }
     Ok(())
 }

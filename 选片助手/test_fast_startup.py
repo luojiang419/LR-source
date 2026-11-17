@@ -1,5 +1,6 @@
 """首屏不等待预览补建；异步加载期间动画可见，真实数据与交互随后恢复。"""
 from contextlib import ExitStack
+from concurrent.futures import ThreadPoolExecutor
 import io
 import json
 from pathlib import Path
@@ -7,13 +8,13 @@ import tempfile
 import threading
 import time
 import unittest
-from unittest.mock import patch
+from unittest.mock import patch,MagicMock
 from urllib.request import Request,urlopen
 
 from PIL import Image
 from playwright.sync_api import sync_playwright
 from catalog_store import Store
-from preview_cache import cache_for,PreviewWarmer
+from preview_cache import cache_for,PreviewWarmer,MAX_WARM_WORKERS
 from startup_tasks import StartupTasks
 import media_engine
 import server
@@ -83,13 +84,61 @@ class FastStartupTests(unittest.TestCase):
         self.warmer.request(self.photos,[self.record])
         changed=dict(self.record,fingerprint='new-version')
         self.warmer.request(self.photos,[changed]);self.assertEqual(len(self.warmer.requests),1)
-        self.warmer.threads=[];self.warmer.start()
-        until=time.monotonic()+2
-        while time.monotonic()<until:
-            with self.cache.connect() as c:row=c.execute('SELECT record FROM pending').fetchone()
-            if row:break
-            time.sleep(.01)
-        self.assertIsNotNone(row);self.assertEqual(json.loads(row[0])['fingerprint'],'new-version')
+        # start会补齐工作线程；本用例只检查落库，避免消费者先取走pending。
+        with patch.object(self.warmer,'_run',side_effect=lambda:self.warmer.closed.wait()):
+            self.warmer.threads=[];self.warmer.start()
+            until=time.monotonic()+2
+            while time.monotonic()<until:
+                with self.cache.connect() as c:row=c.execute('SELECT record FROM pending').fetchone()
+                if row:break
+                time.sleep(.01)
+            self.assertIsNotNone(row);self.assertEqual(json.loads(row[0])['fingerprint'],'new-version')
+
+    def test_bootstrap_temporarily_yields_full_speed_then_queued_decode_resumes(self):
+        self.gate.clear()
+        self.warmer.set_full_speed(True,'max')
+        self.warmer.enqueue(self.photos,[self.record])
+        with ThreadPoolExecutor(1) as pool:
+            def request():
+                with urlopen(self.url+'/api/bootstrap',timeout=5) as response:return json.load(response)
+            future=pool.submit(request)
+            try:
+                self.assertTrue(self.entered.wait(1))
+                self.assertEqual(self.warmer.foreground_active,1)
+                self.assertEqual(self.warmer.worker_limit(),MAX_WARM_WORKERS)
+                self.assertFalse(self.warmer.process_one())
+            finally:self.gate.set()
+            self.assertEqual(future.result(5)['photos'][0]['id'],self.record['id'])
+        self.assertEqual(self.warmer.foreground_active,0)
+        self.assertTrue(self.warmer.full_speed)
+        with patch('preview_cache.time.monotonic',return_value=self.warmer.foreground_until+1):
+            self.assertTrue(self.warmer.process_one())
+
+    def test_background_catalog_poll_does_not_yield_but_user_query_does(self):
+        self.warmer.set_full_speed(True,'max')
+        for background in ('1','0'):
+            with self.subTest(background=background):
+                entered,release=threading.Event(),threading.Event()
+                catalog=MagicMock()
+                def items(*args,**kwargs):
+                    entered.set()
+                    if not release.wait(5):raise RuntimeError('目录查询未释放')
+                    return {'rows':[],'total':0}
+                catalog.items.side_effect=items
+                record={**self.record,'fingerprint':self.record['fingerprint']+background}
+                self.warmer.enqueue(self.photos,[record])
+                def request():
+                    with urlopen(self.url+'/api/catalog/items?background='+background,timeout=5) as response:return json.load(response)
+                with patch.object(server,'CATALOG',catalog),ThreadPoolExecutor(1) as pool:
+                    future=pool.submit(request)
+                    try:
+                        self.assertTrue(entered.wait(1))
+                        self.assertEqual(self.warmer.foreground_active,0 if background=='1' else 1)
+                        self.assertEqual(self.warmer.process_one(),background=='1')
+                    finally:release.set()
+                    self.assertEqual(future.result(5)['rows'],[])
+                self.assertEqual(self.warmer.foreground_active,0)
+                self.assertTrue(self.warmer.full_speed)
 
     def test_animation_is_visible_before_data_then_real_workbench_is_interactive(self):
         self.gate.clear();out=ROOT/'build/fast-startup-acceptance';out.mkdir(exist_ok=True)

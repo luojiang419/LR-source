@@ -3,6 +3,7 @@ from pathlib import Path
 import hashlib
 import json
 import time
+import threading
 
 from asset_catalog import pair_key
 
@@ -54,6 +55,10 @@ class SharedRatings:
         paths=list(paths)
         direct={pair_key(p) for p in paths}
         def read(c):
+            if c.execute("SELECT 1 FROM sqlite_master WHERE name='portable_ratings'").fetchone():
+                for path in paths:
+                    row=c.execute('SELECT rating FROM portable_ratings WHERE path=?',(str(Path(path).absolute()),)).fetchone()
+                    if row is not None:return row[0]
             keys = self.related_keys(paths,c)
             rows = [(row,key in direct) for key in keys if (row := c.execute('SELECT rating,updated FROM shared_ratings WHERE path_key=?', (key,)).fetchone()) and (not explicit_only or row['updated']>0)]
             return max(rows, key=lambda entry:(entry[0]['updated'],entry[1]))[0]['rating'] if rows else None
@@ -82,6 +87,9 @@ class SharedRatings:
                 import json
                 record=json.loads(capture[0]) if capture else None
                 if record:related.extend(self.paths(row['session'],record))
+            capture=getattr(self.archive,'capture_service',None)
+            dataset=capture.dataset_for_path(paths[0]) if capture and paths else None
+            if dataset:related=[path for path in related if Path(path).absolute().is_relative_to(dataset.root)]
             self.sync.enqueue(c,paths+related,rating,stamp)
         return rating
 
@@ -190,12 +198,30 @@ class SharedRatings:
     def session(self, session, records):
         if not session:
             return session
-        shared = {}
-        with self.archive.connect() as c:
-            for record in records:
-                value = self.get(self.paths(session['id'], record,session['root']),c)
-                if value is not None:
-                    shared[record['id']] = value
+        records=list(records)
+        lock=self.__dict__.setdefault('_session_cache_lock',threading.RLock())
+        with self.archive.connect() as c:version=c.execute('SELECT value FROM rating_view_version WHERE id=1').fetchone()[0]
+        key=(session['id'],session['root'],version,tuple((r['id'],r.get('raw'),r.get('jpg')) for r in records))
+        with lock:
+            cache=self.__dict__.setdefault('_session_cache',{})
+            if key in cache:return {**session,'sharedRatings':dict(cache[key])}
+            result=self._session_uncached(session,records)
+            with self.archive.connect() as c:after=c.execute('SELECT value FROM rating_view_version WHERE id=1').fetchone()[0]
+            if after==version:
+                if len(cache)>=8:cache.pop(next(iter(cache)))
+                cache[key]=dict(result['sharedRatings'])
+            return result
+
+    def _session_uncached(self,session,records):
+        # 现场清单和OCR确认都会调用；逐张get会在数千张目录放大成数万条SQL。
+        paths=[{'path':path,'capture':record['id']} for record in records
+               for path in self.paths(session['id'],record,session['root'])]
+        self.decorate(paths,include_evidence=True)
+        evidence={}
+        for item in paths:
+            value=item['_rating_evidence']
+            if value is not None and (item['capture'] not in evidence or value[1:]>evidence[item['capture']][1:]):evidence[item['capture']]=value
+        shared={cid:value[0] for cid,value in evidence.items()}
         return {**session, 'sharedRatings': shared}
 
     def saved(self, sid, before, after, baseline=None):
@@ -209,7 +235,7 @@ class SharedRatings:
                 record = records.get(cid)
                 if record:self.set(self.paths(sid, record), new.get(cid, record.get('liveRating', record.get('existingRating', 0))))
 
-    def decorate(self, rows):
+    def decorate(self, rows,*,include_evidence=False):
         """为归档分页一次性补齐共享评级，避免每张素材触发多轮关联查询。"""
         if not rows:return rows
         paths=[str(Path(row['path']).absolute()) for row in rows]
@@ -244,5 +270,14 @@ class SharedRatings:
                 ratings.update({row['path_key']:(row['rating'],row['updated']) for row in c.execute('SELECT path_key,rating,updated FROM shared_ratings WHERE path_key IN ('+marks+')',batch)})
         for row,path in zip(rows,paths):
             key=direct[path];candidates=[(ratings[entry],entry==key) for entry in {key}|set().union(*(asset_keys.get(asset,set()) for asset in assets_by_key[key])) if entry in ratings]
-            row['rating']=max(candidates,key=lambda entry:(entry[0][1],entry[1]))[0][0] if candidates else 0
+            best=max(candidates,key=lambda entry:(entry[0][1],entry[1])) if candidates else None
+            row['rating']=best[0][0] if best else 0
+            if include_evidence:row['_rating_evidence']=(*best[0],best[1]) if best else None
+        with self.archive.connect() as c:
+            if c.execute("SELECT 1 FROM sqlite_master WHERE name='portable_ratings'").fetchone():
+                for row in rows:
+                    value=c.execute('SELECT rating,updated FROM portable_ratings WHERE path=?',(row['path'],)).fetchone()
+                    if value is not None:
+                        row['rating']=value[0]
+                        if include_evidence:row['_rating_evidence']=(value[0],value[1],True)
         return rows

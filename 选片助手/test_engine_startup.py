@@ -1,6 +1,7 @@
 """历史归档后台持锁时，引擎仍须完成启动并响应健康检查。"""
 from contextlib import ExitStack
 import json
+import socket
 from pathlib import Path
 import tempfile
 import threading
@@ -16,6 +17,29 @@ ROOT=Path(__file__).resolve().parents[1]
 
 
 class EngineStartupTests(unittest.TestCase):
+    def test_burst_connections_are_queued_while_accept_loop_is_briefly_busy(self):
+        http=server.ThreadingHTTPServer(('127.0.0.1',0),server.Handler)
+        clients=[]
+        try:
+            # 尚未运行 accept 循环，模拟工作台预览同时建连时主线程短暂忙碌。
+            for _ in range(32):
+                clients.append(socket.create_connection(('127.0.0.1',http.server_port),timeout=.5))
+        finally:
+            for client in clients:client.close()
+            http.server_close()
+
+    def test_repeated_startup_diagnostics_recycle_oversized_stack_file(self):
+        from startup_status import StartupProgress, STACK_LIMIT
+        with tempfile.TemporaryDirectory() as temporary:
+            path=Path(temporary)/'engine-startup-stacks.log'
+            path.write_bytes(b'x'*STACK_LIMIT)
+            progress=StartupProgress(Path(temporary))
+            progress.done=MagicMock()
+            progress.done.wait.side_effect=[False,True]
+            progress._watch()
+            self.assertLess(path.stat().st_size,STACK_LIMIT)
+            self.assertTrue(path.read_text(encoding='utf8').startswith('\n[startup]'))
+
     def test_ready_handshake_does_not_query_busy_business_database(self):
         http=server.ThreadingHTTPServer(('127.0.0.1',0),server.Handler);http.daemon_threads=True
         worker=threading.Thread(target=http.serve_forever,daemon=True);worker.start()
@@ -91,7 +115,7 @@ class EngineStartupTests(unittest.TestCase):
                 def serve_forever(self,*args,**kwargs):
                     serving.set();super().serve_forever(*args,**kwargs)
             http=TestHTTP(('127.0.0.1',0),server.Handler);http.daemon_threads=True
-            for name in ('STORE','MOUSE','WATCH','MODELS','SKU','ARCHIVE','ANALYSIS','INTELLIGENCE','LANWORKSPACE','RAWLINK','FILESEARCH','UPDATES','CATALOG','COMPONENTS','DRIVER','PREVIEWS','CANON','BOOT_TASKS'):
+            for name in ('STORE','MOUSE','WATCH','DIRECT','REFERENCES','MODELS','SKU','ARCHIVE','ANALYSIS','INTELLIGENCE','LANWORKSPACE','RAWLINK','FILESEARCH','UPDATES','CATALOG','COMPONENTS','DRIVER','PREVIEWS','CANON','BOOT_TASKS','STORAGE','WORKFLOW'):
                 patches.enter_context(patch.object(server,name,None))
             patches.enter_context(patch.object(server,'DATA',store.data))
             patches.enter_context(patch.object(server,'Store',return_value=store))
@@ -100,9 +124,15 @@ class EngineStartupTests(unittest.TestCase):
             patches.enter_context(patch.object(server,'watch_desktop_parent'))
             patches.enter_context(patch.object(server,'local_inference'))
             patches.enter_context(patch.object(server.sys,'argv',['server.py','--port','0','--no-browser']))
-            for name in ('cache_for','PreviewWarmer','ReferenceLibrary','CanonLink','MouseRemote','FolderWatch','Providers','ComponentManager','DriverSetup','VisionScheduler','AssetCatalog','EverythingSearch','SkuService','AssetAnalysis','AssetIntelligence','LanWorkspace','RawReconcile','UpdateClient','ArchivePipeline'):
+            for name in ('cache_for','CacheStorage','PreviewWarmer','ReferenceLibrary','EosMonitor','MouseRemote','FolderWatch','Providers','ComponentManager','DriverSetup','VisionScheduler','AssetCatalog','EverythingSearch','SkuService','AssetAnalysis','AssetIntelligence','AnalysisWorkflow','LanWorkspace','RawReconcile','UpdateClient','ArchivePipeline'):
                 patches.enter_context(patch.object(server,name,MagicMock()))
             errors=[]
+            archive_close=archive.close
+            def close_archive():
+                self.assertFalse(server.CATALOG.wal_maintenance.close.called,
+                                 '业务生产者停止前不能关闭 WAL 回收')
+                archive_close()
+            patches.enter_context(patch.object(archive,'close',side_effect=close_archive))
             def run():
                 try:server.main()
                 except BaseException as error:errors.append(error)

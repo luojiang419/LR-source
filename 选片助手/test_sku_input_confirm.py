@@ -51,7 +51,9 @@ class InputConfirmTests(unittest.TestCase):
         with self.sku.connect() as c:self.assertEqual(c.execute('SELECT count(*) FROM ocr_documents').fetchone()[0],0)
 
     def test_no_active_document_can_confirm_without_model_or_prior_ocr(self):
-        with self.sku.connect() as c:c.execute("DELETE FROM settings WHERE key='active'")
+        with self.sku.connect() as c:
+            c.execute("DELETE FROM settings WHERE key='active'")
+            c.execute('DELETE FROM shooting_bindings')  # 查看文档与现场绑定现已分离，模拟真正无绑定状态。
         result=confirm_group(self.archive,self.sku,self.sid,self.ids[1],[self.ids[1]],'NO-PLAN-100')
         self.assertEqual(result['sku'],'NO-PLAN-100');self.assertEqual(result['capture_count'],2)
         self.assertNotEqual(self.sku.project()['id'],self.pid)

@@ -1,0 +1,60 @@
+{
+  "stage": "完成",
+  "source": "\\\\192.168.0.181\\新摄影\\细节图\\源图片备份（勿动）\\现场拍摄小档\\2026-11-04",
+  "photos": 8434,
+  "elapsed_seconds": 215.423,
+  "reads": 8434,
+  "unique_reads": 8434,
+  "duplicate_reads": {},
+  "stats": {
+    "entries": 8434,
+    "bytes": 36270398,
+    "decodedBytes": 100608000,
+    "active": 0,
+    "queued": 0,
+    "requests": 8434,
+    "hits": 66822,
+    "byteLimit": 536870912,
+    "decodedLimit": 100663296
+  },
+  "checks": [
+    {
+      "view": "grid",
+      "photos": 8434,
+      "reads_before_revisits": 8434,
+      "reads_after_revisits": 8434,
+      "visible_nodes": 34
+    },
+    {
+      "view": "list",
+      "photos": 8434,
+      "reads_before_revisits": 8434,
+      "reads_after_revisits": 8434,
+      "visible_nodes": 13
+    },
+    {
+      "view": "sidebar",
+      "photos": 8434,
+      "reads_before_revisits": 8434,
+      "reads_after_revisits": 8434,
+      "visible_nodes": 5
+    }
+  ],
+  "page_errors": [],
+  "failed_thumbnails": [],
+  "source_manifest_unchanged": true,
+  "source_files_checked": 8546,
+  "continuous_revisits_added_reads": 0,
+  "no_pagination_controls": true,
+  "date": "2026-11-11",
+  "branch": "feat/live-continuous-scroll",
+  "regressions": {
+    "passed": 16,
+    "failed": 0,
+    "log": "build/continuous-scroll-final.log"
+  },
+  "python_compile": true,
+  "javascript_syntax": true,
+  "installed_app_updated": false,
+  "production_photos_modified": false
+}

@@ -98,7 +98,10 @@
     }
     const source=photo.preview||photo.previewLarge;
     if(!source){fail();return}
-    pendingImage=new Image();const image=pendingImage;image.decoding='async';image.onload=()=>{if(ticket!==generation)return;pendingImage=null;image.onload=image.onerror=null;consume(image)};image.onerror=()=>{if(ticket!==generation)return;clearRequest();fail()};image.src=source;
+    (window.FramekeepThumbnailMemory?.load(source)||Promise.resolve(source)).then(url=>{
+      if(ticket!==generation)return;if(!url){fail();return}
+      pendingImage=new Image();const image=pendingImage;image.crossOrigin='anonymous';image.decoding='async';image.onload=()=>{if(ticket!==generation)return;pendingImage=null;image.onload=image.onerror=null;consume(image)};image.onerror=()=>{if(ticket!==generation)return;clearRequest();fail()};image.src=url;
+    });
   }
   function schedule(){if(!queued){queued=true;requestAnimationFrame(refresh)}}
   document.addEventListener('framekeep:boot-ready',schedule,{once:true});

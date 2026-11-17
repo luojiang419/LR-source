@@ -1,0 +1,35 @@
+{
+  "previous_public": {
+    "status": "checked",
+    "message": "发现新版本",
+    "available": true,
+    "version": "1.0.0",
+    "releaseId": "20261109053053",
+    "notes": "AI 助手配置新增多模态、OCR、文本默认模型下拉，选择后自动保存并与卡片双向同步；当前使用卡片显示轻微呼吸光。包含已完成的 CPU OCR 图片旋转纠正、安装器运行库校验与原位覆盖更新修复。",
+    "size": 327346199,
+    "currentVersion": "1.0.0",
+    "currentReleaseId": "20261109015625"
+  },
+  "installed_configuration": {
+    "status": "checked",
+    "message": "发现新版本",
+    "available": true,
+    "version": "1.0.0",
+    "releaseId": "20261109053053",
+    "notes": "AI 助手配置新增多模态、OCR、文本默认模型下拉，选择后自动保存并与卡片双向同步；当前使用卡片显示轻微呼吸光。包含已完成的 CPU OCR 图片旋转纠正、安装器运行库校验与原位覆盖更新修复。",
+    "size": 327346199,
+    "currentVersion": "1.0.0",
+    "currentReleaseId": "20261109015625"
+  },
+  "new_configuration": {
+    "status": "checked",
+    "message": "当前已是最新版本",
+    "available": false,
+    "version": "1.0.0",
+    "releaseId": "20261109053053",
+    "notes": "AI 助手配置新增多模态、OCR、文本默认模型下拉，选择后自动保存并与卡片双向同步；当前使用卡片显示轻微呼吸光。包含已完成的 CPU OCR 图片旋转纠正、安装器运行库校验与原位覆盖更新修复。",
+    "size": 327346199,
+    "currentVersion": "1.0.0",
+    "currentReleaseId": "20261109053053"
+  }
+}

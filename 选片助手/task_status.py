@@ -2,6 +2,7 @@
 from contextlib import closing
 from pathlib import Path
 import sqlite3
+import time
 
 MODULES=('selection','progress','archive','database','analysis','settings')
 
@@ -18,6 +19,10 @@ def snapshot(store=None,sku=None,archive=None,catalog=None,analysis=None,rawlink
         # 独立只读连接，避免状态指示器等待归档锁或占用业务连接。
         try:
             with closing(sqlite3.connect(Path(database).resolve().as_uri()+'?mode=ro',uri=True,timeout=.05)) as c:
+                c.setconfig(sqlite3.SQLITE_DBCONFIG_NO_CKPT_ON_CLOSE,True)
+                # busy_timeout只限制锁等待，不限制大表统计执行时间。
+                deadline=time.monotonic()+.05
+                c.set_progress_handler(lambda:time.monotonic()>deadline,200)
                 for key,label,sql,state in queries:add(key,label,int(c.execute(sql).fetchone()[0] or 0),state)
         except (OSError,sqlite3.Error):
             for key in keys:groups[key]['available']=False
@@ -27,9 +32,14 @@ def snapshot(store=None,sku=None,archive=None,catalog=None,analysis=None,rawlink
         add('selection','照片索引',scans)
         from preview_cache import _LOCATIONS
         cache=_LOCATIONS.get(store.data.resolve(),store.data)/'previews/index.sqlite3'
-        if cache.is_file():read(cache,('selection','archive'),[
+        visits=getattr(catalog,'visits',None) if catalog is not None else None
+        if visits:
+            # 按访问模式不运行旧全库预览队列，不能为任务灯反复扫描历史队列。
+            current=visits.state()
+            if current['running'] and current.get('thumbnail_cache_enabled',True):add('archive','当前目录缩略图',max(0,current['total']-current['cached']-current['failed']))
+        elif cache.is_file():read(cache,('selection','archive'),[
             ('selection','预览生成',"SELECT count(*) FROM pending WHERE attempts<3 AND json_extract(record,'$._catalog') IS NULL",'active'),
-            ('archive','预览生成',"SELECT count(*) FROM archive_jobs WHERE state='queued'",'active')])
+            ('archive','预览生成',"SELECT count(*) FROM archive_jobs INDEXED BY archive_job_progress WHERE state='queued'",'active')])
 
     if sku is not None:
         queue_state='paused' if sku.tasks_paused else 'active'

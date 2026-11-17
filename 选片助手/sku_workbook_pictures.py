@@ -21,7 +21,7 @@ def append_node(raw,tag,child):
     return xml.encode('utf8')
 
 
-def insert_columns(parts,plans,column_maps=None):
+def insert_columns(parts,plans,column_maps=None,*,picture_title='款号图片',column_titles=None):
     """迁移旧状态／时间布局；标准单元格、公式、范围与图锚点随插入列平移。"""
     shifts={p['name']:p['status_col']+1 for p in plans if not p.get('image_col')} if column_maps is None else {name:1 for name in column_maps}
     def mapped(column,name):
@@ -88,20 +88,30 @@ def insert_columns(parts,plans,column_maps=None):
             if column_maps is None and lo<at<=hi:
                 columns=table.find('m:tableColumns',N)
                 if columns is not None:
-                    if any(c.get('name')=='款号图片' for c in columns):raise ValueError('Excel 表格已有“款号图片”列，请先为原产品图列改名，避免表格内列名重复')
+                    if any(c.get('name')==picture_title for c in columns):raise ValueError(f'Excel 表格已有“{picture_title}”列，请先为原图片列改名，避免表格内列名重复')
                     pid=max([int(c.get('id','0')) for c in columns]+[0])+1
                     match=re.search(r'<(?P<tag>(?:\w+:)?tableColumns)\b(?P<attrs>[^>]*)>(?P<body>.*?)</(?P=tag)>',xml,re.S)
                     cells=list(re.finditer(r'<(?:\w+:)?tableColumn\b[^>]*(?:/>|>.*?</(?:\w+:)?tableColumn>)',match['body'],re.S))
                     index=at-lo;offset=cells[index].start() if index<len(cells) else len(match['body'])
-                    body=match['body'][:offset]+f'<tableColumn xmlns="{NS}" id="{pid}" name="款号图片"/>'+match['body'][offset:]
+                    body=match['body'][:offset]+f'<tableColumn xmlns="{NS}" id="{pid}" name={quoteattr(picture_title)}/>'+match['body'][offset:]
                     attrs=re.sub(r'\bcount="\d+"',f'count="{len(columns)+1}"',match['attrs'])
                     xml=xml[:match.start()]+'<'+match['tag']+attrs+'>'+body+'</'+match['tag']+'>'+xml[match.end():]
             elif column_maps is not None:
                 match=re.search(r'<(?P<tag>(?:\w+:)?tableColumns)\b(?P<attrs>[^>]*)>(?P<body>.*?)</(?P=tag)>',xml,re.S)
                 if match:
                     cells=re.findall(r'<(?:\w+:)?tableColumn\b[^>]*(?:/>|>.*?</(?:\w+:)?tableColumn>)',match['body'],re.S)
-                    cells=[value for _,value in sorted((mapped(lo+i,context),value) for i,value in enumerate(cells))]
-                    xml=xml[:match.start()]+'<'+match['tag']+match['attrs']+'>'+''.join(cells)+'</'+match['tag']+'>'+xml[match.end():]
+                    positions={mapped(lo+i,context):value for i,value in enumerate(cells)}
+                    next_id=max([int(c.get('id','0')) for c in table.find('m:tableColumns',N)]+[0])+1
+                    for index in range(min(positions),max(positions)+1):
+                        if index in positions:continue
+                        title=(column_titles or {}).get(context,{}).get(index)
+                        if not title:raise ValueError('Excel 表格列移动后范围不连续，无法安全补齐列名')
+                        positions[index]=f'<tableColumn xmlns="{NS}" id="{next_id}" name={quoteattr(title)}/>';next_id+=1
+                    cells=[value for _,value in sorted(positions.items())]
+                    names=[unescape(re.search(r'\bname=(["\'])(.*?)\1',cell,re.S)[2]).casefold() for cell in cells]
+                    if len(set(names))!=len(names):raise ValueError('Excel 表格内列名称不能重复，请先为原图片列改名')
+                    attrs=re.sub(r'\bcount="\d+"',f'count="{len(cells)}"',match['attrs'])
+                    xml=xml[:match.start()]+'<'+match['tag']+attrs+'>'+''.join(cells)+'</'+match['tag']+'>'+xml[match.end():]
             xml=re.sub(r'\bref="([A-Z0-9:$]+)"',lambda m:'ref="'+shift_refs(m[1],context)+'"',xml)
         elif at and '/drawings/' in part:
             xml=re.sub(r'(<(?:\w+:)?col>)(\d+)(</(?:\w+:)?col>)',lambda m:m[1]+str(mapped(int(m[2])+1,context)-1)+m[3],xml)
@@ -113,16 +123,16 @@ def insert_columns(parts,plans,column_maps=None):
         if xml!=raw.decode('utf-8-sig'):parts[part]=xml.encode('utf8')
 
 
-def add_pictures(path,sheets,images):
+def add_pictures(path,sheets,images,*,picture_title='款号图片',picture_kind='Sku'):
     from sku_workbook import inspect_workbook
     plans=[dict(p) for p in sheets if p.get('rows')]
     with ZipFile(path) as z:parts={name:z.read(name) for name in z.namelist()}
-    insert_columns(parts,plans)
+    insert_columns(parts,plans,picture_title=picture_title)
     for plan in plans:
-        part=plan['path'];column=plan['status_col']+1;xml=parts[part].decode('utf8');prefix=re.search(r'<((?:\w+:)?)worksheet\b',xml)[1]
+        part=plan['path'];column=plan.get('image_col') or plan['status_col']+1;xml=parts[part].decode('utf8');prefix=re.search(r'<((?:\w+:)?)worksheet\b',xml)[1]
         def patch_row(m):
             number=int(re.search(r'\br=["\'](\d+)["\']',m['attrs'])[1]);body=m['body'];attrs=m['attrs']
-            value='款号图片' if number==plan['header_row'] else ('图片暂不可用' if (plan['name'],number) in images and images[plan['name'],number] is None else '')
+            value=picture_title if number==plan['header_row'] else ('图片暂不可用' if (plan['name'],number) in images and images[plan['name'],number] is None else '')
             neighbor=re.search(r'<(?:\w+:)?c\b[^>]*\br="'+col_name(column-1)+str(number)+r'"[^>]*>',body)
             style=re.search(r'\bs="(\d+)"',neighbor[0]) if neighbor else None
             cell=f'<{prefix}c r="{col_name(column)}{number}"'+(f' s="{style[1]}"' if style else '')+f' t="inlineStr"><{prefix}is><{prefix}t>{escape(value)}</{prefix}t></{prefix}is></{prefix}c>'
@@ -138,7 +148,7 @@ def add_pictures(path,sheets,images):
         xml=re.sub(r'<(?P<tag>(?:\w+:)?row)\b(?P<attrs>[^>]*)>(?P<body>.*?)</(?P=tag)>',patch_row,xml,flags=re.S)
         xml=_column_width(xml,prefix,column,19)
         parts[part]=xml.encode('utf8')
-        attach_images(parts,plan,column,images)
+        attach_images(parts,plan,column,images,kind=picture_kind)
     # 备注随整列移动，保留列宽、公式引用、表格顺序和图片锚点；源文件仍只读。
     moves={}
     for plan in plans:
@@ -161,7 +171,7 @@ def add_pictures(path,sheets,images):
     finally:temporary.unlink(missing_ok=True)
 
 
-def attach_images(parts,plan,column,images):
+def attach_images(parts,plan,column,images,*,kind='Sku'):
     part=plan['path'];relpart=posixpath.join(posixpath.dirname(part),'_rels',posixpath.basename(part)+'.rels')
     sheet=E.fromstring(parts[part]);drawing=sheet.find('m:drawing',N);token=hashlib.sha256(part.encode()).hexdigest()[:16]
     if drawing is not None:
@@ -181,20 +191,23 @@ def attach_images(parts,plan,column,images):
     relationships=E.fromstring(parts.get(drawingrels,f'<Relationships xmlns="{PKG}"/>'.encode()))
     xml=parts[drawingpart].decode('utf8');prefix=re.search(r'<((?:\w+:)?)wsDr\b',xml)[1]
     # 只替换本功能创建的图锚点；原有浮动图、WPS 图片和其他关系保留。
-    xml=re.sub(r'<(?P<tag>(?:\w+:)?(?:oneCellAnchor|twoCellAnchor))\b[^>]*>.*?</(?P=tag)>',lambda m:'' if 'name="FramekeepSkuRow' in m[0] else m[0],xml,flags=re.S)
+    xml=re.sub(r'<(?P<tag>(?:\w+:)?(?:oneCellAnchor|twoCellAnchor))\b[^>]*>.*?</(?P=tag)>',lambda m:'' if f'name="Framekeep{kind}Row' in m[0] else m[0],xml,flags=re.S)
     used={int(m) for m in re.findall(r'<(?:\w+:)?cNvPr\b[^>]*\bid="(\d+)"',xml)}
     for row in plan['rows']:
         number=row['excel_row'];data=images.get((plan['name'],number))
         if not isinstance(data,bytes):continue
         with Image.open(io.BytesIO(data)) as source:
-            image=ImageOps.exif_transpose(source).convert('RGB');image.thumbnail((144,92));width,height=image.size
-            output=io.BytesIO();image.save(output,'JPEG',quality=82)
-        media=f'xl/media/framekeep-sku-{token}-{number}.jpg';parts[media]=output.getvalue();rid=f'framekeepSkuRow{number}'
+            image=ImageOps.exif_transpose(source).convert('RGB')
+            if kind=='Label':image.thumbnail((2048,2048))
+            display=image.copy();display.thumbnail((144,92));width,height=display.size
+            if kind!='Label':image=display
+            output=io.BytesIO();image.save(output,'JPEG',quality=90 if kind=='Label' else 82)
+        media=f'xl/media/framekeep-{kind.lower()}-{token}-{number}.jpg';parts[media]=output.getvalue();rid=f'framekeep{kind}Row{number}'
         prior=next((r for r in relationships if r.get('Id')==rid),None)
         if prior is not None:relationships.remove(prior)
         E.SubElement(relationships,'{'+PKG+'}Relationship',Id=rid,Type=REL+'/image',Target='../media/'+posixpath.basename(media))
         pid=max(used or {0})+1;used.add(pid);cx=width*9525;cy=height*9525
-        anchor=f'<xdr:oneCellAnchor xmlns:xdr="{DRAW}" xmlns:a="{ART}" xmlns:r="{REL}"><xdr:from><xdr:col>{column-1}</xdr:col><xdr:colOff>38100</xdr:colOff><xdr:row>{number-1}</xdr:row><xdr:rowOff>38100</xdr:rowOff></xdr:from><xdr:ext cx="{cx}" cy="{cy}"/><xdr:pic><xdr:nvPicPr><xdr:cNvPr id="{pid}" name="FramekeepSkuRow{number}"/><xdr:cNvPicPr/></xdr:nvPicPr><xdr:blipFill><a:blip r:embed="{rid}"/><a:stretch><a:fillRect/></a:stretch></xdr:blipFill><xdr:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="{cx}" cy="{cy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></xdr:spPr></xdr:pic><xdr:clientData/></xdr:oneCellAnchor>'
+        anchor=f'<xdr:oneCellAnchor xmlns:xdr="{DRAW}" xmlns:a="{ART}" xmlns:r="{REL}"><xdr:from><xdr:col>{column-1}</xdr:col><xdr:colOff>38100</xdr:colOff><xdr:row>{number-1}</xdr:row><xdr:rowOff>38100</xdr:rowOff></xdr:from><xdr:ext cx="{cx}" cy="{cy}"/><xdr:pic><xdr:nvPicPr><xdr:cNvPr id="{pid}" name="Framekeep{kind}Row{number}"/><xdr:cNvPicPr/></xdr:nvPicPr><xdr:blipFill><a:blip r:embed="{rid}"/><a:stretch><a:fillRect/></a:stretch></xdr:blipFill><xdr:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="{cx}" cy="{cy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></xdr:spPr></xdr:pic><xdr:clientData/></xdr:oneCellAnchor>'
         xml=append_node(xml.encode(),'wsDr',anchor).decode()
     parts[drawingpart]=xml.encode();parts[drawingrels]=E.tostring(relationships,encoding='utf-8',xml_declaration=True)
     types=parts['[Content_Types].xml'];root=E.fromstring(types)

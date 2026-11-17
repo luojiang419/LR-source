@@ -58,7 +58,14 @@ def capture_status(store, sku, archive, analysis, sid, cid):
             row = c.execute("SELECT status,reason,created FROM auto_inputs WHERE session=? AND capture=? AND status IN ('queued','running','failed')", (sid, cid)).fetchone()
             if row:
                 jobs.append(dict(row))
+            if c.execute("SELECT 1 FROM sqlite_master WHERE name='workflow_jobs'").fetchone():
+                row=c.execute("SELECT status,reason,created FROM workflow_jobs WHERE kind='vision' AND source='capture' AND session=? AND source_id=? ORDER BY created DESC LIMIT 1",(sid,cid)).fetchone()
+                if row:jobs.append(dict(row))
+                if link:
+                    row=c.execute("SELECT status,reason,created FROM workflow_jobs WHERE kind='vision' AND asset=? ORDER BY created DESC LIMIT 1",(link['asset'],)).fetchone()
+                    if row:jobs.append(dict(row))
         if jobs:
             job = max(jobs, key=lambda j: j['created'])
             multimodal.update(status=job['status'], reason=job['reason'] or '')
-    return {'session_id': sid, 'capture_id': cid, 'ocr': ocr, 'multimodal': multimodal}
+    metadata=archive.metadata_statuses([(sid,cid)])[(sid,cid)] if archive else {'status':'unavailable','operation_ids':[]}
+    return {'session_id': sid, 'capture_id': cid, 'ocr': ocr, 'multimodal': multimodal,'metadata':metadata}

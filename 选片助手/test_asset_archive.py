@@ -39,7 +39,8 @@ class AssetTests(unittest.TestCase):
     def test_worker_survives_busy_database_even_when_audit_write_is_also_busy(self):
         import sqlite3
         calls=[]
-        def tick():
+        def tick(**kwargs):
+            self.assertFalse(kwargs['process_metadata'])
             calls.append(1)
             if len(calls)==1:raise sqlite3.OperationalError('database is locked')
             self.archive.closed.set()

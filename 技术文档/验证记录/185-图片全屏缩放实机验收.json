@@ -1,0 +1,32 @@
+{
+  "sha256": "e1f909e6b4d88d9b72af02a0f70fd01704ca119879d0f0069026504fe3262ee3",
+  "size": 43826998,
+  "browser_gesture_tests": 8,
+  "browser_gesture_tests_passed": true,
+  "release_build_passed": true,
+  "lint_release_passed": true,
+  "tested_features": [
+    "fullscreen",
+    "pinch_anchor",
+    "double_tap",
+    "pan_bounds",
+    "pinch_to_pan_transition",
+    "pointer_cancel",
+    "zoom_limits",
+    "next_image_reset",
+    "keyboard_wheel",
+    "four_themes_resize"
+  ],
+  "android_pinch_percent": 323,
+  "installed_sha256_matches": true,
+  "existing_record_count": 5,
+  "android_pan_verified": true,
+  "android_fit_restores_100_percent": true,
+  "android_double_tap_percent": 300,
+  "android_second_double_tap_restores_fit": true,
+  "android_back_returns_to_records": true,
+  "android_label_preview_reset_and_zoom_button": true,
+  "data_modified_or_cleared": false,
+  "android_model": "MI 9",
+  "data_preserved": true
+}

@@ -1,0 +1,530 @@
+{
+  "runtime": "llama.cpp b11773",
+  "cpu": "Intel Core i7-14700K",
+  "backend": {
+    "device": "none",
+    "gpu_layers": 0,
+    "mmproj_offload": false,
+    "CUDA_VISIBLE_DEVICES": "-1",
+    "threads": 4,
+    "context_tokens": 4096,
+    "prompt_cache": false
+  },
+  "low_budget": {
+    "model": {
+      "file": "G:\\app\\LR\\.runtime\\models\\ocr\\GLM-OCR-Q8_0.gguf",
+      "size": 950433408,
+      "sha256": "45bc244a6446aff850521dc41f18bc8d7105ad5f0c2c8c28af04e7cc4f4d50b1",
+      "revision": "3ed9f460089d7d655134c5344496a63c03a1f13f",
+      "repo": "ggml-org/GLM-OCR-GGUF",
+      "projector": {
+        "file": "G:\\app\\LR\\.runtime\\models\\ocr\\mmproj-GLM-OCR-Q8_0.gguf",
+        "size": 484403648,
+        "sha256": "9c4b58e33e316ed142eb5dcb41abec3844d3e6e5dc361ffb782c3fa9d175141f"
+      }
+    },
+    "cpu_only": true,
+    "threads": 4,
+    "image_max_tokens": 1024,
+    "prompt_cache": false,
+    "limitation": "3 张真实底图、6 个任务，含方向变体；本机 14700K，不是客户机实测。",
+    "cases": [
+      {
+        "name": "XSY_2611",
+        "degrees": 0,
+        "expected": "LC7832852-P804",
+        "payload_sha256": "2bb27afa75ea123f6736c9e686dfc5440f3b55f997a3fccd716a26508a2bcce0",
+        "medium": {
+          "text": "SIZE:S\nLC7832852-P804\n261108\n571\n71.5% COTTON\n27% POLYESTER\n1.5% ELASTANE\nMADE IN CHINA",
+          "codes": [
+            "LC7832852-P804"
+          ],
+          "elapsed_ms": 1110.6416000002355,
+          "candidate_exact": true,
+          "orientation": {
+            "votes": [
+              32.65266511702256,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "confidence": 1.0,
+            "uncertain": false,
+            "probe_lines": 6,
+            "correction_ccw_degrees": 0,
+            "method": "bidirectional_text_consensus",
+            "source_size": [
+              1600,
+              1067
+            ]
+          }
+        },
+        "q8": {
+          "text": "\nSIZE : S\nLC7832852-P804\n261108 571\n71.5% COTTON\n27% POLYESTER\n1.5% ELASTANE\nMADE IN CHINA",
+          "codes": [
+            "LC7832852-P804"
+          ],
+          "finish_reason": "stop",
+          "usage": {
+            "completion_tokens": 63,
+            "prompt_tokens": 1025,
+            "total_tokens": 1088,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "server_timings": {
+            "cache_n": 0,
+            "prompt_n": 1025,
+            "prompt_ms": 18929.886,
+            "prompt_per_token_ms": 18.468181463414634,
+            "prompt_per_second": 54.147182925454494,
+            "predicted_n": 63,
+            "predicted_ms": 1246.055,
+            "predicted_per_token_ms": 20.09766129032258,
+            "predicted_per_second": 49.757033196769
+          },
+          "candidate_exact": true,
+          "elapsed_ms": 20212.490300000354,
+          "memory": {
+            "peak_working_set_mib": 1843.32,
+            "working_set_mib": 1827.23,
+            "private_mib": 1398.33
+          }
+        }
+      },
+      {
+        "name": "XSY_3471",
+        "degrees": 0,
+        "expected": "LC7832773-P805",
+        "payload_sha256": "3fb1c02d5a7e8b796dd54ef9cf31b66b8fca5be41dd7484f24fdef0f966673f8",
+        "medium": {
+          "text": "宏爵制衣厂\n款号：LC7832773\n-P805\n尺码：\n顺富7158SH\n面料\n用线：\nHX117\n板类：\nS码\n坐围：\n车板工号：12\n8.18\n期：",
+          "codes": [
+            "LC7832773-P805"
+          ],
+          "elapsed_ms": 1241.4652999996179,
+          "candidate_exact": true,
+          "orientation": {
+            "votes": [
+              16.47289660725995,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "confidence": 1.0,
+            "uncertain": false,
+            "probe_lines": 6,
+            "correction_ccw_degrees": 0,
+            "method": "bidirectional_text_consensus",
+            "source_size": [
+              1600,
+              1067
+            ]
+          }
+        },
+        "q8": {
+          "text": "\n宏爵制衣厂\n款号: LC7832713\n尺码: -P805\n面料: 180G 7158SH\n用线: HX117\n板类: S不码\n坐围: \n车板工号: 12\n期: 8.18",
+          "codes": [
+            "LC7832713"
+          ],
+          "finish_reason": "stop",
+          "usage": {
+            "completion_tokens": 80,
+            "prompt_tokens": 1025,
+            "total_tokens": 1105,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "server_timings": {
+            "cache_n": 0,
+            "prompt_n": 1025,
+            "prompt_ms": 19113.624,
+            "prompt_per_token_ms": 18.647438048780486,
+            "prompt_per_second": 53.62666964673994,
+            "predicted_n": 80,
+            "predicted_ms": 1546.068,
+            "predicted_per_token_ms": 19.570481012658227,
+            "predicted_per_second": 51.09736441087973
+          },
+          "candidate_exact": false,
+          "elapsed_ms": 20744.85789999926,
+          "memory": {
+            "peak_working_set_mib": 1926.85,
+            "working_set_mib": 1903.75,
+            "private_mib": 1483.97
+          }
+        }
+      },
+      {
+        "name": "XSY_5753",
+        "degrees": 0,
+        "expected": "7877842-P305",
+        "payload_sha256": "f6985230d5bbf15be532d2d18f55454cf2d19830fb40f256f529aaad91cc7cda",
+        "medium": {
+          "text": "：1817842-9305\n号：7205E\nst\n1955\n面线\n1361\n级骨\n成眼码粉\n打枣\n纸样",
+          "codes": [
+            "1817842-9305",
+            "7205E",
+            "1955",
+            "1361"
+          ],
+          "elapsed_ms": 971.2373000002117,
+          "candidate_exact": false,
+          "orientation": {
+            "votes": [
+              6.996489252156385,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "confidence": 1.0,
+            "uncertain": false,
+            "probe_lines": 3,
+            "correction_ccw_degrees": 0,
+            "method": "bidirectional_text_consensus",
+            "source_size": [
+              1600,
+              1067
+            ]
+          }
+        },
+        "q8": {
+          "text": "\n款号：1817842-3305\n布号：7205E\n面线：含毛1955\n级骨：1361\n打枣：\n码数：S\n纸样：",
+          "codes": [
+            "1817842-3305"
+          ],
+          "finish_reason": "stop",
+          "usage": {
+            "completion_tokens": 56,
+            "prompt_tokens": 1025,
+            "total_tokens": 1081,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "server_timings": {
+            "cache_n": 0,
+            "prompt_n": 1025,
+            "prompt_ms": 19312.035,
+            "prompt_per_token_ms": 18.84100975609756,
+            "prompt_per_second": 53.07571159642161,
+            "predicted_n": 56,
+            "predicted_ms": 1080.191,
+            "predicted_per_token_ms": 19.639836363636363,
+            "predicted_per_second": 50.91692117412568
+          },
+          "candidate_exact": false,
+          "elapsed_ms": 20445.453100001032,
+          "memory": {
+            "peak_working_set_mib": 1996.44,
+            "working_set_mib": 1972.16,
+            "private_mib": 1550.8
+          }
+        }
+      },
+      {
+        "name": "XSY_2611",
+        "degrees": 90,
+        "expected": "LC7832852-P804",
+        "payload_sha256": "0a60075c860b165ab09ae755c848a4874e62b7dda009070026c1b5d11f84edac",
+        "medium": {
+          "text": "SIZE:S\nLC7832852-P804\n261108\n571\n71.5% COTTON\n27% POLYESTER\n1.5% ELASTANE\nMADE IN CHINA",
+          "codes": [
+            "LC7832852-P804"
+          ],
+          "elapsed_ms": 1647.6206999996066,
+          "candidate_exact": true,
+          "orientation": {
+            "votes": [
+              0.0,
+              0.0,
+              0.0,
+              28.35176068711112
+            ],
+            "confidence": 1.0,
+            "uncertain": false,
+            "probe_lines": 6,
+            "correction_ccw_degrees": 270,
+            "method": "bidirectional_text_consensus",
+            "source_size": [
+              1067,
+              1600
+            ]
+          }
+        },
+        "q8": {
+          "text": "\nSIZE : S\nLC7832852-P804\n261108 (571)\n71.5% COTTON\n27% POLYESTER\n1.5% ELASTANE\nMADE IN CHINA",
+          "codes": [
+            "LC7832852-P804"
+          ],
+          "finish_reason": "stop",
+          "usage": {
+            "completion_tokens": 63,
+            "prompt_tokens": 1025,
+            "total_tokens": 1088,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "server_timings": {
+            "cache_n": 0,
+            "prompt_n": 1025,
+            "prompt_ms": 19289.009,
+            "prompt_per_token_ms": 18.818545365853655,
+            "prompt_per_second": 53.13907002687386,
+            "predicted_n": 63,
+            "predicted_ms": 1274.404,
+            "predicted_per_token_ms": 20.554903225806452,
+            "predicted_per_second": 48.65019256060088
+          },
+          "candidate_exact": true,
+          "elapsed_ms": 20616.071099999317,
+          "memory": {
+            "peak_working_set_mib": 2065.13,
+            "working_set_mib": 2038.5,
+            "private_mib": 1610.18
+          }
+        }
+      },
+      {
+        "name": "XSY_2611",
+        "degrees": 180,
+        "expected": "LC7832852-P804",
+        "payload_sha256": "7680aa7d0d46bd08aa1bdf2bcd88ef0cc150b6d3fd8c95d38834ce5086377304",
+        "medium": {
+          "text": "SIZE:S\nLC7832852-P804\n261108\n57\n71.5% COTTON\n27% POLYESTER\n1.5% ELASTANE\nMADE IN CHINA",
+          "codes": [
+            "LC7832852-P804"
+          ],
+          "elapsed_ms": 1658.565499999895,
+          "candidate_exact": true,
+          "orientation": {
+            "votes": [
+              0.0,
+              0.0,
+              33.22637996251488,
+              0.0
+            ],
+            "confidence": 1.0,
+            "uncertain": false,
+            "probe_lines": 6,
+            "correction_ccw_degrees": 180,
+            "method": "bidirectional_text_consensus",
+            "source_size": [
+              1600,
+              1067
+            ]
+          }
+        },
+        "q8": {
+          "text": "\nSIZE:S\nLC7832852-P804\n261108 571\n71.5% COTTON\n27% POLYESTER\n1.5% ELASTANE\nMADE IN CHINA",
+          "codes": [
+            "LC7832852-P804"
+          ],
+          "finish_reason": "stop",
+          "usage": {
+            "completion_tokens": 63,
+            "prompt_tokens": 1025,
+            "total_tokens": 1088,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "server_timings": {
+            "cache_n": 0,
+            "prompt_n": 1025,
+            "prompt_ms": 19020.359,
+            "prompt_per_token_ms": 18.55644780487805,
+            "prompt_per_second": 53.889624270498786,
+            "predicted_n": 63,
+            "predicted_ms": 1220.302,
+            "predicted_per_token_ms": 19.682290322580645,
+            "predicted_per_second": 50.807095292804576
+          },
+          "candidate_exact": true,
+          "elapsed_ms": 20291.443699999945,
+          "memory": {
+            "peak_working_set_mib": 2133.05,
+            "working_set_mib": 2107.86,
+            "private_mib": 1686.7
+          }
+        }
+      },
+      {
+        "name": "XSY_3471",
+        "degrees": 90,
+        "expected": "LC7832773-P805",
+        "payload_sha256": "aa2aa60411addde98646e78e4d28a27ab27dc9e677019d0dfd05f552011a9328",
+        "medium": {
+          "text": "宏爵制衣厂\n款号：LC7832773\n-P805\n尺码：\n顺富7158SH\n面料\n用线：\nHX117\n板类：\nS码\n坐围：\n车板工号：12\n8.18\n期：",
+          "codes": [
+            "LC7832773-P805"
+          ],
+          "elapsed_ms": 1824.7846999984176,
+          "candidate_exact": true,
+          "orientation": {
+            "votes": [
+              0.0,
+              0.0,
+              0.0,
+              15.339975384689016
+            ],
+            "confidence": 1.0,
+            "uncertain": false,
+            "probe_lines": 6,
+            "correction_ccw_degrees": 270,
+            "method": "bidirectional_text_consensus",
+            "source_size": [
+              1067,
+              1600
+            ]
+          }
+        },
+        "q8": {
+          "text": "\n宏爵制衣厂\n款号：LC7832413\n尺码：P805\n面料：聚酯7158S44\n用线：HX117\n板类：5码\n坐围：5码\n车板工号：12\n期：8.18",
+          "codes": [
+            "LC7832413"
+          ],
+          "finish_reason": "stop",
+          "usage": {
+            "completion_tokens": 76,
+            "prompt_tokens": 1025,
+            "total_tokens": 1101,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "server_timings": {
+            "cache_n": 0,
+            "prompt_n": 1025,
+            "prompt_ms": 19157.237,
+            "prompt_per_token_ms": 18.68998731707317,
+            "prompt_per_second": 53.50458419447439,
+            "predicted_n": 76,
+            "predicted_ms": 1564.426,
+            "predicted_per_token_ms": 20.859013333333333,
+            "predicted_per_second": 47.94090612147843
+          },
+          "candidate_exact": false,
+          "elapsed_ms": 20809.122199998455,
+          "memory": {
+            "peak_working_set_mib": 2201.49,
+            "working_set_mib": 2174.71,
+            "private_mib": 1746.32
+          }
+        }
+      }
+    ],
+    "load_ms": 1041.8294000010064,
+    "loaded_memory": {
+      "peak_working_set_mib": 1533.88,
+      "working_set_mib": 1516.88,
+      "private_mib": 1360.03
+    },
+    "server_stopped": true
+  },
+  "high_budget": {
+    "model": {
+      "file": "G:\\app\\LR\\.runtime\\models\\ocr\\GLM-OCR-Q8_0.gguf",
+      "size": 950433408,
+      "sha256": "45bc244a6446aff850521dc41f18bc8d7105ad5f0c2c8c28af04e7cc4f4d50b1",
+      "revision": "3ed9f460089d7d655134c5344496a63c03a1f13f",
+      "repo": "ggml-org/GLM-OCR-GGUF",
+      "projector": {
+        "file": "G:\\app\\LR\\.runtime\\models\\ocr\\mmproj-GLM-OCR-Q8_0.gguf",
+        "size": 484403648,
+        "sha256": "9c4b58e33e316ed142eb5dcb41abec3844d3e6e5dc361ffb782c3fa9d175141f"
+      }
+    },
+    "cpu_only": true,
+    "threads": 4,
+    "image_max_tokens": 4096,
+    "prompt_cache": false,
+    "limitation": "小样本含方向变体；本机 14700K，不是客户机实测。两个模型收到同字节 JPEG；GLM 原生读图，Medium 含方向预处理。",
+    "cases": [
+      {
+        "name": "XSY_3471",
+        "degrees": 0,
+        "expected": "LC7832773-P805",
+        "payload_sha256": "3fb1c02d5a7e8b796dd54ef9cf31b66b8fca5be41dd7484f24fdef0f966673f8",
+        "medium": {
+          "text": "宏爵制衣厂\n款号：LC7832773\n-P805\n尺码：\n顺富7158SH\n面料\n用线：\nHX117\n板类：\nS码\n坐围：\n车板工号：12\n8.18\n期：",
+          "codes": [
+            "LC7832773-P805"
+          ],
+          "elapsed_ms": 1267.6164000004064,
+          "candidate_exact": true,
+          "orientation": {
+            "votes": [
+              16.47289660725995,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "confidence": 1.0,
+            "uncertain": false,
+            "probe_lines": 6,
+            "correction_ccw_degrees": 0,
+            "method": "bidirectional_text_consensus",
+            "source_size": [
+              1600,
+              1067
+            ]
+          }
+        },
+        "q8": {
+          "text": "\n宏爵制衣厂\n款号：LC7832713\n尺码：-P805\n面料：顺营7158SH\n用线：HX117\n板类：S不码\n坐围：\n车板工号：12\n期：8.18",
+          "codes": [
+            "LC7832713"
+          ],
+          "finish_reason": "stop",
+          "usage": {
+            "completion_tokens": 73,
+            "prompt_tokens": 2177,
+            "total_tokens": 2250,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "server_timings": {
+            "cache_n": 0,
+            "prompt_n": 2177,
+            "prompt_ms": 56710.402,
+            "prompt_per_token_ms": 26.04979421221865,
+            "prompt_per_second": 38.38801918561607,
+            "predicted_n": 73,
+            "predicted_ms": 2052.395,
+            "predicted_per_token_ms": 28.50548611111111,
+            "predicted_per_second": 35.08096638317673
+          },
+          "candidate_exact": false,
+          "elapsed_ms": 58812.34509999922,
+          "memory": {
+            "peak_working_set_mib": 2162.28,
+            "working_set_mib": 2123.75,
+            "private_mib": 1693.47
+          }
+        }
+      }
+    ],
+    "load_ms": 1029.3844000007084,
+    "loaded_memory": {
+      "peak_working_set_mib": 1553.79,
+      "working_set_mib": 1517.2,
+      "private_mib": 1610.27
+    },
+    "server_stopped": true
+  },
+  "summary": {
+    "tasks": 6,
+    "base_images": 3,
+    "q8_exact": 3,
+    "medium_exact": 5,
+    "q8_median_ms": 20530.762100000175,
+    "medium_median_ms": 1444.5429999996122,
+    "peak_working_set_mib": 2201.49
+  },
+  "interpretation": "小样本完整流程对照；输入相同字节，Medium 包含方向预处理，GLM 原生整图读。未做同条件 f16 CPU 比较，不能推断量化带来的变化。保持 Medium 默认，Q8 未加入全量安装器。"
+}

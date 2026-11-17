@@ -1,4 +1,5 @@
 import tempfile
+from contextlib import closing
 import unittest
 from pathlib import Path
 import os
@@ -10,6 +11,42 @@ from asset_catalog import AssetCatalog,archive_path
 
 
 class AssetCatalogTests(unittest.TestCase):
+    def test_mature_catalog_opens_under_writer_without_schema_changes(self):
+        import sqlite3
+        import time
+        with tempfile.TemporaryDirectory() as folder:
+            data=Path(folder);catalog=AssetCatalog(data);catalog.close()
+            with closing(sqlite3.connect(data/'asset_catalog.sqlite3')) as writer:
+                version=writer.execute('PRAGMA schema_version').fetchone()[0]
+                writer.execute('BEGIN IMMEDIATE')
+                started=time.monotonic()
+                reopened=AssetCatalog(data)
+                try:
+                    self.assertLess(time.monotonic()-started,1)
+                    self.assertTrue(reopened.fast_index.ready)
+                    with reopened.connect() as c:
+                        self.assertEqual(c.execute('PRAGMA schema_version').fetchone()[0],version)
+                finally:reopened.close()
+
+    def test_legacy_capture_view_migrates_once_and_keeps_manual_pairs(self):
+        import sqlite3
+        with tempfile.TemporaryDirectory() as folder:
+            data=Path(folder);catalog=AssetCatalog(data);catalog.close()
+            with closing(sqlite3.connect(data/'asset_catalog.sqlite3')) as c:
+                c.execute('DROP VIEW capture_items')
+                c.execute('CREATE VIEW capture_items AS SELECT * FROM items')
+            migrated=AssetCatalog(data)
+            try:
+                with migrated.connect() as c:
+                    sql=c.execute("SELECT sql FROM sqlite_master WHERE name='capture_items'").fetchone()[0]
+                    self.assertIn("b.source='manual'",sql)
+                    version=c.execute('PRAGMA schema_version').fetchone()[0]
+            finally:migrated.close()
+            reopened=AssetCatalog(data)
+            try:
+                with reopened.connect() as c:self.assertEqual(c.execute('PRAGMA schema_version').fetchone()[0],version)
+            finally:reopened.close()
+
     def test_media_migration_runs_once_and_only_changes_legacy_classification(self):
         import sqlite3
         with tempfile.TemporaryDirectory() as folder:

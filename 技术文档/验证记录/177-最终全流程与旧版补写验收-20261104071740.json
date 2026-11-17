@@ -1,0 +1,293 @@
+{
+  "releaseId": "20261104071740",
+  "passed": true,
+  "actual_model": "GLM-OCR",
+  "mocked_ocr": false,
+  "max_arrival_seconds": 0.672,
+  "groups": [
+    {
+      "sku": "LC7877836-P1",
+      "photos": [
+        "XSY_2235.JPG",
+        "XSY_2295.JPG",
+        "XSY_2296.JPG",
+        "XSY_2297.JPG"
+      ],
+      "arrivals": [
+        {
+          "name": "XSY_2235.JPG",
+          "seconds": 0.672
+        },
+        {
+          "name": "XSY_2295.JPG",
+          "seconds": 0.172
+        },
+        {
+          "name": "XSY_2296.JPG",
+          "seconds": 0.171
+        },
+        {
+          "name": "XSY_2297.JPG",
+          "seconds": 0.125
+        }
+      ],
+      "two_star_to_written_seconds": 38.079,
+      "actual_ocr_jobs": 1,
+      "auto_confirmation": true,
+      "ocr_readings": [
+        {
+          "text": "\nSIZE : S\nLC7877836-P1\n261103 G757\n74.7% COTTON\n16.5% POLYESTER\n8.8% REGENERATED FIBRE\nMADE IN CHINA",
+          "codes": [
+            "LC7877836-P1"
+          ],
+          "model": "glm-ocr",
+          "confidence": 0,
+          "unscored": true
+        },
+        {
+          "text": "SIZE : S LC7877836-P1 261103 (G757) 74.7% COTTON 16.5% POLYESTER 8.8% REGENERATED FIBRE MADE IN CHINA",
+          "codes": [
+            "LC7877836-P1",
+            "261103",
+            "(G757)"
+          ],
+          "model": "qwen3.5-9b-vlm",
+          "confidence": 0.98,
+          "unscored": false
+        }
+      ]
+    },
+    {
+      "sku": "LC7832852-P305",
+      "photos": [
+        "XSY_2487.JPG",
+        "XSY_2556.JPG",
+        "XSY_2557.JPG",
+        "XSY_2558.JPG"
+      ],
+      "arrivals": [
+        {
+          "name": "XSY_2487.JPG",
+          "seconds": 0.141
+        },
+        {
+          "name": "XSY_2556.JPG",
+          "seconds": 0.172
+        },
+        {
+          "name": "XSY_2557.JPG",
+          "seconds": 0.14
+        },
+        {
+          "name": "XSY_2558.JPG",
+          "seconds": 0.157
+        }
+      ],
+      "two_star_to_written_seconds": 40.453,
+      "actual_ocr_jobs": 1,
+      "auto_confirmation": true,
+      "ocr_readings": [
+        {
+          "text": "\nmia\n\nSIZE : S\nLC7832852-P305\n261108 (571)\n71.5% COTTON\n27% POLYESTER\n1.5% ELASTANE\nMADE IN CHINA",
+          "codes": [
+            "LC7832852-P305"
+          ],
+          "model": "glm-ocr",
+          "confidence": 0,
+          "unscored": true
+        },
+        {
+          "text": "SIZE : S\nLC7832852-P305\n261108 (571)\n71.5% COTTON\n27% POLYESTER\n1.5% ELASTANE\nMADE IN CHINA",
+          "codes": [
+            "LC7832852-P305",
+            "261108 (571)"
+          ],
+          "model": "qwen3.5-9b-vlm",
+          "confidence": 0.95,
+          "unscored": false
+        }
+      ]
+    },
+    {
+      "sku": "LC7832852-P804",
+      "photos": [
+        "XSY_2559.JPG",
+        "XSY_2609.JPG",
+        "XSY_2610.JPG",
+        "XSY_2611.JPG"
+      ],
+      "arrivals": [
+        {
+          "name": "XSY_2559.JPG",
+          "seconds": 0.14
+        },
+        {
+          "name": "XSY_2609.JPG",
+          "seconds": 0.188
+        },
+        {
+          "name": "XSY_2610.JPG",
+          "seconds": 0.172
+        },
+        {
+          "name": "XSY_2611.JPG",
+          "seconds": 0.109
+        }
+      ],
+      "two_star_to_written_seconds": 27.984,
+      "actual_ocr_jobs": 1,
+      "auto_confirmation": true,
+      "ocr_readings": [
+        {
+          "text": "\nSIZE : S\nLC7832852-P804\n261108 571\n71.5% COTTON\n27% POLYESTER\n1.5% ELASTANE\nMADE IN CHINA",
+          "codes": [
+            "LC7832852-P804"
+          ],
+          "model": "glm-ocr",
+          "confidence": 0,
+          "unscored": true
+        },
+        {
+          "text": "SIZE : S\nLC7832852-P804\n261108 (57)\n71.5% COTTON\n27% POLYESTER\n1.5% ELASTANE\nMADE IN CHINA",
+          "codes": [
+            "LC7832852-P804",
+            "261108(57)"
+          ],
+          "model": "qwen3.5-9b-vlm",
+          "confidence": 0.98,
+          "unscored": false
+        }
+      ]
+    }
+  ],
+  "live_checks": {
+    "pixels_unchanged": true,
+    "unclosed_tail_unassigned": true,
+    "all_intervals_exact": true,
+    "actual_written_photos": 12,
+    "errors": [],
+    "seconds": 118.64,
+    "exit_code": 0
+  },
+  "legacy_backfill": {
+    "legacy_missing_jobs": 12,
+    "legacy_images_without_sku": 12,
+    "real_ocr_evidence_preserved": true,
+    "progress_samples": [
+      {
+        "applied_files": 1,
+        "shot_skus": 3,
+        "footer": "拍摄进度 · 3 已拍摄"
+      },
+      {
+        "applied_files": 2,
+        "shot_skus": 3,
+        "footer": "拍摄进度 · 3 已拍摄"
+      },
+      {
+        "applied_files": 3,
+        "shot_skus": 3,
+        "footer": "拍摄进度 · 3 已拍摄"
+      },
+      {
+        "applied_files": 4,
+        "shot_skus": 3,
+        "footer": "拍摄进度 · 3 已拍摄"
+      },
+      {
+        "applied_files": 5,
+        "shot_skus": 3,
+        "footer": "拍摄进度 · 3 已拍摄"
+      },
+      {
+        "applied_files": 6,
+        "shot_skus": 3,
+        "footer": "拍摄进度 · 3 已拍摄"
+      },
+      {
+        "applied_files": 7,
+        "shot_skus": 3,
+        "footer": "拍摄进度 · 3 已拍摄"
+      },
+      {
+        "applied_files": 8,
+        "shot_skus": 3,
+        "footer": "拍摄进度 · 3 已拍摄"
+      },
+      {
+        "applied_files": 9,
+        "shot_skus": 3,
+        "footer": "拍摄进度 · 3 已拍摄"
+      },
+      {
+        "applied_files": 10,
+        "shot_skus": 3,
+        "footer": "拍摄进度 · 3 已拍摄"
+      },
+      {
+        "applied_files": 11,
+        "shot_skus": 3,
+        "footer": "拍摄进度 · 3 已拍摄"
+      },
+      {
+        "applied_files": 12,
+        "shot_skus": 3,
+        "footer": "拍摄进度 · 3 已拍摄"
+      }
+    ],
+    "errors": [],
+    "queue": {
+      "worker": {
+        "phase": "idle",
+        "since": 1793777017.3453517,
+        "path": "",
+        "job_id": "",
+        "error": "",
+        "alive": true,
+        "elapsed_seconds": 0.0,
+        "backfilled_jobs": 12
+      },
+      "counts": {
+        "applied": 12
+      },
+      "data_path": "G:\\app\\LR\\build\\live-arrival-queue\\acceptance-legacy-verified\\data",
+      "releaseId": "20261104071740"
+    },
+    "passed": true,
+    "all_files_read_back": true,
+    "all_pixels_unchanged": true,
+    "tail_unassigned": true,
+    "no_zero_shot_progress": true,
+    "no_pending_hint_after_success": true,
+    "exit_code": 0
+  },
+  "restart": {
+    "passed": true,
+    "rows_still_shot": 3,
+    "all_metadata_applied": true,
+    "new_ocr_jobs": 0,
+    "new_ocr_documents": 0,
+    "queue": {
+      "worker": {
+        "phase": "idle",
+        "since": 1793777062.3630753,
+        "path": "",
+        "job_id": "",
+        "error": "",
+        "alive": true,
+        "elapsed_seconds": 0.0,
+        "backfilled_jobs": 0
+      },
+      "counts": {
+        "applied": 12
+      },
+      "data_path": "G:\\app\\LR\\build\\live-arrival-queue\\acceptance-live\\data",
+      "releaseId": "20261104071740"
+    },
+    "observation_seconds": 13,
+    "exit_code": 0
+  },
+  "nas_source_modified": false,
+  "customer_database_available": false,
+  "test_mode": "actual release engine and real UI, isolated copies of user-specified photos; legacy fixture retains actual OCR confirmations and restores original untagged photo bytes with zero metadata jobs"
+}

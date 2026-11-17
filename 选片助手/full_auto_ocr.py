@@ -9,13 +9,15 @@ from sku_progress import capture_time
 class FullAutoOCR:
     def full_auto_state(self,session_id=None):
         config=self.full_auto;p=self.project();reason=''
+        active=self.store.session();binding=self.shooting_context(session_id or (active['id'] if active else None))
+        if binding:p=self.project(binding['project'])
         imported=bool(p and not p['metadata'].get('automatic_day'))
-        active=self.store.session();sid=session_id or (p['session_id'] if p else None) or (active['id'] if active else None)
-        scope=(p['scope'] if p else '') or '现场记录'
+        sid=session_id or (binding['session'] if binding else None) or (p['session_id'] if p else None) or (active['id'] if active else None)
+        scope=(binding['scope'] if binding else p['scope'] if p else '') or '现场记录'
         if not sid or not self.store.session(sid) or self.store.is_removed(sid):reason='请先打开可用的照片目录'
         elif imported and not (self.root/p['id']/'source.xlsx').is_file():reason='输入文档已缺失，请重新导入'
         elif imported and (not p['scope'] or not p['session_id']):reason='请选择文档工作表并绑定当前照片目录'
-        elif imported and p['session_id']!=sid:reason='请先将拍摄文档绑定当前照片目录'
+        elif imported and p['session_id']!=sid and not binding:reason='请先将拍摄文档绑定当前照片目录'
         context={'project':p['id'] if p else None,'session':sid,'scope':scope}
         enabled=bool(config.get('enabled') and not reason and p and p['enabled'] and all(config.get(k)==v for k,v in context.items()))
         counts={}
@@ -35,13 +37,13 @@ class FullAutoOCR:
         with self.lock:
             state=self.full_auto_state(session_id)
             if enabled and not state['can_enable']:raise ValueError(state['reason'])
-            p=self.project()
+            p=self.project(state['project_id'])
             if project_id is not None and (not p or p['id']!=project_id):raise ValueError('拍摄文档已变化，请重新开启全自动 OCR')
-            if scope is not None and p and (p['scope'] or '现场记录')!=scope:raise ValueError('拍摄工作表已变化，请重新开启全自动 OCR')
+            if scope is not None and p and state['scope']!=scope:raise ValueError('拍摄工作表已变化，请重新开启全自动 OCR')
             if enabled and (not p or p['metadata'].get('automatic_day') and p['session_id']!=state['session_id']):p=self._automatic_project(state['session_id'],start_stream=False)
-            if enabled and session_id and p['session_id']!=session_id:raise ValueError('请先将拍摄文档绑定当前照片目录')
+            if enabled and session_id and p['session_id']!=session_id and not self.shooting_context(session_id):raise ValueError('请先将拍摄文档绑定当前照片目录')
             config={'enabled':enabled}
-            if enabled:config.update(project=p['id'],session=p['session_id'],scope=p['scope'])
+            if enabled:config.update(project=p['id'],session=state['session_id'],scope=state['scope'])
             with self.connect() as c:
                 c.execute("INSERT OR REPLACE INTO settings VALUES ('full_auto_ocr',?)",(json.dumps(config),))
                 if enabled:c.execute('UPDATE projects SET enabled=1 WHERE id=?',(p['id'],))
@@ -112,7 +114,7 @@ class FullAutoOCR:
         context=self._full_context()
         return bool(context and (job['project'],job['session_id'],job['scope'])==(context['project'],context['session'],context['scope']))
 
-    def _full_commit(self,job,status,result,targets,reason):
+    def _full_commit(self,job,status,result,targets,reason,*,connection=None):
         if status not in ('matched','confirmed'):return status,result,targets,reason
         if status!='confirmed' and not self._full_job_current(job):return 'cancelled',result,[],'自动模式或文档已变化，未入库'
         if not self._valid(job):return 'cancelled',result,[],'照片已变化，未入库'
@@ -124,6 +126,20 @@ class FullAutoOCR:
         row=next((r for r in self.rows(job['project']) if r['id'] in targets and r['sheet'] in (job['scope'],managed)),None)
         if not row:return 'review',result,[],'文档款号已变化，请复核'
         if result.get('starred_label'):
+            from sku_shoot_versions import allocate
+            from contextlib import nullcontext
+            asset=self.archive.ensure(job['session_id'],job['capture_id'])
+            with self.connect() if connection is None else nullcontext(connection) as c:
+                if not c.in_transaction:c.execute('BEGIN IMMEDIATE')
+                variant=allocate(c,self.archive,asset,job['session_id'],job['capture_id'],row['sku'],self.clock())
+                if variant['sku']!=row['sku']:
+                    matched=self._record_unplanned(job,[{'codes':[variant['sku']],'unscored':True}],
+                        {'status':'review','row_ids':[],'candidates':[]},accept_observed=True,connection=c)
+                    if matched['status']!='matched':raise ValueError('重复标签款号未能独立记录，请重试')
+                    targets=matched['row_ids']
+                c.execute('INSERT INTO ocr_choices VALUES (?,?,?,?,?) ON CONFLICT(session_id,capture_id) DO UPDATE SET sku=excluded.sku,reading_key=excluded.reading_key,updated=excluded.updated',
+                    (job['session_id'],job['capture_id'],variant['sku'],'legacy:'+job['id'],self.clock()))
+                result={**result,**variant}
             return status,result,targets,reason+'；款末标签已确认，按完整区间入库'
         preview=self.archive.preview(job['session_id'],[job['capture_id']],row['sku'],job['scope'],job['project'],source='full_auto')
         before=preview['targets'][0]['before']

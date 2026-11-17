@@ -1,0 +1,6 @@
+/.gradle/
+/local.properties
+/ocr.local.properties
+/**/build/
+/app/src/androidTest/assets/field/
+/*.jks

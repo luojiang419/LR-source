@@ -1,0 +1,1406 @@
+{
+  "date": "2026-11-14",
+  "status": "Installed and restarted successfully; frozen UI and independent image search verified before and after installation",
+  "authoritative_architecture": {
+    "database_type": "SQLite via original SQLAlchemy models",
+    "database_path": "visual-search/assets.db",
+    "schema": "original image, image_features, video, video_features",
+    "metadata_database": "separate; not used for visual feature storage",
+    "custom_vector_schema": false,
+    "source_runtime": "vendored original MaterialSearch Core in an isolated process",
+    "frame_verification": "Query-time preview comparison; original SQLite four tables and stored CLIP vectors unchanged"
+  },
+  "sources": {
+    "frontend": {
+      "url": "https://github.com/chn-lee-yumi/MaterialSearch",
+      "commit": "aa05effad9d97a265d1045ebeb47e79e11192b86"
+    },
+    "core": {
+      "url": "https://github.com/chn-lee-yumi/MaterialSearch-core",
+      "base": "d0e6c39e372b405b1bfe54427c63d9bfbddd1e36",
+      "head": "28f9061c3c2f5265efe553b279fc66e83bb56420",
+      "branch": "feat/archive-embedding-api",
+      "license": "LGPL-3.0-only"
+    }
+  },
+  "source_tests": {
+    "command": "PYTHONPATH=src python -X utf8 -m unittest discover -s tests -q",
+    "run": 15,
+    "passed": 15,
+    "seconds": 0.447,
+    "coverage": [
+      "lazy imports and model loading",
+      "PIL compatibility",
+      "attention masks",
+      "finite unit vectors and dimensions",
+      "concurrent callers",
+      "original SQLite schema isolation",
+      "original image-id search",
+      "checksum deduplication",
+      "video frame fields"
+    ]
+  },
+  "real_model_original_database": {
+    "scope": "generated fixtures and isolated original upstream database only",
+    "database_type": "SQLite / SQLAlchemy",
+    "schema": "original upstream unchanged",
+    "images": {
+      "shape": [
+        2,
+        768
+      ],
+      "dtype": "float32",
+      "norms": [
+        1.000000238418579,
+        0.9999998211860657
+      ],
+      "elapsed_ms": 8453.52
+    },
+    "text": {
+      "shape": [
+        1,
+        768
+      ],
+      "elapsed_ms": 72.72
+    },
+    "search": {
+      "top_name": "red.jpg",
+      "score": 1.0000001192092896,
+      "elapsed_ms": 1.44,
+      "api": "materialsearch_core.search.search_image_by_image"
+    },
+    "tables": [
+      "image",
+      "image_features",
+      "video",
+      "video_features"
+    ],
+    "image_count": 2,
+    "feature_count": 2,
+    "metadata_unchanged": true,
+    "metadata_has_no_visual_tables": true
+  },
+  "existing_lr_probe": {
+    "scope": "temporary database and generated fixtures only",
+    "registration": {
+      "mode": "visited",
+      "indexed_after_add": 0,
+      "fixture_files": 2,
+      "after_visit_A": 1,
+      "unvisited_B_indexed": false
+    },
+    "before_vectors": {
+      "rows": 0,
+      "indexed_vectors": 0
+    },
+    "workflow_save_replaces_clip": {
+      "clip_before": 1,
+      "clip_after": 0
+    },
+    "version_invalidation": {
+      "before": 1,
+      "after": 0,
+      "old_vectors_excluded": true
+    }
+  },
+  "existing_lr_regression": {
+    "product_code_changed_by_this_task": false,
+    "broad_run": 71,
+    "reported_failures": 7,
+    "reported_errors": 2,
+    "all_passed": false,
+    "focused_run": 6,
+    "focused_backend_passed": 5,
+    "focused_browser_errors": 1,
+    "browser_error": "Timeout waiting for 3 initial retrieval cards before reference-image interaction",
+    "note": "Broad failure/error counts can overlap for a test and its teardown; pre-existing workspace was not clean. Not treated as successful production acceptance."
+  },
+  "patch": {
+    "path": "技术文档/补丁/232-MaterialSearch-core-归档特征接口.patch",
+    "base_apply_check": "passed"
+  },
+  "limits": [
+    "Copied JPG/PNG and a generated video fixture were validated; real RAW/PSD libraries were not benchmarked",
+    "No real business-library scan, database migration, model download, full installer build, deployment, or push",
+    "Original MaterialSearch full-range query remains; large-library latency and memory were not measured",
+    "Two pre-existing unrelated regression failures remain explicitly excluded; permission-error traversal used a unit simulation, not a real NAS disconnect"
+  ],
+  "implementation": {
+    "branch": "feat/materialsearch-image-search",
+    "commit": "b882639322251c80ee391e1697ab5c5c2221cbb7",
+    "tests": {
+      "unit": {
+        "run": 8,
+        "passed": 8,
+        "seconds": 0.033
+      },
+      "real_browser_lifecycle": {
+        "passed": true,
+        "latest_combined_run": 8,
+        "latest_combined_seconds": 52.9,
+        "note": "That run contained seven unit tests and one real integration test; the additional directory boundary test was subsequently included in the passing eight-unit suite."
+      },
+      "related_regression": {
+        "run": 59,
+        "passed": 59,
+        "seconds": 71.848,
+        "explicit_preexisting_exclusions": [
+          "test_asset_intelligence.IntelligenceTests.test_one_character_chinese_query_matches_inside_indexed_words",
+          "test_analysis_workflow.AnalysisWorkflowTests.test_browser_can_stop_and_continue_ocr_and_vision_independently"
+        ],
+        "workflow_failure_control": "Also reproduced with 08e78ed backend modules under the current workspace test harness."
+      }
+    },
+    "copied_photo_acceptance": {
+      "copied_images": 7,
+      "checks": [
+        "settings build",
+        "all unvisited subdirectories indexed",
+        "upload search",
+        "all result thumbnails",
+        "selected result similarity search",
+        "full-screen preview",
+        "default frame mode excludes hands and side poses",
+        "explicit content mode preserves broad garment retrieval",
+        "relaxing and restoring content threshold requery correctly",
+        "unindexed front view retrieves only frontal views without hands",
+        "hand query does not globally ban hands",
+        "side query finds the side pose",
+        "logo query retrieves logo only",
+        "unmatched query returns no filler results",
+        "existing metadata asset ids use the same frame matching and visible previews",
+        "pause blocks new image",
+        "resume only indexes new image",
+        "existing image ids and hashes preserved",
+        "native file notifications automatically add and remove images",
+        "reused upstream integer ids cannot show an older result as another file",
+        "restart reuses all unchanged images",
+        "deleted copy removed from visual index",
+        "corrupt image reported without blocking other files",
+        "retry recovers repaired image",
+        "original video frame store and image-to-video match preview",
+        "removed archive root immediately excluded"
+      ],
+      "initial_state": {
+        "engine": "MaterialSearch",
+        "database": "C:\\Users\\jiang\\AppData\\Local\\Temp\\lr-materialsearch-dcrp5zlu\\data\\visual-search\\assets.db",
+        "enabled": true,
+        "paused": false,
+        "phase": "idle",
+        "total": 7,
+        "done": 7,
+        "indexed": 7,
+        "updated": 7,
+        "reused": 0,
+        "failed": 0,
+        "failures": [],
+        "offline": [],
+        "error": "",
+        "ready": true
+      },
+      "search": {
+        "top": "XSY_0929.jpg",
+        "score": 0.9970510005950928,
+        "semantic_score": 0.9989941716194153,
+        "match_mode": "frame",
+        "elapsed_ms": 1074.13,
+        "returned": 3
+      },
+      "relevance": {
+        "default_threshold": 0.85,
+        "default_match_mode": "frame",
+        "front_without_hands": [
+          "XSY_0929.jpg",
+          "XSY_0930.jpg",
+          "XSY_0933.jpg"
+        ],
+        "content_mode_returned": 6,
+        "lower_threshold_requeries": true,
+        "unindexed_front_without_hands": {
+          "returned": 3,
+          "names": [
+            "XSY_0929.jpg",
+            "XSY_0930.jpg",
+            "XSY_0933.jpg"
+          ]
+        },
+        "hands_query": {
+          "returned": 1,
+          "names": [
+            "XSY_0937.jpg"
+          ]
+        },
+        "side_query": {
+          "returned": 1,
+          "names": [
+            "XSY_0945.jpg"
+          ]
+        },
+        "logo_query": {
+          "returned": 1,
+          "names": [
+            "logo.png"
+          ]
+        },
+        "unrelated_screenshot": {
+          "returned": 0,
+          "names": []
+        }
+      },
+      "metadata_items": 0,
+      "metadata_vectors": 0,
+      "metadata_items_after_manual_visit": 3,
+      "metadata_vectors_after_manual_visit": 0,
+      "visual_tables": [
+        "image",
+        "image_features",
+        "video",
+        "video_features"
+      ],
+      "originals_unchanged": true,
+      "page_errors": [],
+      "http_errors": []
+    },
+    "bundled_external_python": {
+      "runtime": "D:\\Program Files\\MaterialSearchWindows\\python.exe",
+      "bundled_worker": true,
+      "tables": "original SQLite four tables",
+      "indexed": 7,
+      "top": "XSY_0929.jpg",
+      "score": 0.9999903440475464,
+      "elapsed_ms": 3441.21,
+      "threshold_applied": 0.85,
+      "match_mode": "frame",
+      "returned": 3,
+      "names": [
+        "XSY_0929.jpg",
+        "XSY_0930.jpg",
+        "XSY_0933.jpg"
+      ]
+    },
+    "preexisting_changes_preserved": {
+      "asset_catalog.py": true,
+      "build_release.py": true,
+      "server.py": true
+    },
+    "syntax": {
+      "python": "passed",
+      "javascript": "passed"
+    },
+    "screenshots": [
+      "build/archive-image-search-integration/index-ready.png",
+      "build/archive-image-search-integration/image-search-results.png",
+      "build/archive-image-search-integration/image-search-fullscreen.png"
+    ],
+    "deployed": true,
+    "pushed": false
+  },
+  "relevance_correction": {
+    "date": "2026-11-14",
+    "commit": "bf69c0ace749893348c001b18c5add9873c1ac53",
+    "user_context": "User explicitly confirmed the complaint concerned the previous test screenshot.",
+    "root_cause": {
+      "old_frontend_default": 0.5,
+      "old_backend_request_threshold": 0,
+      "upstream_image_default": 0.85,
+      "irrelevant_logo_cosine": 0.5471971035003662,
+      "acceptance_gap": "Previous tests asserted self-match rank one and all seven candidates instead of rejecting the irrelevant negative."
+    },
+    "fix": {
+      "image_default": 0.85,
+      "text_default": 0.36,
+      "threshold_sent_by_desktop_and_lan": true,
+      "threshold_applied_by_backend": true,
+      "slider_changes_requery": true,
+      "low_threshold_warning": true,
+      "database_schema_unchanged": true
+    },
+    "database_audit": [
+      {
+        "id": 1,
+        "name": "logo.png",
+        "file_exists": true,
+        "sha1_matches": true,
+        "dimensions": 768,
+        "finite": true,
+        "norm": 1.0,
+        "cosine_to_query": 0.5471969842910767
+      },
+      {
+        "id": 2,
+        "name": "XSY_0929.jpg",
+        "file_exists": true,
+        "sha1_matches": true,
+        "dimensions": 768,
+        "finite": true,
+        "norm": 1.0,
+        "cosine_to_query": 1.0
+      },
+      {
+        "id": 3,
+        "name": "XSY_0930.jpg",
+        "file_exists": true,
+        "sha1_matches": true,
+        "dimensions": 768,
+        "finite": true,
+        "norm": 0.9999999403953552,
+        "cosine_to_query": 0.9971144795417786
+      },
+      {
+        "id": 4,
+        "name": "XSY_0933.jpg",
+        "file_exists": true,
+        "sha1_matches": true,
+        "dimensions": 768,
+        "finite": true,
+        "norm": 0.9999999403953552,
+        "cosine_to_query": 0.9900081753730774
+      },
+      {
+        "id": 5,
+        "name": "XSY_0937.jpg",
+        "file_exists": true,
+        "sha1_matches": true,
+        "dimensions": 768,
+        "finite": true,
+        "norm": 0.9999998807907104,
+        "cosine_to_query": 0.9774014949798584
+      },
+      {
+        "id": 6,
+        "name": "XSY_0941.jpg",
+        "file_exists": true,
+        "sha1_matches": true,
+        "dimensions": 768,
+        "finite": true,
+        "norm": 1.0,
+        "cosine_to_query": 0.9573976993560791
+      },
+      {
+        "id": 7,
+        "name": "XSY_0945.jpg",
+        "file_exists": true,
+        "sha1_matches": true,
+        "dimensions": 768,
+        "finite": true,
+        "norm": 0.9999999403953552,
+        "cosine_to_query": 0.9519925117492676
+      }
+    ],
+    "independent_encoder_audit": {
+      "database": "G:\\app\\LR\\build\\archive-image-search-integration\\data\\visual-search\\assets.db",
+      "model": {
+        "model": "567e85f859213abde0cd45e95d87f4421ccbc14c",
+        "config": "23d97d99a2d3cd9fe51979d0d26b4f65417527258f8d1545614e562ca0ecc454",
+        "processor": "edc450bfac0d5b2e147c19b89b06afda07c2c5a5d48226a7fd6bed36f1d90fb1",
+        "dimension": 768,
+        "preprocessing": "rgb-exif-preview-1600-v1"
+      },
+      "encoder_api": "direct ChineseCLIPModel / ChineseCLIPProcessor",
+      "stored_vectors_recomputed": [
+        {
+          "name": "logo.png",
+          "dimensions": 768,
+          "norm": 1.0,
+          "fresh_cosine": 1.0,
+          "max_abs_difference": 0.0
+        },
+        {
+          "name": "XSY_0929.jpg",
+          "dimensions": 768,
+          "norm": 1.0,
+          "fresh_cosine": 1.0,
+          "max_abs_difference": 0.0
+        },
+        {
+          "name": "XSY_0930.jpg",
+          "dimensions": 768,
+          "norm": 0.9999999403953552,
+          "fresh_cosine": 0.9999998807907104,
+          "max_abs_difference": 0.0
+        },
+        {
+          "name": "XSY_0933.jpg",
+          "dimensions": 768,
+          "norm": 0.9999999403953552,
+          "fresh_cosine": 0.9999999403953552,
+          "max_abs_difference": 0.0
+        },
+        {
+          "name": "XSY_0937.jpg",
+          "dimensions": 768,
+          "norm": 0.9999998807907104,
+          "fresh_cosine": 0.9999998211860657,
+          "max_abs_difference": 0.0
+        },
+        {
+          "name": "XSY_0941.jpg",
+          "dimensions": 768,
+          "norm": 1.0,
+          "fresh_cosine": 1.0,
+          "max_abs_difference": 0.0
+        },
+        {
+          "name": "XSY_0945.jpg",
+          "dimensions": 768,
+          "norm": 0.9999999403953552,
+          "fresh_cosine": 0.9999998807907104,
+          "max_abs_difference": 0.0
+        }
+      ],
+      "queries": [
+        {
+          "kind": "indexed_photo",
+          "query": "G:\\app\\LR\\build\\archive-image-search-integration\\photos\\A\\XSY_0929.jpg",
+          "ranked": [
+            {
+              "name": "XSY_0929.jpg",
+              "score": 1.0
+            },
+            {
+              "name": "XSY_0930.jpg",
+              "score": 0.9971144199371338
+            },
+            {
+              "name": "XSY_0933.jpg",
+              "score": 0.9900080561637878
+            },
+            {
+              "name": "XSY_0937.jpg",
+              "score": 0.9774014949798584
+            },
+            {
+              "name": "XSY_0941.jpg",
+              "score": 0.9573977589607239
+            },
+            {
+              "name": "XSY_0945.jpg",
+              "score": 0.9519925117492676
+            },
+            {
+              "name": "logo.png",
+              "score": 0.5471971035003662
+            }
+          ],
+          "at_85": [
+            "XSY_0929.jpg",
+            "XSY_0930.jpg",
+            "XSY_0933.jpg",
+            "XSY_0937.jpg",
+            "XSY_0941.jpg",
+            "XSY_0945.jpg"
+          ]
+        },
+        {
+          "kind": "unindexed_same_garment",
+          "query": "G:\\app\\LR\\演示方案\\assets\\XSY_0960.jpg",
+          "ranked": [
+            {
+              "name": "XSY_0930.jpg",
+              "score": 0.9691796898841858
+            },
+            {
+              "name": "XSY_0929.jpg",
+              "score": 0.9663240313529968
+            },
+            {
+              "name": "XSY_0933.jpg",
+              "score": 0.9587926268577576
+            },
+            {
+              "name": "XSY_0937.jpg",
+              "score": 0.9441248178482056
+            },
+            {
+              "name": "XSY_0941.jpg",
+              "score": 0.9170886278152466
+            },
+            {
+              "name": "XSY_0945.jpg",
+              "score": 0.9138872027397156
+            },
+            {
+              "name": "logo.png",
+              "score": 0.55842125415802
+            }
+          ],
+          "at_85": [
+            "XSY_0930.jpg",
+            "XSY_0929.jpg",
+            "XSY_0933.jpg",
+            "XSY_0937.jpg",
+            "XSY_0941.jpg",
+            "XSY_0945.jpg"
+          ]
+        },
+        {
+          "kind": "indexed_logo",
+          "query": "G:\\app\\LR\\build\\archive-image-search-integration\\photos\\logo.png",
+          "ranked": [
+            {
+              "name": "logo.png",
+              "score": 1.0
+            },
+            {
+              "name": "XSY_0929.jpg",
+              "score": 0.5471971035003662
+            },
+            {
+              "name": "XSY_0930.jpg",
+              "score": 0.5456048846244812
+            },
+            {
+              "name": "XSY_0945.jpg",
+              "score": 0.5433350801467896
+            },
+            {
+              "name": "XSY_0941.jpg",
+              "score": 0.5380964875221252
+            },
+            {
+              "name": "XSY_0937.jpg",
+              "score": 0.5373656153678894
+            },
+            {
+              "name": "XSY_0933.jpg",
+              "score": 0.5306928157806396
+            }
+          ],
+          "at_85": [
+            "logo.png"
+          ]
+        },
+        {
+          "kind": "workspace_screenshot",
+          "query": "G:\\app\\LR\\演示方案\\AI选片工作台.png",
+          "ranked": [
+            {
+              "name": "XSY_0929.jpg",
+              "score": 0.6042500734329224
+            },
+            {
+              "name": "XSY_0930.jpg",
+              "score": 0.6025110483169556
+            },
+            {
+              "name": "XSY_0933.jpg",
+              "score": 0.5939028263092041
+            },
+            {
+              "name": "XSY_0941.jpg",
+              "score": 0.5893462300300598
+            },
+            {
+              "name": "XSY_0937.jpg",
+              "score": 0.5885334610939026
+            },
+            {
+              "name": "XSY_0945.jpg",
+              "score": 0.5810116529464722
+            },
+            {
+              "name": "logo.png",
+              "score": 0.5521426796913147
+            }
+          ],
+          "at_85": []
+        },
+        {
+          "kind": "different_logo",
+          "query": "G:\\app\\LR\\品牌资源\\Logo候选-20261110\\01-字母印记.png",
+          "ranked": [
+            {
+              "name": "logo.png",
+              "score": 0.48748695850372314
+            },
+            {
+              "name": "XSY_0941.jpg",
+              "score": 0.34067079424858093
+            },
+            {
+              "name": "XSY_0945.jpg",
+              "score": 0.32523420453071594
+            },
+            {
+              "name": "XSY_0930.jpg",
+              "score": 0.32222849130630493
+            },
+            {
+              "name": "XSY_0929.jpg",
+              "score": 0.3218936324119568
+            },
+            {
+              "name": "XSY_0937.jpg",
+              "score": 0.32134366035461426
+            },
+            {
+              "name": "XSY_0933.jpg",
+              "score": 0.31272003054618835
+            }
+          ],
+          "at_85": []
+        }
+      ]
+    },
+    "tests": {
+      "unit": {
+        "run": 10,
+        "passed": 10,
+        "seconds": 0.023
+      },
+      "shared_reference_ui": {
+        "run": 1,
+        "passed": 1,
+        "seconds": 3.197,
+        "backend": "deterministic test fixture; checks UI requests, slider, paste, drop; not model accuracy evidence"
+      },
+      "real_model_browser_and_lifecycle": {
+        "run": 1,
+        "passed": 1,
+        "seconds": 63.385
+      }
+    },
+    "real_browser_acceptance": {
+      "copied_images": 7,
+      "checks": [
+        "settings build",
+        "all unvisited subdirectories indexed",
+        "upload search",
+        "all result thumbnails",
+        "selected result similarity search",
+        "full-screen preview",
+        "default threshold excludes unrelated logo",
+        "relaxing and restoring threshold requery correctly",
+        "unindexed same-garment view retrieves garment only",
+        "logo query retrieves logo only",
+        "unmatched query returns no filler results",
+        "pause blocks new image",
+        "resume only indexes new image",
+        "existing image ids and hashes preserved",
+        "native file notifications automatically add and remove images",
+        "reused upstream integer ids cannot show an older result as another file",
+        "restart reuses all unchanged images",
+        "deleted copy removed from visual index",
+        "corrupt image reported without blocking other files",
+        "retry recovers repaired image",
+        "original video frame store and image-to-video match preview",
+        "removed archive root immediately excluded"
+      ],
+      "initial_state": {
+        "engine": "MaterialSearch",
+        "database": "C:\\Users\\jiang\\AppData\\Local\\Temp\\lr-materialsearch-v3i4v5xd\\data\\visual-search\\assets.db",
+        "enabled": true,
+        "paused": false,
+        "phase": "idle",
+        "total": 7,
+        "done": 7,
+        "indexed": 7,
+        "updated": 7,
+        "reused": 0,
+        "failed": 0,
+        "failures": [],
+        "offline": [],
+        "error": "",
+        "ready": true
+      },
+      "search": {
+        "top": "XSY_0929.jpg",
+        "score": 0.9989941716194153,
+        "elapsed_ms": 771.91,
+        "returned": 6
+      },
+      "relevance": {
+        "default_threshold": 0.85,
+        "default_excludes_logo": true,
+        "lower_threshold_requeries": true,
+        "unindexed_same_garment": {
+          "returned": 6,
+          "names": [
+            "XSY_0930.jpg",
+            "XSY_0929.jpg",
+            "XSY_0933.jpg",
+            "XSY_0937.jpg",
+            "XSY_0941.jpg",
+            "XSY_0945.jpg"
+          ]
+        },
+        "logo_query": {
+          "returned": 1,
+          "names": [
+            "logo.png"
+          ]
+        },
+        "unrelated_screenshot": {
+          "returned": 0,
+          "names": []
+        }
+      },
+      "metadata_items": 0,
+      "metadata_vectors": 0,
+      "visual_tables": [
+        "image",
+        "image_features",
+        "video",
+        "video_features"
+      ],
+      "originals_unchanged": true,
+      "page_errors": [],
+      "http_errors": []
+    },
+    "bundled_python_acceptance": {
+      "runtime": "D:\\Program Files\\MaterialSearchWindows\\python.exe",
+      "bundled_worker": true,
+      "tables": "original SQLite four tables",
+      "indexed": 2,
+      "top": "XSY_0929.jpg",
+      "score": 1.0,
+      "elapsed_ms": 3579.96,
+      "threshold_applied": 0.85,
+      "returned": 1
+    },
+    "screenshots": [
+      "build/archive-image-search-integration/image-search-relevance-fixed.png",
+      "build/archive-image-search-integration/relevance-unindexed_same_garment.png",
+      "build/archive-image-search-integration/relevance-logo_query.png",
+      "build/archive-image-search-integration/relevance-unrelated_screenshot.png"
+    ],
+    "scope": "Only these sample images and specified query cases were assessed; no broad garment-identity accuracy claim.",
+    "deployed": false,
+    "pushed": false,
+    "scope_note": "This earlier phase checked content relevance; its six-photo positive set is not valid for the later near-frame requirement."
+  },
+  "frame_matching": {
+    "date": "2026-11-14",
+    "branch": "feat/materialsearch-image-search",
+    "commit": "1175adf156ce7edb32302a73051e5cedaf7e3c62",
+    "user_goal": "Reference has no visible hands and is frontal; images with hands or side pose should not be accepted as default near-frame matches.",
+    "previous_acceptance_gap": "Same garment/content was incorrectly treated as matching the reference frame.",
+    "modes": {
+      "default": "frame",
+      "optional": "semantic",
+      "text_query": "semantic"
+    },
+    "method": {
+      "coarse_recall": "original MaterialSearch Chinese-CLIP query",
+      "detail": "bounded SIFT / RANSAC small affine alignment and RGB SSIM on comparable area",
+      "recipe": "frame-structure-v1",
+      "cache_entries": 32,
+      "max_verification_candidates": 256,
+      "verification_budget_seconds": 5,
+      "new_model_download": false,
+      "database_schema_changed": false
+    },
+    "references": [
+      "https://docs.opencv.org/4.x/d1/de0/tutorial_py_feature_homography.html",
+      "https://ece.uwaterloo.ca/~z70wang/research/ssim/"
+    ],
+    "pairwise_original_image_audit": [
+      {
+        "name": "XSY_0929.jpg",
+        "content_cosine": 1.0,
+        "frame_detail": {
+          "score": 0.9999903440475464,
+          "comparable": true,
+          "coverage": 1.0,
+          "aligned": true,
+          "inliers": 47,
+          "changed_fraction": 0.0,
+          "recipe": "frame-structure-v1"
+        },
+        "passes_frame_85": true
+      },
+      {
+        "name": "XSY_0930.jpg",
+        "content_cosine": 0.9971144795417786,
+        "frame_detail": {
+          "score": 0.9693251252174377,
+          "comparable": true,
+          "coverage": 0.9821419270833334,
+          "aligned": true,
+          "inliers": 31,
+          "changed_fraction": 0.0049615800828971815,
+          "recipe": "frame-structure-v1"
+        },
+        "passes_frame_85": true
+      },
+      {
+        "name": "XSY_0933.jpg",
+        "content_cosine": 0.9900081753730774,
+        "frame_detail": {
+          "score": 0.8947299122810364,
+          "comparable": true,
+          "coverage": 0.8469010416666667,
+          "aligned": true,
+          "inliers": 23,
+          "changed_fraction": 0.08252419276009254,
+          "recipe": "frame-structure-v1"
+        },
+        "passes_frame_85": true
+      },
+      {
+        "name": "XSY_0937.jpg",
+        "content_cosine": 0.9774014949798584,
+        "frame_detail": {
+          "score": 0.8033280968666077,
+          "comparable": true,
+          "coverage": 0.8341276041666666,
+          "aligned": true,
+          "inliers": 17,
+          "changed_fraction": 0.20323125031021988,
+          "recipe": "frame-structure-v1"
+        },
+        "passes_frame_85": false
+      },
+      {
+        "name": "XSY_0941.jpg",
+        "content_cosine": 0.9573976993560791,
+        "frame_detail": {
+          "score": 0.7964345812797546,
+          "comparable": true,
+          "coverage": 0.86287109375,
+          "aligned": true,
+          "inliers": 17,
+          "changed_fraction": 0.21958473144565463,
+          "recipe": "frame-structure-v1"
+        },
+        "passes_frame_85": false
+      },
+      {
+        "name": "XSY_0945.jpg",
+        "content_cosine": 0.9519925117492676,
+        "frame_detail": {
+          "score": 0.7364822626113892,
+          "comparable": true,
+          "coverage": 1.0,
+          "aligned": false,
+          "inliers": 0,
+          "changed_fraction": 0.2940755208333333,
+          "recipe": "frame-structure-v1"
+        },
+        "passes_frame_85": false
+      },
+      {
+        "name": "logo.png",
+        "content_cosine": 0.5471969842910767,
+        "frame_detail": {
+          "score": 0.0,
+          "comparable": false,
+          "coverage": 0.0,
+          "aligned": false,
+          "reason": "画幅比例差异较大",
+          "recipe": "frame-structure-v1"
+        },
+        "passes_frame_85": false
+      }
+    ],
+    "tests": {
+      "combined_run": 21,
+      "passed": 21,
+      "seconds": 72.664,
+      "coverage": [
+        "image resize and JPEG",
+        "local changes and RGB color differences",
+        "textureless input and frame aspect",
+        "versioned bounded cache",
+        "mode validation and separate text behavior",
+        "reference component callbacks and paste/drop",
+        "LAN mode and media forwarding without private diagnostics",
+        "real copied images browser and full lifecycle",
+        "unvisited standalone ids and manually visited metadata ids"
+      ]
+    },
+    "real_browser_acceptance": {
+      "copied_images": 7,
+      "checks": [
+        "settings build",
+        "all unvisited subdirectories indexed",
+        "upload search",
+        "all result thumbnails",
+        "selected result similarity search",
+        "full-screen preview",
+        "default frame mode excludes hands and side poses",
+        "explicit content mode preserves broad garment retrieval",
+        "relaxing and restoring content threshold requery correctly",
+        "unindexed front view retrieves only frontal views without hands",
+        "hand query does not globally ban hands",
+        "side query finds the side pose",
+        "logo query retrieves logo only",
+        "unmatched query returns no filler results",
+        "existing metadata asset ids use the same frame matching and visible previews",
+        "pause blocks new image",
+        "resume only indexes new image",
+        "existing image ids and hashes preserved",
+        "native file notifications automatically add and remove images",
+        "reused upstream integer ids cannot show an older result as another file",
+        "restart reuses all unchanged images",
+        "deleted copy removed from visual index",
+        "corrupt image reported without blocking other files",
+        "retry recovers repaired image",
+        "original video frame store and image-to-video match preview",
+        "removed archive root immediately excluded"
+      ],
+      "initial_state": {
+        "engine": "MaterialSearch",
+        "database": "C:\\Users\\jiang\\AppData\\Local\\Temp\\lr-materialsearch-dcrp5zlu\\data\\visual-search\\assets.db",
+        "enabled": true,
+        "paused": false,
+        "phase": "idle",
+        "total": 7,
+        "done": 7,
+        "indexed": 7,
+        "updated": 7,
+        "reused": 0,
+        "failed": 0,
+        "failures": [],
+        "offline": [],
+        "error": "",
+        "ready": true
+      },
+      "search": {
+        "top": "XSY_0929.jpg",
+        "score": 0.9970510005950928,
+        "semantic_score": 0.9989941716194153,
+        "match_mode": "frame",
+        "elapsed_ms": 1074.13,
+        "returned": 3
+      },
+      "relevance": {
+        "default_threshold": 0.85,
+        "default_match_mode": "frame",
+        "front_without_hands": [
+          "XSY_0929.jpg",
+          "XSY_0930.jpg",
+          "XSY_0933.jpg"
+        ],
+        "content_mode_returned": 6,
+        "lower_threshold_requeries": true,
+        "unindexed_front_without_hands": {
+          "returned": 3,
+          "names": [
+            "XSY_0929.jpg",
+            "XSY_0930.jpg",
+            "XSY_0933.jpg"
+          ]
+        },
+        "hands_query": {
+          "returned": 1,
+          "names": [
+            "XSY_0937.jpg"
+          ]
+        },
+        "side_query": {
+          "returned": 1,
+          "names": [
+            "XSY_0945.jpg"
+          ]
+        },
+        "logo_query": {
+          "returned": 1,
+          "names": [
+            "logo.png"
+          ]
+        },
+        "unrelated_screenshot": {
+          "returned": 0,
+          "names": []
+        }
+      },
+      "metadata_items": 0,
+      "metadata_vectors": 0,
+      "metadata_items_after_manual_visit": 3,
+      "metadata_vectors_after_manual_visit": 0,
+      "visual_tables": [
+        "image",
+        "image_features",
+        "video",
+        "video_features"
+      ],
+      "originals_unchanged": true,
+      "page_errors": [],
+      "http_errors": []
+    },
+    "bundled_original_python_acceptance": {
+      "runtime": "D:\\Program Files\\MaterialSearchWindows\\python.exe",
+      "bundled_worker": true,
+      "tables": "original SQLite four tables",
+      "indexed": 7,
+      "top": "XSY_0929.jpg",
+      "score": 0.9999903440475464,
+      "elapsed_ms": 3441.21,
+      "threshold_applied": 0.85,
+      "match_mode": "frame",
+      "returned": 3,
+      "names": [
+        "XSY_0929.jpg",
+        "XSY_0930.jpg",
+        "XSY_0933.jpg"
+      ]
+    },
+    "screenshots": [
+      "build/archive-image-search-integration/image-search-frame-match.png",
+      "build/archive-image-search-integration/image-search-content-mode.png",
+      "build/archive-image-search-integration/relevance-unindexed_front_without_hands.png",
+      "build/archive-image-search-integration/relevance-hands_query.png",
+      "build/archive-image-search-integration/relevance-side_query.png"
+    ],
+    "limits": [
+      "Frame structure matching is not a trained hand or pose attribute classifier",
+      "Broad garment-identity accuracy and arbitrary crop/angle invariance were not established",
+      "Real RAW/PSD libraries, NAS disconnections and large-library performance remain unmeasured"
+    ],
+    "deployed": true,
+    "pushed": false
+  },
+  "installation_update": {
+    "date": "2026-11-14",
+    "branch": "feat/materialsearch-image-search",
+    "runtime_isolation_commit": "ddda54d",
+    "runtime_cache_commit": "cd9a7a1",
+    "result": {
+      "status": "complete",
+      "installed": "D:\\Program Files\\Framekeep",
+      "data": "D:\\Program Files\\Framekeep\\data",
+      "version": "1.0.1",
+      "releaseId": "20261113145022",
+      "verified_files": 963,
+      "protected_data_files": 52,
+      "data_unchanged_before_start": true,
+      "health": {
+        "pid": 67944,
+        "releaseId": "20261113145022",
+        "version": "1.0.1"
+      },
+      "session": "D:\\Program Files\\Framekeep\\.update-state\\local-materialsearch-20261114",
+      "published": false
+    },
+    "build": {
+      "frozen_modules_verified": 163,
+      "web_resources_verified": 79,
+      "sources_unchanged_during_build": true,
+      "input": "current working tree; pre-existing user edits retained and not committed as ours"
+    },
+    "tests": {
+      "update_system": {
+        "run": 79,
+        "passed": 79,
+        "seconds": 9.585
+      },
+      "runtime_and_detail_units": {
+        "run": 21,
+        "passed": 21,
+        "seconds": 0.337
+      }
+    },
+    "stage_frozen_acceptance": {
+      "phase": "qa-stage",
+      "application": "G:\\app\\LR\\build\\tauri-release\\SHIYING 数字资产",
+      "data": "G:\\app\\LR\\build\\materialsearch-install-20261114-r3\\qa-stage\\data",
+      "production_data_used": false,
+      "ready": {
+        "application": "framekeep",
+        "process_id": 77260,
+        "ready": true,
+        "services_ready": true
+      },
+      "root_id": "781fdb899341efac6c1719522be9202b",
+      "index": {
+        "engine": "MaterialSearch",
+        "database": "G:\\app\\LR\\build\\materialsearch-install-20261114-r3\\qa-stage\\data\\visual-search\\assets.db",
+        "enabled": true,
+        "paused": false,
+        "phase": "idle",
+        "total": 7,
+        "done": 7,
+        "indexed": 7,
+        "updated": 7,
+        "reused": 0,
+        "failed": 0,
+        "failures": [],
+        "offline": [],
+        "error": "",
+        "ready": true
+      },
+      "frame": {
+        "names": [
+          "XSY_0929.jpg",
+          "XSY_0930.jpg",
+          "XSY_0933.jpg"
+        ],
+        "scores": [
+          0.9999903440475464,
+          0.9693251252174377,
+          0.8947298526763916
+        ],
+        "elapsed_ms": 2834.33
+      },
+      "content_names": [
+        "XSY_0929.jpg",
+        "XSY_0930.jpg",
+        "XSY_0933.jpg",
+        "XSY_0937.jpg",
+        "XSY_0941.jpg",
+        "XSY_0945.jpg"
+      ],
+      "browser": {
+        "page_errors": [],
+        "http_errors": [],
+        "frame_matches": 3,
+        "content_matches": 6,
+        "decoded_fullscreen": true
+      },
+      "visual_tables": [
+        "image",
+        "image_features",
+        "video",
+        "video_features"
+      ],
+      "metadata_items": 0,
+      "metadata_vectors": 0,
+      "status": "passed",
+      "copied_originals_unchanged": true
+    },
+    "installed_frozen_acceptance": {
+      "phase": "qa-installed",
+      "application": "D:\\Program Files\\Framekeep",
+      "data": "G:\\app\\LR\\build\\materialsearch-install-20261114-r3\\qa-installed\\data",
+      "production_data_used": false,
+      "ready": {
+        "application": "framekeep",
+        "process_id": 86884,
+        "ready": true,
+        "services_ready": true
+      },
+      "root_id": "527c2652593d21130c158bfc9e695dd3",
+      "index": {
+        "engine": "MaterialSearch",
+        "database": "G:\\app\\LR\\build\\materialsearch-install-20261114-r3\\qa-installed\\data\\visual-search\\assets.db",
+        "enabled": true,
+        "paused": false,
+        "phase": "idle",
+        "total": 7,
+        "done": 7,
+        "indexed": 7,
+        "updated": 7,
+        "reused": 0,
+        "failed": 0,
+        "failures": [],
+        "offline": [],
+        "error": "",
+        "ready": true
+      },
+      "frame": {
+        "names": [
+          "XSY_0929.jpg",
+          "XSY_0930.jpg",
+          "XSY_0933.jpg"
+        ],
+        "scores": [
+          0.9999903440475464,
+          0.9693251252174377,
+          0.8947298526763916
+        ],
+        "elapsed_ms": 2877.21
+      },
+      "content_names": [
+        "XSY_0929.jpg",
+        "XSY_0930.jpg",
+        "XSY_0933.jpg",
+        "XSY_0937.jpg",
+        "XSY_0941.jpg",
+        "XSY_0945.jpg"
+      ],
+      "browser": {
+        "page_errors": [],
+        "http_errors": [],
+        "frame_matches": 3,
+        "content_matches": 6,
+        "decoded_fullscreen": true
+      },
+      "visual_tables": [
+        "image",
+        "image_features",
+        "video",
+        "video_features"
+      ],
+      "metadata_items": 0,
+      "metadata_vectors": 0,
+      "status": "passed",
+      "copied_originals_unchanged": true
+    },
+    "production_readonly": {
+      "root": "D:\\Program Files\\Framekeep",
+      "ready": {
+        "application": "framekeep",
+        "process_id": 71560,
+        "ready": true,
+        "services_ready": true
+      },
+      "health": {
+        "application": "framekeep",
+        "process_id": 71560,
+        "busy": false
+      },
+      "image_index": {
+        "engine": "MaterialSearch",
+        "ready": false,
+        "phase": "disabled",
+        "indexed": 0,
+        "total": 0,
+        "done": 0,
+        "failed": 0,
+        "error": "",
+        "enabled": false,
+        "paused": false,
+        "database": "D:\\Program Files\\Framekeep\\data\\visual-search\\assets.db"
+      },
+      "production_image_index_enabled": false,
+      "http_assets": {
+        "reference-search.js": "5b2708f787d3dc18a437468f46a90a13b946368b046baa86d5dda35d45acadac",
+        "reference-search.css": "d7843655642246271861c94f5bed0f5f323a02b3b4b24d645def0a93f0efd83a",
+        "asset-retrieval.js": "0224ddfe3fb6bb42a706b7b3a423af6dfa18136f424b9cc553422c77f48ca1a6",
+        "lan-workspace.js": "37ae27829a163b40960b88d2fb35f95a2eac56df9bd1e52c478d8e40817a7752"
+      },
+      "visual_settings_created": false,
+      "visual_database_created": false,
+      "pending_update": false
+    },
+    "data_preservation": {
+      "protected_file_count": 52,
+      "data_attributes_and_digests_unchanged": true,
+      "method": "Full SHA-256 below 512 MiB; size, mtime and five 1 MiB samples for larger files; package excludes data/",
+      "data": "D:\\Program Files\\Framekeep\\data"
+    },
+    "failed_preinstallation_checks": [
+      {
+        "phase": "initial frozen QA",
+        "error": "simplejson namespace package shadowed external Python requests dependency",
+        "installed_files_replaced": false,
+        "resolution": "dedicated material-search-runtime, sanitized imports and child DLL search"
+      },
+      {
+        "phase": "second signing package validation",
+        "error": "runtime/source __pycache__ prohibited by safe path check",
+        "installed_files_replaced": false,
+        "resolution": "-B, child dont_write_bytecode, source allowlist staging; validation not bypassed"
+      }
+    ],
+    "cleanup": {
+      "targets": [
+        {
+          "path": "G:\\app\\LR\\build\\materialsearch-install-20261114\\engine-dist",
+          "files": 351,
+          "bytes": 747925770,
+          "deleted_bytes": 747925770,
+          "status": "deleted"
+        },
+        {
+          "path": "G:\\app\\LR\\build\\materialsearch-install-20261114-r2\\engine-dist",
+          "files": 351,
+          "bytes": 747926820,
+          "deleted_bytes": 747926820,
+          "status": "deleted"
+        },
+        {
+          "path": "G:\\app\\LR\\build\\materialsearch-install-20261114-r3\\engine-dist",
+          "files": 344,
+          "bytes": 747863593,
+          "deleted_bytes": 747863593,
+          "status": "deleted"
+        },
+        {
+          "path": "G:\\app\\LR\\build\\materialsearch-install-20261114-r2\\previous-release",
+          "files": 980,
+          "bytes": 865200879,
+          "deleted_bytes": 865200879,
+          "status": "deleted"
+        },
+        {
+          "path": "G:\\app\\LR\\build\\materialsearch-install-20261114-r3\\previous-release",
+          "files": 972,
+          "bytes": 865169443,
+          "deleted_bytes": 865169443,
+          "status": "deleted"
+        },
+        {
+          "path": "G:\\app\\LR\\build\\materialsearch-install-20261114-r2\\signed-package\\SHIYING-Windows-x64.zip",
+          "files": 1,
+          "bytes": 47337697,
+          "deleted_bytes": 47337697,
+          "status": "deleted"
+        }
+      ],
+      "deleted_bytes": 4021424202,
+      "free_before": 216308453376,
+      "free_after": 220336799744,
+      "free_change": 4028346368,
+      "kept_final_signed_package": "G:\\app\\LR\\build\\materialsearch-install-20261114-r3\\signed-package\\SHIYING-Windows-x64.zip",
+      "kept_final_release": "G:\\app\\LR\\build\\tauri-release\\SHIYING 数字资产",
+      "retained_original_staging_backup": "G:\\app\\LR\\build\\materialsearch-install-20261114\\previous-release",
+      "basis": "Only owned generated engine copies, failed staging copies and incomplete ZIP; successful installation, rollback journal, source, user data, models and final payload retained."
+    },
+    "evidence_directory": "build/materialsearch-install-20261114-r3",
+    "version_policy": "same-version local repair: 1.0.1 / 20261113145022; no public release change",
+    "published": false,
+    "pushed": false,
+    "final_process_observation": {
+      "production_desktop_engine_seen": false,
+      "ready_endpoint_reachable": false,
+      "exit_cause": "not determined; not assumed to be user closure",
+      "restart_not_forced_after_observation": true,
+      "startup_health_verification_passed": true,
+      "engine_startup_seconds": 3.375,
+      "desktop_first_document_ms": 2667
+    },
+    "normal_entry_relaunch": {
+      "normal_entry_relaunch_passed": true,
+      "readiness_checks": [
+        {
+          "application": "framekeep",
+          "process_id": 74068,
+          "ready": true,
+          "services_ready": true
+        },
+        {
+          "application": "framekeep",
+          "process_id": 74068,
+          "ready": true,
+          "services_ready": true
+        },
+        {
+          "application": "framekeep",
+          "process_id": 74068,
+          "ready": true,
+          "services_ready": true
+        }
+      ],
+      "observation_seconds": 30,
+      "image_index_enabled": false,
+      "desktop_metrics": {
+        "capture_monitor_ready_ms": null,
+        "desktop_pid": 85232,
+        "first_document_ready_ms": 1587,
+        "first_photo_visible_ms": null,
+        "first_workbench_ready_ms": 1587,
+        "photos_restored_ms": 1687,
+        "startup_animation_visible_ms": 620,
+        "web_timings": {
+          "data_ready_ms": 433.40000000596046,
+          "first_photo_ready_ms": null,
+          "monitor_ready_ms": null,
+          "services_ready": true,
+          "shell_ready_ms": 132.10000002384186,
+          "workbench_ready_ms": 271.40000000596046
+        }
+      },
+      "prior_exit_cause": "not determined; not assumed to be a crash or user closure"
+    },
+    "current_verified_processes": {
+      "desktop_pid": 85232,
+      "engine_pid": 74068,
+      "installed_path": "D:/Program Files/Framekeep",
+      "ready_checks": 3,
+      "observation_seconds": 30,
+      "remaining_after_verification_script": true
+    }
+  }
+}

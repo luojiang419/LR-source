@@ -13,4 +13,7 @@ def save_record(data,identity,journal,*,source='',status='prepared'):
             'source':str(source),'status':status,
             'journal':{k:v for k,v in journal.items() if k not in ('backup','prepared')}}
     atomic_write(path,json.dumps(record,ensure_ascii=False,sort_keys=True,indent=2).encode('utf8'))
+    if status=='applied' and source:
+        from automatic_backup import applied
+        applied(data,source,journal)
     return path

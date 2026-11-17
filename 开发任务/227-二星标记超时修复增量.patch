@@ -1,0 +1,126 @@
+--- a/选片助手/archive_capture_service.py
++++ b/选片助手/archive_capture_service.py
+@@ -588,7 +588,8 @@
+                 if visits:
+                     with visits.lock:key=visits.key
+                     if not key:return 0
+-                    return c.execute("SELECT count(*) FROM items WHERE root=? AND folder=? AND online=1 AND media_type IN ('image','video')",(key[0],key[1] or '/')).fetchone()[0]
++                    # 大库可能误选 online 开头的覆盖索引，遍历全部在线素材；明确使用目录索引。
++                    return c.execute("SELECT count(*) FROM items INDEXED BY catalog_items_root_folder WHERE root=? AND folder=? AND online=1 AND media_type IN ('image','video')",(key[0],key[1] or '/')).fetchone()[0]
+                 prefix=str(dataset.root).rstrip('\\/')+'\\';upper=prefix[:-1]+chr(ord(prefix[-1])+1)
+                 return c.execute("SELECT count(*) FROM items INDEXED BY catalog_capture_paths WHERE path>=? AND path<? AND online=1 AND media_type IN ('image','video')",(prefix,upper)).fetchone()[0]
+         except sqlite3.Error:return 0
+@@ -739,9 +740,11 @@
+         for record in dataset.records():self._queue_ocr_apply(dataset,record)
+         self.wake.set()
+ 
+-    def _scan(self, dataset, _locked=False, focus=None, *, limit=16):
++    def _scan(self, dataset, _locked=False, focus=None, *, limit=16, total=None):
+         if not _locked:
+-            with self.io_lock:return self._scan(dataset, True,focus,limit=limit)
++            if focus is None and not self.scan_cursor.get(str(dataset.root)) and total is None:
++                total=self._scan_total(dataset)
++            with self.io_lock:return self._scan(dataset, True,focus,limit=limit,total=total)
+         key = str(dataset.root)
+         authority = self.dataset_for_path(dataset.root)
+         if authority is not None and authority is not dataset and authority.root in dataset.root.parents and (authority.folder / 'dataset.json').is_file():
+@@ -764,7 +767,7 @@
+             capture_mode=True
+             starting=focus is None and not self.scan_cursor.get(key)
+             if starting:
+-                self.scan_progress[key]={'done':0,'total':self._scan_total(dataset),'started':time.time(),'running':True}
++                self.scan_progress[key]={'done':0,'total':total if total is not None else 0,'started':time.time(),'running':True}
+                 self._pass_started=getattr(self,'_pass_started',{});self._pass_started[key]=time.monotonic()
+             items=self._rows(dataset,after=self.scan_cursor.get(key,''),focus=focus,limit=limit)
+             ready=self.scan_versions_ready if focus is None else None
+@@ -1041,10 +1044,10 @@
+         if (code or item.get('sku')) and (item.get('sku'),item.get('normalized'),item.get('source'),item.get('confidence'))!=(code,normalized,source,confidence):
+             try:
+                 with (nullcontext(catalog_connection) if catalog_connection else self.catalog.connect()) as c:
+-                    if catalog_connection is None:c.execute('PRAGMA busy_timeout=0')
++                    c.execute('PRAGMA busy_timeout=0')
+                     c.execute('UPDATE items SET sku=?,normalized=?,source=?,confidence=? WHERE id=? AND (sku<>? OR normalized<>? OR source<>? OR confidence IS NOT ?)', (code,normalized,source,confidence,item['id'],code,normalized,source,confidence))
+             except sqlite3.OperationalError as exc:
+-                if catalog_connection is not None or not any(word in str(exc).lower() for word in ('locked','busy')):raise
++                if not any(word in str(exc).lower() for word in ('locked','busy')):raise
+                 # 本机便携库已可靠保存；大索引被其它任务写入时后台接续投影。
+                 self.projection_pending[(str(dataset.root),record['id'])]=dataset
+                 return
+@@ -2072,9 +2075,11 @@
+                 # 预读期间可能已过去较久；锁内采用的版本须在预读之后重新枚举。
+                 items=self._rows(dataset,after=before,limit=self.scan_window.get(root,16))
+                 versions=self._scan_versions(items)
++            # 进度计数不参与业务校验，不能持有标星锁等待目录统计 SQL。
++            total=self._scan_total(dataset) if not before else None
+             with self.io_lock:
+                 self.scan_reads=prepared;self.scan_versions_ready=versions
+-                try:self._scan(dataset,limit=self.scan_window.get(root,16))
++                try:self._scan(dataset,limit=self.scan_window.get(root,16),total=total)
+                 finally:self.scan_reads={};self.scan_versions_ready=None
+             worked=True
+             # 有文件需要读取时保持小批，交互锁每批很快释放；连续无变化则放大到128。
+--- a/演示方案/archive-capture.js
++++ b/演示方案/archive-capture.js
+@@ -30,7 +30,7 @@
+   let writeRequest=null,writeScope='',writePolling=false,pollAbort=null,writeAbort=null,writeSequence=0,writeItems={},writeFrame=0;
+   // 卡片写入状态：写入中持续微光，写完淡出；排队与失败以角标区分。
+   const writeShown=new Map(),writeFading=new Map();
+-  const ratingQueue=new Map(),ratingConfirmed=new Map(),ratingPending=new Map();let ratingWorker=null,ratingReload=0;
++  const ratingQueue=new Map(),ratingConfirmed=new Map(),ratingPending=new Map(),ratingUncertain=new Map();let ratingWorker=null,ratingReload=0;
+   let state=null,currentId='',selected=null,request=0,itemRequest=0,busy=false,polling=false,activeScope='',itemVersion='',groupVersion='',picked=new Set(),anchor='';
+   // knownSku：当前素材已保存的款号；输入框与之不同且非空即视为草稿，主按钮变为“确定”。
+   let knownSku='',detailsOpen=false,detailsAuto='',ocrSubmitting=false;const ocrStarted=new Map();
+@@ -185,6 +185,12 @@
+     if(id!==currentId||sequence!==itemRequest||key!==JSON.stringify(scopeBody()))return;
+     selected=result;itemVersion=version;
+     const group=result.group,record=result.record;
++    // 请求超时不会撤销后端写入；只在重新读到目标星级后确认成功，不重发写请求。
++    if(ratingUncertain.has(id)&&record.rating===ratingUncertain.get(id)&&!ratingQueue.has(id)){
++      ratingUncertain.delete(id);ratingPending.delete(id);ratingConfirmed.set(id,record.rating);
++      ratingStatus(id,`已核对，${record.rating?'已保存 '+record.rating+' 星':'已清除星级'}`);
++      document.dispatchEvent(new CustomEvent('framekeep:archive-rating-saved',{detail:{item_id:id,rating:record.rating}}));
++    }
+     // 保存队列中尚未落库的星级优先显示，迟到的旧资料不能把刚标的星级闪回。
+     const pendingRating=ratingPending.get(id);
+     document.dispatchEvent(new CustomEvent('framekeep:archive-record',{detail:{item_id:id,rating:pendingRating??(record.rating||0),sku:record.sku||record.inherited_sku||''}}));
+@@ -225,7 +231,7 @@
+       const version=JSON.stringify([key,data.groups.map(g=>[g.id,g.decision_id,g.sku,g.status]),data.sku_projection_pending||0]);
+       if(version!==groupVersion){groupVersion=version;document.dispatchEvent(new CustomEvent('framekeep:archive-groups',{detail:{version}}))}
+       // 解析进行中任务状态变化不递增版本：每轮轮询强制读取当前素材，动画及时切换阶段。
+-      await item(ocrActive());
++      await item(ocrActive()||ratingUncertain.has(currentId));
+     }catch(error){if(sequence===request&&key===JSON.stringify(scopeBody()))$('capture-access').textContent=error.message+'；可先提交补写，或重新读取目录'}
+     finally{if(sequence===request){polling=false;if(pollAbort===controller)pollAbort=null}}
+   }
+@@ -409,7 +415,7 @@
+         const [id,job]=ratingQueue.entries().next().value;ratingQueue.delete(id);
+         try{
+           await savingRating(id,job);
+-        }finally{if(!ratingQueue.has(id))ratingPending.delete(id)}
++        }finally{if(!ratingQueue.has(id)&&!ratingUncertain.has(id))ratingPending.delete(id)}
+       }
+     }finally{ratingWorker=null;scheduleRatingReload();poll().catch(()=>{})}
+   }
+@@ -431,6 +437,14 @@
+       }
+       job.resolve(result);
+     }catch(error){
++      if(error.name==='TimeoutError'){
++        if(!ratingQueue.has(id)){
++          ratingUncertain.set(id,job.rating);itemVersion='';
++          ratingStatus(id,'保存结果尚未确认，正在核对；请勿重复提交');
++          if(id===currentId){note('请求超时，后台可能仍在保存；正在重新读取星级核对');if(job.rating===2)showFeedback('queued','正在核对二星保存结果','后台可能仍在处理，请稍候…','submitting')}
++        }
++        job.reject(error);return;
++      }
+       if(!ratingQueue.has(id)){
+         // 保存失败：恢复到最后一次确认成功的星级，并说明原因。
+         const back=ratingConfirmed.get(id)??0;
+@@ -444,6 +458,7 @@
+   }
+   window.FramekeepArchiveCapture={
+     rate(id,rating,previous=0){
++      ratingUncertain.delete(id);
+       if(!ratingConfirmed.has(id))ratingConfirmed.set(id,previous||0);
+       const correction=$('capture-correction').checked,prior=ratingQueue.get(id);
+       // 尚未提交的旧改动被新星级取代，视为完成，不再回退界面。

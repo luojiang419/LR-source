@@ -1,8 +1,8 @@
 /* 四种风格共用：主页面入口在底部，选片工具并入顶栏。 */
 /* 文件夹和监控入口固定在左栏底部，不随文件夹/照片列表滚动。 */
 .folder-sidebar-footer {display:grid;grid-template-columns:minmax(0,1fr);flex:none;gap:6px;padding:8px;border-top:1px solid var(--theme-border);background:var(--theme-panel);}
-html[data-hardcore-layout] .folder-sidebar-footer>:is(#open-folder,#folder-watch,#canon-tether-open) {min-width:0;min-height:34px;padding:7px 4px;font-size:11px;line-height:1.5;white-space:normal;overflow-wrap:anywhere;}
-html[data-hardcore-layout] .folder-sidebar-footer>:is(#folder-watch,#canon-tether-open) {width:100%;min-height:40px;padding:9px 12px;border-radius:8px;font-size:12px;font-weight:500;white-space:nowrap;}
+html[data-hardcore-layout] .folder-sidebar-footer>:is(#open-folder,#folder-watch) {min-width:0;min-height:34px;padding:7px 4px;font-size:11px;line-height:1.5;white-space:normal;overflow-wrap:anywhere;}
+html[data-hardcore-layout] .folder-sidebar-footer>:is(#folder-watch) {width:100%;min-height:40px;padding:9px 12px;border-radius:8px;font-size:12px;font-weight:500;white-space:nowrap;}
 .left-collapsed .folder-sidebar-footer {display:none;}
 html[data-hardcore-layout] .workbench.workspace-with-bottom-tabs {height:100dvh;min-height:0;overflow:hidden;}
 .workspace-with-bottom-tabs>.workspace-bottom-bar {order:3;flex:none;min-width:0;width:100%;border-top:1px solid var(--theme-border);background:var(--glass-panel,var(--theme-panel));}

@@ -110,7 +110,7 @@ class SkuChoiceProgressTests(unittest.TestCase):
                         result=response.value.json()
                         self.assertTrue(result['saved']);self.assert_completed()
                         page.clock.run_for(100)
-                        page.wait_for_function('()=>document.getElementById("sku-panel-scope").textContent.includes("临时插拍")',timeout=5000)
+                        page.wait_for_function('()=>document.getElementById("sku-panel-scope-options").textContent.includes("临时插拍")',timeout=5000)
                         page.locator('#sku-open').click();page.locator('#sku-search').fill(self.code)
                         page.locator('[data-progress-sheet="临时插拍"]').click()
                         page.wait_for_function('(code)=>[...document.querySelectorAll("#sku-rows tbody tr")].some(r=>r.textContent.includes(code)&&r.textContent.includes("已拍摄")&&r.querySelector("[data-sku-cover] img"))',arg=self.code)

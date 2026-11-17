@@ -154,7 +154,11 @@ class FullAutoWorkflowTests(unittest.TestCase):
         self.sku.configure(self.pid,self.sid,'细节图')
         with self.assertRaisesRegex(ValueError,'工作表已变化'):self.sku.set_full_auto(True,self.sid,self.pid,'模特图')
         self.assertFalse(self.sku.full_auto_state()['enabled'])
-        self.sku.import_file('new.xlsx',fixture_book())
+        import io
+        from zipfile import ZipFile
+        different=io.BytesIO(fixture_book())
+        with ZipFile(different,'a') as book:book.writestr('docProps/new-test.xml','<new/>')
+        self.sku.import_file('new.xlsx',different.getvalue())  # 同内容导入会去重，须使用真实不同文档测试旧请求。
         new=self.sku.project()['id'];self.sku.configure(new,self.sid,'模特图')
         with self.assertRaisesRegex(ValueError,'文档已变化'):self.sku.set_full_auto(True,self.sid,self.pid,'模特图')
         self.assertFalse(self.sku.full_auto_state()['enabled'])

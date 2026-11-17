@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "G:\app\LR\build\modelscope-20261109-fixes\verify_frozen_variants.py", line 74, in <module>
+    pending=c.execute("SELECT count(*) FROM metadata_jobs WHERE status IN ('queued','running','writing')").fetchone()[0]
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+sqlite3.OperationalError: no such table: metadata_jobs

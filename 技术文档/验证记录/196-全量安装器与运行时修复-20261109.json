@@ -1,0 +1,1027 @@
+{
+  "status": "complete_local_artifact",
+  "sourceCommit": "51fc562",
+  "customerLog": "[PYI-10008:ERROR] Failed to extract python312.dll: decompression resulted in return code -3!\n[PYI-10008:ERROR] Failed to extract entry: python312.dll.\n[PYI-11464:ERROR] Failed to extract python312.dll: decompression resulted in return code -3!\n[PYI-11464:ERROR] Failed to extract entry: python312.dll.\n",
+  "received_installer_sha256": "61edc8e4f934ccaef6de7bd99e0038b162535be45f6e4ed98dc729669dcf9d2c",
+  "causeScope": "onefile 启动解压失败；本地副本有效，客户机具体触发因素未知",
+  "updateTestsPassed": 71,
+  "runtimeAcceptance": {
+    "checks": [
+      {
+        "path": "ascii",
+        "native_exit": 0,
+        "worker_exit": 0,
+        "cache_repaired": true
+      },
+      {
+        "path": "中文 空格",
+        "native_exit": 0,
+        "worker_exit": 0,
+        "cache_repaired": true
+      }
+    ],
+    "corrupt_archive_blocked_before_worker": true,
+    "installer_sha256": "c00b787fe23f02a895d3d71ab7cc5ccb830e31a3efe1945aeedf3f6b6d213689"
+  },
+  "fullPayloadAcceptance": {
+    "native_exit": 0,
+    "payload_integrity": {
+      "status": "verified",
+      "files": 19,
+      "archive_sha256": "6956513843692cd5db1f7244c1d10145498840d57ff1a2555a728a28f00c8f60",
+      "runtime": "offline-payload"
+    },
+    "worker_integrity": {
+      "status": "verified",
+      "files": 75,
+      "archive_sha256": "db0a2bad6db2ff0b463f7b2d533c1e55fe167d8d4dd0cb35a40e32187cac14a7",
+      "runtime": "onedir"
+    },
+    "ready": [
+      "driver",
+      "webview",
+      "pp-ocrv6-small-local",
+      "pp-ocrv6-medium-local"
+    ],
+    "offline_components_verified": true,
+    "qwen_weights_absent": true,
+    "glm_weights_absent": true
+  },
+  "build": {
+    "releaseId": "20261109025702",
+    "installer": "G:\\app\\LR\\dist\\SHIYING 数字资产全量安装器-20261109-修复版.exe",
+    "bytes": 746219008,
+    "sha256": "cb45f84f4d643d488d47c6633015fd08b4e0a2ebefbe491b3fd94e724e04bda7",
+    "offline": true,
+    "singleExe": true,
+    "qwenWeightsIncluded": false,
+    "glmWeightsIncluded": false,
+    "components": [
+      "runtime/msvcp140.dll",
+      "runtime/vcruntime140.dll",
+      "runtime/vcruntime140_1.dll",
+      "runtime/concrt140.dll",
+      "driver/install-interception.exe",
+      "driver/licenses/commercial-usage/Interception API.pdf",
+      "driver/licenses/commercial-usage/Interception.pdf",
+      "driver/licenses/non-commercial-usage/LGPL 3.0.txt",
+      "webview/MicrosoftEdgeWebView2RuntimeInstallerX64.exe",
+      "models/paddle-ocr/PP-OCRv6_small_det/inference.onnx",
+      "models/paddle-ocr/PP-OCRv6_small_det/inference.yml",
+      "models/paddle-ocr/PP-OCRv6_small_rec/inference.onnx",
+      "models/paddle-ocr/PP-OCRv6_small_rec/inference.yml",
+      "models/paddle-ocr/PP-OCRv6_medium_rec/inference.onnx",
+      "models/paddle-ocr/PP-OCRv6_medium_rec/inference.yml",
+      "models/paddle-ocr/PP-OCRv6_medium_det/inference.onnx",
+      "models/paddle-ocr/PP-OCRv6_medium_det/inference.yml"
+    ],
+    "payloadFiles": [
+      {
+        "path": "envelope.json",
+        "size": 161297,
+        "sha256": "3a3f6a12b8de49acee4f446a91962ff084e2acee34104f310cf8df67e4163b7f"
+      },
+      {
+        "path": "SHIYING-Windows-x64.zip",
+        "size": 327331697,
+        "sha256": "6eecfdd140609b330ff31a1a4a5f1dac1d3bec6da9059dfc2b7fc9accf1a81d6"
+      },
+      {
+        "path": "components/runtime/msvcp140.dll",
+        "size": 643512,
+        "sha256": "7c26614e1d733892c2deac7e245ce115504b1d80592dd0a01b08e3e5a55f89ca"
+      },
+      {
+        "path": "components/runtime/vcruntime140.dll",
+        "size": 178616,
+        "sha256": "d1f4225df2cd877dbf130d5668a021dce3f94118455ff5ec952061c30afc9ce7"
+      },
+      {
+        "path": "components/runtime/vcruntime140_1.dll",
+        "size": 50112,
+        "sha256": "a7146c08f89fe5b04541ab507cdb59ff7b44534d4ba3c668a426c6450a03434e"
+      },
+      {
+        "path": "components/runtime/concrt140.dll",
+        "size": 374200,
+        "sha256": "54716f0738af891f283d213b5c8d11b25896bb8ee3097d301eae718560cf974e"
+      },
+      {
+        "path": "components/driver/install-interception.exe",
+        "size": 470528,
+        "sha256": "e137863a79da797f08e7a137280ff2a123809044a888fd75ce9c973198915abe"
+      },
+      {
+        "path": "components/driver/licenses/commercial-usage/Interception API.pdf",
+        "size": 22419,
+        "sha256": "b6fbff2a6b20ba644632d13128589eac2a8886729f4aecf7724be4ccae17c2f9"
+      },
+      {
+        "path": "components/driver/licenses/commercial-usage/Interception.pdf",
+        "size": 78798,
+        "sha256": "f54331742d5d9bfed03822cb8a905b46960502048a1ac11e8060cc7fda7a7de9"
+      },
+      {
+        "path": "components/driver/licenses/non-commercial-usage/LGPL 3.0.txt",
+        "size": 7651,
+        "sha256": "da7eabb7bafdf7d3ae5e9f223aa5bdc1eece45ac569dc21b3b037520b4464768"
+      },
+      {
+        "path": "components/webview/MicrosoftEdgeWebView2RuntimeInstallerX64.exe",
+        "size": 214156024,
+        "sha256": "0625fb5c1e75be58a164e14f95aa58a3e5badb859b3d17c952385f3e4a9ff3e8"
+      },
+      {
+        "path": "components/models/paddle-ocr/PP-OCRv6_small_det/inference.onnx",
+        "size": 9880512,
+        "sha256": "d73e0058b7a8086bbd57f3d10b8bcd4ff95363f67e06e2762b5e814fe9c9410e"
+      },
+      {
+        "path": "components/models/paddle-ocr/PP-OCRv6_small_det/inference.yml",
+        "size": 885,
+        "sha256": "193f435274bf9f0b5f71a929bbfbcf148282df7e633b34e7c373e8f44741b516"
+      },
+      {
+        "path": "components/models/paddle-ocr/PP-OCRv6_small_rec/inference.onnx",
+        "size": 21159378,
+        "sha256": "5435fd747c9e0efe15a96d0b378d5bd157e9492ed8fd80edf08f30d02fa24634"
+      },
+      {
+        "path": "components/models/paddle-ocr/PP-OCRv6_small_rec/inference.yml",
+        "size": 150579,
+        "sha256": "ab078671bb49f06228eadccd34f1bb501e157f7a047095ffb943ba81512c77d1"
+      },
+      {
+        "path": "components/models/paddle-ocr/PP-OCRv6_medium_rec/inference.onnx",
+        "size": 76554979,
+        "sha256": "9c09abf0957f7968c7586464b7397b84ad2387a0497a351af40e9acc71b673ba"
+      },
+      {
+        "path": "components/models/paddle-ocr/PP-OCRv6_medium_rec/inference.yml",
+        "size": 150580,
+        "sha256": "991b700facf5b50a7de193468207d5f4255b538dde0d312ae3b7c7a9b6873129"
+      },
+      {
+        "path": "components/models/paddle-ocr/PP-OCRv6_medium_det/inference.onnx",
+        "size": 62032837,
+        "sha256": "eb13b44b25bb36f89528b68720af8a61d9cf381176107f465db1757b65d086e1"
+      },
+      {
+        "path": "components/models/paddle-ocr/PP-OCRv6_medium_det/inference.yml",
+        "size": 886,
+        "sha256": "7298d5ead546584af2504d03355f881ac7a7bc0eb1e282d3e159277c1d0af871"
+      }
+    ],
+    "workerRuntime": "onedir",
+    "published": false
+  },
+  "signedInstallAcceptance": {
+    "releaseId": "20261109025702",
+    "signature_verified": true,
+    "package_sha256": "6eecfdd140609b330ff31a1a4a5f1dac1d3bec6da9059dfc2b7fc9accf1a81d6",
+    "installed_files_verified": 936,
+    "photo_preserved": true,
+    "old_model_preserved": true,
+    "glm_assets_absent": true,
+    "native_window_tested": false,
+    "native_window_note": "现用桌面实例保持运行；单实例应用不另起同标识窗口，本次校验冻结引擎真实业务接口。",
+    "new": {
+      "health": {
+        "application": "framekeep",
+        "process_id": 54288,
+        "busy": false
+      },
+      "default_model": "pp-ocrv6-medium-local",
+      "builtin_enabled": true,
+      "provider_test": {
+        "ok": true,
+        "model": "pp-ocrv6-medium-local",
+        "models": [
+          "pp-ocrv6-medium-local"
+        ],
+        "message": "纯 CPU OCR 加载通过；识别质量请使用实际样片验证"
+      },
+      "parse": {
+        "session_id": "72014a1e6feb809bbe89e545",
+        "capture_id": "cf7a08c4285bcb02a63bcad4",
+        "name": "XSY_3471",
+        "reading": {
+          "text": "宏爵制衣厂\n款号：LC7832773\n-P805\n尺码：\n顺富7158SH\n面料\n用线：\nHX117\n板类：\nS码\n坐围：\n车板工号：12\n8.18\n期：",
+          "codes": [
+            "LC7832773-P805"
+          ],
+          "ocr_candidates": [
+            "LC7832773-P805",
+            "LC7832773",
+            "P805",
+            "7158SH",
+            "HX117"
+          ],
+          "confidence": 0,
+          "unscored": true,
+          "is_label": false,
+          "handwritten": false,
+          "auxiliary": {
+            "text": "宏爵制衣厂\n款号：LC7832773\n-P805\n尺码：\n顺富7158SH\n面料\n用线：\nHX117\n板类：\nS码\n坐围：\n车板工号：12\n8.18\n期：",
+            "lines": [
+              {
+                "text": "宏爵制衣厂",
+                "confidence": 0.9999192953109741,
+                "points": [
+                  [
+                    568.0,
+                    458.0
+                  ],
+                  [
+                    820.0,
+                    458.0
+                  ],
+                  [
+                    820.0,
+                    514.0
+                  ],
+                  [
+                    568.0,
+                    514.0
+                  ]
+                ]
+              },
+              {
+                "text": "款号：LC7832773",
+                "confidence": 0.9861712455749512,
+                "points": [
+                  [
+                    520.0,
+                    512.0
+                  ],
+                  [
+                    865.0,
+                    512.0
+                  ],
+                  [
+                    865.0,
+                    579.0
+                  ],
+                  [
+                    520.0,
+                    579.0
+                  ]
+                ]
+              },
+              {
+                "text": "-P805",
+                "confidence": 0.849007785320282,
+                "points": [
+                  [
+                    673.0,
+                    563.0
+                  ],
+                  [
+                    843.0,
+                    563.0
+                  ],
+                  [
+                    843.0,
+                    646.0
+                  ],
+                  [
+                    673.0,
+                    646.0
+                  ]
+                ]
+              },
+              {
+                "text": "尺码：",
+                "confidence": 0.9999074339866638,
+                "points": [
+                  [
+                    521.0,
+                    584.0
+                  ],
+                  [
+                    612.0,
+                    590.0
+                  ],
+                  [
+                    610.0,
+                    629.0
+                  ],
+                  [
+                    518.0,
+                    623.0
+                  ]
+                ]
+              },
+              {
+                "text": "顺富7158SH",
+                "confidence": 0.86009681224823,
+                "points": [
+                  [
+                    593.0,
+                    634.0
+                  ],
+                  [
+                    876.0,
+                    639.0
+                  ],
+                  [
+                    875.0,
+                    724.0
+                  ],
+                  [
+                    591.0,
+                    719.0
+                  ]
+                ]
+              },
+              {
+                "text": "面料",
+                "confidence": 0.9999585151672363,
+                "points": [
+                  [
+                    518.0,
+                    650.0
+                  ],
+                  [
+                    592.0,
+                    654.0
+                  ],
+                  [
+                    590.0,
+                    693.0
+                  ],
+                  [
+                    516.0,
+                    689.0
+                  ]
+                ]
+              },
+              {
+                "text": "用线：",
+                "confidence": 0.9999485015869141,
+                "points": [
+                  [
+                    516.0,
+                    712.0
+                  ],
+                  [
+                    612.0,
+                    719.0
+                  ],
+                  [
+                    609.0,
+                    762.0
+                  ],
+                  [
+                    513.0,
+                    755.0
+                  ]
+                ]
+              },
+              {
+                "text": "HX117",
+                "confidence": 0.9530237317085266,
+                "points": [
+                  [
+                    607.0,
+                    712.0
+                  ],
+                  [
+                    783.0,
+                    712.0
+                  ],
+                  [
+                    783.0,
+                    776.0
+                  ],
+                  [
+                    607.0,
+                    776.0
+                  ]
+                ]
+              },
+              {
+                "text": "板类：",
+                "confidence": 0.9999672770500183,
+                "points": [
+                  [
+                    514.0,
+                    778.0
+                  ],
+                  [
+                    608.0,
+                    784.0
+                  ],
+                  [
+                    605.0,
+                    825.0
+                  ],
+                  [
+                    511.0,
+                    819.0
+                  ]
+                ]
+              },
+              {
+                "text": "S码",
+                "confidence": 0.7781492471694946,
+                "points": [
+                  [
+                    648.0,
+                    782.0
+                  ],
+                  [
+                    810.0,
+                    782.0
+                  ],
+                  [
+                    810.0,
+                    883.0
+                  ],
+                  [
+                    648.0,
+                    883.0
+                  ]
+                ]
+              },
+              {
+                "text": "坐围：",
+                "confidence": 0.9999786019325256,
+                "points": [
+                  [
+                    515.0,
+                    844.0
+                  ],
+                  [
+                    605.0,
+                    844.0
+                  ],
+                  [
+                    605.0,
+                    882.0
+                  ],
+                  [
+                    515.0,
+                    882.0
+                  ]
+                ]
+              },
+              {
+                "text": "车板工号：12",
+                "confidence": 0.9858309626579285,
+                "points": [
+                  [
+                    510.0,
+                    894.0
+                  ],
+                  [
+                    769.0,
+                    889.0
+                  ],
+                  [
+                    770.0,
+                    946.0
+                  ],
+                  [
+                    511.0,
+                    951.0
+                  ]
+                ]
+              },
+              {
+                "text": "8.18",
+                "confidence": 0.9810259938240051,
+                "points": [
+                  [
+                    659.0,
+                    933.0
+                  ],
+                  [
+                    850.0,
+                    949.0
+                  ],
+                  [
+                    843.0,
+                    1032.0
+                  ],
+                  [
+                    652.0,
+                    1016.0
+                  ]
+                ]
+              },
+              {
+                "text": "期：",
+                "confidence": 0.9837534427642822,
+                "points": [
+                  [
+                    555.0,
+                    969.0
+                  ],
+                  [
+                    606.0,
+                    978.0
+                  ],
+                  [
+                    602.0,
+                    1005.0
+                  ],
+                  [
+                    550.0,
+                    996.0
+                  ]
+                ]
+              }
+            ],
+            "timing": {
+              "load_ms": 662.1212999998534,
+              "detection_ms": 613.7433000003512,
+              "recognition_ms": 387.3788000000786,
+              "total_ms": 1001.1221000004298
+            },
+            "backend": "CPUExecutionProvider",
+            "det_input_shape": [
+              1,
+              3,
+              864,
+              1280
+            ]
+          },
+          "provider_id": "cpu-medium",
+          "model": "pp-ocrv6-medium-local",
+          "engine": "local|pp-ocrv6-medium-local",
+          "requires_sku_choice": true
+        },
+        "auto_applied": null,
+        "recommended": [
+          "LC7832773-P805"
+        ]
+      },
+      "parse_ms": 1154.01,
+      "source_unchanged": true,
+      "gpu_providers_absent": true,
+      "ok": true,
+      "test_process_stopped": true
+    },
+    "upgrade": {
+      "health": {
+        "application": "framekeep",
+        "process_id": 49428,
+        "busy": false
+      },
+      "default_model": "pp-ocrv6-medium-local",
+      "builtin_enabled": true,
+      "legacy_card_id_preserved": true,
+      "old_weights_preserved": true,
+      "provider_test": {
+        "ok": true,
+        "model": "pp-ocrv6-medium-local",
+        "models": [
+          "pp-ocrv6-medium-local"
+        ],
+        "message": "纯 CPU OCR 加载通过；识别质量请使用实际样片验证"
+      },
+      "parse": {
+        "session_id": "f9ab3e0d2449e689b8d1bce9",
+        "capture_id": "cf7a08c4285bcb02a63bcad4",
+        "name": "XSY_3471",
+        "reading": {
+          "text": "宏爵制衣厂\n款号：LC7832773\n-P805\n尺码：\n顺富7158SH\n面料\n用线：\nHX117\n板类：\nS码\n坐围：\n车板工号：12\n8.18\n期：",
+          "codes": [
+            "LC7832773-P805"
+          ],
+          "ocr_candidates": [
+            "LC7832773-P805",
+            "LC7832773",
+            "P805",
+            "7158SH",
+            "HX117"
+          ],
+          "confidence": 0,
+          "unscored": true,
+          "is_label": false,
+          "handwritten": false,
+          "auxiliary": {
+            "text": "宏爵制衣厂\n款号：LC7832773\n-P805\n尺码：\n顺富7158SH\n面料\n用线：\nHX117\n板类：\nS码\n坐围：\n车板工号：12\n8.18\n期：",
+            "lines": [
+              {
+                "text": "宏爵制衣厂",
+                "confidence": 0.9999192953109741,
+                "points": [
+                  [
+                    568.0,
+                    458.0
+                  ],
+                  [
+                    820.0,
+                    458.0
+                  ],
+                  [
+                    820.0,
+                    514.0
+                  ],
+                  [
+                    568.0,
+                    514.0
+                  ]
+                ]
+              },
+              {
+                "text": "款号：LC7832773",
+                "confidence": 0.9861712455749512,
+                "points": [
+                  [
+                    520.0,
+                    512.0
+                  ],
+                  [
+                    865.0,
+                    512.0
+                  ],
+                  [
+                    865.0,
+                    579.0
+                  ],
+                  [
+                    520.0,
+                    579.0
+                  ]
+                ]
+              },
+              {
+                "text": "-P805",
+                "confidence": 0.849007785320282,
+                "points": [
+                  [
+                    673.0,
+                    563.0
+                  ],
+                  [
+                    843.0,
+                    563.0
+                  ],
+                  [
+                    843.0,
+                    646.0
+                  ],
+                  [
+                    673.0,
+                    646.0
+                  ]
+                ]
+              },
+              {
+                "text": "尺码：",
+                "confidence": 0.9999074339866638,
+                "points": [
+                  [
+                    521.0,
+                    584.0
+                  ],
+                  [
+                    612.0,
+                    590.0
+                  ],
+                  [
+                    610.0,
+                    629.0
+                  ],
+                  [
+                    518.0,
+                    623.0
+                  ]
+                ]
+              },
+              {
+                "text": "顺富7158SH",
+                "confidence": 0.86009681224823,
+                "points": [
+                  [
+                    593.0,
+                    634.0
+                  ],
+                  [
+                    876.0,
+                    639.0
+                  ],
+                  [
+                    875.0,
+                    724.0
+                  ],
+                  [
+                    591.0,
+                    719.0
+                  ]
+                ]
+              },
+              {
+                "text": "面料",
+                "confidence": 0.9999585151672363,
+                "points": [
+                  [
+                    518.0,
+                    650.0
+                  ],
+                  [
+                    592.0,
+                    654.0
+                  ],
+                  [
+                    590.0,
+                    693.0
+                  ],
+                  [
+                    516.0,
+                    689.0
+                  ]
+                ]
+              },
+              {
+                "text": "用线：",
+                "confidence": 0.9999485015869141,
+                "points": [
+                  [
+                    516.0,
+                    712.0
+                  ],
+                  [
+                    612.0,
+                    719.0
+                  ],
+                  [
+                    609.0,
+                    762.0
+                  ],
+                  [
+                    513.0,
+                    755.0
+                  ]
+                ]
+              },
+              {
+                "text": "HX117",
+                "confidence": 0.9530237317085266,
+                "points": [
+                  [
+                    607.0,
+                    712.0
+                  ],
+                  [
+                    783.0,
+                    712.0
+                  ],
+                  [
+                    783.0,
+                    776.0
+                  ],
+                  [
+                    607.0,
+                    776.0
+                  ]
+                ]
+              },
+              {
+                "text": "板类：",
+                "confidence": 0.9999672770500183,
+                "points": [
+                  [
+                    514.0,
+                    778.0
+                  ],
+                  [
+                    608.0,
+                    784.0
+                  ],
+                  [
+                    605.0,
+                    825.0
+                  ],
+                  [
+                    511.0,
+                    819.0
+                  ]
+                ]
+              },
+              {
+                "text": "S码",
+                "confidence": 0.7781492471694946,
+                "points": [
+                  [
+                    648.0,
+                    782.0
+                  ],
+                  [
+                    810.0,
+                    782.0
+                  ],
+                  [
+                    810.0,
+                    883.0
+                  ],
+                  [
+                    648.0,
+                    883.0
+                  ]
+                ]
+              },
+              {
+                "text": "坐围：",
+                "confidence": 0.9999786019325256,
+                "points": [
+                  [
+                    515.0,
+                    844.0
+                  ],
+                  [
+                    605.0,
+                    844.0
+                  ],
+                  [
+                    605.0,
+                    882.0
+                  ],
+                  [
+                    515.0,
+                    882.0
+                  ]
+                ]
+              },
+              {
+                "text": "车板工号：12",
+                "confidence": 0.9858309626579285,
+                "points": [
+                  [
+                    510.0,
+                    894.0
+                  ],
+                  [
+                    769.0,
+                    889.0
+                  ],
+                  [
+                    770.0,
+                    946.0
+                  ],
+                  [
+                    511.0,
+                    951.0
+                  ]
+                ]
+              },
+              {
+                "text": "8.18",
+                "confidence": 0.9810259938240051,
+                "points": [
+                  [
+                    659.0,
+                    933.0
+                  ],
+                  [
+                    850.0,
+                    949.0
+                  ],
+                  [
+                    843.0,
+                    1032.0
+                  ],
+                  [
+                    652.0,
+                    1016.0
+                  ]
+                ]
+              },
+              {
+                "text": "期：",
+                "confidence": 0.9837534427642822,
+                "points": [
+                  [
+                    555.0,
+                    969.0
+                  ],
+                  [
+                    606.0,
+                    978.0
+                  ],
+                  [
+                    602.0,
+                    1005.0
+                  ],
+                  [
+                    550.0,
+                    996.0
+                  ]
+                ]
+              }
+            ],
+            "timing": {
+              "load_ms": 674.4613000000754,
+              "detection_ms": 584.145200000421,
+              "recognition_ms": 344.7906999999759,
+              "total_ms": 928.9359000003969
+            },
+            "backend": "CPUExecutionProvider",
+            "det_input_shape": [
+              1,
+              3,
+              864,
+              1280
+            ]
+          },
+          "provider_id": "cpu-medium",
+          "model": "pp-ocrv6-medium-local",
+          "engine": "local|pp-ocrv6-medium-local",
+          "requires_sku_choice": true
+        },
+        "auto_applied": null,
+        "recommended": [
+          "LC7832773-P805"
+        ]
+      },
+      "parse_ms": 991.47,
+      "source_unchanged": true,
+      "gpu_providers_absent": true,
+      "ok": true,
+      "test_process_stopped": true
+    }
+  },
+  "copiedUpdateRuntime": {
+    "worker_exit": 0,
+    "install_plan_created": true,
+    "python312_dll_external": true
+  },
+  "customerMachineRetested": false,
+  "cleanup": {
+    "free_after": 353113776128,
+    "removed_logical_bytes": 5548695301.0,
+    "records": [
+      {
+        "bytes": 77740945.0,
+        "path": "G:\\app\\LR\\build\\installer-diagnosis"
+      },
+      {
+        "bytes": 97047168.0,
+        "path": "G:\\app\\LR\\build\\installer-runtime-acceptance"
+      },
+      {
+        "bytes": 32119703.0,
+        "path": "G:\\app\\LR\\build\\update-worker-dist"
+      },
+      {
+        "bytes": 7142229.0,
+        "path": "G:\\app\\LR\\build\\update-worker"
+      },
+      {
+        "bytes": 97732897.0,
+        "path": "G:\\app\\LR\\build\\update-tools"
+      },
+      {
+        "bytes": 97047680.0,
+        "path": "G:\\app\\LR\\build\\full-installer-source\\build\\runtime-acceptance"
+      },
+      {
+        "bytes": 32130403.0,
+        "path": "G:\\app\\LR\\build\\full-installer-source\\build\\copied-update-runtime"
+      },
+      {
+        "bytes": 1130196161.0,
+        "path": "G:\\app\\LR\\build\\full-installer-source\\build\\full-payload-acceptance"
+      },
+      {
+        "bytes": 2320888979.0,
+        "path": "G:\\app\\LR\\build\\full-installer-source\\build\\signed-full-install-check"
+      },
+      {
+        "bytes": 746756050.0,
+        "path": "G:\\app\\LR\\build\\full-installer-source\\build\\engine-dist"
+      },
+      {
+        "bytes": 26682007.0,
+        "path": "G:\\app\\LR\\build\\full-installer-source\\build\\framekeep-engine"
+      },
+      {
+        "bytes": 32119703.0,
+        "path": "G:\\app\\LR\\build\\full-installer-source\\build\\update-worker-dist"
+      },
+      {
+        "bytes": 7143211.0,
+        "path": "G:\\app\\LR\\build\\full-installer-source\\build\\update-worker"
+      },
+      {
+        "bytes": 97732897.0,
+        "path": "G:\\app\\LR\\build\\full-installer-source\\build\\update-tools"
+      },
+      {
+        "bytes": 713408868,
+        "path": "G:\\app\\LR\\build\\full-installer-source\\build\\single-installer\\20261109025702\\offline-payload.zip"
+      },
+      {
+        "bytes": 32806400,
+        "path": "G:\\app\\LR\\dist\\SHIYING 数字资产安装器.exe"
+      }
+    ],
+    "free_delta": 5228253184,
+    "retained": "全量 EXE、签名软件包、唯一完整程序目录、源码、开发模型、永久验证记录与客户原始日志/安装器",
+    "free_before": 347885522944
+  },
+  "deliveredFileReverified": true
+}

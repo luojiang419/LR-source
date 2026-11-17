@@ -84,6 +84,16 @@ def extract_frame(source, size, frame, app_root=None):
                        '-filter_threads', '1', '-frames:v', '1', '-fps_mode', 'vfr', '-f', 'image2pipe', '-threads', '1', '-c:v', 'png', 'pipe:1'])
         if result.returncode:
             detail = result.stderr.decode('utf8', errors='replace').strip()[-400:]
+            if 'matches no streams' in detail or 'Invalid data found' in detail or 'moov atom not found' in detail:
+                # 初次快速探测可能漏掉流；正常完整探测确认后才跳过，不把网络故障当成不支持。
+                probe=find_tool('ffprobe',app_root)
+                if probe:
+                    inspected=_run([probe,'-v','error','-show_entries','stream=codec_type','-of','json',str(source)],timeout=15)
+                    from preview_errors import PreviewIgnored
+                    try:streams=json.loads(inspected.stdout).get('streams',[])
+                    except (ValueError,TypeError):streams=None
+                    if not inspected.returncode and streams is not None and not any(stream.get('codec_type')=='video' for stream in streams):
+                        raise PreviewIgnored('no_video','视频容器没有可用的视频画面流，已忽略预览')
             raise RuntimeError('视频无法解码，请检查素材是否完整或编码是否受支持：' + detail)
         return result.stdout
 

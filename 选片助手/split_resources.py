@@ -268,7 +268,7 @@ class ResourceLibrary:
         row = {'id': secrets.token_hex(8), 'name': str(name).strip()[:48] or '局域网设备', 'address': address, 'secret': protect(token)}
         result = self.remote(row, 'roots')
         if not isinstance(result.get('roots'), list):
-            raise ValueError('对方不是兼容的末帧文件数据库')
+            raise ValueError('对方不是兼容的SHIYING文件数据库')
         with self.lock:
             self.config['peers'].append(row)
             self.save()

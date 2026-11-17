@@ -18,9 +18,20 @@ def decorate_images(sku,rows):
                 key=(sid,image['normalized']);prior=first_sku.get(key)
                 if prior is None or _natural(image['name'])<_natural(prior['name']):first_sku[key]=image
         sessions[sid]={r['id']:r for r in sku.store.records(sid)}
-    project=None
+    projects={}
     for row in rows:
-        row['sku_image']=None;evidence=row.get('completion')
+        row['sku_image']=None;row['label_image']=None;evidence=row.get('completion')
+        if row['project'] not in projects:projects[row['project']]=sku.project(row['project'])
+        project=projects[row['project']]
+        sheet=next((s for s in project['metadata']['sheets'] if s['name']==row['sheet']),{})
+        if evidence:
+            sid=evidence['session_id'];cid=evidence['capture_id']
+            row['label_image']={'session_id':sid,'capture_id':cid,'url':f'/api/preview/{quote(sid)}/{quote(cid)}?size=240'}
+        elif sheet.get('label_col'):
+            from sku_workbook import col_number
+            indexed=[i for i in sheet.get('images',[]) if int(''.join(filter(str.isdigit,i['cell'])))==row['excel_row']]
+            found=next((i for i,im in enumerate(indexed) if col_number(im['cell'])==sheet['label_col']),None)
+            if found is not None:row['label_image']={'url':f'/api/sku/image?row_id={row["id"]}&index={found}','imported':True,'index':found}
         if row['status']!='已拍摄':continue
         if evidence:
             sid=evidence['session_id'];label=evidence['capture_id']
@@ -43,10 +54,10 @@ def decorate_images(sku,rows):
     decorate_selected(sku,rows)
 
 
-def export_images(sku,rows):
+def export_images(sku,rows,*,field='sku_image',size=240,progress=None):
     result={};sessions={};cache={}
     for row in rows:
-        image=row.get('sku_image')
+        image=row.get(field)
         if not image:continue
         key=(row['sheet'],row['excel_row'])
         try:
@@ -55,8 +66,9 @@ def export_images(sku,rows):
                 sid=image['session_id'];cid=image['capture_id'];identity=(sid,cid)
                 if sid not in sessions:sessions[sid]=(sku.store.session(sid),{r['id']:r for r in sku.store.records(sid)})
                 session,records=sessions[sid]
-                if identity not in cache:cache[identity]=media.preview_bytes(records[cid],session['root'],sku.store.data/'previews',lambda:media.find_exiftool(sku.store.root),240,False)
+                if identity not in cache:cache[identity]=media.preview_bytes(records[cid],session['root'],sku.store.data/'previews',lambda:media.find_exiftool(sku.store.root),size,False)
                 data=cache[identity]
             result[key]=data
         except (OSError,ValueError,RuntimeError,KeyError):result[key]=None
+        if progress:progress(field,result[key] is None)
     return result

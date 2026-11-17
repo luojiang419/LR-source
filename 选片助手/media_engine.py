@@ -15,8 +15,8 @@ import atexit
 import base64
 import weakref
 from collections import OrderedDict
-from preview_cache import cache_for,cache_name,WARM_WORKERS
-from contextlib import nullcontext,contextmanager
+from preview_cache import cache_for,cache_name,WARM_WORKERS,MAX_WARM_WORKERS
+from contextlib import nullcontext,contextmanager,ExitStack
 from datetime import datetime
 from pathlib import Path
 from PIL import Image, ImageOps, ImageDraw
@@ -24,6 +24,18 @@ from preview_codec import MAX_PREVIEW_EDGE,embedded_jpeg
 
 _QUICK_PREVIEWS=OrderedDict()
 _QUICK_PREVIEW_GUARD=threading.Lock()
+
+
+def remember_quick_preview(record,root,image,orientation=None):
+    """复用完整性校验已解码的像素；通过读取后指纹核验才由监控发布。"""
+    from preview_codec import save_preview
+    oriented=_orient_preview(image,orientation or record.get('orientation',1))
+    oriented.thumbnail((480,480),Image.Resampling.LANCZOS)
+    stream=io.BytesIO();save_preview(oriented,stream)
+    key=(str(root),record['fingerprint'],480,record.get('orientation',1))
+    with _QUICK_PREVIEW_GUARD:
+        _QUICK_PREVIEWS[key]=stream.getvalue();_QUICK_PREVIEWS.move_to_end(key)
+        while len(_QUICK_PREVIEWS)>8:_QUICK_PREVIEWS.popitem(last=False)
 
 
 def quick_preview_bytes(record,root,size=480):
@@ -50,7 +62,7 @@ RAW_EXTS={'.cr3','.cr2','.nef','.nrw','.arw','.srf','.sr2','.raf','.rw2','.orf',
 IMAGE_EXTS={'.jpg','.jpeg','.tif','.tiff','.png','.heic','.heif'}
 _PREVIEW_LOCK_GUARD=threading.Lock()
 _PREVIEW_LOCKS=weakref.WeakValueDictionary()
-_PREVIEW_SLOTS=threading.BoundedSemaphore(WARM_WORKERS+2)
+_PREVIEW_SLOTS=threading.BoundedSemaphore(MAX_WARM_WORKERS+2)
 _DECODE_SLOT=threading.BoundedSemaphore(1)
 _STATS={}
 
@@ -81,15 +93,16 @@ def find_exiftool(root):
 
 class ExifToolSession:
     """串行复用 ExifTool；取消或关闭后，下次请求自动启动干净进程。"""
-    def __init__(self,exiftool,timeout=180):
+    def __init__(self,exiftool,timeout=180,*,startup_args=()):
         self.exiftool=Path(exiftool);self.timeout=timeout
+        self.startup_args=tuple(map(str,startup_args))
         self._lock=threading.Lock();self._state_lock=threading.Lock()
         self._process=None;self._output=None;self._reader=None;self._sequence=0
 
     def _start(self):
         with self._state_lock:
             if self._process is None:
-                process=subprocess.Popen([str(self.exiftool),'-stay_open','True','-@','-'],stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
+                process=subprocess.Popen([str(self.exiftool),*self.startup_args,'-stay_open','True','-@','-'],stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
                 output=queue.Queue()
                 def read_output():
                     try:
@@ -155,7 +168,7 @@ def preview_exif_session(exiftool):
     with _PREVIEW_SESSION_LOCK:
         if key not in _PREVIEW_SESSIONS:
             sessions=queue.Queue()
-            for _ in range(WARM_WORKERS+2):sessions.put(ExifToolSession(exiftool,timeout=30))
+            for _ in range(MAX_WARM_WORKERS+2):sessions.put(ExifToolSession(exiftool,timeout=30))
             _PREVIEW_SESSIONS[key]=sessions
         sessions=_PREVIEW_SESSIONS[key]
     session=sessions.get()
@@ -381,6 +394,16 @@ def _companion_preview(record,root,size):
     return None
 
 
+def _paired_raw_preview(record,exiftool,size):
+    source=Path(record['_fallback_raw']);tool=exiftool() if callable(exiftool) else exiftool
+    try:
+        with preview_exif_session(tool) as session:metadata=read_metadata([source],tool,session=session)[0]
+        orientation=int(metadata.get('Orientation',record.get('orientation',1)))
+        if orientation in range(1,9):record['orientation']=orientation
+    except (OSError,ValueError,RuntimeError,TypeError,IndexError):pass
+    return _raw_preview(dict(record,raw=source.name,jpg=None),source.parent,tool,size)
+
+
 def _raw_preview(record,root,exiftool,size):
     image=_companion_preview(record,root,size)
     if image is not None:return image
@@ -412,7 +435,7 @@ def _jpeg_source(record,root,exiftool):
         record['_jpeg_attempted']=True
         try:
             tool=exiftool() if callable(exiftool) else exiftool
-            path=resolved_file(root,raw)
+            path=resolved_file(root,Path(raw).name if not record.get('raw') else raw)
             orientation,payload=raw_embedded_metadata(path,tool)
             if payload:
                 record['orientation']=orientation;record['_source_jpeg']=payload;return payload
@@ -432,18 +455,27 @@ def warm_previews(record,root,cache,exiftool,sizes=(420,MAX_PREVIEW_EDGE),*,cach
     """每张一次读取；主图仅在超限时缩放，小图复用同次的压缩数据或像素。"""
     index=cache_index or cache_for(cache);record=dict(record)
     sizes=tuple(sorted({max(160,min(MAX_PREVIEW_EDGE,int(s))) for s in sizes}))
-    with index.budget.generation() if index.budget else nullcontext():
+    with (index.budget.generation() if index.budget else nullcontext()),ExitStack() as connections:
+        for related in index.budget.caches if index.budget else (index,):
+            connections.enter_context(related.connection_scope())
         if all(index.contains([cache_name(record,edge)]) for edge in sizes):return
         largest=max(sizes);image=None
-        payload=None if record.get('_video') else _jpeg_source(record,root,exiftool)
+        payload=None if record.get('_video') or record.get('_design') else _jpeg_source(record,root,exiftool)
         if payload:
             if embedded_jpeg(payload,largest,record.get('orientation')) is None:
                 image=_read_preview(io.BytesIO(payload),largest,record.get('orientation'))
         elif record.get('_video'):
             from video_preview import extract_frame
             image=extract_frame(record['_video'],largest,record['_video_frame'])
+        elif record.get('_design'):
+            from design_preview import preview as design_preview
+            cached=index.get(cache_name(record,largest),read=True)
+            image=_read_preview(io.BytesIO(cached),largest,1) if cached else design_preview(record['_design'],largest)
         elif record.get('raw'):image=_raw_preview(record,root,exiftool,largest)
-        else:image=_companion_preview(record,root,largest)
+        else:
+            image=_companion_preview(record,root,largest)
+            if image is None and record.get('_fallback_raw'):
+                image=_paired_raw_preview(record,exiftool,largest)
         if image is not None:
             from gpu_media import resize_preview
             image=resize_preview(image,largest)
@@ -452,6 +484,14 @@ def warm_previews(record,root,cache,exiftool,sizes=(420,MAX_PREVIEW_EDGE),*,cach
             if image is not None:current['_warmed_image']=image.copy()
             # 已持有整批 generation 租约，不能再次等待迁移开关，否则迁移会互等。
             _preview(current,root,cache,exiftool,edge,cache_index=index)
+
+
+def cached_preview(record,cache,size=480,decode=False,*,read=False):
+    """只查精确版本的缓存，不提取源图；供前台绕过同源后台生成锁。"""
+    size=max(160,min(MAX_PREVIEW_EDGE,int(size)))
+    index=cache_for(cache)
+    with index.budget.generation() if index.budget else nullcontext():
+        return index.get(cache_name(record,size,decode),read=read)
 
 
 def preview(record,root,cache,exiftool,size=480,decode=False,*,cache_index=None):
@@ -478,8 +518,8 @@ def _preview(record,root,cache,exiftool,size=480,decode=False,*,cache_index=None
             legacy=index.get(old_name)
             if legacy is not None:return legacy
     try:
-        content=None if record.get('_video') else index.known_content(record)
-        if not record.get('_video') and content is None and cached_source is None and (
+        content=None if record.get('_video') or record.get('_design') else index.known_content(record)
+        if not record.get('_video') and not record.get('_design') and content is None and cached_source is None and (
                 record.get('_portable_prepare') or not record.get('_background_preview') and index.has_portable() and index.candidate(record,root)):
             content=index.content_key(record,root)
     except (OSError,ValueError):content=None
@@ -497,7 +537,7 @@ def _preview(record,root,cache,exiftool,size=480,decode=False,*,cache_index=None
         with _PREVIEW_SLOTS,(_DECODE_SLOT if decode else nullcontext()):
             load_size=size
             image=None
-            payload=None if decode or record.get('_video') or cached_source is not None else _jpeg_source(record,root,exiftool)
+            payload=None if decode or record.get('_video') or record.get('_design') or cached_source is not None else _jpeg_source(record,root,exiftool)
             # RAW 方向可能由上面的同次 JPEG 提取补齐，重新确定缓存身份。
             name=cache_name(record,size,decode);target=index.folder/name
             hit=index.get(name)
@@ -513,14 +553,24 @@ def _preview(record,root,cache,exiftool,size=480,decode=False,*,cache_index=None
             elif record.get('_video'):
                 from video_preview import extract_frame
                 image=extract_frame(record['_video'],load_size,record['_video_frame'])
+            elif record.get('_design'):
+                from design_preview import preview as design_preview
+                image=design_preview(record['_design'],load_size)
             elif record.get('raw'):
                 if decode:
                     import rawpy
                     with rawpy.imread(str(resolved_file(root,record['raw']))) as source:
                         image=Image.fromarray(source.postprocess(use_camera_wb=True,half_size=True))
                 else:image=_raw_preview(record,root,exiftool,size)
-            elif not decode:image=_companion_preview(record,root,load_size)
+            elif not decode:
+                image=_companion_preview(record,root,load_size)
+                if image is None and record.get('_fallback_raw'):
+                    image=_paired_raw_preview(record,exiftool,load_size)
             if image is None and direct is None:raise RuntimeError('无可用预览；可在单张视图按需解码 RAW。')
+            # 配对JPG失效后RAW回退可能补齐方向，提交前同步更新缓存键。
+            name=cache_name(record,size,decode);target=index.folder/name
+            hit=index.get(name)
+            if hit is not None:return hit
             if image is not None:
                 if size<=480:image.thumbnail((size,size),Image.Resampling.LANCZOS)
                 else:
@@ -532,7 +582,7 @@ def _preview(record,root,cache,exiftool,size=480,decode=False,*,cache_index=None
             try:
                 if direct is not None:temp.write_bytes(direct)
                 else:save_preview(image,temp,decode=decode)
-                index.publish(temp,target,record,size,decode)
+                target=index.publish(temp,target,record,size,decode) or target
                 if not record.get('_video') and content is None and record.get('_portable_prepare'):
                     try:content=index.content_key(record,root)
                     except (OSError,ValueError):pass
@@ -542,14 +592,10 @@ def _preview(record,root,cache,exiftool,size=480,decode=False,*,cache_index=None
 
 
 def preview_bytes(record,root,cache,exiftool,size=480,decode=False):
-    """读取与淘汰互斥，防止返回 Path 后恰被其他请求淘汰。"""
-    index=cache_for(cache)
-    for _ in range(3):
-        target=preview(record,root,cache,exiftool,size,decode,cache_index=index)
-        owner=index if target.parent==index.folder else cache_for(target.parent)
-        payload=owner.get(target.name,read=True)
-        if payload is not None:return payload
-    raise OSError('预览缓存繁忙，请重试')
+    """兼容原调用签名，显示与业务按需预览均不读写磁盘缓存。"""
+    from direct_previews import preview_bytes as read_file
+    return read_file(record,root,exiftool,size,decode)
+
 
 def placeholder():
     image=Image.new('RGB',(480,320),(43,43,43));draw=ImageDraw.Draw(image);draw.text((100,145),'Preview unavailable',fill=(190,190,190));out=io.BytesIO();image.save(out,format='JPEG');return out.getvalue()

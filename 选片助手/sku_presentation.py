@@ -5,7 +5,7 @@ from urllib.parse import quote
 from sku_match import normalize
 
 FIXED_HEADERS={'seq':'序号','row':'原表行','sku':'款号','photo':'款号图片',
-               'status':'拍摄状态','time':'拍摄完成时间','source':'所属工作表'}
+               'label':'标签图片','status':'拍摄状态','time':'拍摄完成时间','source':'所属工作表'}
 
 
 def header_key(sheet,column):
@@ -32,11 +32,6 @@ def rename_header(sku,pid,key,title):
         if not isinstance(title,str) or not title.strip() or len(title.strip())>40 or any(ord(ch)<32 for ch in title):raise ValueError('列名须为 1–40 个可见字符')
         before=preferences(sku,pid);value=json.loads(json.dumps(before));value['headers'][key]=title.strip();save_preferences(sku,pid,value)
         sku.dirty.add(pid)
-        # 即时更新工作副本，识别线程的后续导出也沿用此偏好。
-        try:sku.export(pid)
-        except Exception:
-            save_preferences(sku,pid,before)
-            raise
         return sku.state()
 
 
@@ -60,7 +55,6 @@ def gallery_items(sku,pid,code=''):
         if row['status']=='已拍摄' and (not requested or row['normalized']==requested):groups.setdefault(row['normalized'],{'sku':row['sku'],'normalized':row['normalized'],'images':[]})
     if not groups:return []
     data=browse(sku,all_rows=True)
-    with sku.connect() as c:versions={normalize(row['sku']):normalize(row['base_sku']) for row in c.execute('SELECT sku,base_sku FROM sku_shoot_versions')}
     sessions={};ratings={}
     for item in data['rows']:
         if not item.get('normalized'):continue
@@ -68,7 +62,7 @@ def gallery_items(sku,pid,code=''):
         if sid not in sessions:
             sessions[sid]=sku.store.session(sid) or {}
             ratings[sid]=sessions[sid].get('state',{}).get('overrides',{})
-        key=versions.get(item['normalized'],item['normalized'])
+        key=item['normalized']
         if key not in groups:continue
         group=groups[key]
         group['images'].append({'key':'capture:'+item['session_id']+':'+item['capture_id'],
@@ -107,10 +101,6 @@ def select_images(sku,pid,choices,code=''):
             if not image:raise ValueError('所选照片不再属于此款号，请重新打开组图选择')
             value['images'][code]={k:v for k,v in image.items() if k not in ('url','name','sku','normalized','source')}
         save_preferences(sku,pid,value);sku.dirty.add(pid)
-        try:sku.export(pid)
-        except Exception:
-            save_preferences(sku,pid,before)
-            raise
         return sku.state()
 
 
@@ -124,12 +114,7 @@ def _capture_cover_codes(sku,requested):
             for cid in ids:
                 row=c.execute('SELECT a.id,a.normalized FROM catalog_links k JOIN assets a ON a.id=k.asset WHERE k.session=? AND k.capture=?',(sid,cid)).fetchone()
                 if row:links[(sid,cid)]=dict(row)
-    codes={key:{row['normalized']} for key,row in links.items()}
-    with sku.connect() as c:
-        for key,row in links.items():
-            for version in c.execute('SELECT sku,base_sku FROM sku_shoot_versions WHERE asset=?',(row['id'],)):
-                if normalize(version['sku'])==row['normalized']:codes[key].add(normalize(version['base_sku']))
-    return codes
+    return {key:{row['normalized']} for key,row in links.items()}
 
 
 def decorate_selected(sku,rows):

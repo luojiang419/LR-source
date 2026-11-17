@@ -14,13 +14,17 @@ import uuid
 import base64
 import socket
 import sqlite3
+import urllib.request
 from contextlib import closing
 
 PRODUCT='framekeep'
 MARKER='.framekeep-install.json'
 LAYOUT='update/install-layout.json'
-UNINSTALLER='update/卸载末帧选片.exe'
+UNINSTALLER='update/卸载SHIYING 数字资产.exe'
+ENTRY='SHIYING 数字资产.exe'
+LEGACY_ENTRY='末帧选片.exe'
 MIN_FREE=1024**3
+DEFAULT_SUBDIRECTORY='Program Files/Framekeep'
 
 
 def read_json(path):return json.loads(Path(path).read_text(encoding='utf-8-sig'))
@@ -31,12 +35,22 @@ def digest(path):
     with Path(path).open('rb') as stream:return hashlib.file_digest(stream,'sha256').hexdigest()
 def same_path(a,b):return os.path.normcase(os.path.abspath(str(a)))==os.path.normcase(os.path.abspath(str(b)))
 
+def executable(root):
+    root=Path(root)
+    return root/ENTRY if (root/ENTRY).is_file() or not (root/LEGACY_ENTRY).is_file() else root/LEGACY_ENTRY
+
+def has_application(root):return any((Path(root)/name).is_file() for name in (ENTRY,LEGACY_ENTRY))
+
+def uninstaller(root):
+    root=Path(root);current=root/UNINSTALLER;legacy=root/'update/卸载末帧选片.exe'
+    return legacy if not current.is_file() and legacy.is_file() else current
+
 
 def safe_relative(relative):
     if not isinstance(relative,str) or any(c in relative for c in ('\\',':','\x00')):raise ValueError('更新路径非法')
     parts=PurePosixPath(relative).parts
     if not parts or relative!='/'.join(parts) or any(p in ('.','..') or p.endswith(('.',' ')) or re.match(r'^(con|prn|aux|nul|com[0-9]|lpt[0-9])(\.|$)',p,re.I) for p in parts):raise ValueError('更新路径非法：'+relative)
-    allowed=relative in ('末帧选片.exe','update-config.json','完整使用说明.md','使用说明.txt') or relative.startswith(('engine/','runtime/exiftool/','runtime/everything/','FramekeepBridge.lrplugin/','update/'))
+    allowed=relative in (ENTRY,LEGACY_ENTRY,'update-config.json','完整使用说明.md','使用说明.txt') or relative.startswith(('engine/','runtime/exiftool/','runtime/everything/','FramekeepBridge.lrplugin/','update/'))
     if not allowed or any(p.lower() in ('.git','.framekeep','__pycache__','node_modules','.env') for p in parts):raise ValueError('禁止修改此路径：'+relative)
     return relative
 
@@ -51,7 +65,7 @@ def direct_file(root,relative):
     return target
 
 
-def user_programs():return Path(os.environ.get('LOCALAPPDATA',Path.home()/'AppData/Local'))/'Programs/Framekeep'
+def user_programs():return Path(os.environ.get('LOCALAPPDATA',Path.home()/'AppData/Local'))/'Programs/SHIYING Digital Assets'
 def user_data():return Path(os.environ.get('LOCALAPPDATA',Path.home()/'AppData/Local'))/'Framekeep/data'
 
 
@@ -66,10 +80,22 @@ def writable_directory(path):
     except OSError:return False
 
 
+def installation_present(root):
+    root=Path(root)
+    if not root.is_dir() or any(p.is_symlink() or p.is_junction() for p in (root,*root.parents)):return False
+    if has_application(root):return True
+    for name in (MARKER,LAYOUT,'update-config.json'):
+        try:
+            value=read_json(root/name)
+            if value.get('product')==PRODUCT and (name!=MARKER or same_path(value.get('root',''),root)):return True
+        except (OSError,ValueError,TypeError):pass
+    return False
+
+
 def choose_directory(drives=None,registered='',fallback=None,required=MIN_FREE,can_write=writable_directory):
     fallback=Path(fallback or user_programs())
-    if registered and Path(registered,'末帧选片.exe').is_file() and can_write(registered):
-        return {'root':str(Path(registered)),'reason':'沿用已安装位置，保留原有资料','requiredBytes':required}
+    if registered and installation_present(registered):
+        return {'root':str(Path(registered)),'reason':'检测到已有安装，原地覆盖更新并保留资料','requiredBytes':required,'existing':True,'requiresElevation':not can_write(registered)}
     if drives is None:
         drives=[]
         if os.name=='nt':
@@ -80,8 +106,8 @@ def choose_directory(drives=None,registered='',fallback=None,required=MIN_FREE,c
                 except OSError:pass
     for drive in sorted(drives,key=lambda d:str(d['root']).upper()):
         if str(drive['root'])[:1].upper() not in 'DEFGHIJKLMNOPQRSTUVWXYZ' or drive.get('type','fixed')!='fixed':continue
-        target=Path(drive['root'])/'Program Files/Framekeep'
-        if drive['free']>=required and can_write(target):return {'root':str(target),'reason':'优先选择空间充足且可写的非 C 分区','requiredBytes':required}
+        target=Path(drive['root'])/DEFAULT_SUBDIRECTORY
+        if drive['free']>=required:return {'root':str(target),'reason':'默认安装到 D 盘；磁盘不可用时选择其它分区','requiredBytes':required,'existing':False,'requiresElevation':not can_write(target)}
     if not can_write(fallback):raise OSError('用户安装目录不可写，请选择其他可写目录')
     parent=fallback
     while not parent.exists():parent=parent.parent
@@ -194,7 +220,7 @@ def prepare_data_directory(root,source):
 
 class WindowsIntegration:
     """可注入测试注册项和快捷方式目录；生产只操作当前用户的 Framekeep。"""
-    def __init__(self,product_key=r'Software\Framekeep',uninstall_key=r'Software\Microsoft\Windows\CurrentVersion\Uninstall\Framekeep',desktop=None,programs=None,display_name='末帧选片',startup_key=r'Software\Microsoft\Windows\CurrentVersion\Run',startup_name='Framekeep'):
+    def __init__(self,product_key=r'Software\Framekeep',uninstall_key=r'Software\Microsoft\Windows\CurrentVersion\Uninstall\Framekeep',desktop=None,programs=None,display_name='SHIYING 数字资产',startup_key=r'Software\Microsoft\Windows\CurrentVersion\Run',startup_name='Framekeep'):
         self.product_key=product_key;self.uninstall_key=uninstall_key;self.desktop=desktop;self.programs=programs
         self.display_name=display_name
         self.startup_key=startup_key;self.startup_name=startup_name
@@ -209,7 +235,7 @@ class WindowsIntegration:
         if self.desktop is None or self.programs is None:
             folders=json.loads(self.shell("@{desktop=[Environment]::GetFolderPath('Desktop');programs=[Environment]::GetFolderPath('Programs')}|ConvertTo-Json -Compress",{}))
             self.desktop=Path(folders['desktop']);self.programs=Path(folders['programs'])
-        return Path(self.desktop),Path(self.programs)/'末帧选片'
+        return Path(self.desktop),Path(self.programs)/'SHIYING 数字资产'
 
     def values(self,name):
         import winreg
@@ -235,47 +261,80 @@ class WindowsIntegration:
 
     def preferences(self):return {n:v[0] for n,v in (self.values(self.product_key) or {}).items()}
 
+    def install_locations(self):
+        import winreg
+        result=[]
+        for hive in (winreg.HKEY_CURRENT_USER,winreg.HKEY_LOCAL_MACHINE):
+            for view in (winreg.KEY_WOW64_64KEY,winreg.KEY_WOW64_32KEY):
+                for name in (self.product_key,self.uninstall_key):
+                    try:
+                        with winreg.OpenKey(hive,name,0,winreg.KEY_READ|view) as key:
+                            value=winreg.QueryValueEx(key,'InstallLocation')[0]
+                            if isinstance(value,str) and value.strip():result.append(os.path.expandvars(value.strip().strip('"')))
+                    except OSError:pass
+        return list(dict.fromkeys(result))
+
     def shortcuts(self,root):
-        desktop,programs=self.folders();exe=str(Path(root)/'末帧选片.exe');uninstall=str(Path(root)/UNINSTALLER)
-        return [(desktop/'末帧选片.lnk',exe),(programs/'末帧选片.lnk',exe),(programs/'卸载末帧选片.lnk',uninstall)]
+        desktop,programs=self.folders();exe=str(executable(root));uninstall=str(uninstaller(root))
+        return [(desktop/'SHIYING 数字资产.lnk',exe),(programs/'SHIYING 数字资产.lnk',exe),(programs/'卸载SHIYING 数字资产.lnk',uninstall)]
+
+    def legacy_shortcuts(self,root):
+        desktop,programs=self.folders();programs=programs.parent/'末帧选片'
+        return [(desktop/'末帧选片.lnk',str(Path(root)/LEGACY_ENTRY)),(programs/'末帧选片.lnk',str(Path(root)/LEGACY_ENTRY)),(programs/'卸载末帧选片.lnk',str(Path(root)/'update/卸载末帧选片.exe'))]
 
     def snapshot(self,root):
-        return {'product':self.values(self.product_key),'uninstall':self.values(self.uninstall_key),'links':[(p,p.read_bytes() if p.exists() else None) for p,_ in self.shortcuts(root)]}
+        return {'product':self.values(self.product_key),'uninstall':self.values(self.uninstall_key),'startup':(self.values(self.startup_key) or {}).get(self.startup_name),'links':[(p,p.read_bytes() if p.exists() else None) for p,_ in self.shortcuts(root)+self.legacy_shortcuts(root)]}
 
     def restore(self,snapshot):
         self.replace(self.product_key,snapshot['product']);self.replace(self.uninstall_key,snapshot['uninstall'])
+        if 'startup' in snapshot:self.restore_startup(snapshot['startup'])
         for path,content in snapshot['links']:
             if content is None:path.unlink(missing_ok=True)
             else:path.parent.mkdir(parents=True,exist_ok=True);path.write_bytes(content)
+
+    def restore_startup(self,value):
+        import winreg
+        with winreg.CreateKeyEx(winreg.HKEY_CURRENT_USER,self.startup_key,0,winreg.KEY_SET_VALUE|winreg.KEY_WOW64_64KEY) as key:
+            if value is not None:winreg.SetValueEx(key,self.startup_name,0,value[1],value[0])
+            else:
+                try:winreg.DeleteValue(key,self.startup_name)
+                except FileNotFoundError:pass
 
     def register(self,root,data,manifest):
         import winreg
         root=Path(root).absolute();links=[{'path':str(p),'target':target} for p,target in self.shortcuts(root)]
         for item in links:Path(item['path']).parent.mkdir(parents=True,exist_ok=True)
-        self.shell("$shell=New-Object -ComObject WScript.Shell;foreach($item in (ConvertFrom-Json $env:FRAMEKEEP_LINKS)){$link=$shell.CreateShortcut($item.path);$link.TargetPath=$item.target;$link.WorkingDirectory=$env:FRAMEKEEP_ROOT;$link.IconLocation=$env:FRAMEKEEP_EXE+',0';$link.Description='末帧选片';$link.Save()}",{'FRAMEKEEP_LINKS':json.dumps(links,ensure_ascii=False),'FRAMEKEEP_ROOT':str(root),'FRAMEKEEP_EXE':str(root/'末帧选片.exe')})
+        self.shell("$shell=New-Object -ComObject WScript.Shell;foreach($item in (ConvertFrom-Json $env:FRAMEKEEP_LINKS)){$link=$shell.CreateShortcut($item.path);$link.TargetPath=$item.target;$link.WorkingDirectory=$env:FRAMEKEEP_ROOT;$link.IconLocation=$env:FRAMEKEEP_EXE+',0';$link.Description='SHIYING 数字资产';$link.Save()}",{'FRAMEKEEP_LINKS':json.dumps(links,ensure_ascii=False),'FRAMEKEEP_ROOT':str(root),'FRAMEKEEP_EXE':str(executable(root))})
         previous=self.values(self.uninstall_key) or {}
         date=previous.get('InstallDate',(datetime.now().strftime('%Y%m%d'),0))[0] if same_path(previous.get('InstallLocation',('',0))[0],root) else datetime.now().strftime('%Y%m%d')
-        strings={'DisplayName':self.display_name,'DisplayVersion':manifest['version'],'Publisher':'末帧选片','InstallLocation':str(root),'DisplayIcon':'"'+str(root/'末帧选片.exe')+'",0','UninstallString':'"'+str(root/UNINSTALLER)+'"','InstallDate':date,'URLInfoAbout':'https://modelscope.cn/models/jiangjiang419/framekeep-updates'}
+        strings={'DisplayName':self.display_name,'DisplayVersion':manifest['version'],'Publisher':'SHIYING','InstallLocation':str(root),'DisplayIcon':'"'+str(executable(root))+'",0','UninstallString':'"'+str(uninstaller(root))+'"','InstallDate':date,'URLInfoAbout':'https://modelscope.cn/models/jiangjiang419/framekeep-updates'}
         values={k:(v,winreg.REG_SZ) for k,v in strings.items()}
         values.update({k:(v,winreg.REG_DWORD) for k,v in {'NoModify':1,'NoRepair':1,'EstimatedSize':max(1,sum(r['size'] for r in manifest['files'])//1024)}.items()})
         self.replace(self.uninstall_key,values)
         prefs=self.values(self.product_key) or {};prefs.update({'InstallLocation':(str(root),winreg.REG_SZ),'DataLocation':(str(data),winreg.REG_SZ)})
         self.replace(self.product_key,prefs)
+        startup=(self.values(self.startup_key) or {}).get(self.startup_name)
+        match=re.match(r'^"([^"]+)"(.*)$',startup[0]) if startup and isinstance(startup[0],str) else None
+        if match and same_path(match.group(1),root/LEGACY_ENTRY):self.restore_startup(('"'+str(executable(root))+'"'+match.group(2),startup[1]))
+        self.remove_shortcuts(self.legacy_shortcuts(root))
+
+    def remove_shortcuts(self,shortcuts):
+        links=[{'path':str(p),'target':target} for p,target in shortcuts]
+        self.shell("$shell=New-Object -ComObject WScript.Shell;foreach($item in (ConvertFrom-Json $env:FRAMEKEEP_LINKS)){if(Test-Path -LiteralPath $item.path){$link=$shell.CreateShortcut($item.path);if($link.TargetPath -ieq $item.target){Remove-Item -LiteralPath $item.path -Force}}}",{'FRAMEKEEP_LINKS':json.dumps(links,ensure_ascii=False)})
 
     def unregister(self,root):
         root=Path(root).absolute();prefs=self.values(self.product_key) or {};registered=prefs.get('InstallLocation',('',0))[0]
         # 只移除指向本次卸载目录的启动项，保留其他安装副本及其他程序。
         startup=(self.values(self.startup_key) or {}).get(self.startup_name,('',0))[0]
         match=re.match(r'^"([^"]+)"(?:\s|$)',startup) if isinstance(startup,str) else None
-        if match and same_path(match.group(1),root/'末帧选片.exe'):
+        if match and any(same_path(match.group(1),root/name) for name in (ENTRY,LEGACY_ENTRY)):
             import winreg
             with winreg.OpenKey(winreg.HKEY_CURRENT_USER,self.startup_key,0,winreg.KEY_SET_VALUE) as key:
                 try:winreg.DeleteValue(key,self.startup_name)
                 except FileNotFoundError:pass
         values=self.values(self.uninstall_key)
         if values and same_path(values.get('InstallLocation',('',0))[0],root):self.replace(self.uninstall_key,None)
-        links=[{'path':str(p),'target':target} for p,target in self.shortcuts(root)]
-        self.shell("$shell=New-Object -ComObject WScript.Shell;foreach($item in (ConvertFrom-Json $env:FRAMEKEEP_LINKS)){if(Test-Path -LiteralPath $item.path){$link=$shell.CreateShortcut($item.path);if($link.TargetPath -ieq $item.target){Remove-Item -LiteralPath $item.path -Force}}}",{'FRAMEKEEP_LINKS':json.dumps(links,ensure_ascii=False)})
+        self.remove_shortcuts(self.shortcuts(root)+self.legacy_shortcuts(root))
         if same_path(registered,root):
             prefs.pop('InstallLocation',None);self.replace(self.product_key,prefs or None)
         _,programs=self.folders()
@@ -287,8 +346,18 @@ def integration_backend():return WindowsIntegration() if os.name=='nt' else None
 
 
 def install_plan():
-    backend=integration_backend();registered=backend.preferences().get('InstallLocation','') if backend else ''
-    return choose_directory(registered=registered)
+    backend=integration_backend();candidates=[]
+    if backend:
+        value=backend.preferences().get('InstallLocation','')
+        if value:candidates.append(value)
+        if hasattr(backend,'install_locations'):candidates.extend(backend.install_locations())
+    if os.name=='nt':
+        for drive in 'DEFGHIJKLMNOPQRSTUVWXYZC':
+            candidates.extend((drive+':/Program Files/Framekeep',drive+':/Program Files/SHIYING Digital Assets'))
+    candidates.extend((user_programs(),user_programs().parent/'Framekeep'))
+    for root in dict.fromkeys(map(str,candidates)):
+        if installation_present(root):return choose_directory(registered=root)
+    return choose_directory()
 
 
 def prepare_marker(root,data,manifest,integrated):
@@ -310,7 +379,7 @@ def prepare_marker(root,data,manifest,integrated):
 def save_registration_snapshot(root,session,backend,snapshot):
     def values(data):
         return None if data is None else {n:{'value':base64.b64encode(v).decode() if isinstance(v,bytes) else v,'binary':isinstance(v,bytes),'type':t} for n,(v,t) in data.items()}
-    write_json(Path(session)/'integration-before.json',{'root':str(Path(root).absolute()),'product':values(snapshot['product']),'uninstall':values(snapshot['uninstall']),'links':[{'path':str(p),'data':base64.b64encode(content).decode() if content is not None else None} for p,content in snapshot['links']]})
+    write_json(Path(session)/'integration-before.json',{'root':str(Path(root).absolute()),'product':values(snapshot['product']),'uninstall':values(snapshot['uninstall']),'startup':snapshot.get('startup'),'links':[{'path':str(p),'data':base64.b64encode(content).decode() if content is not None else None} for p,content in snapshot['links']]})
 
 
 def rollback_registration(root,session,backend=None):
@@ -318,12 +387,15 @@ def rollback_registration(root,session,backend=None):
     if not file.is_file():return
     saved=read_json(file);backend=backend if backend is not None else integration_backend()
     if not backend or not same_path(saved['root'],root):raise ValueError('应用注册备份与安装目录不匹配')
-    expected=[p for p,_ in backend.shortcuts(root)]
-    if len(expected)!=len(saved['links']) or any(not same_path(p,item['path']) for p,item in zip(expected,saved['links'])):raise ValueError('快捷方式备份位置无效')
+    current=[p for p,_ in backend.shortcuts(root)];legacy=[p for p,_ in backend.legacy_shortcuts(root)]
+    expected=next((paths for paths in (current,current+legacy,legacy) if len(paths)==len(saved['links']) and all(same_path(p,item['path']) for p,item in zip(paths,saved['links']))),None)
+    if expected is None:raise ValueError('快捷方式备份位置无效')
     def values(data):return None if data is None else {n:(base64.b64decode(item['value']) if item['binary'] else item['value'],item['type']) for n,item in data.items()}
     previous=values(saved['product']) or {};current=backend.preferences().get('InstallLocation','');prior=previous.get('InstallLocation',('',0))[0]
     if current and not same_path(current,root) and (not prior or not same_path(current,prior)):return
-    backend.restore({'product':values(saved['product']),'uninstall':values(saved['uninstall']),'links':[(p,base64.b64decode(item['data']) if item['data'] is not None else None) for p,item in zip(expected,saved['links'])]})
+    snapshot={'product':values(saved['product']),'uninstall':values(saved['uninstall']),'links':[(p,base64.b64decode(item['data']) if item['data'] is not None else None) for p,item in zip(expected,saved['links'])]}
+    if 'startup' in saved:snapshot['startup']=saved['startup']
+    backend.restore(snapshot)
 
 
 def complete_registration(root,state,backend=None,session=None):
@@ -331,7 +403,7 @@ def complete_registration(root,state,backend=None,session=None):
     before=None
     if state['integrated']:
         if backend is None:raise OSError('Windows 应用注册不可用')
-        if not (Path(root)/UNINSTALLER).is_file():raise OSError('缺少独立卸载程序')
+        if not uninstaller(root).is_file():raise OSError('缺少独立卸载程序')
         before=backend.snapshot(root)
         if session is not None:save_registration_snapshot(root,session,backend,before)
     try:
@@ -371,22 +443,41 @@ def refresh_registered_install(root,data):
 
 def running_application(root):
     if os.name!='nt':return False
-    result=WindowsIntegration.shell("$found=Get-CimInstance Win32_Process|Where-Object {$_.ExecutablePath -and ($_.ExecutablePath -ieq $env:FRAMEKEEP_EXE -or $_.ExecutablePath -ieq $env:FRAMEKEEP_ENGINE)};if($found){'running'}",{'FRAMEKEEP_EXE':str(Path(root)/'末帧选片.exe'),'FRAMEKEEP_ENGINE':str(Path(root)/'engine/framekeep-engine.exe')})
+    result=WindowsIntegration.shell("$found=Get-CimInstance Win32_Process|Where-Object {$_.ExecutablePath -and ($_.ExecutablePath -ieq $env:FRAMEKEEP_EXE -or $_.ExecutablePath -ieq $env:FRAMEKEEP_LEGACY_EXE -or $_.ExecutablePath -ieq $env:FRAMEKEEP_ENGINE)};if($found){'running'}",{'FRAMEKEEP_EXE':str(Path(root)/ENTRY),'FRAMEKEEP_LEGACY_EXE':str(Path(root)/LEGACY_ENTRY),'FRAMEKEEP_ENGINE':str(Path(root)/'engine/framekeep-engine.exe')})
     return result=='running'
+
+
+def active_installation(root, allow_unresponsive=False):
+    """只绑定目标目录的真实桌面/引擎实例，交给既有保存退出协议。"""
+    if os.name!='nt':return None
+    root=Path(root)
+    script="$all=Get-CimInstance Win32_Process;$rows=@();foreach($e in $all){if($e.ExecutablePath -and $e.ExecutablePath -ieq $env:FRAMEKEEP_ENGINE){$p=$all|Where-Object ProcessId -eq $e.ParentProcessId;$port=8769;if($e.CommandLine -match '--port\\s+(\\d+)'){$port=[int]$Matches[1]};$parent=0;if($p.ExecutablePath -ieq $env:FRAMEKEEP_EXE -or $p.ExecutablePath -ieq $env:FRAMEKEEP_LEGACY_EXE){$parent=$p.ProcessId};$rows+=@{enginePid=$e.ProcessId;parentPid=$parent;port=$port}}};ConvertTo-Json -InputObject $rows -Compress"
+    text=WindowsIntegration.shell(script,{'FRAMEKEEP_ENGINE':str(root/'engine/framekeep-engine.exe'),'FRAMEKEEP_EXE':str(root/ENTRY),'FRAMEKEEP_LEGACY_EXE':str(root/LEGACY_ENTRY)})
+    rows=json.loads(text or '[]')
+    if not rows:return None
+    if (len(rows)!=1 or not rows[0]['parentPid']) and not allow_unresponsive:raise RuntimeError('此安装目录存在独立或多个引擎，请先正常关闭后重试；现有资料未修改')
+    row=rows[0]
+    try:
+        with urllib.request.urlopen(f"http://127.0.0.1:{int(row['port'])}/api/health",timeout=3) as response:health=json.load(response)
+    except OSError:
+        if allow_unresponsive:return row  # 路径已由系统进程表核验，卡死引擎可走有界退出。
+        raise
+    if health.get('application')!=PRODUCT or health.get('process_id')!=row['enginePid']:raise RuntimeError('运行中的程序身份校验失败，未自动关闭任何程序')
+    return row
 
 
 def require_port_free(port):
     with socket.socket() as connection:
         connection.settimeout(.3)
-        if connection.connect_ex(('127.0.0.1',int(port)))==0:raise RuntimeError('工作台连接仍被占用，请先保存并关闭已运行的末帧选片（含便携版）后重试；如仍失败，请检查本机 '+str(port)+' 端口。')
+        if connection.connect_ex(('127.0.0.1',int(port)))==0:raise RuntimeError('工作台连接仍被占用，请先保存并关闭已运行的SHIYING 数字资产（含便携版）后重试；如仍失败，请检查本机 '+str(port)+' 端口。')
 
 
 def uninstall(root,backend=None,is_running=running_application):
     root=Path(root).absolute();marker=root/MARKER
-    if root.is_symlink() or root.is_junction() or not marker.is_file():raise ValueError('此目录没有有效的末帧安装记录')
+    if root.is_symlink() or root.is_junction() or not marker.is_file():raise ValueError('此目录没有有效的SHIYING安装记录')
     state=read_json(marker)
     if state.get('product')!=PRODUCT or not same_path(state.get('root',''),root) or state.get('status')!='installed':raise ValueError('安装记录与目录不匹配，未删除文件')
-    if is_running(root):raise RuntimeError('请先保存任务并正常关闭末帧选片，再重试卸载')
+    if is_running(root):raise RuntimeError('请先保存任务并正常关闭SHIYING 数字资产，再重试卸载')
     records=state.get('files',[])
     if not records or len(records)>20000:raise ValueError('卸载文件清单无效')
     files=[];preserved=[];seen=set()

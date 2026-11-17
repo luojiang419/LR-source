@@ -1,0 +1,189 @@
+{
+  "publication": {
+    "published": true,
+    "version": "1.0.2",
+    "releaseId": "20261116034116",
+    "online_latest_activated": true,
+    "runtime_uploaded": false,
+    "package_bytes": 14396803,
+    "artifacts": [
+      {
+        "path": "minimal/20261116034116/SHIYING-Windows-x64.zip",
+        "size": 14396803,
+        "sha256": "afdd3a3df5e0fa1235287959632914a73cecec2a2b7e81bd28c18a58f7ad4764",
+        "url": "https://modelscope.cn/api/v1/models/jiangjiang419/framekeep-updates/repo?Revision=master&FilePath=minimal%2F20261116034116%2FSHIYING-Windows-x64.zip"
+      },
+      {
+        "path": "minimal/20261116034116/安装最小更新.exe",
+        "size": 826368,
+        "sha256": "68f720d4b9eca49a5461dde17c8e5922fc201a6910343432cb16c7b63d79c210",
+        "url": "https://modelscope.cn/api/v1/models/jiangjiang419/framekeep-updates/repo?Revision=master&FilePath=minimal%2F20261116034116%2F%E5%AE%89%E8%A3%85%E6%9C%80%E5%B0%8F%E6%9B%B4%E6%96%B0.exe"
+      },
+      {
+        "path": "minimal/20261116034116/SHIYING-Setup.exe",
+        "size": 178176,
+        "sha256": "3a6c137fb04199afda4b222bf3bcbc2df781d44f0e81de4028a1e2234724def4",
+        "url": "https://modelscope.cn/api/v1/models/jiangjiang419/framekeep-updates/repo?Revision=master&FilePath=minimal%2F20261116034116%2FSHIYING-Setup.exe"
+      },
+      {
+        "path": "minimal/20261116034116/envelope.json",
+        "size": 19441,
+        "sha256": "5c9e27d9d7ad81fb74e94e38b91e202322acc0a46831bfeac3ab28b10a1b7b4f",
+        "url": "https://modelscope.cn/api/v1/models/jiangjiang419/framekeep-updates/repo?Revision=master&FilePath=minimal%2F20261116034116%2Fenvelope.json"
+      }
+    ],
+    "previous_release": "20261116021119",
+    "install_base": "20261116021119"
+  },
+  "verification": {
+    "status": "passed",
+    "version": "1.0.2",
+    "releaseId": "20261116034116",
+    "package_sha256": "afdd3a3df5e0fa1235287959632914a73cecec2a2b7e81bd28c18a58f7ad4764",
+    "baselines": {
+      "20261114043205": {
+        "frozen_worker_update": "complete",
+        "elapsed_seconds": 5.17,
+        "version": "1.0.2",
+        "runtime_files_preserved": 730,
+        "data_preserved": true,
+        "rollback_verified": true,
+        "next_worker_verified": true
+      },
+      "20261116013944": {
+        "frozen_worker_update": "complete",
+        "elapsed_seconds": 5.56,
+        "version": "1.0.2",
+        "runtime_files_preserved": 730,
+        "data_preserved": true,
+        "rollback_verified": true,
+        "next_worker_verified": true
+      },
+      "20261116021119": {
+        "frozen_worker_update": "complete",
+        "elapsed_seconds": 4.99,
+        "version": "1.0.2",
+        "runtime_files_preserved": 730,
+        "data_preserved": true,
+        "rollback_verified": true,
+        "next_worker_verified": true
+      },
+      "20261116030917": {
+        "frozen_worker_update": "complete",
+        "elapsed_seconds": 4.59,
+        "version": "1.0.2",
+        "runtime_files_preserved": 730,
+        "data_preserved": true,
+        "rollback_verified": true,
+        "next_worker_verified": true
+      }
+    },
+    "fresh_install_uses_complete_base": true,
+    "production_install_modified": false
+  },
+  "online_clients": {
+    "status": "passed",
+    "clients": {
+      "legacy-14": {
+        "status": "downloaded",
+        "available": true,
+        "version": "1.0.2",
+        "releaseId": "20261116034116",
+        "package_bytes": 14396803,
+        "source_sha256": "95bb22d7c357b3a9a1f8e96ce10b84dfcd79ef656fde73d3737e45248be7ee00",
+        "download_verified": true,
+        "cache_reused": false
+      },
+      "legacy-16": {
+        "status": "downloaded",
+        "available": true,
+        "version": "1.0.2",
+        "releaseId": "20261116034116",
+        "package_bytes": 14396803,
+        "source_sha256": "95bb22d7c357b3a9a1f8e96ce10b84dfcd79ef656fde73d3737e45248be7ee00",
+        "download_verified": true,
+        "cache_reused": true
+      },
+      "manual-patch": {
+        "status": "downloaded",
+        "available": true,
+        "version": "1.0.2",
+        "releaseId": "20261116034116",
+        "package_bytes": 14396803,
+        "source_sha256": "95bb22d7c357b3a9a1f8e96ce10b84dfcd79ef656fde73d3737e45248be7ee00",
+        "download_verified": true,
+        "cache_reused": true
+      },
+      "new-version": {
+        "status": "checked",
+        "available": false,
+        "version": "1.0.2",
+        "releaseId": "20261116034116",
+        "package_bytes": 14396803,
+        "source_sha256": "23ad2a17603e200c728b5b0941c43d8192bfa9a7d4220bec2ab28184407af073",
+        "download_verified": false,
+        "cache_reused": false
+      }
+    }
+  },
+  "tests": {
+    "update_system": 93,
+    "version_cases_rechecked": 2
+  },
+  "notes": [
+    "已激活客户端实际读取的 public/latest.json；不再仅发布独立下载入口。",
+    "正式版本、Tauri、Cargo、原生工具文件版本统一为 1.0.2，发布号自动生成 20261116034116。",
+    "新装使用完整基础版后检查当前最小更新，未向魔搭重复上传 OCR 或运行时。",
+    "本机生产安装与业务数据没有替换。"
+  ],
+  "cleanup": {
+    "deleted_logical_bytes": 8469257722,
+    "free_before": 143770161152,
+    "free_after": 152234913792,
+    "items": [
+      {
+        "path": "G:\\app\\LR\\build\\task241-online\\qa",
+        "deleted_logical_bytes": 3766207627
+      },
+      {
+        "path": "G:\\app\\LR\\build\\task241-online\\qa-publish",
+        "deleted_logical_bytes": 3766225456
+      },
+      {
+        "path": "G:\\app\\LR\\build\\task241-online\\engine-dist",
+        "deleted_logical_bytes": 747858832
+      },
+      {
+        "path": "G:\\app\\LR\\build\\task241-online\\release",
+        "deleted_logical_bytes": 30252070
+      },
+      {
+        "path": "G:\\app\\LR\\build\\task241-online\\online-release",
+        "deleted_logical_bytes": 16422192
+      },
+      {
+        "path": "G:\\app\\LR\\build\\task241-online\\final-release",
+        "deleted_logical_bytes": 16422319
+      },
+      {
+        "path": "G:\\app\\LR\\build\\task241-online\\bootstrap-tool-test",
+        "deleted_logical_bytes": 33334265
+      },
+      {
+        "path": "G:\\app\\LR\\build\\task241-online\\followup-manual",
+        "deleted_logical_bytes": 49284617
+      },
+      {
+        "path": "G:\\app\\LR\\build\\task241-online\\online-clients",
+        "deleted_logical_bytes": 43250344
+      }
+    ],
+    "note": "保留最终已签名最小包、新装入口、编译源码、历史完整基线和验证日志；未修改生产安装、照片或模型。磁盘差值包含硬链接及同期活动。"
+  },
+  "followup_manual": {
+    "status": "passed",
+    "baseline": "1.0.2 upgraded from 20261114043205",
+    "known_runtime_variants_accepted": true,
+    "program_files_modified": false
+  }
+}

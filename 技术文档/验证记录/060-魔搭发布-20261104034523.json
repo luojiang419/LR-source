@@ -1,0 +1,81 @@
+{
+  "releaseId": "20261104034523",
+  "version": "1.0.0",
+  "branch": "release/modelscope-20261104-metadata",
+  "source_commit": "3309b08",
+  "verified_at_shanghai": "2026-11-04T11:52:07+08:00",
+  "package": {
+    "passed": true,
+    "snapshot": "G:\\app\\LR\\build\\updates\\1.0.0-20261104034523",
+    "release": "20261104034523",
+    "files": 833,
+    "frozen_modules": 113,
+    "package_size": 275973207,
+    "package_sha256": "f745e9deebb0426ac4b846870e1ee4422e2afb31c90f42940f6cfd1dfe019804",
+    "installer_sha256": "ea9161fd27465d15b5dea2b626523a0cb0d361fc01cc8e7b61e0ad41a9b6951e",
+    "installer_size": 14106112
+  },
+  "publication": {
+    "repository": "jiangjiang419/framekeep-updates",
+    "releaseId": "20261104034523",
+    "anonymousVerification": true,
+    "installerUrl": "https://modelscope.cn/api/v1/models/jiangjiang419/framekeep-updates/repo?Revision=master&FilePath=releases%2F1.0.0%2F20261104034523%2FFramekeep-Setup.exe",
+    "packageSize": 275973207,
+    "components": [
+      {
+        "path": "components/52d1df764521fb4fc071665dfdf889c3529c78e5438bfb66029eb19cd29e8ea9/llama-b11773-framekeep-win-x64.zip",
+        "sha256": "52d1df764521fb4fc071665dfdf889c3529c78e5438bfb66029eb19cd29e8ea9",
+        "size": 694127530
+      },
+      {
+        "path": "components/0625fb5c1e75be58a164e14f95aa58a3e5badb859b3d17c952385f3e4a9ff3e8/MicrosoftEdgeWebView2RuntimeInstallerX64.exe",
+        "sha256": "0625fb5c1e75be58a164e14f95aa58a3e5badb859b3d17c952385f3e4a9ff3e8",
+        "size": 214156024
+      }
+    ]
+  },
+  "frozen": {
+    "passed": true,
+    "frozen_modules": 113,
+    "entrypoint_checked": true,
+    "source_mismatches": [],
+    "web_files": 69,
+    "tests": 13,
+    "failures": 0,
+    "errors": 0,
+    "skips": 0
+  },
+  "update_tests": {
+    "tests": 64,
+    "passed": true
+  },
+  "installer": {
+    "passed": true,
+    "files": 833,
+    "unknown_preserved": true,
+    "was_running": false,
+    "errors": []
+  },
+  "online_clients": {
+    "old-public": {
+      "status": "checked",
+      "available": true,
+      "releaseId": "20261104034523",
+      "currentReleaseId": "20261103060833"
+    },
+    "installed-config": {
+      "status": "checked",
+      "available": true,
+      "releaseId": "20261104034523",
+      "currentReleaseId": "20261103060833"
+    },
+    "new-release": {
+      "status": "checked",
+      "available": false,
+      "releaseId": "20261104034523",
+      "currentReleaseId": "20261104034523"
+    }
+  },
+  "production_install_modified": false,
+  "github_pushed": false
+}

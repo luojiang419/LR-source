@@ -56,7 +56,11 @@ class MediaPoolTests(unittest.TestCase):
         self.assertEqual(labels(f.sku,f.sid)['labels'],dict(zip(f.ids,['A-900','A-900','B-200','B-200'])))
         repeated=self.act('rename',sku='A-100',new_sku='A-900');self.assertEqual(result['operation_ids'],repeated['operation_ids'])
     def test_all_same_sku_intervals_rename_without_merging_boundaries(self):
-        f=self.f;f.choose('A-100',f.ids[3]);self.drain()
+        f=self.f
+        # 明确构造历史同款双区间；正常再次选同款会分配重拍后缀。
+        from sku_shoot_versions import remember_manual
+        with f.sku.connect() as c:remember_manual(c,f.archive.ensure(f.sid,f.ids[3]),'A-100',f.sku.clock())
+        f.choose('A-100',f.ids[3]);self.drain()
         with f.archive.connect() as c:segments={r[0] for r in c.execute("SELECT id FROM segments WHERE status='confirmed'")}
         result=self.act('rename',sku='A-100',new_sku='WHOLE-300');self.assertEqual(result['capture_count'],4);self.drain()
         for i in range(4):self.assertEqual(f.archive.writer.read(f.photos/f'{i}.JPG')['XMP-fk:SKU'],'WHOLE-300')
@@ -72,7 +76,10 @@ class MediaPoolTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'同名组'):self.act('create_bin',name='重复')
         self.assertEqual(before,self.hashes());self.assertEqual(browse(self.f.sku)['organization']['bins'][0]['id'],folder)
     def test_failed_multi_interval_rename_can_resume(self):
-        f=self.f;f.choose('A-100',f.ids[3]);self.drain();original=f.archive.apply;calls=[]
+        f=self.f
+        from sku_shoot_versions import remember_manual
+        with f.sku.connect() as c:remember_manual(c,f.archive.ensure(f.sid,f.ids[3]),'A-100',f.sku.clock())
+        f.choose('A-100',f.ids[3]);self.drain();original=f.archive.apply;calls=[]
         def fail_second(pid):
             calls.append(pid)
             if len(calls)==2:raise ValueError('隔离测试中断')
@@ -113,8 +120,8 @@ class MediaPoolTests(unittest.TestCase):
                         page.wait_for_function('()=>document.querySelectorAll("#sku-database-list [data-db-sku]").length===1')
                         page.locator('#sku-database-list [data-db-sku="A100"]').dblclick();page.wait_for_selector('#sku-pool-editor[open]')
                         page.locator('#sku-pool-name').fill('A-900');page.locator('#sku-pool-name').press('Enter')
-                        page.wait_for_function('()=>!document.getElementById("sku-pool-editor").open')
-                        self.drain();page.wait_for_selector('#sku-database-list [data-db-sku="A900"]')
+                        page.wait_for_function('()=>document.getElementById("sku-write-view").dataset.state==="writing"');self.drain()
+                        page.wait_for_function('()=>!document.getElementById("sku-pool-editor").open');page.wait_for_selector('#sku-database-list [data-db-sku="A900"]')
                         page.wait_for_function('()=>document.getElementById("sku-pool-status").textContent.includes("已写入 2 个文件")')
                         for i in range(2):self.assertEqual(f.archive.writer.read(f.photos/f'{i}.JPG')['XMP-fk:SKU'],'A-900')
                         self.assertEqual(before[2:],self.hashes()[2:]);after=self.hashes()

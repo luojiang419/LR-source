@@ -3,6 +3,7 @@ import ctypes as C
 from ctypes import wintypes as W
 import json
 import os
+from pathlib import Path
 
 import media_engine as media
 
@@ -42,6 +43,19 @@ def reveal_capture(store,sid,cid,component=None):
         except (OSError,ValueError):continue
         if path.is_file():reveal_path(path);return {'ok':True,'component':kind}
     raise ValueError('照片已移动或目录离线，请先重新定位')
+
+
+def reveal_catalog(catalog,item_id):
+    if catalog is None:raise ValueError('归档资料尚未就绪，请稍后重试')
+    row=catalog.item(item_id);root=catalog._root(row['root'])
+    if not row['online']:raise ValueError('照片已移出归档或目录离线，请先重新定位')
+    try:
+        relative=Path(row['path']).relative_to(Path(root['path'])).as_posix()
+        path=media.resolved_file(root['path'],relative)
+        if not path.is_file():raise ValueError('照片不存在')
+    except (OSError,ValueError):raise ValueError('照片已移动、目录离线或超出归档位置，请先重新定位') from None
+    reveal_path(path)
+    return {'ok':True}
 
 
 def open_session_folder(store,sid):

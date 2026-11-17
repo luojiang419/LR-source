@@ -1,0 +1,374 @@
+{
+  "verified_at": "2026-11-04T14:14:50+08:00",
+  "source_commit": "e0169f4",
+  "branch": "fix/background-shooting-row-writeback",
+  "publication": {
+    "repository": "jiangjiang419/framekeep-updates",
+    "releaseId": "20261104060511",
+    "anonymousVerification": true,
+    "installerUrl": "https://modelscope.cn/api/v1/models/jiangjiang419/framekeep-updates/repo?Revision=master&FilePath=releases%2F1.0.0%2F20261104060511%2FFramekeep-Setup.exe",
+    "packageSize": 275993783,
+    "components": [
+      {
+        "path": "components/52d1df764521fb4fc071665dfdf889c3529c78e5438bfb66029eb19cd29e8ea9/llama-b11773-framekeep-win-x64.zip",
+        "sha256": "52d1df764521fb4fc071665dfdf889c3529c78e5438bfb66029eb19cd29e8ea9",
+        "size": 694127530
+      },
+      {
+        "path": "components/0625fb5c1e75be58a164e14f95aa58a3e5badb859b3d17c952385f3e4a9ff3e8/MicrosoftEdgeWebView2RuntimeInstallerX64.exe",
+        "sha256": "0625fb5c1e75be58a164e14f95aa58a3e5badb859b3d17c952385f3e4a9ff3e8",
+        "size": 214156024
+      }
+    ]
+  },
+  "package": {
+    "passed": true,
+    "snapshot": "G:\\app\\LR\\build\\updates\\1.0.0-20261104060511",
+    "release": "20261104060511",
+    "files": 835,
+    "frozen_modules": 114,
+    "package_size": 275993783,
+    "package_sha256": "696a7ae20857254505c0d40446f07b4eda97bbbb73ffe9ab4586dc7dab623c8b",
+    "installer_sha256": "6b387a2111a1c1f7a312feee2fb4b0282a09e90356e5e2d0e146998c51b9c507",
+    "installer_size": 14106112
+  },
+  "frozen": {
+    "passed": true,
+    "frozen_modules": 114,
+    "entrypoint_checked": true,
+    "source_mismatches": [],
+    "web_files": 71,
+    "tests": 23,
+    "failures": 0,
+    "errors": 0,
+    "skips": 0
+  },
+  "installer": {
+    "was_running": false,
+    "errors": [],
+    "passed": true,
+    "files": 835,
+    "status": {
+      "status": "complete",
+      "version": "1.0.0",
+      "releaseId": "20261104060511",
+      "pid": 67408,
+      "components": null
+    },
+    "unknown_preserved": true,
+    "health": {
+      "application": "framekeep",
+      "process_id": 55712,
+      "ready": true
+    },
+    "workflow": {
+      "config": {
+        "live_enabled": false,
+        "global_enabled": false,
+        "session_id": null,
+        "ocr_paused": false,
+        "vision_paused": false
+      },
+      "runs": {},
+      "error": "",
+      "active": [],
+      "timings": {},
+      "sku_writeback": {
+        "counts": {},
+        "failed": [],
+        "paused": false,
+        "loading": false,
+        "error": ""
+      }
+    }
+  },
+  "clients": {
+    "old-public": {
+      "status": "checked",
+      "message": "发现新版本",
+      "available": true,
+      "version": "1.0.0",
+      "releaseId": "20261104060511",
+      "notes": "修复拍摄清单改款号卡住和长期待写入：保存后后台自动写入，取消阻断弹窗，行内显示正在写入中，成功后提示消失，失败保留原因和重试；修复区间跨文档/拍摄类型串款，保留未封口尾图；已有持久写入任务重启后自动继续。",
+      "size": 275993783,
+      "currentVersion": "1.0.0",
+      "currentReleaseId": "20261104052727"
+    },
+    "installed-config": {
+      "status": "checked",
+      "message": "发现新版本",
+      "available": true,
+      "version": "1.0.0",
+      "releaseId": "20261104060511",
+      "notes": "修复拍摄清单改款号卡住和长期待写入：保存后后台自动写入，取消阻断弹窗，行内显示正在写入中，成功后提示消失，失败保留原因和重试；修复区间跨文档/拍摄类型串款，保留未封口尾图；已有持久写入任务重启后自动继续。",
+      "size": 275993783,
+      "currentVersion": "1.0.0",
+      "currentReleaseId": "20261104052727"
+    },
+    "new-release": {
+      "status": "checked",
+      "message": "当前已是最新版本",
+      "available": false,
+      "version": "1.0.0",
+      "releaseId": "20261104060511",
+      "notes": "修复拍摄清单改款号卡住和长期待写入：保存后后台自动写入，取消阻断弹窗，行内显示正在写入中，成功后提示消失，失败保留原因和重试；修复区间跨文档/拍摄类型串款，保留未封口尾图；已有持久写入任务重启后自动继续。",
+      "size": 275993783,
+      "currentVersion": "1.0.0",
+      "currentReleaseId": "20261104060511"
+    }
+  },
+  "network_source_preparation": [
+    {
+      "name": "XSY_2297.JPG",
+      "committed": false,
+      "passed": true,
+      "pixel_unchanged": true,
+      "source_unchanged": true,
+      "sidecars": 1
+    },
+    {
+      "name": "XSY_2365.JPG",
+      "committed": false,
+      "passed": true,
+      "pixel_unchanged": true,
+      "source_unchanged": true,
+      "sidecars": 1
+    },
+    {
+      "name": "XSY_2431.JPG",
+      "committed": false,
+      "passed": true,
+      "pixel_unchanged": true,
+      "source_unchanged": true,
+      "sidecars": 1
+    },
+    {
+      "name": "XSY_2486.JPG",
+      "committed": false,
+      "passed": true,
+      "pixel_unchanged": true,
+      "source_unchanged": true,
+      "sidecars": 1
+    },
+    {
+      "name": "XSY_2558.JPG",
+      "committed": false,
+      "passed": true,
+      "pixel_unchanged": true,
+      "source_unchanged": true,
+      "sidecars": 1
+    },
+    {
+      "name": "XSY_2611.JPG",
+      "committed": false,
+      "passed": true,
+      "pixel_unchanged": true,
+      "source_unchanged": true,
+      "sidecars": 1
+    },
+    {
+      "name": "XSY_2696.JPG",
+      "committed": false,
+      "passed": true,
+      "pixel_unchanged": true,
+      "source_unchanged": true,
+      "sidecars": 1
+    },
+    {
+      "name": "XSY_2754.JPG",
+      "committed": false,
+      "passed": true,
+      "pixel_unchanged": true,
+      "source_unchanged": true,
+      "sidecars": 1
+    },
+    {
+      "name": "XSY_2819.JPG",
+      "committed": false,
+      "passed": true,
+      "pixel_unchanged": true,
+      "source_unchanged": true,
+      "sidecars": 1
+    },
+    {
+      "name": "XSY_2892.JPG",
+      "committed": false,
+      "passed": true,
+      "pixel_unchanged": true,
+      "source_unchanged": true,
+      "sidecars": 1
+    },
+    {
+      "name": "XSY_2948.JPG",
+      "committed": false,
+      "passed": true,
+      "pixel_unchanged": true,
+      "source_unchanged": true,
+      "sidecars": 1
+    },
+    {
+      "name": "XSY_2999.JPG",
+      "committed": false,
+      "passed": true,
+      "pixel_unchanged": true,
+      "source_unchanged": true,
+      "sidecars": 1
+    },
+    {
+      "name": "XSY_3150.JPG",
+      "committed": false,
+      "passed": true,
+      "pixel_unchanged": true,
+      "source_unchanged": true,
+      "sidecars": 1
+    }
+  ],
+  "network_write_probe": {
+    "create_write_flush_read_verified": true,
+    "probe_extension": ".tmp",
+    "source_images_modified": false,
+    "probe_removed": true
+  },
+  "real_file_replay": {
+    "source_directory": "\\\\192.168.0.181\\新摄影\\细节图\\源图片备份（勿动）\\现场拍摄小档\\2026-11-04",
+    "source_modified": false,
+    "sku_values_are_diagnostic_tokens": true,
+    "full_photos": 978,
+    "full_intervals": 13,
+    "full_closed_photos": 916,
+    "full_unclosed_tail": 62,
+    "sample_photos": 54,
+    "groups": [
+      {
+        "label": "XSY_2297.JPG",
+        "first": "XSY_2235.JPG",
+        "last": "XSY_2297.JPG",
+        "full_count": 63,
+        "sample_count": 4,
+        "test_sku": "VERIFY-XSY_2297-EDIT"
+      },
+      {
+        "label": "XSY_2365.JPG",
+        "first": "XSY_2298.JPG",
+        "last": "XSY_2365.JPG",
+        "full_count": 68,
+        "sample_count": 4,
+        "test_sku": "VERIFY-XSY_2365-EDIT"
+      },
+      {
+        "label": "XSY_2431.JPG",
+        "first": "XSY_2366.JPG",
+        "last": "XSY_2431.JPG",
+        "full_count": 66,
+        "sample_count": 4,
+        "test_sku": "VERIFY-XSY_2431-EDIT"
+      },
+      {
+        "label": "XSY_2486.JPG",
+        "first": "XSY_2432.JPG",
+        "last": "XSY_2486.JPG",
+        "full_count": 55,
+        "sample_count": 4,
+        "test_sku": "VERIFY-XSY_2486-EDIT"
+      },
+      {
+        "label": "XSY_2558.JPG",
+        "first": "XSY_2487.JPG",
+        "last": "XSY_2558.JPG",
+        "full_count": 72,
+        "sample_count": 4,
+        "test_sku": "VERIFY-XSY_2558-EDIT"
+      },
+      {
+        "label": "XSY_2611.JPG",
+        "first": "XSY_2559.JPG",
+        "last": "XSY_2611.JPG",
+        "full_count": 53,
+        "sample_count": 4,
+        "test_sku": "VERIFY-XSY_2611-EDIT"
+      },
+      {
+        "label": "XSY_2696.JPG",
+        "first": "XSY_2612.JPG",
+        "last": "XSY_2696.JPG",
+        "full_count": 85,
+        "sample_count": 4,
+        "test_sku": "VERIFY-XSY_2696-EDIT"
+      },
+      {
+        "label": "XSY_2754.JPG",
+        "first": "XSY_2697.JPG",
+        "last": "XSY_2754.JPG",
+        "full_count": 58,
+        "sample_count": 4,
+        "test_sku": "VERIFY-XSY_2754-EDIT"
+      },
+      {
+        "label": "XSY_2819.JPG",
+        "first": "XSY_2755.JPG",
+        "last": "XSY_2819.JPG",
+        "full_count": 65,
+        "sample_count": 4,
+        "test_sku": "VERIFY-XSY_2819-EDIT"
+      },
+      {
+        "label": "XSY_2892.JPG",
+        "first": "XSY_2820.JPG",
+        "last": "XSY_2892.JPG",
+        "full_count": 73,
+        "sample_count": 4,
+        "test_sku": "VERIFY-XSY_2892-EDIT"
+      },
+      {
+        "label": "XSY_2948.JPG",
+        "first": "XSY_2893.JPG",
+        "last": "XSY_2948.JPG",
+        "full_count": 56,
+        "sample_count": 4,
+        "test_sku": "VERIFY-XSY_2948-EDIT"
+      },
+      {
+        "label": "XSY_2999.JPG",
+        "first": "XSY_2949.JPG",
+        "last": "XSY_2999.JPG",
+        "full_count": 51,
+        "sample_count": 4,
+        "test_sku": "VERIFY-XSY_2999-EDIT"
+      },
+      {
+        "label": "XSY_3150.JPG",
+        "first": "XSY_3000.JPG",
+        "last": "XSY_3150.JPG",
+        "full_count": 151,
+        "sample_count": 4,
+        "test_sku": "VERIFY-XSY_3150-EDIT"
+      }
+    ],
+    "passed": true,
+    "written_sample_files": 52,
+    "all_rows_applied": true,
+    "pixels_unchanged": true,
+    "unclosed_tail_unchanged": true,
+    "restart_resumed": true,
+    "sync_error_isolated": true,
+    "seconds": 173.67,
+    "queue": {
+      "applied": 52,
+      "cancelled": 52
+    }
+  },
+  "source_suites": {
+    "background": 9,
+    "interval_background_document": 34,
+    "index_input_asset": 41,
+    "shared_boundary_additional": 1,
+    "overlapping_previous_compatibility": 54
+  },
+  "update_tests": 64,
+  "customer_database_available": false,
+  "nas_originals_committed": false,
+  "test_sku_namespace": "VERIFY-* only in isolated copies",
+  "customer_database_modified": false,
+  "github_pushed": false,
+  "recovery_limit": "queued/running tasks resume; failed or missing customer records need review/retry; old incorrect ownership not assumed repaired without customer DB"
+}

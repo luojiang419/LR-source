@@ -3,14 +3,14 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
 
-[assembly: System.Reflection.AssemblyTitle("末帧选片")]
-[assembly: System.Reflection.AssemblyProduct("末帧选片")]
-[assembly: System.Reflection.AssemblyFileVersion("1.0.0.0")]
+[assembly: System.Reflection.AssemblyTitle("SHIYING 数字资产")]
+[assembly: System.Reflection.AssemblyProduct("SHIYING 数字资产")]
+[assembly: System.Reflection.AssemblyFileVersion("1.0.3.0")]
 
 namespace FramekeepBootstrap {
     public static class Brand {
-        public const string Name = "末帧选片";
-        public const string Entry = "末帧选片.exe";
+        public const string Name = "SHIYING 数字资产";
+        public const string Entry = "SHIYING 数字资产.exe";
         public static string ExecutablePath(string root) {
             string current = System.IO.Path.Combine(root, Entry);
             return System.IO.File.Exists(current) ? current : System.IO.Path.Combine(root, "末帧选片.exe");

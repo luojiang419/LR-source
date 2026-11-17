@@ -1,7 +1,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use std::{
-    fs::{self, OpenOptions},
+    fs,
     io::{Read, Write},
     net::{SocketAddr, TcpStream},
     path::{Path, PathBuf},
@@ -16,9 +16,33 @@ use std::{
 use tauri::{Manager, WebviewUrl, WebviewWindow, WindowEvent};
 use tauri_plugin_dialog::{DialogExt, MessageDialogButtons};
 mod quick_search;
+mod archive_document;
+#[cfg(windows)]
+mod desktop_backdrop;
 use quick_search::{search_show,search_hide,search_shortcut,search_open_asset};
 mod desktop_preferences;
+mod bounded_log;
 use desktop_preferences::{CloseBehavior, DesktopPreferences, Preferences, StartupMode};
+
+#[derive(Default)]
+struct FullscreenRestore(Mutex<std::collections::HashMap<String, bool>>);
+
+#[tauri::command]
+fn toggle_fullscreen(window: WebviewWindow, restore: tauri::State<'_, FullscreenRestore>) -> Result<bool, String> {
+    let fullscreen = !window.is_fullscreen().map_err(|e| e.to_string())?;
+    let mut previous = restore.inner().0.lock().map_err(|e| e.to_string())?;
+    if fullscreen {
+        let maximized = window.is_maximized().map_err(|e| e.to_string())?;
+        window.set_fullscreen(true).map_err(|e| e.to_string())?;
+        previous.insert(window.label().to_string(), maximized);
+    } else {
+        window.set_fullscreen(false).map_err(|e| e.to_string())?;
+        if previous.remove(window.label()).unwrap_or(false) {
+            window.maximize().map_err(|e| e.to_string())?;
+        }
+    }
+    Ok(fullscreen)
+}
 
 #[tauri::command]
 fn get_desktop_preferences(preferences: tauri::State<'_, DesktopPreferences>) -> Preferences {
@@ -57,10 +81,10 @@ fn request_close(window: &WebviewWindow, force_exit: bool) {
 
 fn create_tray(app: &tauri::App) -> tauri::Result<()> {
     use tauri::{menu::{Menu, MenuItem}, tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent}};
-    let show = MenuItem::with_id(app, "show", if desktop_preferences::development_build() { "打开末帧资产检索开发版" } else { "打开末帧选片" }, true, None::<&str>)?;
+    let show = MenuItem::with_id(app, "show", if desktop_preferences::development_build() { "打开SHIYING资产检索开发版" } else { "打开SHIYING 数字资产" }, true, None::<&str>)?;
     let exit = MenuItem::with_id(app, "exit", "退出程序", true, None::<&str>)?;
     let menu = Menu::with_items(app, &[&show, &exit])?;
-    let mut tray = TrayIconBuilder::with_id("main-tray").tooltip(if desktop_preferences::development_build() { "末帧资产检索开发版 · 点击打开窗口" } else { "末帧选片 · 点击打开窗口" }).menu(&menu).show_menu_on_left_click(false);
+    let mut tray = TrayIconBuilder::with_id("main-tray").tooltip(if desktop_preferences::development_build() { "SHIYING资产检索开发版 · 点击打开窗口" } else { "SHIYING 数字资产 · 点击打开窗口" }).menu(&menu).show_menu_on_left_click(false);
     if let Some(icon) = app.default_window_icon() { tray = tray.icon(icon.clone()); }
     tray.on_menu_event(|app, event| match event.id.as_ref() {
         "show" => show_main(app),
@@ -127,8 +151,18 @@ fn startup_visible(engine: tauri::State<'_, Arc<Engine>>) {
 #[tauri::command]
 fn desktop_ready(engine: tauri::State<'_, Arc<Engine>>, timings: Option<serde_json::Value>) {
     let elapsed=engine.started.elapsed().as_millis();
-    let _ = fs::write(engine.data.join("desktop-metrics.json"), serde_json::json!({"first_document_ready_ms":elapsed,"first_workbench_ready_ms":elapsed,"startup_animation_visible_ms":*engine.splash_visible.lock().unwrap(),"web_timings":timings,"desktop_pid":std::process::id()}).to_string());
-    if engine.ready.load(Ordering::SeqCst) {
+    let metrics=engine.data.join("desktop-metrics.json");
+    let previous=fs::read_to_string(&metrics).ok().and_then(|v|serde_json::from_str::<serde_json::Value>(&v).ok())
+        .filter(|v|v["desktop_pid"].as_u64()==Some(std::process::id() as u64));
+    let first=previous.as_ref().and_then(|v|v["first_workbench_ready_ms"].as_u64()).map(u128::from).unwrap_or(elapsed);
+    let restored=timings.as_ref().and_then(|v|v["data_ready_ms"].as_f64()).is_some();
+    let first_photo=previous.as_ref().and_then(|v|v["first_photo_visible_ms"].as_u64()).map(u128::from)
+        .or_else(||timings.as_ref().and_then(|v|v["first_photo_ready_ms"].as_f64()).map(|_|elapsed));
+    let photos_restored=previous.as_ref().and_then(|v|v["photos_restored_ms"].as_u64()).map(u128::from).or(if restored{Some(elapsed)}else{None});
+    let monitor_ready=previous.as_ref().and_then(|v|v["capture_monitor_ready_ms"].as_u64()).map(u128::from)
+        .or_else(||timings.as_ref().and_then(|v|v["monitor_ready_ms"].as_f64()).map(|_|elapsed));
+    let _ = fs::write(metrics, serde_json::json!({"first_document_ready_ms":first,"first_workbench_ready_ms":first,"first_photo_visible_ms":first_photo,"capture_monitor_ready_ms":monitor_ready,"photos_restored_ms":photos_restored,"startup_animation_visible_ms":*engine.splash_visible.lock().unwrap(),"web_timings":timings,"desktop_pid":std::process::id()}).to_string());
+    if engine.ready.load(Ordering::SeqCst) && restored && timings.as_ref().and_then(|v|v["services_ready"].as_bool())!=Some(false) {
         if let (Some(file), Ok(config)) = (std::env::var_os("FRAMEKEEP_UPDATE_HEALTH_FILE"), fs::read_to_string(engine.app_root.join("update-config.json"))) {
             if let Ok(identity) = serde_json::from_str::<serde_json::Value>(&config) {
                 let target=PathBuf::from(file);
@@ -142,12 +176,23 @@ fn desktop_ready(engine: tauri::State<'_, Arc<Engine>>, timings: Option<serde_js
 }
 
 #[tauri::command]
-fn close_for_update(window: WebviewWindow, engine: tauri::State<'_, Arc<Engine>>) -> Result<(), String> {
-    let health = engine.request("/api/update/health", false)?;
-    if health["busy"].as_bool().unwrap_or(true) { return Err("仍有后台任务，请完成或停止后重试更新".into()); }
-    engine.closing.store(true, Ordering::SeqCst);
-    window.app_handle().exit(0);
-    Ok(())
+async fn close_for_update(window: WebviewWindow, engine: tauri::State<'_, Arc<Engine>>) -> Result<(), String> {
+    let engine = engine.inner().clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        let state = engine.request("/api/update", false)?;
+        if !state["ready"].as_bool().unwrap_or(false) { return Err("更新包尚未校验完成或更新已取消".into()); }
+        let health = engine.request("/api/update/health", false)?;
+        if health["blocking"].as_bool().unwrap_or(true) {
+            return Err("UPDATE_WAIT:正在等待缓存迁移等关键任务完成…".into());
+        }
+        if engine.closing.swap(true, Ordering::SeqCst) { return Err("UPDATE_WAIT:正在停止本地引擎…".into()); }
+        if let Err(error) = engine.stop_for_update() {
+            engine.closing.store(false, Ordering::SeqCst);
+            return Err(error);
+        }
+        window.app_handle().exit(0);
+        Ok(())
+    }).await.map_err(|error| error.to_string())?
 }
 
 fn data_directory(app_root: &Path, explicit: Option<PathBuf>) -> PathBuf {
@@ -182,6 +227,7 @@ impl Engine {
                 if let Ok(payload)=fs::read_to_string(&path) {
                     match self.post_json("/api/desktop/canon",&payload) {
                         Ok(result)=>{
+                            if result["pending"].as_bool()==Some(true) {break;}
                             if result.get("error").is_some() {let _=fs::rename(&path,path.with_extension("rejected"));}
                             else {let _=fs::remove_file(&path);}
                         }
@@ -256,11 +302,8 @@ impl Engine {
         }
         fs::create_dir_all(&self.data).map_err(|e| e.to_string())?;
         let _ = fs::remove_file(self.data.join("engine-startup.json"));
-        let log = OpenOptions::new()
-            .create(true)
-            .append(true)
-            .open(self.data.join("engine.log"))
-            .map_err(|e| e.to_string())?;
+        let log = Arc::new(Mutex::new(bounded_log::BoundedLog::open(&self.data.join("engine.log"))
+            .map_err(|e| e.to_string())?));
         let engine = std::env::var_os("FRAMEKEEP_ENGINE")
             .map(PathBuf::from)
             .unwrap_or_else(|| self.app_root.join("engine/framekeep-engine.exe"));
@@ -274,8 +317,8 @@ impl Engine {
             .env("FRAMEKEEP_DESKTOP_PID", std::process::id().to_string())
             .env("FRAMEKEEP_DESKTOP_EXE",std::env::current_exe().map_err(|e|e.to_string())?)
             .stdin(Stdio::null())
-            .stdout(log.try_clone().map_err(|e| e.to_string())?)
-            .stderr(log);
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped());
         if std::env::var_os("FRAMEKEEP_CONFIG").is_none()
             && !self.data.join("config-location").is_file()
         {
@@ -296,9 +339,11 @@ impl Engine {
             if self.closing.load(Ordering::SeqCst) {
                 return Err("程序正在关闭".into());
             }
-            let child = command
+            let mut child = command
                 .spawn()
                 .map_err(|e| format!("无法启动本机选片引擎：{e}"))?;
+            if let Some(stdout) = child.stdout.take() { bounded_log::capture(stdout, log.clone()); }
+            if let Some(stderr) = child.stderr.take() { bounded_log::capture(stderr, log.clone()); }
             let pid = child.id();
             *slot = Some(child);
             pid
@@ -333,10 +378,26 @@ impl Engine {
             }
             thread::sleep(Duration::from_millis(80));
         }
-        if let Ok(mut log) = OpenOptions::new().create(true).append(true).open(self.data.join("engine.log")) {
-            let _ = writeln!(log, "[desktop startup] engine_pid={pid} elapsed={:.3}s stage={} last_error={last_error}", started.elapsed().as_secs_f64(), waiting.stage);
+        if let Ok(mut output) = log.lock() {
+            let _ = output.write(format!("[desktop startup] engine_pid={pid} elapsed={:.3}s stage={} last_error={last_error}\n", started.elapsed().as_secs_f64(), waiting.stage).as_bytes());
         }
         Err(format!("选片引擎启动超时。\n请保留以下目录中的 engine.log、engine-startup.json 和 engine-startup-stacks.log：\n{}",self.data.display()))
+    }
+    fn stop_for_update(&self) -> Result<(), String> {
+        let mut child = self.child.lock().unwrap();
+        if let Some(process) = child.as_mut() {
+            let _ = self.request("/api/desktop/shutdown", true);
+            let until = Instant::now() + Duration::from_secs(60);
+            loop {
+                if process.try_wait().map_err(|error| error.to_string())?.is_some() {
+                    *child = None;
+                    return Ok(());
+                }
+                if Instant::now() >= until { return Err("本地引擎仍在收尾，未替换程序文件；请稍后重试更新".into()); }
+                thread::sleep(Duration::from_millis(80));
+            }
+        }
+        Ok(())
     }
     fn stop(&self) {
         self.closing.store(true, Ordering::SeqCst);
@@ -393,7 +454,7 @@ async fn choose_cache_folder(window: WebviewWindow) -> Result<Option<String>, St
 async fn choose_cache_backup(window: WebviewWindow) -> Result<Option<String>, String> {
     tauri::async_runtime::spawn_blocking(move || {
         window.dialog().file().set_title("导入图片缓存备份").set_parent(&window)
-            .add_filter("末帧缓存备份", &["zip"]).blocking_pick_file()
+            .add_filter("SHIYING缓存备份", &["zip"]).blocking_pick_file()
             .map(|p| p.into_path().map(|p| p.to_string_lossy().into_owned()).map_err(|e| e.to_string())).transpose()
     }).await.map_err(|e| e.to_string())?
 }
@@ -434,16 +495,42 @@ async fn save_manifest(
 }
 
 #[tauri::command]
+async fn save_inventory_report(window: WebviewWindow, engine: tauri::State<'_, Arc<Engine>>, suggested_name: String, query: String) -> Result<bool, String> {
+    if query.len()>8192 || query.bytes().any(|c| !c.is_ascii_alphanumeric() && !b"%&=+-_.*".contains(&c)) { return Err("库存筛选参数无效".into()); }
+    let port=engine.port;
+    tauri::async_runtime::spawn_blocking(move || {
+        let name=Path::new(&suggested_name).file_name().and_then(|s|s.to_str()).unwrap_or("库存报表.xlsx");
+        let Some(path)=window.dialog().file().set_title("保存库存报表").set_parent(&window).set_file_name(name).add_filter("Excel 库存报表", &["xlsx"]).blocking_save_file() else { return Ok(false); };
+        let mut target=path.into_path().map_err(|e|e.to_string())?;
+        if target.extension().is_none(){target.set_extension("xlsx");}
+        let mut stream=TcpStream::connect_timeout(&SocketAddr::from(([127,0,0,1],port)),Duration::from_secs(3)).map_err(|e|e.to_string())?;
+        stream.set_read_timeout(Some(Duration::from_secs(120))).map_err(|e|e.to_string())?;
+        stream.set_write_timeout(Some(Duration::from_secs(3))).map_err(|e|e.to_string())?;
+        stream.write_all(format!("GET /api/inventory/export?{query} HTTP/1.0\r\nHost: 127.0.0.1:{port}\r\n\r\n").as_bytes()).map_err(|e|e.to_string())?;
+        let mut response=Vec::new();stream.read_to_end(&mut response).map_err(|e|e.to_string())?;
+        let start=response.windows(4).position(|w|w==b"\r\n\r\n").ok_or("库存报表响应无效")?+4;
+        if !response.starts_with(b"HTTP/1.0 200 ") && !response.starts_with(b"HTTP/1.1 200 "){return Err("库存报表生成失败，请检查筛选条件后重试".into());}
+        if !response[start..].starts_with(b"PK"){return Err("库存报表格式无效".into());}
+        fs::write(target,&response[start..]).map_err(|e|e.to_string())?;Ok(true)
+    }).await.map_err(|e|e.to_string())?
+}
+
+#[tauri::command]
 async fn save_sku_workbook(
     window: WebviewWindow,
     engine: tauri::State<'_, Arc<Engine>>,
     project_id: String,
     suggested_name: String,
+    source_name: Option<String>,
 ) -> Result<bool, String> {
     if project_id.len() != 32 || !project_id.bytes().all(|c| c.is_ascii_hexdigit()) {
         return Err("对账任务标识无效".into());
     }
-    let source = engine.data.join("sku-projects").join(project_id).join("拍摄对账.xlsx");
+    let source_name = source_name.unwrap_or_else(|| "拍摄对账.xlsx".into());
+    if source_name.contains(['/', '\\', ':']) || !source_name.ends_with(".xlsx") || source_name == ".xlsx" {
+        return Err("对账 Excel 文件名无效".into());
+    }
+    let source = engine.data.join("sku-projects").join(project_id).join(source_name);
     tauri::async_runtime::spawn_blocking(move || {
         if !source.is_file() { return Err("对账 Excel 尚未生成，请重试导出".into()); }
         let name = Path::new(&suggested_name).file_name().and_then(|s|s.to_str()).unwrap_or("拍摄对账.xlsx");
@@ -468,7 +555,7 @@ async fn finish_close(
                 && !window
                     .dialog()
                     .message("仍有索引、缓存管理或 LR 同步任务。关闭程序将中断未完成的任务，是否退出？")
-                    .title("退出末帧选片")
+                    .title("退出SHIYING 数字资产")
                     .buttons(MessageDialogButtons::OkCancel)
                     .blocking_show()
             {
@@ -542,16 +629,16 @@ fn main() {
     let cleanup = engine.clone();
     let app=tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(move |app,args,cwd|{
-            if queue_photos(&inbox_data,&args,Path::new(&cwd)){return;}
+            if queue_photos(&inbox_data,&args,Path::new(&cwd)){show_main(app);return;}
             if !desktop_preferences::startup_launch(&args) && !desktop_preferences::silent_start(&args) { show_main(app); }
         }))
-        .plugin(tauri_plugin_dialog::init()).manage(engine.clone()).manage(quick_search::SearchHotkey::default()).manage(preferences)
-        .invoke_handler(tauri::generate_handler![choose_folders,choose_cache_folder,choose_cache_backup,save_manifest,save_sku_workbook,finish_close,desktop_ready,close_for_update,startup_status,startup_visible,get_desktop_preferences,set_desktop_preferences,hide_to_tray,search_show,search_hide,search_shortcut,search_open_asset])
+        .plugin(tauri_plugin_dialog::init()).manage(engine.clone()).manage(FullscreenRestore::default()).manage(quick_search::SearchHotkey::default()).manage(preferences)
+        .invoke_handler(tauri::generate_handler![choose_folders,choose_cache_folder,choose_cache_backup,save_manifest,save_inventory_report,save_sku_workbook,archive_document::save_archive_document,finish_close,desktop_ready,close_for_update,startup_status,startup_visible,get_desktop_preferences,set_desktop_preferences,hide_to_tray,toggle_fullscreen,search_show,search_hide,search_shortcut,search_open_asset])
         .setup(move |app| {
             create_tray(app)?;
             queue_photos(&engine.data,&initial_args,&initial_cwd);
             let window=tauri::WebviewWindowBuilder::new(app,"main",WebviewUrl::App("index.html".into()))
-                .title(if desktop_preferences::development_build() { "末帧 · 多模态资产检索开发版" } else { "末帧选片" }).inner_size(1440.,900.).min_inner_size(1000.,680.).center()
+                .title(if desktop_preferences::development_build() { "SHIYING · 多模态资产检索开发版" } else { "SHIYING 数字资产" }).inner_size(1440.,900.).min_inner_size(1000.,680.).center().maximized(true)
                 .visible(!silent)
                 // 让资源管理器文件拖放进入前端的HTML5事件，避免WebView2被原生处理器截获。
                 .disable_drag_drop_handler()
@@ -569,22 +656,44 @@ fn main() {
             thread::spawn(move || {
                 match engine.start() {
                     Ok(())=>{
-                        let shortcut=engine.request("/api/intelligence/state",false).ok()
+                        // 先进入工作台；检索配置及第二个 WebView 不得阻挡 EOS 拉起。
+                        let delivery=engine.clone();thread::spawn(move||delivery.deliver_photos());
+                        let _=window.navigate(format!("http://127.0.0.1:{}/",engine.port).parse().unwrap());
+                        let quick_engine=engine.clone();let quick_handle=handle.clone();
+                        thread::spawn(move || {
+                        while !quick_engine.closing.load(Ordering::SeqCst) {
+                            if quick_engine.request("/api/ready",false).ok().and_then(|v|v["services_ready"].as_bool()).unwrap_or(false) {break;}
+                            thread::sleep(Duration::from_millis(200));
+                        }
+                        if quick_engine.closing.load(Ordering::SeqCst) {return;}
+                        let shortcut=quick_engine.request("/api/intelligence/search-state",false).ok()
                             .and_then(|v|v.get("config")?.get("shortcut")?.as_str().map(str::to_owned))
                             .unwrap_or_else(||"Ctrl+Shift+Space".into());
-                        let search_handle=handle.clone();let search_port=engine.port;
-                        let _=handle.run_on_main_thread(move||{
+                        let search_handle=quick_handle;let search_port=quick_engine.port;
+                        // Windows WebView2 创建须由后台线程发起，避免阻塞主线程消息循环。
+                        {
                             if let Err(error)=quick_search::create(&search_handle,search_port){
                                 search_handle.dialog().message(error.to_string()).title("快捷搜索窗口创建失败").show(|_|{});return;
                             }
                             if let Err(error)=search_handle.state::<quick_search::SearchHotkey>().set(search_handle.clone(),&shortcut){
                                 search_handle.dialog().message(error).title("快捷搜索按键注册失败").show(|_|{});
                             }
+                        }
                         });
-                        let delivery=engine.clone();thread::spawn(move||delivery.deliver_photos());
-                        let _=window.navigate(format!("http://127.0.0.1:{}/",engine.port).parse().unwrap());
+                        // 原生交接检查不依赖页面定时器，最小化到托盘或前端轮询失败也可更新。
+                        let update_engine=engine.clone();let update_window=window.clone();
+                        thread::spawn(move || {
+                            while !update_engine.closing.load(Ordering::SeqCst) {
+                                thread::sleep(Duration::from_secs(2));
+                                if update_engine.closing.load(Ordering::SeqCst) { break; }
+                                if update_engine.request("/api/update",false).ok()
+                                    .and_then(|state|state["ready"].as_bool()).unwrap_or(false) {
+                                    let _=update_window.eval("window.FramekeepUpdate?.prepare();");
+                                }
+                            }
+                        });
                     }
-                    Err(error)=>{if !engine.closing.load(Ordering::SeqCst) {show_main(&handle);handle.dialog().message(error).title("无法打开末帧选片").blocking_show();handle.exit(1);}}
+                    Err(error)=>{if !engine.closing.load(Ordering::SeqCst) {show_main(&handle);handle.dialog().message(error).title("无法打开SHIYING 数字资产").blocking_show();handle.exit(1);}}
                 }
             });
             Ok(())
@@ -616,7 +725,7 @@ mod tests {
     #[test]
     fn canon_arguments_keep_unicode_paths_and_ignore_non_images() {
         let cwd=Path::new("C:/拍摄 目录");
-        let args=vec!["末帧.exe".into(),"第一张.JPG".into(),"--unknown".into(),"data.txt".into(),"C:/RAW/001.CR3".into()];
+        let args=vec!["SHIYING.exe".into(),"第一张.JPG".into(),"--unknown".into(),"data.txt".into(),"C:/RAW/001.CR3".into()];
         let paths=photo_arguments(&args,cwd);
         assert_eq!(paths.len(),2);assert_eq!(PathBuf::from(&paths[0]),cwd.join("第一张.JPG"));
         assert_eq!(PathBuf::from(&paths[1]),PathBuf::from("C:/RAW/001.CR3"));

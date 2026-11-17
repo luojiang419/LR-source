@@ -20,7 +20,7 @@ class ProviderConcurrency:
             return concurrency_value(current)
 
     @contextmanager
-    def inference_slot(self,provider,*,priority=False,cancel=None,valid=None):
+    def inference_slot(self,provider,*,priority=False,cancel=None,valid=None,background=False):
         pid=provider['id'];ticket=object();acquired=False
         with self.capacity_changed:self.inference_waiters.setdefault(pid,[]).append((ticket,priority))
         try:
@@ -31,7 +31,10 @@ class ProviderConcurrency:
                     waiting=self.inference_waiters[pid]
                     urgent=[item for item in waiting if item[1]]
                     next_ticket=max(reversed(urgent),key=lambda item:item[1])[0] if urgent else waiting[0][0]
-                    if self.inference_active.get(pid,0)<self.concurrency(provider) and ticket is next_ticket:
+                    capacity=self.concurrency(provider)
+                    # OCR 批量任务预留一个现场名额；二星仍可用满卡片容量，不突破服务器并发上限。
+                    if background and not priority and provider.get('category')=='ocr' and capacity>1:capacity-=1
+                    if self.inference_active.get(pid,0)<capacity and ticket is next_ticket:
                         self.inference_active[pid]=self.inference_active.get(pid,0)+1
                         waiting.remove((ticket,priority));acquired=True;break
                     self.capacity_changed.wait(.1)

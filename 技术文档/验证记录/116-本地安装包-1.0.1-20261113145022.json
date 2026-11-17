@@ -1,0 +1,80 @@
+{
+  "build": "20261113145022",
+  "version": "1.0.1",
+  "base_commit": "13e1b4b",
+  "branch": "fix/archive-rating-timeout",
+  "output": "G:\\app\\LR\\build\\installer-20261113145022",
+  "installer": "G:\\app\\LR\\dist\\SHIYING 数字资产全量安装器-1.0.1-20261113145022.exe",
+  "previous_release_id": "20261113120017",
+  "published": false,
+  "status": "verified",
+  "source_verification": "G:\\app\\LR\\build\\installer-20261113145022\\source-verification.json",
+  "snapshot": "G:\\app\\LR\\build\\installer-20261113145022\\signed-package",
+  "installer_bytes": 751514624,
+  "installer_sha256": "4a340cd09869724228dae89dca2e1859d19d39927463fcc165cc720e128baeef",
+  "offline": true,
+  "single_exe": true,
+  "includes_cpu_ocr": true,
+  "installer_sha256_file": "G:\\app\\LR\\dist\\SHIYING 数字资产全量安装器-1.0.1-20261113145022.exe.sha256",
+  "update_tests": 79,
+  "frozen_modules": 158,
+  "web_files": 77,
+  "signature_verified": true,
+  "installed_file_count": 945,
+  "native_payload_files": 19,
+  "runtime_checks": [
+    {
+      "path": "ascii",
+      "native_exit": 0,
+      "worker_exit": 0,
+      "cache_repaired": true
+    },
+    {
+      "path": "中文 空格",
+      "native_exit": 0,
+      "worker_exit": 0,
+      "cache_repaired": true
+    }
+  ],
+  "corrupt_archive_blocked": true,
+  "cpu_ocr": {
+    "new": {
+      "ok": true,
+      "parse_ms": 743.82,
+      "model": "pp-ocrv6-medium-local"
+    },
+    "upgrade": {
+      "ok": true,
+      "parse_ms": 768.51,
+      "model": "pp-ocrv6-medium-local"
+    }
+  },
+  "ui": {
+    "ok": true,
+    "confirmation_requests": 1,
+    "progress": "4 / 4",
+    "sku": "中文 Ab-001 / 123.00",
+    "visible_files": [
+      "IMG_0001.JPG",
+      "IMG_0002.JPG",
+      "IMG_0003.JPG",
+      "IMG_0004.JPG",
+      "large.PSB",
+      "source.PSD"
+    ],
+    "non_media_preserved": true,
+    "pixels_unchanged": true,
+    "page_errors": []
+  },
+  "official_public_key_unchanged": true,
+  "semantic_version_unchanged": true,
+  "production_install_modified": false,
+  "cleanup": {
+    "deleted_bytes": 1802833127,
+    "free_space_delta": 1802842112
+  },
+  "limitations": [
+    "使用完整当前工作树，包含既有未提交功能；发行来源按 source-before.json 与冻结模块核验记录追踪。",
+    "未在真实客户相机或鼠标驱动上执行硬件安装；本次使用隔离生成照片和本机运行库验收。"
+  ]
+}

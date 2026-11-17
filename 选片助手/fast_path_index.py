@@ -5,6 +5,7 @@ from contextlib import suppress
 from pathlib import Path
 import sqlite3
 import threading
+from wal_maintenance import configure as configure_wal
 
 
 class FastPathIndex:
@@ -46,6 +47,8 @@ class FastPathIndex:
 
     def _connect(self, timeout):
         connection = sqlite3.connect(self.db_path, timeout=timeout)
+        # 路径索引与归档共库；初始化短连接同样不能在关闭时合并历史 WAL。
+        configure_wal(connection)
         connection.set_progress_handler(lambda: int(self._closed.is_set()), 2000)
         return connection
 
@@ -57,7 +60,10 @@ class FastPathIndex:
                 connection.execute('''CREATE VIRTUAL TABLE IF NOT EXISTS reference_path_fts
                     USING fts5(relative, content='items', content_rowid='rowid', tokenize='trigram')''')
                 # IF NOT EXISTS 不会重建已完成索引，也不触碰已有 items 行。
-                connection.execute('INSERT OR IGNORE INTO reference_path_index_state(version,ready) VALUES(1,0)')
+                # INSERT OR IGNORE 即使没有行变化仍申请写锁；已完成的索引
+                # 必须能够在后台写事务期间直接读取启动。
+                if connection.execute('SELECT 1 FROM reference_path_index_state WHERE version=1').fetchone() is None:
+                    connection.execute('INSERT OR IGNORE INTO reference_path_index_state(version,ready) VALUES(1,0)')
                 for sql in (
                     '''CREATE TRIGGER IF NOT EXISTS reference_path_insert AFTER INSERT ON items
                        WHEN (SELECT ready FROM reference_path_index_state WHERE version=1)=1 BEGIN
@@ -146,7 +152,7 @@ class FastPathIndex:
         if ready:
             phrase = '"' + text.replace('"', '""') + '"'
             return ('''pair_key IN (
-                SELECT i.pair_key FROM reference_path_fts JOIN items i ON i.rowid=reference_path_fts.rowid
+                SELECT i.pair_key FROM reference_path_fts CROSS JOIN items i ON i.rowid=reference_path_fts.rowid
                 WHERE reference_path_fts MATCH ? AND i.online=1 AND instr(lower(i.relative),lower(?))>0
             )''', [phrase, text])
         return ('''pair_key IN (

@@ -8,6 +8,24 @@ import tempfile
 from contextlib import contextmanager
 
 
+class MetadataBusyError(TimeoutError):
+    retryable_metadata = True
+
+
+class ArchiveBusyError(MetadataBusyError):
+    """归档业务锁被其它线程短暂占用；不是文件被占用，应很快再试而不是退避到 30 秒。"""
+    short_retry = True
+
+
+def metadata_retry_delay(error, attempts):
+    """暂时占用持续退避，不耗尽任务；权限、路径及内容冲突保留失败。"""
+    if getattr(error,'short_retry',False):
+        return min(5,1+max(0,attempts)*.5)
+    if getattr(error,'retryable_metadata',False) or isinstance(error,OSError) and getattr(error,'winerror',None) in (32,33):
+        return 2**max(0,attempts) if attempts<5 else 30
+    return None
+
+
 def atomic_write(path,payload):
     """仅用于程序自有配置；独占随机临时文件，禁止接管同名临时文件。"""
     path=Path(path);path.parent.mkdir(parents=True,exist_ok=True)
@@ -53,7 +71,8 @@ def metadata_file(target,create):
     kernel.CreateFileW.restype=W.HANDLE
     kernel.CloseHandle.argtypes=[W.HANDLE]
     handle=kernel.CreateFileW(str(target),0xC0000000|(0x10000 if create else 0),1,None,1 if create else 3,0x00200000,None)
-    if handle==C.c_void_p(-1).value:raise C.WinError(C.get_last_error())
+    if handle==C.c_void_p(-1).value:
+        error=C.WinError(C.get_last_error());error.filename=str(target);raise error
     try:fd=msvcrt.open_osfhandle(handle,os.O_RDWR|os.O_BINARY)
     except BaseException:kernel.CloseHandle(handle);raise
     with os.fdopen(fd,'r+b',buffering=0) as stream:
@@ -76,6 +95,7 @@ def write_verified(payload,target,expected_digest):
     if not isinstance(payload,bytes) or not payload:raise ValueError('元数据内存结果为空，未写回')
     target=Path(target);create=expected_digest is None
     with metadata_file(target,create) as stream:
+        original_stat=os.fstat(stream.fileno())
         original=stream.read()
         if not create and hashlib.sha256(original).hexdigest()!=expected_digest:
             raise ValueError('提交前检测到外部修改，未覆盖')
@@ -84,6 +104,16 @@ def write_verified(payload,target,expected_digest):
             stream.seek(0)
             if hashlib.file_digest(stream,'sha256').hexdigest()!=hashlib.sha256(payload).hexdigest():
                 raise OSError('元数据直接写回校验失败')
+            if not create and target.suffix.lower() in ('.jpg','.jpeg'):
+                if os.name=='nt':
+                    import msvcrt
+                    kernel=C.WinDLL('kernel32',use_last_error=True)
+                    kernel.SetFileTime.argtypes=[W.HANDLE,C.c_void_p,C.c_void_p,C.c_void_p]
+                    kernel.SetFileTime.restype=W.BOOL
+                    stamp=C.c_uint64(original_stat.st_mtime_ns//100+116444736000000000)
+                    if not kernel.SetFileTime(msvcrt.get_osfhandle(stream.fileno()),None,None,C.byref(stamp)):raise C.WinError(C.get_last_error())
+                else:os.utime(stream.fileno(),ns=(original_stat.st_atime_ns,original_stat.st_mtime_ns))
+
         except BaseException as exc:
             try:
                 overwrite_stream(stream,original)

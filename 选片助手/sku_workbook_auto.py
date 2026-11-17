@@ -11,6 +11,30 @@ PKG='http://schemas.openxmlformats.org/package/2006/relationships'
 CT='http://schemas.openxmlformats.org/package/2006/content-types'
 
 
+def rename_codes(path,changes):
+    """只更新软件源副本指定 SKU 单元格，保留其他表、图片和包关系。"""
+    with ZipFile(path) as src:entries={info.filename:(info,src.read(info)) for info in src.infolist()}
+    for part in {key[0] for key in changes if key[0] in entries}:
+        xml=entries[part][1].decode('utf-8-sig');prefix=re.search(r'<((?:\w+:)?)worksheet\b',xml)[1]
+        for (sheet,row,column),code in changes.items():
+            if sheet!=part:continue
+            ref=col_name(column)+str(row)
+            pattern=r'<(?:\w+:)?c\b(?P<attrs>[^>]*\br=["\']'+ref+r'["\'][^>]*?)(?:/>|>.*?</(?:\w+:)?c>)'
+            match=re.search(pattern,xml,re.S)
+            if not match:continue
+            from xml.sax.saxutils import escape
+            attrs=re.sub(r'\s+t=["\'][^"\']*["\']','',match['attrs'])
+            node=f'<{prefix}c{attrs} t="inlineStr"><{prefix}is><{prefix}t>{escape(code)}</{prefix}t></{prefix}is></{prefix}c>'
+            xml=xml[:match.start()]+node+xml[match.end():]
+        entries[part]=(entries[part][0],xml.encode('utf8'))
+    temporary=path.with_suffix('.rename.xlsx')
+    try:
+        with ZipFile(temporary,'w',ZIP_DEFLATED) as dest:
+            for info,data in entries.values():dest.writestr(info,data)
+        temporary.replace(path)
+    finally:temporary.unlink(missing_ok=True)
+
+
 def create_book(name='现场记录'):
     output=io.BytesIO()
     with ZipFile(output,'w',ZIP_DEFLATED) as z:
@@ -54,7 +78,7 @@ def replace_sheet(content,name,rows):
     views=E.SubElement(sheet,'sheetViews');view=E.SubElement(views,'sheetView',workbookViewId='0');E.SubElement(view,'pane',ySplit='1',topLeftCell='A2',activePane='bottomLeft',state='frozen')
     cols=E.SubElement(sheet,'cols')
     for index,width in enumerate((26,24,26,26,16,28),1):E.SubElement(cols,'col',min=str(index),max=str(index),width=str(width),customWidth='1')
-    data=E.SubElement(sheet,'sheetData');headers=['款号','来源文件','现场文件夹','记录时间','拍摄状态','拍摄完成时间']
+    data=E.SubElement(sheet,'sheetData');headers=['款号','来源文件','现场文件夹','入库时间','拍摄状态','拍摄完成时间']
     for i,values in enumerate([headers]+rows,1):
         row=E.SubElement(data,'row',r=str(i))
         for j,value in enumerate(values,1):

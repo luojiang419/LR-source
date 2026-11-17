@@ -1,0 +1,918 @@
+--- a/选片助手/archive_capture_service.py
++++ b/选片助手/archive_capture_service.py
+@@ -129,6 +129,11 @@
+                 reason TEXT NOT NULL DEFAULT '',result TEXT NOT NULL DEFAULT '{}',due REAL NOT NULL DEFAULT 0,
+                 updated REAL NOT NULL,UNIQUE(root,folder))""")
+             c.execute("UPDATE capture_metadata_requests SET status='queued',reason='上次补写请求正在恢复',due=0 WHERE status='preparing'")
++            if 'requested' not in {r[1] for r in c.execute('PRAGMA table_info(capture_metadata_requests)')}:
++                c.execute('ALTER TABLE capture_metadata_requests ADD COLUMN requested REAL NOT NULL DEFAULT 0')
++            # 手动确认进度独立保存，不能覆盖仍在等待目录读取的补写请求。
++            c.execute('CREATE TABLE IF NOT EXISTS capture_metadata_operations(id TEXT PRIMARY KEY,root TEXT NOT NULL,folder TEXT NOT NULL,result TEXT NOT NULL,updated REAL NOT NULL)')
++            c.execute('CREATE INDEX IF NOT EXISTS capture_metadata_operation_scope ON capture_metadata_operations(root,folder,updated DESC)')
+             c.execute('CREATE TABLE IF NOT EXISTS portable_sku_evidence(path TEXT PRIMARY KEY,data TEXT NOT NULL,revision TEXT,updated REAL)')
+             # SKU 读投影可能已经初始化；新来源须补上变更触发器。
+             if c.execute("SELECT 1 FROM sqlite_master WHERE name='sku_browser_revision'").fetchone():
+@@ -588,7 +593,8 @@
+                 if visits:
+                     with visits.lock:key=visits.key
+                     if not key:return 0
+-                    return c.execute("SELECT count(*) FROM items WHERE root=? AND folder=? AND online=1 AND media_type IN ('image','video')",(key[0],key[1] or '/')).fetchone()[0]
++                    # 大库可能误选 online 开头的覆盖索引，遍历全部在线素材；明确使用目录索引。
++                    return c.execute("SELECT count(*) FROM items INDEXED BY catalog_items_root_folder WHERE root=? AND folder=? AND online=1 AND media_type IN ('image','video')",(key[0],key[1] or '/')).fetchone()[0]
+                 prefix=str(dataset.root).rstrip('\\/')+'\\';upper=prefix[:-1]+chr(ord(prefix[-1])+1)
+                 return c.execute("SELECT count(*) FROM items INDEXED BY catalog_capture_paths WHERE path>=? AND path<? AND online=1 AND media_type IN ('image','video')",(prefix,upper)).fetchone()[0]
+         except sqlite3.Error:return 0
+@@ -652,7 +658,12 @@
+                 complete = found == group.get('expected_products') and labels == group.get('expected_labels') and actual_digest == group.get('members_digest') and len(revisions) <= 1 and all(r.get('available') for r in members) and len(members)==group.get('expected_files') and actual_files==group.get('files_digest') and not any(r.get('identity_conflict') or r.get('metadata_conflict') for r in members) if known else None
+                 groups.append({**group, 'found_products': found, 'found_labels': labels,'found_files':sum(bool(r.get('available')) for r in members), 'complete': complete})
+         with dataset.connect() as c:
+-            tasks = [dict(r) for r in c.execute("SELECT id,kind,record,status,reason FROM tasks WHERE status NOT IN ('complete','cancelled') ORDER BY rowid LIMIT 100")]
++            # 失败日志保留，但旧确认版本的写入失败不应冒充当前整款的失败。
++            tasks = [dict(r) for r in c.execute("""SELECT t.id,t.kind,t.record,t.status,t.reason FROM tasks t
++                LEFT JOIN records r ON r.id=t.record
++                WHERE t.status NOT IN ('complete','cancelled') AND
++                (t.kind NOT IN ('metadata','metadata_fill','metadata_sidecar','source_sync') OR
++                 t.revision=json_extract(r.data,'$.decision_id')) ORDER BY t.rowid LIMIT 100""")]
+             history = [dict(r) for r in c.execute('SELECT id,kind,created FROM history ORDER BY revision DESC,created DESC LIMIT 20')]
+             unpublished = c.execute("SELECT count(*) FROM events WHERE status='pending'").fetchone()[0]
+             record_versions={r['id']:r.get('decision_id') for r in records}
+@@ -739,9 +750,11 @@
+         for record in dataset.records():self._queue_ocr_apply(dataset,record)
+         self.wake.set()
+ 
+-    def _scan(self, dataset, _locked=False, focus=None, *, limit=16):
++    def _scan(self, dataset, _locked=False, focus=None, *, limit=16, total=None):
+         if not _locked:
+-            with self.io_lock:return self._scan(dataset, True,focus,limit=limit)
++            if focus is None and not self.scan_cursor.get(str(dataset.root)) and total is None:
++                total=self._scan_total(dataset)
++            with self.io_lock:return self._scan(dataset, True,focus,limit=limit,total=total)
+         key = str(dataset.root)
+         authority = self.dataset_for_path(dataset.root)
+         if authority is not None and authority is not dataset and authority.root in dataset.root.parents and (authority.folder / 'dataset.json').is_file():
+@@ -764,7 +777,7 @@
+             capture_mode=True
+             starting=focus is None and not self.scan_cursor.get(key)
+             if starting:
+-                self.scan_progress[key]={'done':0,'total':self._scan_total(dataset),'started':time.time(),'running':True}
++                self.scan_progress[key]={'done':0,'total':total if total is not None else 0,'started':time.time(),'running':True}
+                 self._pass_started=getattr(self,'_pass_started',{});self._pass_started[key]=time.monotonic()
+             items=self._rows(dataset,after=self.scan_cursor.get(key,''),focus=focus,limit=limit)
+             ready=self.scan_versions_ready if focus is None else None
+@@ -1041,10 +1054,10 @@
+         if (code or item.get('sku')) and (item.get('sku'),item.get('normalized'),item.get('source'),item.get('confidence'))!=(code,normalized,source,confidence):
+             try:
+                 with (nullcontext(catalog_connection) if catalog_connection else self.catalog.connect()) as c:
+-                    if catalog_connection is None:c.execute('PRAGMA busy_timeout=0')
++                    c.execute('PRAGMA busy_timeout=0')
+                     c.execute('UPDATE items SET sku=?,normalized=?,source=?,confidence=? WHERE id=? AND (sku<>? OR normalized<>? OR source<>? OR confidence IS NOT ?)', (code,normalized,source,confidence,item['id'],code,normalized,source,confidence))
+             except sqlite3.OperationalError as exc:
+-                if catalog_connection is not None or not any(word in str(exc).lower() for word in ('locked','busy')):raise
++                if not any(word in str(exc).lower() for word in ('locked','busy')):raise
+                 # 本机便携库已可靠保存；大索引被其它任务写入时后台接续投影。
+                 self.projection_pending[(str(dataset.root),record['id'])]=dataset
+                 return
+@@ -1417,7 +1430,8 @@
+                 if not automatic:
+                     with dataset.connect() as c:
+                         for r in originals:c.execute("UPDATE tasks SET status='cancelled',reason='已明确保留当前款号' WHERE record=? AND kind IN ('ocr','ocr_now','ocr_apply') AND status IN ('queued','running')",(r['id'],))
+-                return {'operation_id':'','sku':code,'count':len(originals),'decision_id':record.get('decision_id',''),'unchanged':True}
++                result={'operation_id':'','sku':code,'count':len(originals),'decision_id':record.get('decision_id',''),'unchanged':True}
++                return result if automatic else self._track_confirmation(dataset,originals,result,item_id,root_id,folder)
+             token = uuid.uuid4().hex
+             gid = group['id'] if group else uuid.uuid4().hex
+             products = len({r['asset_id'] for r in originals if not r.get('boundary')})
+@@ -1454,7 +1468,21 @@
+             for r in updates:
+                 self._project(dataset, r)
+             self.wake.set()
+-            return {'operation_id': operation, 'sku': code, 'count': len(updates), 'decision_id': token}
++            result={'operation_id': operation, 'sku': code, 'count': len(updates), 'decision_id': token}
++            return result if automatic else self._track_confirmation(dataset,updates,result,item_id,root_id,folder)
++
++    def _track_confirmation(self,dataset,records,result,item_id,root_id,folder):
++        if not root_id:
++            item=self.catalog.item(item_id);root_id=item['root'];folder=item.get('folder','')
++        root_id,folder=self._metadata_request_scope(root_id,folder)
++        request_id=result.get('operation_id') or uuid.uuid4().hex
++        payload={'mode':'manual','sku':result['sku'],'item_id':item_id,'dataset':str(dataset.root),
++                 'records':[r['id'] for r in records],'revisions':{r['id']:r.get('decision_id','') for r in records},
++                 'queued':sum(r.get('write_state') not in ('verified','sku_verified') for r in records)}
++        with self.archive.connect() as c:
++            c.execute('INSERT INTO capture_metadata_operations VALUES(?,?,?,?,?)',(request_id,root_id,folder,encoded(payload).decode(),time.time()))
++        result['write_request']=self.metadata_write_state(root_id,folder)
++        return result
+ 
+     def batch_preview(self, root_id, folder, item_ids, sku):
+         dataset, scope = self.scope(root_id, folder)
+@@ -2072,9 +2100,11 @@
+                 # 预读期间可能已过去较久；锁内采用的版本须在预读之后重新枚举。
+                 items=self._rows(dataset,after=before,limit=self.scan_window.get(root,16))
+                 versions=self._scan_versions(items)
++            # 进度计数不参与业务校验，不能持有标星锁等待目录统计 SQL。
++            total=self._scan_total(dataset) if not before else None
+             with self.io_lock:
+                 self.scan_reads=prepared;self.scan_versions_ready=versions
+-                try:self._scan(dataset,limit=self.scan_window.get(root,16))
++                try:self._scan(dataset,limit=self.scan_window.get(root,16),total=total)
+                 finally:self.scan_reads={};self.scan_versions_ready=None
+             worked=True
+             # 有文件需要读取时保持小批，交互锁每批很快释放；连续无变化则放大到128。
+@@ -2153,22 +2183,25 @@
+     def metadata_write_state(self,root_id,folder=''):
+         root_id,folder=self._metadata_request_scope(root_id,folder)
+         with self.archive.connect() as c:
+-            row=c.execute('SELECT id,status,reason,result,updated FROM capture_metadata_requests WHERE root=? AND folder=?',(root_id,folder)).fetchone()
++            row=c.execute('SELECT id,status,reason,result,updated,requested FROM capture_metadata_requests WHERE root=? AND folder=?',(root_id,folder)).fetchone()
++            manual=c.execute("SELECT id,'submitted' AS status,'' AS reason,result,updated FROM capture_metadata_operations WHERE root=? AND folder=? ORDER BY updated DESC LIMIT 1",(root_id,folder)).fetchone()
++        # 以用户发起时间选择显示入口，后台推进补写不能抢走较新的手动确认进度。
++        if manual is not None and (row is None or manual['updated']>(row['requested'] or row['updated'])):row=manual
+         if not row:return {'status':'idle'}
+         result=json.loads(row['result'])
+         state={'id':row['id'],'status':row['status'],'reason':row['reason'],'updated':row['updated'],
+-               'result':{k:v for k,v in result.items() if k not in ('records','dataset')}}
++               'result':{k:v for k,v in result.items() if k not in ('records','dataset','revisions')}}
+         dataset=self.datasets.get(result.get('dataset',''))
+         if dataset is not None:
+             key=str(dataset.root)
+             if row['status'] in ('queued','preparing'):
+                 state['scan']={**(self.scan_progress.get(key) or {}),'loading':bool(self.loading.get(key)),'complete':key in self.scan_complete}
+             elif row['status']=='submitted':
+-                try:state['progress']=self._request_progress(row['id'],dataset,result.get('records') or [])
++                try:state['progress']=self._request_progress(row['id'],dataset,result.get('records') or [],result.get('revisions'))
+                 except (OSError,ValueError,sqlite3.Error) as exc:state['progress_error']=str(exc)[:300]
+         return state
+ 
+-    def _request_progress(self,request_id,dataset,records):
++    def _request_progress(self,request_id,dataset,records,revisions=None):
+         """本批记录逐项进度：已写入、写入中、排队、失败或已被新的确认版本取代。"""
+         progress={'total':len(records),'done':0,'running':0,'queued':0,'failed':0,'skipped':0,'items':{},'failures':[]}
+         if not records:return progress
+@@ -2193,7 +2226,8 @@
+             else:
+                 write_state,decision,_=value
+                 status,reason=latest.get((record,decision),(None,''))
+-                if write_state in ('verified','sku_verified') or status=='complete':state='done'
++                if revisions is not None and revisions.get(record)!=decision:state,reason='skipped','确认版本已更新，按新版本写入'
++                elif write_state in ('verified','sku_verified') or status=='complete':state='done'
+                 elif status=='running':state='running'
+                 elif status in ('queued','waiting_native'):state='queued'
+                 elif status=='failed':state='failed'
+@@ -2214,6 +2248,7 @@
+                 ON CONFLICT(root,folder) DO UPDATE SET id=excluded.id,status='queued',reason=excluded.reason,
+                 result='{}',due=0,updated=excluded.updated WHERE capture_metadata_requests.status NOT IN ('queued','preparing')""",
+                 (uuid.uuid4().hex,root_id,folder,time.time()))
++            c.execute('UPDATE capture_metadata_requests SET requested=? WHERE root=? AND folder=?',(time.time(),root_id,folder))
+         self._start_metadata_request_worker()
+         self.wake.set()
+         return self.metadata_write_state(root_id,folder)
+--- a/演示方案/archive-capture.js
++++ b/演示方案/archive-capture.js
+@@ -27,13 +27,18 @@
+   const folder=document.createElement('section');folder.id='capture-folder-panel';folder.hidden=true;folder.setAttribute('role','tabpanel');folder.setAttribute('aria-labelledby','capture-folder-tab');
+   folder.innerHTML='<p id="capture-folder-path" class="capture-folder-path" hidden style="display:none"></p><div class="capture-scope-fields" hidden style="display:none"><label>客户<input id="capture-customer" maxlength="100" placeholder="默认作用域"></label><label>品牌<input id="capture-brand" maxlength="100" placeholder="默认作用域"></label></div><label hidden style="display:none">拍摄日期<input id="capture-day" type="date"></label><section id="capture-summary" role="status" aria-label="目录统计"></section><section id="capture-sync" class="capture-status-section" role="status" aria-label="读取与校验"></section><section id="capture-write-status" class="capture-status-section" role="status" aria-label="元数据写入"></section><div id="capture-groups"></div><details><summary>操作历史与撤销</summary><div id="capture-history"></div></details><div id="capture-errors" role="status"></div><div class="capture-folder-actions"><button id="capture-cancel-plan" type="button" hidden>取消归档计划并恢复源写入</button><div id="capture-write-progress" class="capture-write-progress" data-phase="idle" hidden><div class="capture-write-head"><strong id="capture-write-phase"></strong><span id="capture-write-count"></span></div><div class="capture-write-track" role="progressbar" aria-label="补写元数据进度" aria-valuemin="0" aria-valuemax="100"><span id="capture-write-fill"></span></div><p id="capture-write-result" role="status"></p></div><button id="capture-write-metadata" type="button" title="补齐当前目录已确认但未写入的元数据，并重试失败写入；已验证文件跳过">补写元数据</button><button id="capture-refresh" type="button">重新读取目录</button><button id="capture-retry" type="button">重试失败任务</button></div>';
+   photo.after(folder);
++  // 两个入口共用同一份进度与卡片状态，照片设置内也能看见实际文件写入进展。
++  for(const name of ['count','fill','result'])$('capture-write-'+name).classList.add('capture-write-'+name);
++  const photoWrite=folder.querySelector('#capture-write-progress').cloneNode(true);
++  for(const node of [photoWrite,...photoWrite.querySelectorAll('[id]')])node.id=node.id.replace('capture-write','capture-photo-write');
++  $('capture-ocr-details').before(photoWrite);
+   let writeRequest=null,writeScope='',writePolling=false,pollAbort=null,writeAbort=null,writeSequence=0,writeItems={},writeFrame=0;
+   // 卡片写入状态：写入中持续微光，写完淡出；排队与失败以角标区分。
+   const writeShown=new Map(),writeFading=new Map();
+-  const ratingQueue=new Map(),ratingConfirmed=new Map(),ratingPending=new Map();let ratingWorker=null,ratingReload=0;
++  const ratingQueue=new Map(),ratingConfirmed=new Map(),ratingPending=new Map(),ratingUncertain=new Map();let ratingWorker=null,ratingReload=0;
+   let state=null,currentId='',selected=null,request=0,itemRequest=0,busy=false,polling=false,activeScope='',itemVersion='',groupVersion='',picked=new Set(),anchor='';
+   // knownSku：当前素材已保存的款号；输入框与之不同且非空即视为草稿，主按钮变为“确定”。
+-  let knownSku='',detailsOpen=false,detailsAuto='',ocrSubmitting=false;const ocrStarted=new Map();
++  let knownSku='',detailsOpen=false,detailsAuto='',ocrSubmitting=false,manualSubmitting=false;const ocrStarted=new Map();
+   const skuDraft=()=>{const value=skuInput.value.trim();return !!value&&value!==knownSku};
+   const context=()=>window.FramekeepArchiveSelection?.()||{root_id:'',folder:''};
+   const scopeBody=()=>{const chosen=window.FramekeepArchiveSelection?.();return chosen?{root_id:chosen.root_id||'',folder:chosen.folder||''}:selected?.scope||{root_id:'',folder:''}};
+@@ -113,7 +118,18 @@
+     // 保存队列中的星级尚未落库：保持按键时的即时反馈，不被迟到的旧资料覆盖。
+     if(ratingPending.has(id)){if(ratingPending.get(id)!==2)showFeedback('');return}
+     if(ocrSubmitting)return;
++    if(manualSubmitting)return;
+     if(record.media_type!=='image'){showFeedback('');return}
++    if(writeRequest?.result?.mode==='manual'&&(writeRequest.result.item_id===id||writeItems[id])){
++      const p=writeRequest.progress,code=writeRequest.result.sku;
++      if(writeRequest.status==='failed'){showFeedback('failed',code,writeRequest.reason||'元数据写入未完成');return}
++      if(record.rating===2)ratingStatus(id,`已保存 2 星 · SKU ${code}`);
++      if(p){
++        if(p.running||p.queued){showFeedback('running',code,`正在写入元数据 · 已写入 ${p.done} / ${p.total}`,'saving');return}
++        if(p.failed){showFeedback('failed',code,`元数据写入未完成 · ${p.failed} 张失败，可重试`);return}
++        if(p.done===p.total&&p.total){showFeedback('completed',code,`SKU · 元数据已写入 ${p.done} 张`);return}
++      }
++    }
+     const code=record.sku||record.inherited_sku||'',taskActive=!!task&&['queued','running'].includes(task.status);
+     if(taskActive&&task.kind!=='ocr_apply'||record.ocr_state==='queued'&&!code){
+       if(task?.status==='running')showFeedback('running','正在解析款号','模型正在读取标签文字…','recognizing');
+@@ -185,6 +201,12 @@
+     if(id!==currentId||sequence!==itemRequest||key!==JSON.stringify(scopeBody()))return;
+     selected=result;itemVersion=version;
+     const group=result.group,record=result.record;
++    // 请求超时不会撤销后端写入；只在重新读到目标星级后确认成功，不重发写请求。
++    if(ratingUncertain.has(id)&&record.rating===ratingUncertain.get(id)&&!ratingQueue.has(id)){
++      ratingUncertain.delete(id);ratingPending.delete(id);ratingConfirmed.set(id,record.rating);
++      ratingStatus(id,`已核对，${record.rating?'已保存 '+record.rating+' 星':'已清除星级'}`);
++      document.dispatchEvent(new CustomEvent('framekeep:archive-rating-saved',{detail:{item_id:id,rating:record.rating}}));
++    }
+     // 保存队列中尚未落库的星级优先显示，迟到的旧资料不能把刚标的星级闪回。
+     const pendingRating=ratingPending.get(id);
+     document.dispatchEvent(new CustomEvent('framekeep:archive-record',{detail:{item_id:id,rating:pendingRating??(record.rating||0),sku:record.sku||record.inherited_sku||''}}));
+@@ -225,7 +247,7 @@
+       const version=JSON.stringify([key,data.groups.map(g=>[g.id,g.decision_id,g.sku,g.status]),data.sku_projection_pending||0]);
+       if(version!==groupVersion){groupVersion=version;document.dispatchEvent(new CustomEvent('framekeep:archive-groups',{detail:{version}}))}
+       // 解析进行中任务状态变化不递增版本：每轮轮询强制读取当前素材，动画及时切换阶段。
+-      await item(ocrActive());
++      await item(ocrActive()||ratingUncertain.has(currentId));
+     }catch(error){if(sequence===request&&key===JSON.stringify(scopeBody()))$('capture-access').textContent=error.message+'；可先提交补写，或重新读取目录'}
+     finally{if(sequence===request){polling=false;if(pollAbort===controller)pollAbort=null}}
+   }
+@@ -237,13 +259,19 @@
+   }
+   $('capture-edit').onclick=()=>mutate('edit',{enabled:!editing(),customer:$('capture-customer').value,brand:$('capture-brand').value},editing()?'已结束编辑，可由其它设备接续':'已取得当前数据集编辑权限').catch(()=>{});
+   async function confirmSku(code){
+-    const id=currentId,sku=String(code||'').trim();if(!id||!sku)return;
++    const id=currentId,sku=String(code||'').trim();if(!id||!sku||busy)return;
++    const scope=JSON.stringify(scopeBody());manualSubmitting=true;
++    writeAbort?.abort();writeAbort=null;writePolling=false;++writeSequence;
++    paintWriteProgress({status:'queued',result:{mode:'manual',sku},reason:'正在提交款号，随后写入图片文件…'});
++    writeItems={[id]:'queued'};scheduleWriteCards();showFeedback('running',sku,'正在提交元数据写入…','saving');
+     const whole=$('capture-whole-group').checked;
+     try{
+-      const result=await mutate('confirm',{item_id:id,sku,whole_group:whole,expected_revision:selected?.record.decision_id||''},`已确认 SKU ${sku}，${whole?'整款 RAW / JPG':'当前素材'}元数据写入已提交`);
+-      if(id===currentId){knownSku=sku;showFeedback('completed',sku,whole?'SKU · 已应用整款':'SKU · 当前素材');setEnabled()}
++      const result=await mutate('confirm',{item_id:id,sku,whole_group:whole,expected_revision:selected?.record.decision_id||''},`已确认 SKU ${sku}，${whole?'整款 RAW / JPG':'当前素材'}元数据写入已提交`,{reload:false});
++      if(result?.write_request)paintWriteRequest(result.write_request,scope);
++      if(id===currentId){knownSku=sku;setEnabled()}
+       return result;
+-    }catch{/* mutate 已显示原因 */}
++    }catch(error){if(scope===JSON.stringify(scopeBody()))paintWriteRequest({status:'failed',result:{mode:'manual',sku,item_id:id},reason:error.message},scope)}
++    finally{manualSubmitting=false;if(selected&&id===currentId)paintFeedbackFromItem(selected);pollWriteRequest()}
+   }
+   saveButton.onclick=()=>confirmSku(skuInput.value);
+   skuInput.addEventListener('input',setEnabled);
+@@ -259,34 +287,37 @@
+   $('capture-ocr-details').onclick=()=>showDetails(!detailsOpen);
+   const writeSummary=counts=>`新增 ${counts.queued||0} · 重试 ${counts.retried||0} · 已在队列 ${counts.pending||0} · 冲突或离线跳过 ${counts.skipped||0}`+(counts.unassigned?` · 无SKU保留 ${counts.unassigned} 张`:'');
+   function paintWriteProgress(result){
+-    const box=$('capture-write-progress'),fill=$('capture-write-fill'),track=fill.parentElement;
+-    const status=result?.status||'idle',counts=result?.result||{};
++    const status=result?.status||'idle',counts=result?.result||{},manual=counts.mode==='manual',action=manual?'写入':'补写';
+     let phase='',count='',detail='',percent=null,active=false,tone='idle';
+     if(status==='queued'||status==='preparing'){
+       const away=/请打开此文件夹/.test(result.reason||''),scan=result.scan||{};
+-      active=!away;tone=away?'waiting':'reading';phase=away?'等待打开此文件夹':'正在读取目录';
++      active=!away;tone=away?'waiting':'reading';phase=away?'等待打开此文件夹':manual?'正在提交元数据写入':'正在读取目录';
+       if(scan.total&&!away){const done=Math.min(scan.done||0,scan.total);percent=Math.round(100*done/scan.total);count=`${done} / ${scan.total}`}
+       detail=result.reason||'补写请求已保存，正在等待目录读取完成';
+     }else if(status==='submitted'){
+-      const p=result.progress||{total:0};
+-      if(!p.total){
++      const p=result.progress;
++      if(!p){active=true;tone='waiting';phase='正在读取写入进度';detail=result.progress_error||'正在恢复本次文件写入状态…'}
++      else if(!p.total){
+         tone='done';phase=counts.unassigned?`补写结束 · ${counts.unassigned} 张无SKU保留`:'无需补写';percent=100;count=counts.already?`${counts.already} 张已在文件中`:'';
+         detail=`${result.reason||'已确认款号无需新增补写任务'}（${writeSummary(counts)}）`;
+       }else{
+         const finished=(p.done||0)+(p.failed||0)+(p.skipped||0);active=(p.running||0)+(p.queued||0)>0;
+         percent=Math.round(100*finished/p.total);count=`${p.done||0} / ${p.total}`;
+         tone=active?'writing':p.failed?'failed':'done';
+-        phase=active?(p.running?'正在写入元数据':'排队等待写入'):p.failed?`补写结束 · ${p.failed} 张失败`:'补写完成';
+-        detail=`已提交补写：${writeSummary(counts)}`+(active?` · 写入中 ${p.running||0} · 排队 ${p.queued||0}`:'')+(p.failed?` · 失败 ${p.failed}`:'')+(p.skipped?` · 按新版本另行写入 ${p.skipped}`:'');
++        phase=active?(p.running?'正在写入元数据':'排队等待写入'):p.failed?`${action}结束 · ${p.failed} 张失败`:p.skipped?`${action}已由新款号接续`:`${action}完成`;
++        detail=(manual?`SKU ${counts.sku} · 共 ${p.total} 张`:`已提交补写：${writeSummary(counts)}`)+(active?` · 写入中 ${p.running||0} · 排队 ${p.queued||0}`:'')+(p.failed?` · 失败 ${p.failed}`:'')+(p.skipped?` · 按新版本另行写入 ${p.skipped}`:'');
+         if(p.failures?.length)detail+='\n'+p.failures.slice(0,3).map(f=>`${f.path}：${f.reason}`).join('\n');
+       }
+       if(counts.unassigned)detail+='\n无SKU照片保持原样，不参与款号补写；临时拍摄无需分配SKU。'+(counts.unassigned_examples?.length?' 例如：'+counts.unassigned_examples.join('、'):'');
+-    }else if(status==='failed'){tone='failed';phase='补写未完成';detail=result.reason||'补写请求失败，可重新提交'}
+-    box.hidden=status==='idle';box.dataset.phase=tone;track.dataset.active=String(active);
+-    $('capture-write-phase').textContent=phase;$('capture-write-count').textContent=count;
+-    if(percent==null){track.dataset.indeterminate=String(active);fill.style.width=active?'':'0%';track.removeAttribute('aria-valuenow')}
+-    else{delete track.dataset.indeterminate;fill.style.width=percent+'%';track.setAttribute('aria-valuenow',String(percent))}
+-    $('capture-write-result').textContent=detail;
++    }else if(status==='failed'){tone='failed';phase=action+'未完成';detail=result.reason||action+'请求失败，可重新提交'}
++    for(const prefix of ['capture-write','capture-photo-write']){
++      const box=$(prefix+'-progress'),fill=$(prefix+'-fill'),track=fill.parentElement;
++      box.hidden=status==='idle';box.dataset.phase=tone;track.dataset.active=String(active);
++      $(prefix+'-phase').textContent=phase;$(prefix+'-count').textContent=count;
++      if(percent==null){track.dataset.indeterminate=String(active);fill.style.width=active?'':'0%';track.removeAttribute('aria-valuenow')}
++      else{delete track.dataset.indeterminate;fill.style.width=percent+'%';track.setAttribute('aria-valuenow',String(percent))}
++      $(prefix+'-result').textContent=detail;
++    }
+   }
+   function paintWriteCards(){
+     writeFrame=0;
+@@ -308,11 +339,11 @@
+     writeRequest=result;writeScope=key;
+     paintWriteProgress(result);
+     writeItems=result?.status==='submitted'?result.progress?.items||{}:{};
+-    scheduleWriteCards();setEnabled();
++    scheduleWriteCards();setEnabled();if(selected)paintFeedbackFromItem(selected);
+   }
+   async function pollWriteRequest(){
+     syncScope();
+-    if(FramekeepWorkspace.current()!=='archive'||document.hidden||writePolling||!scopeBody().root_id)return;
++    if(FramekeepWorkspace.current()!=='archive'||document.hidden||manualSubmitting||writePolling||!scopeBody().root_id)return;
+     writePolling=true;const chosen=scopeBody(),key=JSON.stringify(chosen),sequence=++writeSequence,controller=new AbortController();writeAbort=controller;
+     try{const result=await FramekeepIO.api('/api/archive-capture/metadata-write-state?'+new URLSearchParams(chosen),undefined,5000,controller.signal);if(sequence===writeSequence)paintWriteRequest(result,key)}
+     catch{}finally{if(sequence===writeSequence){writePolling=false;if(writeAbort===controller)writeAbort=null}}
+@@ -409,7 +440,7 @@
+         const [id,job]=ratingQueue.entries().next().value;ratingQueue.delete(id);
+         try{
+           await savingRating(id,job);
+-        }finally{if(!ratingQueue.has(id))ratingPending.delete(id)}
++        }finally{if(!ratingQueue.has(id)&&!ratingUncertain.has(id))ratingPending.delete(id)}
+       }
+     }finally{ratingWorker=null;scheduleRatingReload();poll().catch(()=>{})}
+   }
+@@ -431,6 +462,14 @@
+       }
+       job.resolve(result);
+     }catch(error){
++      if(error.name==='TimeoutError'){
++        if(!ratingQueue.has(id)){
++          ratingUncertain.set(id,job.rating);itemVersion='';
++          ratingStatus(id,'保存结果尚未确认，正在核对；请勿重复提交');
++          if(id===currentId){note('请求超时，后台可能仍在保存；正在重新读取星级核对');if(job.rating===2)showFeedback('queued','正在核对二星保存结果','后台可能仍在处理，请稍候…','submitting')}
++        }
++        job.reject(error);return;
++      }
+       if(!ratingQueue.has(id)){
+         // 保存失败：恢复到最后一次确认成功的星级，并说明原因。
+         const back=ratingConfirmed.get(id)??0;
+@@ -444,6 +483,7 @@
+   }
+   window.FramekeepArchiveCapture={
+     rate(id,rating,previous=0){
++      ratingUncertain.delete(id);
+       if(!ratingConfirmed.has(id))ratingConfirmed.set(id,previous||0);
+       const correction=$('capture-correction').checked,prior=ratingQueue.get(id);
+       // 尚未提交的旧改动被新星级取代，视为完成，不再回退界面。
+--- a/演示方案/asset-workspace.css
++++ b/演示方案/asset-workspace.css
+@@ -583,12 +583,12 @@
+ .capture-write-progress[hidden]{display:none}
+ .capture-write-progress[data-phase=waiting]{--capture-write-tone:#e5af3c}.capture-write-progress[data-phase=failed]{--capture-write-tone:#ff7a6b}.capture-write-progress[data-phase=reading]{--capture-write-tone:#6fb6ff}
+ .capture-write-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px}.capture-write-head strong{font-size:12px;color:var(--theme-text)}
+-#capture-write-count{font-variant-numeric:tabular-nums;color:var(--theme-text-soft);white-space:nowrap}
++.capture-write-count{font-variant-numeric:tabular-nums;color:var(--theme-text-soft);white-space:nowrap}
+ .capture-write-track{position:relative;height:8px;border-radius:5px;background:color-mix(in srgb,var(--theme-border) 70%,transparent);overflow:hidden}
+-#capture-write-fill{display:block;height:100%;width:0;border-radius:inherit;background:var(--capture-write-tone);transition:width .5s cubic-bezier(.2,.7,.3,1)}
+-.capture-write-track[data-active=true] #capture-write-fill{background-image:repeating-linear-gradient(115deg,transparent 0 8px,rgba(255,255,255,.22) 8px 16px);background-size:36px 100%;animation:capture-write-flow .9s linear infinite}
+-.capture-write-track[data-indeterminate=true] #capture-write-fill{width:38%;animation:capture-write-scan 1.4s ease-in-out infinite}
+-#capture-write-result{white-space:pre-line;overflow-wrap:anywhere;color:var(--theme-muted)}
++.capture-write-fill{display:block;height:100%;width:0;border-radius:inherit;background:var(--capture-write-tone);transition:width .5s cubic-bezier(.2,.7,.3,1)}
++.capture-write-track[data-active=true] .capture-write-fill{background-image:repeating-linear-gradient(115deg,transparent 0 8px,rgba(255,255,255,.22) 8px 16px);background-size:36px 100%;animation:capture-write-flow .9s linear infinite}
++.capture-write-track[data-indeterminate=true] .capture-write-fill{width:38%;animation:capture-write-scan 1.4s ease-in-out infinite}
++.capture-write-result{white-space:pre-line;overflow-wrap:anywhere;color:var(--theme-muted)}
+ @keyframes capture-write-flow{to{background-position:36px 0}}
+ @keyframes capture-write-scan{0%{transform:translateX(-105%)}100%{transform:translateX(270%)}}
+ /* 素材卡片写入状态：写入中四周流动微光，写完熄灭；排队与失败只显示小角标。 */
+@@ -609,7 +609,7 @@
+ @keyframes capture-glow-spin{to{--capture-glow-angle:360deg}}
+ @keyframes capture-glow-out{0%{opacity:1}100%{opacity:0}}
+ @keyframes capture-write-chip{0%,70%{opacity:1}100%{opacity:0}}
+-@media(prefers-reduced-motion:reduce){.catalog-card[data-capture-write=running]::after{animation:none;background:#7dffc0}.catalog-card[data-capture-write=done]::after{animation:capture-glow-out .6s ease forwards;background:#7dffc0}.capture-write-track #capture-write-fill{animation:none!important}}
++@media(prefers-reduced-motion:reduce){.catalog-card[data-capture-write=running]::after{animation:none;background:#7dffc0}.catalog-card[data-capture-write=done]::after{animation:capture-glow-out .6s ease forwards;background:#7dffc0}.capture-write-track .capture-write-fill{animation:none!important}}
+ #capture-batch-dialog{width:min(720px,calc(100vw - 32px));max-height:85vh;box-sizing:border-box;padding:20px;border:1px solid var(--theme-border-strong);border-radius:9px;color:var(--theme-text);background:var(--theme-panel)}
+ #capture-batch-dialog::backdrop{background:rgba(0,0,0,.55);backdrop-filter:blur(4px)}
+ #capture-batch-dialog>header{display:flex;justify-content:space-between;align-items:center;gap:12px}
+--- a/选片助手/test_archive_visits.py
++++ b/选片助手/test_archive_visits.py
+@@ -64,16 +64,16 @@
+         self.assertEqual(self.rows(),[])
+         self.assertEqual({r['folder'] for r in self.visits.tree()['roots'][0]['folders']},{'A','B'})
+ 
+-    def test_explorer_counts_unknown_children_and_all_files(self):
++    def test_explorer_counts_only_media_and_keeps_unknown_child_folders(self):
+         explorer=self.visits.explorer
+         result=explorer.browse(self.rid)
+         self.assertEqual((result['folders'],result['files']),(2,0))
+         self.assertTrue(all(not r['known'] for r in self.visits.tree()['roots'][0]['folders']))
+         (self.photos/'A/说明.txt').write_text('资料',encoding='utf8')
+         result=explorer.browse(self.rid,'A')
+-        self.assertEqual((result['folders'],result['files']),(0,2))
++        self.assertEqual((result['folders'],result['files']),(0,1))
+         row=next(r for r in self.visits.tree()['roots'][0]['folders'] if r['folder']=='A')
+-        self.assertTrue(row['known']);self.assertEqual(row['count'],2)
++        self.assertTrue(row['known']);self.assertEqual(row['count'],1)
+ 
+     def test_explorer_browse_does_not_wait_for_catalog_writer(self):
+         with self.catalog.connect() as c:
+@@ -286,22 +286,26 @@
+                         page.wait_for_timeout(500)
+                         self.assertEqual(self.visits.generation,generation,'资料回显刷新不能重新扫描当前目录')
+                         self.assertIn('当前文件夹',page.locator('#catalog-scan-status').inner_text())
+-                        # 真实文件夹浏览：主区入口、非媒体、导航和文件操作。
++                        # 媒体文件的浏览、导航、复制与重命名；文档保留但不出现在列表。
+                         (self.photos/'A/说明.txt').write_text('浏览器文件操作',encoding='utf8')
++                        Image.new('RGB',(90,60),'red').save(self.photos/'A/说明.jpg')
++                        original=(self.photos/'A/说明.jpg').read_bytes()
++                        page.locator('#explorer-view').click()
+                         page.locator('#explorer-refresh').click()
+-                        file=page.locator('.explorer-entry',has_text='说明.txt');file.wait_for()
++                        file=page.locator('.explorer-entry',has_text='说明.jpg');file.wait_for()
+                         self.assertIn('2 个文件',page.locator('#catalog-summary').inner_text())
+                         file.click();page.locator('[data-file-action="copy"]').click()
+                         page.locator('#explorer-up').click()
+                         page.wait_for_function("()=>FramekeepArchiveBrowser.scope().folder===''")
+-                        page.locator('.explorer-entry',has_text='B').dblclick()
++                        page.locator('.explorer-entry[title="B"]').dblclick()
+                         page.wait_for_function("()=>FramekeepArchiveBrowser.scope().folder==='B'")
+                         page.locator('[data-file-action="paste"]').click()
+-                        file=page.locator('.explorer-entry',has_text='说明.txt');file.wait_for()
++                        file=page.locator('.explorer-entry',has_text='说明.jpg');file.wait_for()
+                         file.click();page.locator('[data-file-action="rename"]').click()
+-                        page.locator('#explorer-name').fill('改名.txt');page.locator('#explorer-name-dialog button[type="submit"]').click()
+-                        page.locator('.explorer-entry',has_text='改名.txt').wait_for()
+-                        self.assertEqual((self.photos/'B/改名.txt').read_text(encoding='utf8'),'浏览器文件操作')
++                        page.locator('#explorer-name').fill('改名.jpg');page.locator('#explorer-name-dialog button[type="submit"]').click()
++                        page.locator('.explorer-entry',has_text='改名.jpg').wait_for()
++                        self.assertEqual((self.photos/'B/改名.jpg').read_bytes(),original)
++                        self.assertTrue((self.photos/'A/说明.jpg').exists())
+                         self.assertTrue((self.photos/'A/说明.txt').exists())
+                         page.locator('[data-file-action="mkdir"]').click();page.locator('#explorer-name').fill('新目录');page.locator('#explorer-name-dialog button[type="submit"]').click()
+                         page.locator('.explorer-entry',has_text='新目录').wait_for()
+@@ -312,10 +316,9 @@
+                         page.locator('#explorer-address').fill(str(self.photos/'A'));page.locator('#explorer-address').press('Enter')
+                         page.wait_for_function("()=>FramekeepArchiveBrowser.scope().folder==='A'")
+                         page.locator('#catalog-search').fill('说明')
+-                        page.locator('.explorer-entry',has_text='说明.txt').wait_for()
++                        page.locator('.explorer-entry',has_text='说明.jpg').wait_for()
+                         self.assertEqual(page.evaluate('FramekeepArchiveBrowser.scope().folder'),'A')
+                         page.locator('#catalog-search').fill('')
+-                        page.locator('#explorer-view').click()
+                         page.wait_for_function("()=>document.querySelector('#catalog-grid').classList.contains('explorer-details')")
+                         page.locator('.explorer-entry',has_text='photo.jpg').wait_for()
+                         page.locator('#catalog-media').select_option('image')
+@@ -324,7 +327,8 @@
+                         page.locator('#catalog-media').select_option('')
+                         page.locator('#explorer-view').click()
+                         page.wait_for_function("()=>!FramekeepBoot.loading&&!document.querySelector('#explorer-name-dialog[open]')")
+-                        page.wait_for_selector('.explorer-entry',state='visible')
++                        page.wait_for_function("()=>document.querySelectorAll('#catalog-grid .catalog-card').length===2")
++                        self.assertEqual(page.locator('.explorer-entry').count(),0)
+                         page.wait_for_timeout(500)
+                         out=root/'build/archive-explorer';out.mkdir(parents=True,exist_ok=True)
+                         page.screenshot(path=str(out/'explorer-browser.png'),animations='disabled')
+--- a/选片助手/asset_catalog.py
++++ b/选片助手/asset_catalog.py
+@@ -26,6 +26,9 @@
+ VIDEO_EXTENSIONS = {'.mp4', '.m4v', '.mov', '.mxf', '.mkv', '.avi', '.webm', '.mts', '.m2ts', '.r3d', '.braw'}
+ ADOBE_EXTENSIONS = {'.psd', '.psb', '.ai', '.eps', '.indd', '.pdf'}
+ MEDIA_EXTENSIONS = IMAGE_EXTENSIONS | VIDEO_EXTENSIONS | ADOBE_EXTENSIONS
++# 资产归档浏览仅保留图像／视频与图像源文件；PDF、排版文档继续留在原索引和磁盘。
++ARCHIVE_MEDIA_EXTENSIONS = IMAGE_EXTENSIONS | VIDEO_EXTENSIONS | {'.psd','.psb','.ai','.eps'}
++ARCHIVE_MEDIA_SQL = 'extension IN ('+','.join(repr(ext) for ext in sorted(ARCHIVE_MEDIA_EXTENSIONS))+')'
+ 
+ 
+ def media_type(extension):
+@@ -650,17 +653,17 @@
+             'SELECT capture_items.* FROM ' + selected + ' selected CROSS JOIN capture_items '
+             'ON capture_items.id=selected.column1 ORDER BY modified DESC,id', ids)]
+ 
+-    def items(self, root='', folder='', sku='', offset=0, limit=120, cursor='', text='', media='', *, include_tree=False, cancel=None, quick=False, sort='modified'):
++    def items(self, root='', folder='', sku='', offset=0, limit=120, cursor='', text='', media='', *, include_tree=False, cancel=None, quick=False, sort='modified', visual_only=False):
+         if sort=='original':
+             from catalog_original_order import items
+-            return items(self,root,folder,sku,offset,limit,cursor,text,media,include_tree=include_tree,cancel=cancel,quick=quick)
++            return items(self,root,folder,sku,offset,limit,cursor,text,media,include_tree=include_tree,cancel=cancel,quick=quick,visual_only=visual_only)
+         if sort!='modified':raise ValueError('归档排序方式无效')
+         limit = max(1, min(240, int(limit)))
+         offset = max(0, int(offset))
+         page_key=None;page_revision=None;page_cache=getattr(self,'pages',None)
+         if page_cache and quick and not text and not include_tree:
+             if cancel and cancel():raise SearchCancelled()
+-            page_key=_json(['browse-visited-v1' if getattr(self,'visits',None) else 'browse-v1',root,folder,sku,offset,limit,cursor,media,self.video.frame])
++            page_key=_json(['browse-visited-v1' if getattr(self,'visits',None) else 'browse-v1',root,folder,sku,offset,limit,cursor,media,self.video.frame]+(['visual-only-v1'] if visual_only else []))
+             try:
+                 page_revision,cached=page_cache.read(page_key)
+                 if cached is not None:
+@@ -670,6 +673,7 @@
+                     return cached
+             except (sqlite3.Error,OSError,ValueError):page_key=None
+         clauses, args = ['online=1'], []
++        if visual_only:clauses.append(ARCHIVE_MEDIA_SQL)
+         if root:
+             clauses.append('root=?'); args.append(root)
+         if getattr(self,'visits',None) and root:
+@@ -711,6 +715,7 @@
+                     CROSS JOIN capture_items ON capture_items.id=folder_candidates.folder_item_id'''
+                 source_args=[root,folder,root,pattern]
+             search_clauses=['online=1'];search_args=[]
++            if visual_only:search_clauses.append(ARCHIVE_MEDIA_SQL)
+             if media:search_clauses.append('media_type=?');search_args.append(media)
+             if text:
+                 source,source_args,condition,values = self._search_query(c, text)
+@@ -741,7 +746,7 @@
+                 # 一次完整搜索，同一快照分别产生全局目录统计和当前筛选页。
+                 # 只物化轻量字段；游标、目录、SKU 不收窄左侧全局搜索目录。
+                 query='''WITH search_matches AS MATERIALIZED (
+-                    SELECT id,modified,root,folder,normalized,online,media_type FROM '''+source+'''
++                    SELECT id,modified,root,folder,normalized,online,media_type,extension FROM '''+source+'''
+                     WHERE '''+' AND '.join(search_clauses)+'''),
+                   page_matches AS MATERIALIZED (SELECT id,modified FROM search_matches'''+page_where+'''),
+                   page_ids AS (SELECT id FROM page_matches ORDER BY modified DESC,id LIMIT ? OFFSET ?),
+--- a/选片助手/catalog_original_order.py
++++ b/选片助手/catalog_original_order.py
+@@ -2,13 +2,14 @@
+ import base64
+ import json
+ import sqlite3
+-from asset_catalog import _id,_json
++from asset_catalog import _id,_json,ARCHIVE_MEDIA_SQL
+ from sku_match import normalize
+ 
+ 
+-def items(catalog,root,folder,sku,offset,limit,cursor,text,media,*,include_tree=False,cancel=None,quick=False):
++def items(catalog,root,folder,sku,offset,limit,cursor,text,media,*,include_tree=False,cancel=None,quick=False,visual_only=False):
+     limit=max(1,min(240,int(limit)));offset=max(0,int(offset))
+     clauses=['online=1'];args=[]
++    if visual_only:clauses.append(ARCHIVE_MEDIA_SQL)
+     if root:clauses.append('root=?');args.append(root)
+     visited=bool(getattr(catalog,'visits',None))
+     if root and visited:
+--- a/选片助手/catalog_startup.py
++++ b/选片助手/catalog_startup.py
+@@ -173,5 +173,7 @@
+             except (sqlite3.Error,OSError,ValueError):pass
+         if not isinstance(data,dict) or not isinstance(data.get('rows'),list):data = None
+         if data is not None:
+-            data = {**data,'rows':[r for r in data['rows'] if visible(r['root'],r['folder'])]}
++            from asset_catalog import ARCHIVE_MEDIA_EXTENSIONS
++            rows=[r for r in data['rows'] if visible(r['root'],r['folder']) and str(r.get('extension') or Path(r.get('name','')).suffix).lower() in ARCHIVE_MEDIA_EXTENSIONS]
++            data = {**data,'rows':rows,**({'total':None} if len(rows)!=len(data['rows']) else {})}
+         return dict(database=self.database,revision=revision,tree={'roots':roots},items=data)
+--- a/选片助手/server.py
++++ b/选片助手/server.py
+@@ -435,7 +435,7 @@
+                 if visits and not q.get('root',[''])[0]:
+                     return self.reply({'rows':[],'total':0,'has_more':False,'next_cursor':'','engine':'按访问加载'})
+                 with PREVIEWS.foreground() if PREVIEWS and q.get('background',['0'])[0]!='1' else nullcontext(), CATALOG_SEARCH.begin(q.get('client',[''])[0],q.get('sequence',['0'])[0],self.connection) as cancel:
+-                    data=CATALOG.items(q.get('root',[''])[0],q.get('folder',[''])[0],q.get('sku',[''])[0],q.get('offset',[0])[0],q.get('limit',[120])[0],q.get('cursor',[''])[0],q.get('q',[''])[0],q.get('media',[''])[0],include_tree=q.get('tree',['0'])[0]=='1' and not visits,cancel=cancel,quick=q.get('quick',['0'])[0]=='1',sort=q.get('sort',['original'])[0])
++                    data=CATALOG.items(q.get('root',[''])[0],q.get('folder',[''])[0],q.get('sku',[''])[0],q.get('offset',[0])[0],q.get('limit',[120])[0],q.get('cursor',[''])[0],q.get('q',[''])[0],q.get('media',[''])[0],include_tree=q.get('tree',['0'])[0]=='1' and not visits,cancel=cancel,quick=q.get('quick',['0'])[0]=='1',sort=q.get('sort',['original'])[0],visual_only=q.get('visual_only',['0'])[0]=='1')
+                     # 首屏浏览优先返回索引页。共享评级查询跨两个资料库，慢盘或
+                     # 后台写入期间不能因此让整个网格保持空白；前端随后低优先级回填。
+                     if ARCHIVE and q.get('quick',['0'])[0]!='1':ARCHIVE.ratings.decorate(data['rows'])
+--- a/演示方案/asset-library.js
++++ b/演示方案/asset-library.js
+@@ -478,7 +478,7 @@
+     const scope=JSON.stringify([selection.root,selection.folder,$('catalog-search').value.trim(),$('catalog-media').value,$('catalog-sort').value]);
+     if(scope!==catalogLoadedScope){cancelCatalogPrefetch();FramekeepAssetLoading.clearDirectPreviews();catalogLoadedScope=scope;catalogRows.clear();catalogTotal=null;nextCursor='';hasMore=false}
+     const request=++catalogRequest;
+-    const query = new URLSearchParams({ root: selection.root, folder: selection.folder, q: $('catalog-search').value.trim(), media: $('catalog-media').value, sort:$('catalog-sort').value, cursor: append?nextCursor:'', limit: 120,tree:withTree?'1':'0',quick:'1',client:catalogSearchClient,sequence:request,background:background?'1':'0' });
++    const query = new URLSearchParams({ root: selection.root, folder: selection.folder, q: $('catalog-search').value.trim(), media: $('catalog-media').value, sort:$('catalog-sort').value, cursor: append?nextCursor:'', limit: 120,tree:withTree?'1':'0',quick:'1',visual_only:'1',client:catalogSearchClient,sequence:request,background:background?'1':'0' });
+     const summaryKey=JSON.stringify(['root','folder','q','media','sort'].map(key=>query.get(key)));
+     if(summaryKey!==catalogSummaryKey){catalogSummaryController?.abort();catalogSummaryController=null;catalogSummaryKey=summaryKey;catalogSummaryData=null}
+     catalogController?.abort();catalogController=new AbortController();
+--- /dev/null
++++ b/选片助手/test_archive_rating_timeout.py
+@@ -0,0 +1,119 @@
++"""二星超时：慢目录计数不能占用交互锁，超时写入必须核对真实结果。"""
++from contextlib import ExitStack
++from pathlib import Path
++import threading
++import unittest
++from unittest.mock import patch
++
++import test_archive_capture_service as fixtures
++
++
++class ArchiveRatingTimeoutTests(unittest.TestCase):
++    setUp=fixtures.ArchiveCaptureTests.setUp
++    tearDown=fixtures.ArchiveCaptureTests.tearDown
++    client=fixtures.ArchiveCaptureTests.client
++    item=fixtures.ArchiveCaptureTests.item
++    drain=fixtures.ArchiveCaptureTests.drain
++
++    def test_slow_progress_count_does_not_block_rating(self):
++        entered=threading.Event();release=threading.Event();saved=threading.Event();errors=[]
++        def count(_):
++            entered.set()
++            if not release.wait(10):raise TimeoutError('test count was not released')
++            return 4
++        def run(action):
++            try:action()
++            except BaseException as error:errors.append(error)
++        def rate():
++            self.api.rate(self.item(2),2,root_id=self.rid)
++            saved.set()
++        self.api.scan_cursor.clear()
++        with patch.object(self.api,'_scan_total',side_effect=count):
++            scan=threading.Thread(target=run,args=(lambda:self.api._scan_batches(self.dataset),))
++            scan.start();rating=None
++            try:
++                self.assertTrue(entered.wait(5),'scan never started its progress count')
++                rating=threading.Thread(target=run,args=(rate,));rating.start()
++                self.assertTrue(saved.wait(3),'rating was blocked by progress-only count')
++            finally:
++                release.set();scan.join(10)
++                if rating:rating.join(10)
++        self.assertFalse(errors,errors)
++        self.assertFalse(scan.is_alive())
++        self.assertEqual(self.dataset.record(path='IMG_0002.JPG')['rating'],2)
++        self.drain()
++        self.assertEqual(self.dataset.record(path='IMG_0002.JPG')['sku'],'LC123456')
++
++    def test_progress_query_uses_directory_index(self):
++        from types import SimpleNamespace
++        plans=[];connect=self.catalog.connect
++        class Connection:
++            def execute(inner,sql,args):
++                plans.extend(str(tuple(r)) for r in inner.connection.execute('EXPLAIN QUERY PLAN '+sql,args))
++                return inner.connection.execute(sql,args)
++            def __enter__(inner):
++                inner.context=connect();inner.connection=inner.context.__enter__();return inner
++            def __exit__(inner,*args):return inner.context.__exit__(*args)
++        visits=SimpleNamespace(lock=threading.RLock(),key=(self.rid,''))
++        with patch.object(self.catalog,'visits',visits,create=True),patch.object(self.catalog,'connect',Connection):
++            self.assertEqual(self.api._scan_total(self.dataset),4)
++        self.assertTrue(any('catalog_items_root_folder' in p and 'root=?' in p and 'folder=?' in p for p in plans),plans)
++
++    def test_batched_projection_does_not_wait_for_catalog_writer(self):
++        import time
++        record={**self.dataset.record(path='IMG_0001.JPG'),'sku':'TEST-PENDING'}
++        item=self.catalog.item(self.item(1))
++        with self.catalog.connect() as writer,self.catalog.connect() as reader,self.archive.connect() as archive:
++            writer.execute('BEGIN IMMEDIATE')
++            try:
++                started=time.monotonic()
++                self.api._project(self.dataset,record,item,catalog_connection=reader,archive_connection=archive)
++                self.assertLess(time.monotonic()-started,1)
++                self.assertIn((str(self.dataset.root),record['id']),self.api.projection_pending)
++            finally:writer.rollback()
++
++    def test_browser_reconciles_timeout_without_false_rollback(self):
++        import server
++        from playwright.sync_api import sync_playwright
++        with ExitStack() as stack:
++            values=dict(STORE=self.store,CATALOG=self.catalog,ARCHIVE=self.archive,SKU=self.sku,MODELS=self.sku.providers,DATA=self.store.data,WATCH=None,MOUSE=None,ANALYSIS=None,RAWLINK=None,FILESEARCH=None,UPDATES=None,COMPONENTS=None,DRIVER=None,CANON=None,PREVIEWS=None,REFERENCES=None)
++            for key,value in values.items():stack.enter_context(patch.object(server,key,value))
++            http=server.ThreadingHTTPServer(('127.0.0.1',0),server.Handler);http.daemon_threads=True
++            threading.Thread(target=http.serve_forever,daemon=True).start()
++            try:
++                with sync_playwright() as pw:
++                    browser=pw.chromium.launch(channel='msedge',headless=True)
++                    try:
++                        page=browser.new_page(viewport={'width':1600,'height':1000});errors=[]
++                        page.on('pageerror',lambda error:errors.append(str(error)))
++                        page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='domcontentloaded')
++                        page.wait_for_function('()=>window.FramekeepArchiveOpenItem&&window.FramekeepArchiveCapture')
++                        page.evaluate('(id)=>FramekeepArchiveOpenItem(id)',self.item(2))
++                        page.wait_for_function("()=>!document.querySelector('[data-catalog-rating=\"2\"]').disabled")
++                        # 响应先超时，服务器随后落库；普通读取先返回旧星级。
++                        page.evaluate('''()=>{const api=FramekeepIO.api;window.__ratingWrites=0;
++                            FramekeepIO.api=(path,...args)=>{if(path==='/api/archive-capture/rating'){
++                                window.__ratingWrites++;return Promise.reject(new DOMException('timeout','TimeoutError'))}
++                                return api(path,...args)}}''')
++                        page.locator('[data-catalog-rating="2"]').click()
++                        page.wait_for_function('()=>document.getElementById("catalog-rating-status").textContent.includes("保存结果尚未确认")')
++                        self.assertTrue(page.evaluate('(id)=>FramekeepArchiveCapture.pending(id)',self.item(2)))
++                        self.assertNotIn('二星未保存',page.locator('#capture-ocr-feedback').inner_text())
++                        self.assertEqual(self.dataset.record(path='IMG_0002.JPG')['rating'],0)
++                        self.api.rate(self.item(2),2,root_id=self.rid)
++                        page.evaluate('()=>FramekeepArchiveCapture.refresh(true)')
++                        page.wait_for_function('()=>document.getElementById("catalog-rating-status").textContent.includes("已核对，已保存 2 星")')
++                        self.assertFalse(page.evaluate('(id)=>FramekeepArchiveCapture.pending(id)',self.item(2)))
++                        self.assertEqual(page.evaluate('()=>window.__ratingWrites'),1)
++                        # 明确拒绝仍回退到实际已确认的二星。
++                        page.evaluate('''()=>{const api=FramekeepIO.api;FramekeepIO.api=(path,...args)=>path==='/api/archive-capture/rating'?Promise.reject(new Error('只读测试')):api(path,...args)}''')
++                        page.locator('[data-catalog-rating="1"]').click()
++                        page.wait_for_function('()=>document.getElementById("catalog-rating-status").textContent.includes("已恢复为2 星：只读测试")')
++                        out=Path(__file__).resolve().parents[1]/'build/task227-rating-timeout';out.mkdir(parents=True,exist_ok=True)
++                        page.screenshot(path=str(out/'timeout-reconciled.png'))
++                        self.assertFalse(errors,errors)
++                    finally:browser.close()
++            finally:http.shutdown();http.server_close()
++
++
++if __name__=='__main__':unittest.main()
+--- /dev/null
++++ b/选片助手/test_archive_manual_numeric_sku.py
+@@ -0,0 +1,48 @@
++"""归档整款手填纯数字 SKU，以及新确认版本不再显示旧写入失败。"""
++import unittest
++import uuid
++
++from metadata_writer import field_text
++import test_archive_capture_service as fixtures
++
++
++class ArchiveManualNumericSkuTests(unittest.TestCase):
++    setUp=fixtures.ArchiveCaptureTests.setUp
++    tearDown=fixtures.ArchiveCaptureTests.tearDown
++    client=fixtures.ArchiveCaptureTests.client
++    item=fixtures.ArchiveCaptureTests.item
++    drain=fixtures.ArchiveCaptureTests.drain
++
++    def test_manual_numeric_sku_writes_the_whole_interval(self):
++        self.api.rate(self.item(2),2,root_id=self.rid);self.drain()
++        self.api.confirm(self.item(2),'7876953',whole_group=True,root_id=self.rid);self.drain()
++        for name,rating in (('IMG_0001.JPG',0),('IMG_0002.JPG',2)):
++            actual=self.archive.writer.read(self.photos/name)
++            self.assertEqual(field_text(actual['XMP-fk:SKU']),'7876953')
++            self.assertEqual(field_text(actual['IFD0:XPSubject']),'7876953')
++            self.assertIn('SKU:7876953',actual['IFD0:XPKeywords'])
++            self.assertEqual(actual['XMP-xmp:Rating'],rating)
++        self.assertFalse(self.api.state(self.rid)['tasks'])
++
++    def test_old_metadata_failures_are_preserved_but_only_current_failures_are_shown(self):
++        self.api.confirm(self.item(1),'7876953',whole_group=False,root_id=self.rid)
++        old=self.dataset.record(path='IMG_0001.JPG')['decision_id']
++        with self.dataset.connect() as c:c.execute("UPDATE tasks SET status='failed',reason='Windows 图片属性读回不一致' WHERE revision=?",(old,))
++        self.api.confirm(self.item(1),'LC7876953',whole_group=False,root_id=self.rid)
++        # 旧失败必须留作历史证据；fixture.drain 会拒绝所有历史失败，故只等待当前队列结束。
++        for _ in range(50):
++            self.api.tick()
++            with self.dataset.connect() as c:
++                if not c.execute("SELECT 1 FROM tasks WHERE status IN ('queued','running')").fetchone():break
++        self.assertFalse(self.api.state(self.rid)['tasks'])
++        record=self.dataset.record(path='IMG_0001.JPG')
++        with self.dataset.connect() as c:
++            self.assertGreater(c.execute("SELECT count(*) FROM tasks WHERE revision=? AND status='failed'",(old,)).fetchone()[0],0)
++            task_id=uuid.uuid4().hex
++            c.execute('INSERT INTO tasks VALUES(?,?,?,?,?,?,?)',(task_id,'metadata',record['id'],record['decision_id'],'failed','真实当前版本失败','{}'))
++        tasks=self.api.state(self.rid)['tasks']
++        self.assertEqual([(t['id'],t['reason']) for t in tasks],[(task_id,'真实当前版本失败')])
++        self.assertEqual(self.api.state(self.rid)['metadata_tasks']['failed'],1)
++
++
++if __name__=='__main__':unittest.main()
+--- /dev/null
++++ b/选片助手/test_archive_manual_write_progress.py
+@@ -0,0 +1,134 @@
++"""手工确认与补写共享真实写入进度，实际文件回读后才显示完成。"""
++from contextlib import ExitStack
++from pathlib import Path
++import threading
++import unittest
++from unittest.mock import patch
++
++import test_archive_capture_service as fixtures
++
++
++class ManualWriteProgressTests(unittest.TestCase):
++    setUp=fixtures.ArchiveCaptureTests.setUp
++    tearDown=fixtures.ArchiveCaptureTests.tearDown
++    client=fixtures.ArchiveCaptureTests.client
++    item=fixtures.ArchiveCaptureTests.item
++    drain=fixtures.ArchiveCaptureTests.drain
++
++    def test_confirmation_progress_waits_for_real_file_write(self):
++        result=self.api.confirm(self.item(1),'中文 Ab-001',whole_group=False,root_id=self.rid)
++        state=result['write_request']
++        self.assertEqual(state['result']['mode'],'manual')
++        self.assertEqual((state['progress']['total'],state['progress']['queued'],state['progress']['done']),(1,1,0))
++        self.assertFalse(self.archive.writer.read(self.photos/'IMG_0001.JPG').get('XMP-fk:SKU'))
++        self.drain()
++        state=self.api.metadata_write_state(self.rid)
++        self.assertEqual((state['progress']['done'],state['progress']['failed']),(1,0))
++        self.assertEqual(self.archive.writer.read(self.photos/'IMG_0001.JPG')['XMP-fk:SKU'],'中文 Ab-001')
++        self.api.request_items.clear()
++        self.assertEqual(self.api.metadata_write_state(self.rid)['progress'],state['progress'])
++
++    def test_confirmation_does_not_replace_pending_backfill(self):
++        with patch.object(self.api,'_start_metadata_request_worker'):
++            backfill=self.api.request_metadata_write(self.rid)
++        manual=self.api.confirm(self.item(1),'手动款号',whole_group=False,root_id=self.rid)['write_request']
++        self.assertNotEqual(manual['id'],backfill['id'])
++        with self.archive.connect() as c:
++            row=c.execute('SELECT id,status FROM capture_metadata_requests WHERE root=?',(self.rid,)).fetchone()
++        self.assertEqual(tuple(row),(backfill['id'],'queued'))
++        self.assertEqual(self.api.metadata_write_state(self.rid)['id'],manual['id'])
++        with self.archive.connect() as c:c.execute('UPDATE capture_metadata_requests SET updated=updated+100')
++        self.assertEqual(self.api.metadata_write_state(self.rid)['id'],manual['id'])
++        with patch.object(self.api,'_start_metadata_request_worker'):
++            self.assertEqual(self.api.request_metadata_write(self.rid)['id'],backfill['id'])
++
++    def test_superseded_confirmation_progress_cannot_claim_new_revision(self):
++        old=self.api.confirm(self.item(1),'第一款',whole_group=False,root_id=self.rid)['write_request']
++        record=self.dataset.record(path='IMG_0001.JPG');revision=record['decision_id']
++        self.api.confirm(self.item(1),'第二款',whole_group=False,root_id=self.rid)
++        self.drain()
++        progress=self.api._request_progress(old['id'],self.dataset,[record['id']],{record['id']:revision})
++        self.assertEqual((progress['done'],progress['skipped']),(0,1))
++
++    def test_current_write_failure_is_reported(self):
++        self.api.confirm(self.item(1),'失败验证',whole_group=False,root_id=self.rid)
++        with patch.object(self.archive.writer,'write',side_effect=ValueError('实际文件写入失败')):
++            self.api.tick()
++        progress=self.api.metadata_write_state(self.rid)['progress']
++        self.assertEqual((progress['done'],progress['failed']),(0,1))
++        self.assertIn('实际文件写入失败',progress['failures'][0]['reason'])
++
++    def test_catalog_reader_preserves_literal_text_and_numeric_camera_fields(self):
++        path=self.photos/'IMG_0001.JPG'
++        path.write_bytes(self.archive.writer.edit(path,['-XPSubject=123.00','-XMP-dc:Title=TRUE','-XMP-dc:Subject=1E3','-ISO=400']))
++        with self.assertRaisesRegex(ValueError,'文件已变化'):
++            self.catalog.metadata._extract(self.catalog.item(self.item(1)))
++        payload,_=self.catalog.metadata._extract(self.catalog.item(self.item(1)))
++        self.assertEqual(payload['tags']['IFD0:XPSubject'],'123.00')
++        self.assertEqual(payload['tags']['XMP-dc:Title'],'TRUE')
++        self.assertEqual(payload['tags']['XMP-dc:Subject'],'1E3')
++        self.assertEqual(payload['capture']['iso'],400)
++
++    def test_browser_manual_write_shows_both_panels_and_card_animation(self):
++        import server
++        from playwright.sync_api import sync_playwright
++        self.api.rate(self.item(2),2,root_id=self.rid);self.drain()
++        entered=threading.Event();release=threading.Event();errors=[];worker=None
++        original=self.archive.writer.write
++        def blocked(*args,**kwargs):
++            entered.set()
++            if not release.wait(15):raise TimeoutError('test writer was not released')
++            return original(*args,**kwargs)
++        def run():
++            try:self.api.tick()
++            except BaseException as error:errors.append(str(error))
++        with ExitStack() as stack:
++            values=dict(STORE=self.store,CATALOG=self.catalog,ARCHIVE=self.archive,SKU=self.sku,MODELS=self.sku.providers,DATA=self.store.data,WATCH=None,MOUSE=None,ANALYSIS=None,RAWLINK=None,FILESEARCH=None,UPDATES=None,COMPONENTS=None,DRIVER=None,CANON=None,PREVIEWS=None,REFERENCES=None)
++            for key,value in values.items():stack.enter_context(patch.object(server,key,value))
++            http=server.ThreadingHTTPServer(('127.0.0.1',0),server.Handler);http.daemon_threads=True
++            threading.Thread(target=http.serve_forever,daemon=True).start()
++            try:
++                with sync_playwright() as pw:
++                    browser=pw.chromium.launch(channel='msedge',headless=True)
++                    try:
++                        page=browser.new_page(viewport={'width':1600,'height':1000})
++                        page.on('pageerror',lambda error:errors.append(str(error)))
++                        page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='domcontentloaded')
++                        page.wait_for_function('()=>window.FramekeepArchiveOpenItem&&window.FramekeepArchiveCapture')
++                        page.evaluate('(id)=>FramekeepArchiveOpenItem(id)',self.item(2))
++                        page.wait_for_function("()=>!document.querySelector('#catalog-save-sku').disabled")
++                        page.locator('#catalog-selected-sku').fill('中文 Ab-001')
++                        page.locator('#catalog-save-sku').click()
++                        page.wait_for_function("()=>document.getElementById('capture-photo-write-phase').textContent==='排队等待写入'")
++                        self.assertEqual(page.locator('#catalog-grid [data-capture-write="queued"]').count(),2)
++                        self.assertEqual(page.locator('#capture-ocr-feedback').get_attribute('data-status'),'running')
++                        self.assertIn('中文 Ab-001',page.locator('#catalog-rating-status').inner_text())
++                        with patch.object(self.archive.writer,'write',side_effect=blocked):
++                            worker=threading.Thread(target=run);worker.start()
++                            try:
++                                self.assertTrue(entered.wait(5))
++                                page.wait_for_function("()=>document.getElementById('capture-photo-write-phase').textContent==='正在写入元数据'")
++                                card=page.locator('#catalog-grid [data-capture-write="running"]')
++                                self.assertEqual(card.count(),1)
++                                self.assertEqual(card.evaluate("n=>getComputedStyle(n,'::after').animationName"),'capture-glow-spin')
++                                self.assertEqual(page.locator('#capture-photo-write-count').inner_text(),'0 / 2')
++                                out=Path(__file__).resolve().parents[1]/'build/task227-manual-progress';out.mkdir(parents=True,exist_ok=True)
++                                page.screenshot(path=str(out/'writing.png'))
++                            finally:release.set();worker.join(10)
++                        self.drain()
++                        page.wait_for_function("()=>document.getElementById('capture-photo-write-phase').textContent==='写入完成'")
++                        self.assertEqual(page.locator('#capture-photo-write-count').inner_text(),'2 / 2')
++                        self.assertEqual(page.locator('#capture-ocr-feedback').get_attribute('data-status'),'completed')
++                        page.locator('#capture-folder-tab').click()
++                        self.assertEqual(page.locator('#capture-write-count').inner_text(),'2 / 2')
++                        self.assertEqual(page.locator('#capture-write-phase').inner_text(),'写入完成')
++                        for n in (1,2):self.assertEqual(self.archive.writer.read(self.photos/f'IMG_{n:04d}.JPG')['XMP-fk:SKU'],'中文 Ab-001')
++                        page.screenshot(path=str(out/'complete.png'))
++                        self.assertFalse(errors,errors)
++                    finally:release.set();browser.close()
++            finally:
++                if worker:worker.join(10)
++                http.shutdown();http.server_close()
++
++
++if __name__=='__main__':unittest.main()
+--- a/选片助手/test_archive_media_filter.py
++++ b/选片助手/test_archive_media_filter.py
+@@ -30,5 +30,35 @@
+         self.assertEqual((result['rows'],result['files'],result['total']),([],0,0))
+         self.assertEqual(len(list(folder.iterdir())),2)
+ 
++    def test_existing_index_and_pagination_search_exclude_non_visual_design_documents(self):
++        folder=self.photos/'A'
++        for name in ('image.psd','large.psb','document.pdf','layout.indd'):(folder/name).write_bytes(b'fixture')
++        self.visits.touch(self.rid,'A');fixtures.ArchiveVisitTests.wait(self)
++        unfiltered={r['name'] for r in self.catalog.items(root=self.rid,folder='A')['rows']}
++        self.assertIn('document.pdf',unfiltered)  # 保留原索引及其它调用方兼容性。
++        for sort in ('original','modified'):
++            for quick in (False,True):
++                with self.subTest(sort=sort,quick=quick):
++                    first=self.catalog.items(root=self.rid,folder='A',sort=sort,quick=quick,visual_only=True,limit=1)
++                    names=[r['name'] for r in first['rows']];cursor=first['next_cursor'];more=first['has_more']
++                    while more:
++                        page=self.catalog.items(root=self.rid,folder='A',sort=sort,quick=quick,visual_only=True,limit=1,cursor=cursor)
++                        names.extend(r['name'] for r in page['rows']);cursor=page['next_cursor'];more=page['has_more']
++                    self.assertEqual(set(names),{'photo.jpg','image.psd','large.psb'})
++                    self.assertEqual(len(names),3)
++                    for text in ('document','layout'):
++                        result=self.catalog.items(root=self.rid,folder='A',sort=sort,text=text,visual_only=True,include_tree=True)
++                        self.assertEqual(result['rows'],[])
++
++    def test_startup_snapshot_does_not_restore_document_rows(self):
++        rows=[{'id':'image','root':self.rid,'folder':'A','name':'photo.jpg','extension':'.jpg'},
++              {'id':'pdf','root':self.rid,'folder':'A','name':'document.pdf','extension':'.pdf'}]
++        from unittest.mock import patch
++        startup=self.catalog.startup;key=startup.page_key(self.rid,'A')
++        with patch.object(startup,'_read',side_effect=lambda name:{'rows':rows,'total':2} if name==key else None):
++            result=startup.read(self.rid,'A')['items']
++        self.assertEqual([r['id'] for r in result['rows']],['image'])
++        self.assertIsNone(result['total'])
++
+ 
+ if __name__=='__main__':unittest.main()

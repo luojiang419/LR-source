@@ -251,6 +251,13 @@ class Store:
         except (FileNotFoundError,PermissionError,OSError) as e:status.update(status='failed',error='无法读取文件夹，请检查路径、网络连接和访问权限：'+str(e)[:200])
         except Exception as e:status.update(status='failed',error=str(e)[:300])
     def save(self,sid,revision,state):
+        capture=getattr(self,'capture_service',None)
+        current=self.session(sid) if capture else None
+        if capture and current and current['state'].get('overrides',{})!=state.get('overrides',{}):
+            with self.connect() as check:
+                archived=check.execute('SELECT 1 FROM settings WHERE key=?',('archive_session:'+sid,)).fetchone()
+            if archived:capture.guard([current['root']])
+            else:capture.prepare_live(sid)
         session=self.session(sid)
         if not session or self.is_removed(sid):raise ValueError('会话不存在或已移除。')
         valid={r['id'] for r in self.records(sid)};overrides=state.get('overrides',{})
@@ -271,18 +278,20 @@ class Store:
         if not root.is_dir():raise ValueError('请选择照片传入文件夹。')
         sid=hashlib.sha256(str(root).casefold().encode()).hexdigest()[:24]
         # 将已有的有效评级冻结为基础值，追加新照片不改变原来的末帧推荐。
-        ratings={r['id']:(-1 if r['excluded'] else r['rating']) for r in self.manifest(False,sid)['captures']} if self.session(sid) else {}
+        with self.connect() as c:
+            legacy=c.execute("SELECT 1 FROM captures WHERE session=? AND json_type(data,'$.liveRating') IS NULL LIMIT 1",(sid,)).fetchone()
+        ratings={r['id']:(-1 if r['excluded'] else r['rating']) for r in self.manifest(False,sid)['captures']} if legacy else {}
         with self.connect() as c:
             c.execute('BEGIN IMMEDIATE')
             c.execute('INSERT OR IGNORE INTO sessions VALUES (?,?,?,?,?,?,?)',(sid,str(root),folder_name(root),'',0,'{}',now()))
             c.execute('DELETE FROM settings WHERE key=?',('removed_session:'+sid,))
-            for row in c.execute('SELECT id,data FROM captures WHERE session=?',(sid,)).fetchall():
+            for row in c.execute("SELECT id,data FROM captures WHERE session=? AND json_type(data,'$.liveRating') IS NULL",(sid,)).fetchall():
                 r=json.loads(row['data'])
                 if 'liveRating' not in r:
                     r['liveRating']=ratings.get(r['id'],0)
                     c.execute('UPDATE captures SET data=? WHERE session=? AND id=?',(stable_json(r),sid,r['id']))
         return sid
-    def append_live(self,sid,records):
+    def append_live(self,sid,records,*,initial_positions=None):
         """只更新照片目录，不改会话 state/revision；人工保存可并发进行。"""
         added=[];changed=[];sidecar_changes=[]
         with self.connect() as c:
@@ -299,6 +308,8 @@ class Store:
                     clauses.extend(('p.raw COLLATE NOCASE IN ('+marks+')','p.jpg COLLATE NOCASE IN ('+marks+')'));args.extend(paths+paths)
                 for row in c.execute('SELECT c.id,c.data FROM browser_captures p JOIN captures c ON c.session=p.session AND c.id=p.id WHERE p.session=? AND ('+' OR '.join(clauses)+')',args):known[row['id']]=json.loads(row['data'])
             position=c.execute('SELECT coalesce(max(position),-1)+1 FROM browser_captures WHERE session=?',(sid,)).fetchone()[0]
+            initial_positions=initial_positions or {}
+            position=max(position,max(initial_positions.values(),default=-1)+1)
             by_path={p.casefold():r for r in known.values() for p in (r.get('raw'),r.get('jpg')) if p}
             for source in records:
                 r=dict(source)
@@ -317,7 +328,8 @@ class Store:
                     c.execute('UPDATE captures SET data=? WHERE session=? AND id=?',(stable_json(r),sid,r['id']))
                 else:
                     r['liveRating']=r.get('existingRating',0)
-                    c.execute('INSERT INTO captures VALUES (?,?,?,?)',(sid,r['id'],stable_json(r),position));position+=1;added.append(r['id'])
+                    record_position=initial_positions.get(r['id'],position)
+                    c.execute('INSERT INTO captures VALUES (?,?,?,?)',(sid,r['id'],stable_json(r),record_position));position=max(position,record_position+1);added.append(r['id'])
                 known[r['id']]=r
                 for path in (r.get('raw'),r.get('jpg')):
                     if path:by_path[path.casefold()]=r

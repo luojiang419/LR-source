@@ -34,7 +34,7 @@ class TaskLightsBrowserTests(TaskStatusFixture):
                     page=browser.new_page(viewport={'width':1600,'height':1000});errors=[]
                     page.on('pageerror',lambda error:errors.append(str(error)))
                     page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='domcontentloaded');page.wait_for_function('()=>!window.FramekeepBoot?.loading')
-                    page.wait_for_function("()=>document.querySelectorAll('.workspace-task-light[data-state=idle]').length===6")
+                    page.wait_for_function("()=>document.querySelectorAll('.workspace-task-light[data-state=idle]').length===5")
                     self.assertEqual(page.locator('.workspace-bottom-bar [role=tab]').count(),7)
                     # GET 轮询以及鼠标输入轮询不应伪造工作状态。
                     page.evaluate("async()=>{await Promise.all([FramekeepIO.api('/api/sku'),FramekeepIO.api('/api/analysis')]);const end=FramekeepTaskStatus.begin('/api/mouse/poll',{});end()}")
@@ -46,7 +46,7 @@ class TaskLightsBrowserTests(TaskStatusFixture):
                     with self.archive.connect() as c:c.execute("INSERT INTO metadata_jobs(id,status) VALUES ('write','queued')")
                     with self.analysis.connect() as c:c.execute("INSERT INTO jobs(id,status,trigger) VALUES ('parse','queued','manual')")
                     component.state['status']='working'
-                    page.wait_for_function("()=>document.querySelectorAll('.workspace-task-light[data-state=busy]').length===6",timeout=8000)
+                    page.wait_for_function("()=>document.querySelectorAll('.workspace-task-light[data-state=busy]').length===5",timeout=8000)
                     self.assertIn('OCR 排队',page.locator('#sku-open').get_attribute('title'))
                     checks=[]
                     for theme in ('dark','light','pure-white','hardcore'):
@@ -66,7 +66,7 @@ class TaskLightsBrowserTests(TaskStatusFixture):
                         c.execute("UPDATE metadata_jobs SET status='completed'")
                         c.execute("UPDATE raw_session_work SET status='completed'")
                     self.sku.tasks_paused=True;self.analysis.paused=True
-                    page.wait_for_function("()=>document.getElementById('sku-open').dataset.taskState==='paused'&&document.getElementById('asset-analysis-open').dataset.taskState==='paused'",timeout=8000)
+                    page.wait_for_function("()=>document.getElementById('sku-open').dataset.taskState==='paused'",timeout=8000)
                     with self.sku.connect() as c:
                         c.execute("UPDATE jobs SET status='completed'");c.execute('UPDATE archive_events SET delivered=1')
                     with self.analysis.connect() as c:c.execute("UPDATE jobs SET status='completed'")
@@ -74,7 +74,7 @@ class TaskLightsBrowserTests(TaskStatusFixture):
                     with self.previews.connect() as c:c.execute('DELETE FROM pending')
                     component.state['status']='idle'
                     with self.archive.connect() as c:c.execute("UPDATE raw_session_work SET status='completed'")
-                    page.wait_for_function("()=>document.querySelectorAll('.workspace-task-light[data-state=idle]').length===6",timeout=8000)
+                    page.wait_for_function("()=>document.querySelectorAll('.workspace-task-light[data-state=idle]').length===5",timeout=8000)
                     # 真正的慢操作在共享 api 的 try/finally 内跟踪，异常也必须熄灯。
                     def slow_scan(root_id):
                         release.wait(8);raise ValueError('测试扫描失败')
@@ -86,9 +86,9 @@ class TaskLightsBrowserTests(TaskStatusFixture):
                         release.set();self.assertEqual(page.evaluate('()=>window.scanResult'),'测试扫描失败')
                         page.wait_for_function("()=>document.getElementById('asset-archive-open').dataset.taskState==='idle'")
                     page.route('**/api/task-status',lambda route:route.abort())
-                    page.wait_for_function("()=>document.querySelectorAll('.workspace-task-light[data-state=unknown]').length===6",timeout=8000)
+                    page.wait_for_function("()=>document.querySelectorAll('.workspace-task-light[data-state=unknown]').length===5",timeout=8000)
                     page.unroute('**/api/task-status')
-                    page.wait_for_function("()=>document.querySelectorAll('.workspace-task-light[data-state=idle]').length===6",timeout=8000)
+                    page.wait_for_function("()=>document.querySelectorAll('.workspace-task-light[data-state=idle]').length===5",timeout=8000)
                     self.assertFalse(errors,errors)
                     (out/'result.json').write_text(json.dumps({'passed':True,'checks':checks,'page_errors':errors},ensure_ascii=False,indent=2),encoding='utf8')
                 finally:browser.close()

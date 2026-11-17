@@ -1,12 +1,9 @@
-"""局域网只读工作台：与桌面共享数据库，独立监听和会话边界。"""
-from collections import OrderedDict
+"""局域网只读工作台：与桌面共享数据库，独立监听和同源边界。"""
 import hashlib
 import base64
-from http.cookies import SimpleCookie,CookieError
 import ipaddress
 import json
 from pathlib import Path
-import secrets
 import socket
 import sqlite3
 import threading
@@ -20,9 +17,8 @@ from reference_api import SharedServer
 from http.server import BaseHTTPRequestHandler
 
 NETWORKS = tuple(ipaddress.ip_network(n) for n in ('10.0.0.0/8','172.16.0.0/12','192.168.0.0/16','127.0.0.0/8'))
-ASSETS = {'reference-search.js','reference-search.css','lan-workspace.html','lan-workspace.js','lan-workspace.css','theme.js','style.css',
+ASSETS = {'reference-search.js','reference-search.css','lan-workspace.html','lan-workspace.js','lan-workspace.css','lan-quick-search.js','lan-quick-search.css','theme.js','style.css',
           'theme.css','motion.css','workbench.css','classic-themes.css','view-menu.css','toolbar-layout.css'}
-COOKIE = 'framekeep_lan_session'
 
 
 def local_address(value):
@@ -38,22 +34,19 @@ def bounded(value, length=300):
 
 
 class LanWorkspace:
-    def __init__(self, catalog, sku, intelligence, web, *, autostart=True, require_access_code=True):
+    def __init__(self, catalog, sku, intelligence, web, *, autostart=True):
         self.catalog=catalog;self.sku=sku;self.intelligence=intelligence;self.web=Path(web)
         self.path=catalog.data/'lan-workspace.json';self.lock=threading.RLock()
-        self.server=None;self.thread=None;self.sessions={};self.failures=OrderedDict();self.image_slot=threading.BoundedSemaphore(1)
-        self.require_access_code=require_access_code
+        self.server=None;self.thread=None;self.image_slot=threading.BoundedSemaphore(1)
         self.error='';self.closed=False
         try:
             saved=json.loads(self.path.read_text(encoding='utf8')) if self.path.is_file() else {}
             if not isinstance(saved,dict) or type(saved.get('enabled',False)) is not bool or type(saved.get('port',8780)) is not int or not 1024<=saved.get('port',8780)<=65535:
                 raise ValueError('共享配置无效')
-            if 'access_code' in saved and (not isinstance(saved['access_code'],str) or not 16<=len(saved['access_code'])<=128):
-                raise ValueError('访问码配置无效')
         except (OSError,ValueError):
             saved={};self.error='共享配置不可读，已保持关闭，请重新保存共享设置'
-        self.config={'enabled':False,'port':8780,'access_code':secrets.token_urlsafe(18),**saved}
-        self.cookie_name=COOKIE+'_'+hashlib.sha256(str(self.path.resolve()).encode()).hexdigest()[:12]
+        # 只读取仍在使用的设置，旧版本的访问码或其他字段不参与启动与后续保存。
+        self.config={'enabled':saved.get('enabled',False),'port':saved.get('port',8780)}
         with sku.connect() as c:
             c.execute('CREATE INDEX IF NOT EXISTS lan_progress_page ON sku_rows(project,sheet,excel_row,id)')
             c.execute('CREATE INDEX IF NOT EXISTS lan_progress_sku ON sku_rows(project,sheet,normalized,status)')
@@ -82,9 +75,6 @@ class LanWorkspace:
             elif not enabled:self.server=None
             if old and old is not self.server:old.shutdown();old.server_close()
             self.config.update(enabled=enabled,port=port)
-            if body.get('rotate') is True:
-                self.config['access_code']=secrets.token_urlsafe(18);self.sessions.clear()
-            if not enabled:self.sessions.clear()
             self.error='';self._persist()
         return self.state()
 
@@ -94,33 +84,8 @@ class LanWorkspace:
         except OSError:pass
         with self.lock:
             return {'enabled':bool(self.server),'configured_enabled':self.config['enabled'],'port':self.config['port'],
-                    'access_code':self.config['access_code'] if self.require_access_code else '',
-                    'access_code_required':self.require_access_code,'addresses':[f'http://{host}:{self.config["port"]}/' for host in sorted(hosts)],
+                    'access_code_required':False,'addresses':[f'http://{host}:{self.config["port"]}/' for host in sorted(hosts)],
                     'error':self.error,'mode':'readonly','refresh_seconds':3}
-
-    def login(self,code,address):
-        if not self.require_access_code:return None
-        now=time.time()
-        with self.lock:
-            failures=[stamp for stamp in self.failures.get(address,[]) if now-stamp<60]
-            if len(failures)>=10:raise PermissionError('尝试过于频繁，请稍后重试')
-            if not isinstance(code,str) or len(code)>128 or not secrets.compare_digest(code,self.config['access_code']):
-                self.failures[address]=failures+[now]
-                while len(self.failures)>512:self.failures.popitem(last=False)
-                raise PermissionError('访问码不正确')
-            self.failures.pop(address,None)
-            self.sessions={key:expiry for key,expiry in self.sessions.items() if expiry>now}
-            if len(self.sessions)>=256:raise ValueError('当前访问会话已满，请稍后重试')
-            token=secrets.token_urlsafe(32);self.sessions[token]=now+12*3600
-            return token
-
-    def authorize(self,header):
-        if not self.require_access_code:return None
-        try:cookie=SimpleCookie();cookie.load(header or '');token=cookie[self.cookie_name].value
-        except (KeyError,ValueError,CookieError):raise PermissionError('请先输入访问码') from None
-        with self.lock:
-            if self.sessions.get(token,0)<time.time():raise PermissionError('访问已过期，请重新输入访问码')
-        return token
 
     def revision(self):
         parts=[]
@@ -139,7 +104,7 @@ class LanWorkspace:
         config=self.intelligence.config
         return {'projects':projects,'active_project':active[0] if active else '', 'roots':roots,
                 'dimensions':DIMENSIONS,'custom_dimensions':config['custom_dimensions'],
-                'visual_backend':config['visual_backend'],'login_required':self.require_access_code,'revision':self.revision(),'refresh_seconds':3}
+                'visual_backend':config['visual_backend'],'login_required':False,'revision':self.revision(),'refresh_seconds':3}
 
     def progress(self,query):
         if query.get('view'):return self.progress_view(query)
@@ -225,7 +190,15 @@ class LanWorkspace:
             sources=memberships.get(row['normalized'],[])
             row['sources']=[{'sheet':r['sheet'],'number':r['excel_row'],'shot':bool(r['shot'])} for r in sources]
             # 汇总封面使用首个有拍摄证据的来源行，照片选择继续走软件的规则。
-            evidence=next((r for r in sources if r.get('completion_job')),None)
+            def has_label(source):
+                plan=next((s for s in plans if s['name']==source['sheet']),{})
+                if source.get('completion_job'):return True
+                if not plan.get('label_col'):return False
+                from sku_workbook import col_name
+                cell=col_name(plan['label_col'])+str(source['excel_row'])
+                return any(image['cell']==cell for image in plan.get('images',[]))
+            evidence=next((r for r in sources if r['completed_at']==row['completed_at'] and has_label(r)),None)
+            if evidence is None:evidence=next((r for r in sources if has_label(r)),None)
             if view!='sheet' and evidence:row['id']=evidence['id']
             row['preview']='/api/progress/image?row='+row['id']+'&v='+generation
             row['values']=json.loads(row.pop('source_values','') or '{}') if view=='sheet' else {}
@@ -234,16 +207,22 @@ class LanWorkspace:
             row['images']=[{'letter':''.join(filter(str.isalpha,im['cell'])),
                             'url':f"/api/progress/image?row={row['id']}&kind=source:{index}&v={generation}"} for index,im in enumerate(images)] if view=='sheet' else []
             row['completion']=bool(row.pop('completion_job','')) if view=='sheet' else bool(evidence)
+            label_source=next((r for r in sources if r['id']==row['id']),None) if view=='sheet' else evidence
+            row['label_preview']=f"/api/progress/image?row={row['id']}&kind=completion&v={generation}" if label_source and has_label(label_source) else ''
+            if view!='sheet' and evidence:row['completed_at']=evidence['completed_at']
             row['shot']=bool(row['shot'])
             for key in ('project','baseline','baseline_completed_at','status'):row.pop(key,None)
         plan=next((s for s in plans if s['name']==sheet),{})
         columns=[{'letter':col['letter'],'title':headers.get('sku' if col['index']==plan.get('sku_col') else f"column:{sheet}:{col['letter']}",col['title']),
                   'sku':col['index']==plan.get('sku_col'),'note':col['title'].strip()=='备注'} for col in plan.get('columns',[])]
+        for col in columns:
+            if col['title']=='记录时间':col['title']='入库时间'
         return {'project':{'id':p['id'],'name':p['name'],'scope':p['scope']},'sheets':sheets,'counts':counts,
                 'rows':rows,'has_more':has_more,'offset':offset,'view':view,'sheet':sheet,'columns':columns,
                 'headers':headers,'all_total':all_total,'common_total':common_total,'revision':generation}
 
-    def progress_image(self,row_id,kind='cover'):
+    def progress_image(self,row_id,kind='cover',size=420):
+        size=min(2048,max(160,int(size)))
         with self.sku.connect() as c:row=c.execute('SELECT * FROM sku_rows WHERE id=?',(bounded(row_id,80),)).fetchone()
         if not row:raise ValueError('款号不存在')
         if kind.startswith('source:'):return self.sku.image(row['id'],int(kind.removeprefix('source:')))
@@ -254,7 +233,9 @@ class LanWorkspace:
             evidence=c.execute('SELECT session_id,capture_id,captured_at,capture_time_source FROM jobs WHERE id=?',(row['completion_job'],)).fetchone()
         value['completion']=dict(evidence) if evidence else None
         if kind=='completion':
-            image=dict(evidence) if evidence else None
+            if evidence:image=dict(evidence)
+            else:
+                decorate_images(self.sku,[value]);image=value.get('label_image')
         elif kind=='cover':
             decorate_images(self.sku,[value]);image=value.get('sku_image')
         else:raise ValueError('图片类型无效')
@@ -264,12 +245,12 @@ class LanWorkspace:
             if records:
                 import media_engine as media
                 session=self.sku.store.session(image['session_id'])
-                return media.preview_bytes(records[0],session['root'],self.sku.store.data/'previews',lambda:media.find_exiftool(self.sku.store.root),420,False)
+                return media.preview_bytes(records[0],session['root'],self.sku.store.data/'previews',lambda:media.find_exiftool(self.sku.store.root),size,False)
         if kind=='cover':
             with self.catalog.connect() as c:
                 item=c.execute('''SELECT i.id FROM capture_items i JOIN roots r ON r.id=i.root
                     WHERE i.normalized=? AND r.removed=0 ORDER BY i.modified DESC LIMIT 1''',(row['normalized'],)).fetchone()
-            if item:return self.catalog.preview(item['id'],420,read=True)
+            if item:return self.catalog.preview(item['id'],size,read=True)
         raise ValueError('暂无款号图片')
 
     def _item(self,item_id):
@@ -279,13 +260,13 @@ class LanWorkspace:
 
     @staticmethod
     def public_item(row):
-        keys=('id','root','folder','name','sku','media_type','media_format','modified','size','summary','reasons','score','frame','width','height','duration_ms')
+        keys=('id','root','folder','name','sku','media_type','media_format','modified','size','summary','reasons','score','frame','width','height','duration_ms','match_mode','semantic_score')
         version=hashlib.sha256(str(row.get('fingerprint','')).encode()).hexdigest()[:16]
         return {key:row[key] for key in keys if key in row}|{'preview':'/api/preview?item='+row['id']+'&v='+version}
 
     def search(self,query):
         result=self.intelligence.search(text=bounded(query.get('q','')),facets=json.loads(query.get('facets','{}')),
-            root=bounded(query.get('root',''),80),media=query.get('media',''),cursor=bounded(query.get('cursor',''),2000),limit=60)
+            root=bounded(query.get('root',''),80),media=query.get('media',''),cursor=bounded(query.get('cursor',''),2000),limit=60,collapse_video=True,quick=query.get('quick')=='1')
         result['rows']=[self.public_item(row) for row in result['rows']]
         return result
 
@@ -344,27 +325,28 @@ class LanWorkspace:
         if not self.image_slot.acquire(blocking=False):raise ValueError('图片搜索正在处理，请稍后重试')
         try:
             if body.get('item_id'):self._item(body['item_id'])
-            result=self.intelligence.image_search({key:body[key] for key in ('item_id','image','text','root','threshold') if key in body}|{'limit':max(1,min(100,int(body.get('limit',60))))})
+            result=self.intelligence.image_search({key:body[key] for key in ('item_id','image','text','root','threshold','match_mode','media') if key in body}|{'limit':max(1,min(100,int(body.get('limit',60))))})
             result['rows']=[self.public_item(row) for row in result['rows']]
+            # 工作进程诊断含本机数据库/文件路径，仅留在桌面端。
+            result.pop('index_state',None);result.pop('verification_errors',None)
             return result
         finally:self.image_slot.release()
 
     def close(self):
         with self.lock:
-            self.closed=True;self.sessions.clear();server=self.server;self.server=None
+            self.closed=True;server=self.server;self.server=None
         if server:server.shutdown();server.server_close()
 
 
 class LanHandler(BaseHTTPRequestHandler):
     def log_message(self,*args):pass
 
-    def reply(self,value,status=200,kind=None,cookie=None):
+    def reply(self,value,status=200,kind=None):
         raw=value if isinstance(value,bytes) else json.dumps(value,ensure_ascii=False).encode('utf8')
         self.send_response(status);self.send_header('Content-Type',kind or ('application/json; charset=utf-8'))
         self.send_header('Content-Length',str(len(raw)));self.send_header('Cache-Control','private, max-age=30' if kind and kind.startswith('image/') else 'no-store')
         self.send_header('X-Content-Type-Options','nosniff');self.send_header('Referrer-Policy','no-referrer')
         self.send_header('Content-Security-Policy',"default-src 'self'; img-src 'self' data: blob:; style-src 'self'; script-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'")
-        if cookie:self.send_header('Set-Cookie',cookie)
         self.end_headers()
         try:self.wfile.write(raw)
         except OSError:pass
@@ -386,11 +368,10 @@ class LanHandler(BaseHTTPRequestHandler):
                 import mimetypes
                 payload=(workspace.web/filename).read_bytes()
                 return self.reply(payload,kind=mimetypes.guess_type(filename)[0] or 'application/octet-stream')
-            workspace.authorize(self.headers.get('Cookie'))
             if route=='/api/state':return self.reply(workspace.summary())
             if route=='/api/changes':return self.reply({'revision':workspace.revision(),'time':time.time()})
             if route=='/api/progress':return self.reply(workspace.progress(query))
-            if route=='/api/progress/image':return self.binary(workspace.progress_image(query.get('row',''),query.get('kind','cover')))
+            if route=='/api/progress/image':return self.binary(workspace.progress_image(query.get('row',''),query.get('kind','cover'),query.get('size',420)))
             if route=='/api/search':return self.reply(workspace.search(query))
             if route=='/api/archive':return self.reply(workspace.archive(query))
             if route=='/api/facets':return self.reply(workspace.intelligence.facets(query.get('key','')))
@@ -409,22 +390,14 @@ class LanHandler(BaseHTTPRequestHandler):
     def do_POST(self):
         try:
             self.boundary();route=urlsplit(self.path).path;workspace=self.server.workspace
-            if route not in ('/api/login','/api/logout','/api/image','/api/reference'):return self.reply({'error':'同事工作台仅支持查阅'},405)
+            if route not in ('/api/image','/api/reference'):return self.reply({'error':'同事工作台仅支持查阅'},405)
             length=int(self.headers.get('Content-Length','0'))
-            if route!='/api/login':workspace.authorize(self.headers.get('Cookie'))
             if route=='/api/reference':
                 from reference_upload import receive
                 return self.reply(receive(self.rfile,length,self.headers.get('X-Reference-Name',''),workspace.sku.store.root))
-            if length<=0 or route not in ('/api/image',) and length>4096:raise ValueError('请求大小无效')
+            if length<=0:raise ValueError('请求大小无效')
             body=json.loads(self.rfile.read(length))
             if not isinstance(body,dict):raise ValueError('请求格式无效')
-            if route=='/api/login':
-                token=workspace.login(body.get('code'),self.client_address[0])
-                return self.reply({'ok':True},cookie=f'{workspace.cookie_name}={token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=43200' if token else None)
-            token=workspace.authorize(self.headers.get('Cookie'))
-            if route=='/api/logout':
-                with workspace.lock:workspace.sessions.pop(token,None)
-                return self.reply({'ok':True},cookie=f'{workspace.cookie_name}=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0')
             return self.reply(workspace.image(body))
         except PermissionError as exc:return self.reply({'error':str(exc)},401)
         except (ValueError,KeyError,TypeError,OSError,RuntimeError,sqlite3.Error) as exc:return self.reply({'error':str(exc)[:300]},400)

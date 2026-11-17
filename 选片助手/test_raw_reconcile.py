@@ -96,7 +96,7 @@ class RawWorkflowTests(unittest.TestCase):
         before=[sha(p) for p in (self.target,companion)];self.link.process_session(target['session']);self.assertEqual([sha(p) for p in (self.target,companion)],before)
     def test_existing_raw_rating_conflict_requires_explicit_overwrite(self):
         # 只制造星级冲突，不引入另一永久资产身份（身份冲突不能被星级覆盖授权绕过）。
-        temp,target,journal=self.archive.writer.write(self.target,{'Rating':5},sha(self.target));temp.replace(target)
+        payload,target,journal=self.archive.writer.write(self.target,{'Rating':5},sha(self.target));self.archive.writer.commit(payload,target,journal)
         sid=self.scan(self.raw);self.link.process_session(sid);pair=self.link.state(sid)['pairs'][0];self.assertEqual(pair['status'],'review',pair)
         self.link.review(pair['id'],self.sid,self.cid,overwrite=True)
         for _ in range(4):self.archive.process_one();self.link.refresh_completed()

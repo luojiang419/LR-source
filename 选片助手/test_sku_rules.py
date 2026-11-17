@@ -99,7 +99,8 @@ class RuleIntegrationTests(unittest.TestCase):
         self.sku.enqueue(self.sid,self.ids[1])
         with patch.object(self.sku,method,side_effect=error) as failed:
             self.sku.tick()
-            self.assertGreaterEqual(failed.call_count,2)  # 结果保存和自动确认均尝试后续任务。
+            if method=='export':failed.assert_not_called()  # 拍摄阶段已改为显式导出。
+            else:self.assertGreaterEqual(failed.call_count,2)
         from capture_parsing import capture_status
         feedback=capture_status(self.store,self.sku,self.archive,None,self.sid,self.ids[1])['ocr']
         self.assertEqual(feedback['status'],'confirmed');self.assertEqual(feedback['codes'],[code])

@@ -31,7 +31,11 @@ class SearchFolderTests(unittest.TestCase):
                 for index,name in enumerate(names):
                     path=target/name;Image.new('RGB',(8,8),'red').save(path);os.utime(path,(1000+index if group=='甲' else 1,)*2)
             catalog=AssetCatalog(base/'data');catalog.add_root(str(photos))
-            with patch.object(Path,'stat',side_effect=AssertionError('查询不应访问源文件')):
+            original_stat=Path.stat
+            def guarded_stat(path,*args,**kwargs):
+                if path==photos or path.is_relative_to(photos):raise AssertionError('查询不应访问源文件')
+                return original_stat(path,*args,**kwargs)
+            with patch.object(Path,'stat',guarded_stat):
                 result=catalog.items(text='A001');tree=catalog.tree(text='A001',media='image')
                 self.assertEqual(result['total'],126);self.assertEqual(len(result['rows']),120)
                 self.assertEqual({row['folder'] for row in result['rows']},{'甲'})
@@ -118,6 +122,8 @@ class SearchFolderBrowserTests(unittest.TestCase):
                         page=browser.new_page(viewport={'width':1600,'height':1000},reduced_motion='reduce');errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
                         page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='domcontentloaded');page.locator('#asset-archive-open').click()
                         page.wait_for_selector('#catalog-tree [data-folder="甲"]')
+                        page.locator('#catalog-tree summary[data-folder="乙"]').click()
+                        page.wait_for_selector('#catalog-tree [data-folder="乙/子目录"]')
                         entered=threading.Event();release=threading.Event();original_items=catalog.items
                         def slow_items(*args,**kwargs):
                             if len(args)>1 and args[1]=='甲' and not release.is_set():entered.set();release.wait(10)
@@ -158,7 +164,7 @@ class SearchFolderBrowserTests(unittest.TestCase):
                         page.locator('#catalog-all-search-folders').click();page.wait_for_function("()=>document.querySelectorAll('#catalog-grid .catalog-card').length===3")
                         cards=page.locator('#catalog-grid .catalog-card');names=cards.locator('img').evaluate_all('(nodes)=>nodes.map(node=>node.alt)')
                         cards.first.dblclick();page.wait_for_selector('#asset-viewer-title')
-                        self.assertEqual(page.locator('#asset-viewer-title').inner_text(),names[0]);page.locator('#asset-viewer-next').click()
+                        self.assertEqual(page.locator('#asset-viewer-title').inner_text(),names[0]);page.keyboard.press('ArrowRight')
                         self.assertEqual(page.locator('#asset-viewer-title').inner_text(),names[1]);page.locator('#asset-viewer-close').click()
                         out=ROOT/'build/archive-search-nas-idle';out.mkdir(parents=True,exist_ok=True)
                         for theme in ('dark','light','pure-white','hardcore'):
@@ -177,11 +183,13 @@ class SearchFolderBrowserTests(unittest.TestCase):
                         search.fill('');page.wait_for_function("()=>document.querySelectorAll('#catalog-grid .catalog-card').length===2")
                         self.assertTrue(page.locator('#catalog-tree [data-folder="甲"]').evaluate('(node)=>node.classList.contains("active")'))
                         self.assertFalse(page.locator('#catalog-all-search-folders').is_visible())
-                        entered=threading.Event();release=threading.Event();original=catalog.tree
-                        def delayed(text='',media=''):
+                        entered=threading.Event();release=threading.Event();original=catalog.items
+                        def delayed(*args,**kwargs):
+                            text=kwargs.get('text',args[6] if len(args)>6 else '')
                             if text=='A001':entered.set();release.wait(10)
-                            return original(text,media)
-                        with patch.object(catalog,'tree',side_effect=delayed):
+                            return original(*args,**kwargs)
+                        # 搜索目录已随 items(include_tree=True) 同快照返回。
+                        with patch.object(catalog,'items',side_effect=delayed):
                             search.fill('A001');self.assertTrue(entered.wait(5));search.fill('B002')
                             page.wait_for_function("()=>document.querySelectorAll('#catalog-grid .catalog-card').length===1&&document.getElementById('catalog-tree').textContent.includes('无匹配')")
                             release.set();page.wait_for_timeout(200)

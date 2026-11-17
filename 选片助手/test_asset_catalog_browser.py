@@ -125,10 +125,7 @@ class AssetCatalogBrowserTests(unittest.TestCase):
                         page.wait_for_selector('[data-db-sku]');page.locator('[data-db-sku]').first.click()
                         page.wait_for_selector('#sku-database-grid .catalog-card')
                         page.screenshot(path=str(out/'populated.png'))
-                        page.locator('#asset-analysis-open').click()
-                        self.assertEqual(page.locator('.app-header h2:visible').inner_text(), '解析任务')
-                        self.assertEqual(page.locator('#analysis-dialog h2:visible').count(), 0)
-                        page.screenshot(path=str(out/'analysis-compact.png'))
+                        self.assertEqual(page.locator('#asset-analysis-open, #analysis-dialog').count(), 0)
                         self.assertFalse(errors, errors)
                     finally:
                         browser.close()

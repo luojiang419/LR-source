@@ -61,6 +61,26 @@ class ImageCacheTests(unittest.TestCase):
         self.assertTrue(first.exists());self.assertFalse(second.exists());self.assertEqual(unknown.read_bytes(),b'keep')
         self.assertEqual(self.cache.state()['images'],2);self.assertLessEqual(self.cache.state()['bytes'],budget.limit)
 
+    def test_publish_with_free_capacity_keeps_read_touches_batched(self):
+        out=io.BytesIO();Image.new('RGB',(50,30),'teal').save(out,format='JPEG');payload=out.getvalue()
+        archive=previews.cache_for(self.data/'catalog_previews');budget=self.cache.budget
+        def put(cache,key):
+            record={'fingerprint':key};target=cache.folder/previews.cache_name(record,480)
+            temp=target.with_suffix('.tmp');temp.write_bytes(payload);cache.publish(temp,target,record,480,False)
+            return target
+        first=put(self.cache,'recent')
+        with self.cache.connect() as c:c.execute('UPDATE previews SET accessed=1 WHERE name=?',(first.name,))
+        self.cache.get(first.name,read=True)
+        second=put(archive,'older')
+        with self.cache.connect() as c:self.assertEqual(c.execute('SELECT accessed FROM previews WHERE name=?',(first.name,)).fetchone()[0],1)
+        self.assertIn(first.name,self.cache._touches)
+        # 真正淘汰前刷新记录，跨两类目录仍保留最近浏览者。
+        with archive.connect() as c:c.execute('UPDATE previews SET accessed=2 WHERE name=?',(second.name,))
+        budget.limit=2*len(payload)
+        for cache in budget.caches:cache.limit=budget.limit
+        put(archive,'incoming')
+        self.assertTrue(first.exists());self.assertFalse(second.exists())
+
     def test_all_small_previews_are_processed_before_large_and_rescan_deduplicates(self):
         records=self.records();worker=previews.PreviewWarmer(self.cache,None,autostart=False)
         worker.enqueue(self.photos,records);edges=[];original=media._preview
@@ -126,11 +146,13 @@ class ImageCacheTests(unittest.TestCase):
         self.records(1);catalog=AssetCatalog(self.data);root=catalog.add_root(str(self.photos))['root_id']
         item=catalog.items()['rows'][0]
         for size in (420,1800):catalog.preview(item['id'],size)
+        before=self.cache.state()['images']
         worker=previews.PreviewWarmer(self.cache,None,autostart=False,catalog=catalog)
         catalog.on_previews=worker.enqueue
         with patch.object(media,'_companion_preview',side_effect=AssertionError('不应重建旧缓存')):
             catalog.scan(root);self.drain(worker)
-        self.assertEqual(self.cache.state()['images'],3)
+        self.assertEqual(self.cache.state()['images'],before)
+        self.assertEqual(self.cache.state()['failed'],0)
 
     def test_restart_resumes_large_stage_without_rebuilding_small(self):
         record=self.records(1)[0];worker=previews.PreviewWarmer(self.cache,None,autostart=False)

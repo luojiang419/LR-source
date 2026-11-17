@@ -134,16 +134,40 @@ class MetadataBackupTests(unittest.TestCase):
         with self.store.connect() as c:self.assertEqual(c.execute('SELECT count(*) FROM sessions').fetchone()[0], 0)
         self.assertEqual(list(self.sku.root.iterdir()), [])
 
-    def test_conflict_rolls_back_all_databases_and_preserves_local_data(self):
+    def test_merge_keeps_local_conflicts_and_adds_independent_records(self):
         import_metadata(self.sku, self.content)
         with self.sku.connect() as c:c.execute("UPDATE library_bins SET name='本机修改'")
         def conflict(backup):
             session = copy.deepcopy(backup['payload']['databases']['catalog']['sessions'][0]);session['id'] = 'must-roll-back'
             backup['payload']['databases']['catalog']['sessions'].append(session)
             backup['payload']['databases']['sku']['library_bins'][0]['name'] = '不同备份'
-        with self.assertRaisesRegex(ValueError, '冲突'):import_metadata(self.sku, self.changed(conflict))
-        self.assertIsNone(self.store.session('must-roll-back'))
+        imported=import_metadata(self.sku,self.changed(conflict))
+        self.assertGreater(imported['conflicts'],0)
+        self.assertIsNotNone(self.store.session('must-roll-back'))
         with self.sku.connect() as c:self.assertEqual(c.execute('SELECT name FROM library_bins').fetchone()[0], '本机修改')
+
+    def test_replace_removes_local_business_rows_and_reimport_replaces_same_backup(self):
+        local=Path(self.target_temp.name)/'local';local.mkdir();sid=self.store.ensure_live_session(local)
+        local_bin=manage(self.sku,self.archive,{'action':'create_bin','name':'本机独有'})['bin_id']
+        result=import_metadata(self.sku,self.content,mode='replace')
+        self.assertEqual(result['mode'],'replace');self.assertIsNone(self.store.session(sid))
+        with self.sku.connect() as c:self.assertIsNone(c.execute('SELECT 1 FROM library_bins WHERE id=?',(local_bin,)).fetchone())
+        with self.sku.connect() as c:c.execute("UPDATE library_bins SET name='已改动'")
+        again=import_metadata(self.sku,self.content,mode='replace');self.assertFalse(again['already_imported'])
+        with self.sku.connect() as c:self.assertNotEqual(c.execute('SELECT name FROM library_bins').fetchone()[0],'已改动')
+
+    def test_invalid_replace_rolls_back_original_database(self):
+        import_metadata(self.sku,self.content)
+        with self.sku.connect() as c:before=[tuple(r) for r in c.execute('SELECT * FROM library_bins')]
+        def invalid(backup):backup['payload']['databases']['sku']['library_bins'][0]['unsupported_column']='bad'
+        with self.assertRaisesRegex(ValueError,'字段'):import_metadata(self.sku,self.changed(invalid),mode='replace')
+        with self.sku.connect() as c:self.assertEqual([tuple(r) for r in c.execute('SELECT * FROM library_bins')],before)
+        self.assertIsNotNone(self.store.session(self.f.sid))
+
+    def test_same_content_reexport_is_skipped_and_invalid_mode_does_not_mutate(self):
+        first=import_metadata(self.sku,self.content);self.assertEqual(first['mode'],'merge')
+        duplicate=import_metadata(self.sku,self.content);self.assertTrue(duplicate['already_imported'])
+        with self.assertRaisesRegex(ValueError,'模式'):import_metadata(self.sku,self.content,mode='unsafe')
 
     def test_merge_independent_local_session_and_document_failure_rolls_back(self):
         local = Path(self.target_temp.name)/'local-photos';local.mkdir()

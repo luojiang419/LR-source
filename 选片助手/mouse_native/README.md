@@ -15,7 +15,7 @@ python -X utf8 选片助手/mouse_probe.py
 python -X utf8 选片助手/mouse_probe.py --capture --seconds 30 --output build/mouse-probe.json
 ```
 
-第二条命令只统计输入，不写照片；到时或按 `Ctrl+Alt+F11` 释放接管。运行前停止正式遥控并正常退出已持有接收器锁的其他末帧进程。
+第二条命令只统计输入，不写照片；到时或按 `Ctrl+Alt+F11` 释放接管。运行前停止正式遥控并正常退出已持有接收器锁的其他SHIYING进程。
 
 设备须已安装教程中匹配的签名驱动。其他驱动版本须先核实协议，不能移除哈希校验冒充兼容。运行时不依赖 USB 项目目录或 HeartRelay 程序。
 

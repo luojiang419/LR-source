@@ -1,8 +1,8 @@
 /* 导航任务灯：持久队列与当前窗口的主动操作合并，轮询本身不计作任务。 */
 (() => {
   'use strict';
-  const tabs={selection:'selection-tab',progress:'sku-open',archive:'asset-archive-open',database:'sku-database-open',analysis:'asset-analysis-open',settings:'app-settings-open'};
-  const names={selection:'现场拍摄',progress:'拍摄进度',archive:'资产归档',database:'SKU 数据库',analysis:'解析任务',settings:'设置'};
+  const tabs={selection:'selection-tab',progress:'sku-open',archive:'asset-archive-open',database:'sku-database-open',settings:'app-settings-open'};
+  const names={selection:'现场拍摄',progress:'拍摄进度',archive:'资产归档',database:'SKU 数据库',settings:'设置'};
   const descriptions={idle:'空闲',busy:'正在工作',paused:'任务已暂停',waiting:'任务等待中',unknown:'状态暂不可用'};
   const local=new Map();let backend={},started=false,timer=null,polling=false;
 
@@ -25,7 +25,7 @@
     if(/^\/api\/mouse\/(poll|heartbeat|target)$/.test(path))return null;
     if(path.startsWith('/api/sku/library'))return ['database','正在更新 SKU 数据库'];
     if(path.startsWith('/api/sku/'))return ['progress','正在处理拍摄任务'];
-    if(/^\/api\/(analysis|parsing)\//.test(path))return ['analysis','正在处理解析任务'];
+    if(/^\/api\/(analysis|parsing)\//.test(path))return ['archive','正在处理解析任务'];
     if(/^\/api\/(catalog|assets|metadata|archive|raw)\//.test(path))return ['archive','正在处理资产任务'];
     if(/^\/api\/(components|mouse|models|model|update|assistant)\//.test(path))return ['settings','正在准备或更新设置'];
     if(/^\/api\/(session|scan|folders|watch)(\/|$)/.test(path))return ['selection','正在处理照片'];

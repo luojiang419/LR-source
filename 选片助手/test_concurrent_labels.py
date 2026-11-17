@@ -26,6 +26,70 @@ class ConcurrentLabelTests(unittest.TestCase):
     def jobs(self):
         with self.sku.connect() as c:return [dict(r) for r in c.execute('SELECT * FROM jobs')]
 
+    def test_selected_visual_model_does_not_delay_ocr_unless_explicitly_bound(self):
+        visual=self.providers.selected('multimodal')['id']
+        self.providers.save({'name':'fast OCR','category':'ocr','protocol':'chat','url':'https://example.invalid','model':'ocr'})
+        ocr=next(p['id'] for p in self.providers.public()['providers'] if p['category']=='ocr')
+        self.providers.select(ocr)
+        self.rate(2);self.sku.tick()
+        self.assertEqual(self.calls,[ocr])
+        self.assertEqual(self.providers.selected('multimodal')['id'],visual)
+        self.providers.bind('sku_label',visual)
+        self.assertEqual([p['id'] for p in self.sku._label_providers()],[ocr,visual])
+        self.assertEqual([p['id'] for p in self.sku._label_providers({'trigger':'full_auto'})],[ocr])
+
+    def test_star_save_does_not_build_whole_document_state(self):
+        from unittest.mock import patch
+        with patch.object(self.sku,'state',side_effect=AssertionError('标星不能读取整份清单')):
+            self.rate(2)
+        self.assertEqual(self.jobs()[0]['status'],'queued')
+
+    def test_label_input_never_waits_for_browser_preview_generation(self):
+        from unittest.mock import patch
+        self.rate(2)
+        with patch('media_engine.preview_bytes',side_effect=AssertionError('OCR不能等待浏览预览生成')):
+            self.sku.tick()
+        self.assertEqual(self.jobs()[0]['status'],'matched')
+        self.assertEqual(len(self.calls),1)
+
+    def test_bulk_ocr_reserves_one_slot_and_dispatches_new_star_without_waiting(self):
+        self.providers.save({'name':'OCR','category':'ocr','protocol':'chat','url':'http://127.0.0.1:1','model':'ocr','select':True})
+        for i in range(2,5):
+            path=self.photos/f'label{i}.JPG';Image.new('RGB',(100,80),'white').save(path)
+            record=media.capture_record(self.photos,path,None,{})
+            self.store.append_live(self.sid,[record]);self.cids.append(record['id'])
+        release=threading.Event();calls=[];latest=threading.Event()
+        def recognize(*_):
+            calls.append(1)
+            if len(calls)<=3:release.wait(8)
+            else:latest.set()
+            return fixture.reading()
+        self.sku.recognizer=recognize
+        self.sku.enqueue_parses(self.sid,self.cids[:4]);self.sku.thread.start()
+        try:
+            self.wait(lambda:len(calls)==3)
+            self.rate(2,self.cids[4]);self.assertTrue(latest.wait(2),'二星没有使用预留的OCR名额')
+            self.assertFalse(release.is_set())
+            self.wait(lambda:any(j['status']=='matched' for j in self.jobs()))
+        finally:release.set();self.sku.close()
+
+    def test_new_star_is_durable_while_previous_result_holds_business_lock(self):
+        from asset_archive import AssetArchive
+        archive=AssetArchive(self.store,autostart=False);self.sku.archive=archive
+        held=threading.Event();release=threading.Event();done=threading.Event();errors=[]
+        def previous():
+            with self.sku.lock:held.set();release.wait(8)
+        def mark():
+            try:self.rate(2)
+            except Exception as exc:errors.append(exc)
+            finally:done.set()
+        owner=threading.Thread(target=previous);owner.start();worker=threading.Thread(target=mark)
+        try:
+            self.assertTrue(held.wait(2));worker.start()
+            self.assertTrue(done.wait(2),'新二星保存仍排在旧款归档业务锁后')
+            self.assertFalse(errors,errors);self.assertEqual(self.jobs()[0]['status'],'queued')
+        finally:release.set();owner.join(5);worker.join(5);self.sku.archive=None;archive.close()
+
     def test_latest_api_label_bypasses_occupied_shared_capacity_and_bulk_read(self):
         first=threading.Event();second=threading.Event();release=threading.Event();calls=[]
         self.sku.scheduler=VisionScheduler(limit=1)
@@ -116,23 +180,32 @@ class ConcurrentLabelTests(unittest.TestCase):
         finally:release.set();self.sku.close()
 
     def test_local_models_keep_the_shared_capacity_limit(self):
+        from unittest.mock import patch
         self.providers.set_builtin(True)
-        self.assertFalse(self.sku._parallel_labels_enabled())
-        self.rate(2);self.sku._dispatch_labels();self.assertFalse(self.sku.label_workers)
-        self.assertEqual(self.jobs()[0]['status'],'queued')
+        self.assertTrue(self.sku._parallel_labels_enabled())
+        entered=threading.Event();release=threading.Event()
+        def run(job,**kwargs):entered.set();release.wait(5)
+        with patch.object(self.sku,'_process_label',side_effect=run):
+            try:
+                self.rate(2);self.rate(2,self.cids[-1]);self.sku._dispatch_labels();self.assertTrue(entered.wait(2))
+                self.sku._dispatch_labels();self.assertEqual(len(self.sku.label_workers),1)
+                self.assertEqual(sum(j['status']=='queued' for j in self.jobs()),1)
+            finally:release.set();self.sku.close()
 
     def test_parallel_api_request_is_sent_before_slow_archival_reservation(self):
-        from types import SimpleNamespace
+        from asset_archive import AssetArchive
         model=threading.Event();reserved=threading.Event();release=threading.Event()
         def reserve(_):reserved.set();release.wait(5)
-        self.sku.archive=SimpleNamespace(reserve=reserve)
+        archive=AssetArchive(self.store,autostart=False);archive.reserve=reserve;self.sku.archive=archive
         self.sku.require_sku_choice=True;self.sku.set_sku_rules([])
         def recognize(*_):model.set();return fixture.reading()
         self.sku.recognizer=recognize;self.sku.thread.start()
         try:
-            self.rate(2);self.assertTrue(model.wait(2));self.assertTrue(reserved.wait(2))
+            self.rate(2);self.assertTrue(model.wait(2));self.wait(lambda:self.jobs()[0]['status']=='review')
+            self.assertFalse(reserved.is_set(),'API结果不应等待同步区间扫描')
+            with self.sku.connect() as c:self.assertTrue(c.execute('SELECT 1 FROM archive_events WHERE delivered=0').fetchone())
             self.assertFalse(release.is_set())
-        finally:release.set();self.sku.close()
+        finally:release.set();self.sku.close();archive.close()
 
 
 class ConcurrentArchiveTests(unittest.TestCase):

@@ -167,6 +167,64 @@ class CatalogMetadataTests(unittest.TestCase):
     def _all_items(self):
         with self.catalog.connect() as c:return [dict(row) for row in c.execute('SELECT * FROM items')]
 
+    def test_browsed_rows_read_embedded_sku_before_background_backlog(self):
+        from sku_match import normalize
+        from metadata_writer import MetadataWriter
+        writer=MetadataWriter(ROOT,self.catalog.data)
+        try:
+            writer.run('-overwrite_original','-XMP-dc:Subject=SKU:LC7832743-P1',self.path)
+        finally:writer.close()
+        self.catalog.scan(self.root)
+        with self.catalog.connect() as c:
+            c.execute("UPDATE catalog_metadata SET priority=-1")
+            for number in range(100):
+                c.execute('''INSERT INTO items(id,root,path,relative,folder,name,extension,size,modified,fingerprint,last_seen,pair_key)
+                    VALUES(?,?,?,?,?,?,?,?,?,?,?,?)''',
+                    (str(number),self.root,str(self.photos/f'{number}.jpg'),f'{number}.jpg','/',f'{number}.jpg','.jpg',1,1,str(number),1,str(number)))
+        rows=self.catalog.rating_rows([self.item])
+        self.assertEqual(rows[0]['metadata_status'],'queued')
+        self.catalog.metadata.process_one()
+        row=self.catalog.rating_rows([self.item])[0]
+        self.assertEqual(row['metadata_status'],'ready')
+        self.assertEqual(row['sku'],'LC7832743-P1')
+        self.assertEqual(self.catalog.item(self.item)['normalized'],normalize('LC7832743-P1'))
+        self.catalog.scan(self.root)
+        self.assertEqual(self.catalog.item(self.item)['sku'],'LC7832743-P1','文件未变时重扫不能清除已读SKU')
+        with self.catalog.connect() as c:
+            self.assertEqual(c.execute("SELECT count(*) FROM catalog_metadata WHERE status='queued'").fetchone()[0],100)
+        with patch.object(self.catalog.metadata,'_extract',side_effect=AssertionError('已完成项不应重新读取')):
+            self.catalog.rating_rows([self.item])
+            with self.catalog.connect() as c:
+                self.assertEqual(c.execute('SELECT status FROM catalog_metadata WHERE item=?',(self.item,)).fetchone()[0],'ready')
+        Image.new('RGB',(50,40),'red').save(self.path)
+        self.catalog.scan(self.root)
+        self.assertFalse(self.catalog.item(self.item)['sku'],'文件版本改变后须使旧嵌入SKU失效')
+
+    def test_browsed_metadata_priority_does_not_wait_for_writer_lock(self):
+        with self.catalog.connect() as c:
+            c.execute('BEGIN IMMEDIATE')
+            started=time.monotonic()
+            self.assertEqual(self.catalog.rating_rows([self.item])[0]['id'],self.item)
+            self.assertLess(time.monotonic()-started,1)
+
+    def test_browsed_metadata_continues_while_other_share_is_blocked(self):
+        started=threading.Event();release=threading.Event();visible=threading.Event()
+        original=self.catalog.metadata._extract
+        other=self.photos/'other.jpg';Image.new('RGB',(20,10),'red').save(other);self.catalog.scan(self.root)
+        other_id=next(r['id'] for r in self._all_items() if r['name']=='other.jpg')
+        with self.catalog.connect() as c:c.execute('UPDATE catalog_metadata SET updated=1 WHERE item=?',(other_id,))
+        def held(row):
+            if row['id']==self.item:started.set();release.wait(10)
+            else:visible.set()
+            return original(row)
+        try:
+            with patch.object(self.catalog.metadata,'_extract',side_effect=held):
+                self.catalog.metadata.start();self.assertTrue(started.wait(5))
+                self.catalog.rating_rows([other_id])
+                self.assertTrue(visible.wait(3),'后台共享盘卡住时仍须处理浏览页资料')
+                release.set();self.wait_ready()
+        finally:release.set()
+
     def test_legacy_queue_backfills_beyond_first_batch(self):
         with self.catalog.connect() as c:
             for number in range(519):
@@ -177,13 +235,19 @@ class CatalogMetadataTests(unittest.TestCase):
         payload={'capture':{},'media':{},'description':{}}
         with patch.object(self.catalog.metadata,'_extract',return_value=(payload,'migration')):
             self.catalog.metadata.start()
-            until=time.monotonic()+35
+            # 后台每项主动让出30ms，加上真实SQLite提交；慢盘/并行构建下仍须等全批完成。
+            until=time.monotonic()+60
             while self.catalog.metadata.state()['pending']:
                 if time.monotonic()>until:self.fail(str(self.catalog.metadata.state()))
                 time.sleep(.03)
         self.assertEqual(self.catalog.metadata.state()['ready'],520)
 
     def test_shared_catalog_schema_refresh_keeps_browsing_available(self):
+        # 只有旧定义才需要替换；正常重启不得再重建视图。
+        with self.catalog.connect() as connection:
+            sql=connection.execute("SELECT sql FROM sqlite_master WHERE name='capture_items'").fetchone()[0]
+            connection.execute('DROP VIEW capture_items')
+            connection.execute(sql.replace('a.online=1','a.online > 0'))
         started=threading.Event();release=threading.Event();errors=[]
         original=AssetCatalog.connect
         @contextmanager
@@ -223,6 +287,45 @@ class CatalogMetadataTests(unittest.TestCase):
             self.catalog.metadata.start();self.wait_ready()
             self.assertEqual(self.catalog.metadata.cached(self.item)['status'],'ready')
         finally:library.close()
+
+    def test_browser_browsing_alone_updates_sku_after_metadata_finishes(self):
+        import server
+        from asset_archive import AssetArchive
+        from catalog_store import Store
+        from model_providers import Providers
+        from playwright.sync_api import sync_playwright
+        self.sidecar('已有款号')
+        side=self.path.with_suffix('.xmp')
+        side.write_text(side.read_text(encoding='utf8').replace('蓝色丝绸','SKU:LC7832743-P1'),encoding='utf8')
+        original=self.catalog.metadata._extract
+        started=threading.Event();release=threading.Event()
+        def held(row):
+            started.set();release.wait(20);return original(row)
+        store=Store(self.catalog.data,ROOT);archive=AssetArchive(store,autostart=False)
+        with ExitStack() as stack:
+            for key,value in dict(STORE=store,DATA=store.data,CATALOG=self.catalog,ARCHIVE=archive,
+                MODELS=Providers(store.data),SKU=None,WATCH=None,MOUSE=None,RAWLINK=None,FILESEARCH=None,
+                UPDATES=None,ANALYSIS=None,REFERENCES=None,PREVIEWS=None).items():
+                stack.enter_context(patch.object(server,key,value))
+            http=ThreadingHTTPServer(('127.0.0.1',0),server.Handler);http.daemon_threads=True
+            threading.Thread(target=http.serve_forever,daemon=True).start()
+            try:
+                with patch.object(self.catalog.metadata,'_extract',side_effect=held):
+                    self.catalog.metadata.start();self.assertTrue(started.wait(5))
+                    with sync_playwright() as pw:
+                        browser=pw.chromium.launch(executable_path='C:/Program Files/Google/Chrome/Application/chrome.exe',headless=True)
+                        try:
+                            page=browser.new_page(viewport={'width':1440,'height':1000})
+                            page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='domcontentloaded')
+                            page.locator('#asset-archive-open').click()
+                            page.wait_for_selector('#catalog-grid .catalog-card-sku')
+                            self.assertIn('未确认',page.locator('#catalog-grid .catalog-card-sku').inner_text())
+                            release.set()
+                            page.wait_for_function("()=>document.querySelector('#catalog-grid .catalog-card-sku')?.textContent.includes('LC7832743-P1')")
+                            out=ROOT/'build/metadata-visible-fix';out.mkdir(parents=True,exist_ok=True)
+                            page.screenshot(path=str(out/'sku-auto-update.png'))
+                        finally:release.set();browser.close()
+            finally:release.set();http.shutdown();http.server_close();archive.close()
 
     def test_browser_pending_details_update_search_and_close_without_stale_polling(self):
         import server

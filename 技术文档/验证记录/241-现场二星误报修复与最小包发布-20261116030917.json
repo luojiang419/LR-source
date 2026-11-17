@@ -1,0 +1,120 @@
+{
+  "publication": {
+    "published": true,
+    "repository": "jiangjiang419/framekeep-updates",
+    "version": "1.0.1",
+    "releaseId": "20261116030917",
+    "supported_baselines": [
+      "20261116021119"
+    ],
+    "package_files": 11,
+    "contains_ocr_or_runtime": false,
+    "artifacts": [
+      {
+        "path": "minimal/20261116030917/SHIYING-二星解析状态修复-最小更新包-20261116030917.zip",
+        "bytes": 14158625,
+        "sha256": "22b086e162fd3ac90f418bf53e47b869094f8c92cccee4b9d533bcde670ca39d",
+        "url": "https://modelscope.cn/api/v1/models/jiangjiang419/framekeep-updates/repo?Revision=master&FilePath=minimal%2F20261116030917%2FSHIYING-%E4%BA%8C%E6%98%9F%E8%A7%A3%E6%9E%90%E7%8A%B6%E6%80%81%E4%BF%AE%E5%A4%8D-%E6%9C%80%E5%B0%8F%E6%9B%B4%E6%96%B0%E5%8C%85-20261116030917.zip"
+      },
+      {
+        "path": "minimal/20261116030917/SHIYING-Windows-x64.zip",
+        "bytes": 13937466,
+        "sha256": "d883552fbb45a390e62a3dddbb81c4d2b642568706b60d3929f62e16d469bd1c",
+        "url": "https://modelscope.cn/api/v1/models/jiangjiang419/framekeep-updates/repo?Revision=master&FilePath=minimal%2F20261116030917%2FSHIYING-Windows-x64.zip"
+      },
+      {
+        "path": "minimal/20261116030917/envelope.json",
+        "bytes": 2527,
+        "sha256": "421087393d815b45d14bb856a59c5554569c8ff8fb2b62391f3e44fd8c9fe371",
+        "url": "https://modelscope.cn/api/v1/models/jiangjiang419/framekeep-updates/repo?Revision=master&FilePath=minimal%2F20261116030917%2Fenvelope.json",
+        "local_bytes": 2530,
+        "local_sha256": "3c79051057f56edddecb164a6d6a96e8cffe2359f830b0d0fa94c839e522acb9"
+      }
+    ],
+    "download_url": "https://modelscope.cn/api/v1/models/jiangjiang419/framekeep-updates/repo?Revision=master&FilePath=minimal%2F20261116030917%2FSHIYING-%E4%BA%8C%E6%98%9F%E8%A7%A3%E6%9E%90%E7%8A%B6%E6%80%81%E4%BF%AE%E5%A4%8D-%E6%9C%80%E5%B0%8F%E6%9B%B4%E6%96%B0%E5%8C%85-20261116030917.zip",
+    "latest_full_unchanged": true,
+    "full_release": "20261116021119",
+    "anonymous_verified": true,
+    "local_install_modified": false
+  },
+  "incremental_verification": {
+    "status": "passed",
+    "baselines": {
+      "20261116021119": {
+        "native_launcher_prepared": true,
+        "signed_package_validated": true,
+        "updated_files": 11,
+        "rollback_verified": true,
+        "runtime_files_preserved": 248,
+        "user_data_preserved": true,
+        "next_worker_valid": true,
+        "wrong_baseline_rejected": true,
+        "root": "G:\\app\\LR\\build\\task241-enqueue-diagnostics\\minimal-qa-r3\\20261116021119\\安装目录"
+      }
+    }
+  },
+  "frozen_verification": {
+    "status": "passed",
+    "frozen_engine": "G:\\app\\LR\\build\\task241-enqueue-diagnostics\\minimal-qa-r3\\20261116021119\\安装目录\\engine\\framekeep-engine.exe",
+    "actual_http_model_calls": 1,
+    "model": "local mock fixture",
+    "injected_warning_http_statuses": [
+      200
+    ],
+    "feedback": "OCR / 款号识别\nLC241999\nSKU · 已确认\n图片就绪\n模型准备\nOCR 解析\n完成",
+    "page_errors": [],
+    "production_data_used": false
+  },
+  "source_tests": {
+    "new_cases": 3,
+    "combined_cases": 20,
+    "combined_initial_passed": 19,
+    "initial_environment_error": "ExifTool 子进程在初始化期间超时；该失败用例单独复测通过。",
+    "failed_case_rerun_passed": 1,
+    "update_system": 90
+  },
+  "limitations": [
+    "客户机底层回调异常的具体堆栈尚未取得；本次修复瞬时回调异常被直接误报为解析最终失败的状态判断。",
+    "独立最小包支持基线 1.0.1 / 20261116021119；不替换 public/latest.json。"
+  ],
+  "cleanup": {
+    "deleted_bytes": 4235958538,
+    "free_before": 151218532352,
+    "free_after": 155461918720,
+    "items": [
+      {
+        "path": "G:\\app\\LR\\build\\task241-enqueue-diagnostics\\minimal-qa",
+        "deleted_bytes": 865106195
+      },
+      {
+        "path": "G:\\app\\LR\\build\\task241-enqueue-diagnostics\\minimal-qa-r2",
+        "deleted_bytes": 942340147
+      },
+      {
+        "path": "G:\\app\\LR\\build\\task241-enqueue-diagnostics\\minimal-qa-r3",
+        "deleted_bytes": 939635192
+      },
+      {
+        "path": "G:\\app\\LR\\build\\task241-enqueue-diagnostics\\engine-dist",
+        "deleted_bytes": 747858632
+      },
+      {
+        "path": "G:\\app\\LR\\build\\task241-enqueue-diagnostics\\minimal",
+        "deleted_bytes": 15173256
+      },
+      {
+        "path": "G:\\app\\LR\\build\\task241-enqueue-diagnostics\\minimal-final",
+        "deleted_bytes": 14770031
+      },
+      {
+        "path": "G:\\app\\LR\\dist\\SHIYING-现场二星解析状态修复-无模型安装包-20261116",
+        "deleted_bytes": 365946754
+      },
+      {
+        "path": "G:\\app\\LR\\dist\\SHIYING-现场二星解析状态修复-无模型安装包-20261116.zip",
+        "deleted_bytes": 345128331
+      }
+    ],
+    "preserved": "正式最小包、签名快照、源代码、截图/报告、本机生产安装和全部业务数据与模型"
+  }
+}

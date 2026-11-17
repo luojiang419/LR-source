@@ -32,7 +32,7 @@
   window.FramekeepRawSync={review(id){action(async()=>{state=await api('/api/raw-sync');targetId=id;offset=0;signature='';dialog.showModal();await load()})}};
   async function add(folder){const data=await api('/api/raw-sync/targets',{folder});state.targets=data.targets;targetId=data.target_id;offset=0;signature='';render();await load();try{localStorage.setItem('framekeep-archive-target',targetId)}catch{}}
   $('raw-sync-browse').onclick=()=>action(async()=>{const folder=window.FramekeepDesktop?(await FramekeepDesktop.chooseFolders())?.[0]:window.prompt('最终拷贝路径',selected()?.folder||'');if(folder?.trim())await add(folder)});
-  $('raw-sync-start').onclick=()=>action(async()=>{if(!targetId)throw new Error('请先添加最终归档文件夹');state=await api('/api/raw-sync/sync-target',{target_id:targetId});offset=0;signature='';render();window.FramekeepMetadataTasks?.submitted(targetId);await FramekeepIO.refreshFolders()});
+  $('raw-sync-start').onclick=()=>action(async()=>{if(!targetId)throw new Error('请先添加最终归档文件夹');state=await api('/api/raw-sync/sync-target',{target_id:targetId});offset=0;signature='';render();await FramekeepIO.refreshFolders()});
   $('raw-sync-jobs').onclick=e=>{const b=e.target.closest('button'),card=b?.closest('[data-raw-pair]');if(!card)return;action(async()=>{
     if(b.matches('[data-raw-review]')){const value=card.querySelector('[data-raw-source]').value;if(!value)throw new Error('请先选择对应 JPG');const [source_session,source_capture]=value.split('|');state=await api('/api/raw-sync/review',{pair_id:card.dataset.rawPair,source_session,source_capture,overwrite:card.querySelector('[data-raw-overwrite]').checked})}
     else state=await api('/api/raw-sync/retry',{pair_id:card.dataset.rawPair});signature='';render();

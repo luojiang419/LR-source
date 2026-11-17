@@ -1033,8 +1033,10 @@ dependencies = [
 
 [[package]]
 name = "framekeep-desktop"
-version = "1.0.0"
+version = "1.0.3"
 dependencies = [
+ "base64 0.22.1",
+ "png 0.17.16",
  "serde",
  "serde_json",
  "tauri",
@@ -1042,6 +1044,7 @@ dependencies = [
  "tauri-plugin-dialog",
  "tauri-plugin-single-instance",
  "uuid",
+ "windows-sys 0.61.2",
  "winreg",
 ]
 

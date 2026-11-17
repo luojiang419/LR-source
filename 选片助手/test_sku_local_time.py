@@ -77,7 +77,7 @@ class LocalTimeTests(unittest.TestCase):
                                     page.goto(f'http://127.0.0.1:{http.server_port}',wait_until='domcontentloaded')
                                     page.locator('#sku-open').click();node=page.locator('[data-sku-row="'+row['id']+'"]')
                                     expect(node).to_be_visible()
-                                    index=page.locator('#sku-rows th').all_text_contents().index('记录时间')
+                                    index=page.locator('#sku-rows th').all_text_contents().index('入库时间')
                                     expect(node.locator('td').nth(index)).to_have_text(record_text)
                                     expect(node.locator('.progress-time')).to_have_text(shot_text)
                                     node.locator('[data-completion]').click()

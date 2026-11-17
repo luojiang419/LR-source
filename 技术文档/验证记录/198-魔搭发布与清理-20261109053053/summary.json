@@ -1,0 +1,36 @@
+{
+  "sourceCommit": "76c3ab9",
+  "releaseId": "20261109053053",
+  "version": "1.0.0",
+  "repository": "jiangjiang419/framekeep-updates",
+  "published": true,
+  "anonymous_verified": true,
+  "tests": {
+    "updates": 79,
+    "assistant_configuration": 10,
+    "cpu_ocr": 9
+  },
+  "installer_bytes": 32812544,
+  "installer_sha256": "d299b79e6d2e937200b814c7d32038972f60de23fe54da33d442033bac06d665",
+  "clean_source_only": true,
+  "other_uncommitted_work_excluded": true,
+  "production_install_replaced": false,
+  "cleanup_pending": false,
+  "cleanup": {
+    "protected_source_files": 1456,
+    "source_files_unchanged": 1455,
+    "intended_source_changes": [
+      "更新系统/update-config.json"
+    ],
+    "missing_source_files": [],
+    "installed_program_files_unchanged": 870,
+    "build_removed": true,
+    "dist_removed": true,
+    "runtime_models_preserved": true,
+    "signing_key_preserved": true,
+    "project_config_preserved": true,
+    "deletedGiB": 12.484,
+    "actualFreedGiB": 12.091,
+    "freeGiB": 331.184
+  }
+}

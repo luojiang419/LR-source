@@ -1,4 +1,4 @@
-"""局域网工作台：实际 HTTP、共享数据联动、会话与只读边界。"""
+"""局域网工作台：实际 HTTP、共享数据联动、免码访问与只读边界。"""
 import base64
 from contextlib import closing
 import http.cookiejar
@@ -52,39 +52,30 @@ class LanWorkspaceTests(unittest.TestCase):
             raw=response.read();kind=response.headers.get('Content-Type','')
             return response.code,json.loads(raw) if 'application/json' in kind else raw,dict(response.headers)
 
-    def login(self):
-        status,_,headers=self.call('/api/login',{'code':self.lan.config['access_code']})
+    def assert_access(self):
+        status,_,headers=self.call('/api/state')
         self.assertEqual(status,200);return headers
 
-    def development_access(self):
-        self.lan.close()
-        self.lan=LanWorkspace(self.catalog,self.sku,self.service,fixture.ROOT/'演示方案',require_access_code=False)
-
-    def test_development_without_code_keeps_readonly_and_default_authentication(self):
-        self.development_access()
+    def test_without_code_keeps_readonly_and_network_boundaries(self):
         self.assertEqual(len(self.jar),0)
         status,state,headers=self.call('/api/state')
         self.assertEqual(status,200);self.assertFalse(state['login_required'])
-        self.assertNotIn('Set-Cookie',headers);self.assertEqual(self.lan.state()['access_code'],'')
+        self.assertNotIn('Set-Cookie',headers);self.assertNotIn('access_code',self.lan.state())
         for route in ('/api/changes','/api/progress?view=all','/api/search?q=LC1234','/api/archive'):
             self.assertEqual(self.call(route)[0],200,route)
         self.assertEqual(self.call('/api/image',{'item_id':self.rows[0]['id']})[0],200)
-        self.assertEqual(self.call('/api/login',{'code':'not-needed'})[0],200)
-        self.assertEqual(len(self.jar),0);self.assertEqual(self.lan.sessions,{})
-        for route in ('/api/sku/import','/api/catalog/assign','/api/providers','/api/desktop/shutdown'):
+        self.assertEqual(len(self.jar),0)
+        for route in ('/api/login','/api/logout','/api/sku/import','/api/catalog/assign','/api/providers','/api/desktop/shutdown'):
             self.assertEqual(self.call(route,{})[0],405,route)
-        self.assertEqual(self.call('/api/state',headers={'Origin':'https://evil.invalid'})[0],401)
-        self.assertEqual(self.call('/api/state',headers={'Host':'evil.invalid:'+str(self.port)})[0],401)
-        self.lan.close()
-        self.lan=LanWorkspace(self.catalog,self.sku,self.service,fixture.ROOT/'演示方案')
-        self.assertTrue(self.lan.require_access_code)
-        self.assertEqual(self.call('/api/state')[0],401)
-        self.login();self.assertEqual(self.call('/api/state')[0],200)
+        for headers in ({'Origin':'https://evil.invalid'},{'Host':'evil.invalid:'+str(self.port)},{'Sec-Fetch-Site':'cross-site'}):
+            self.assertEqual(self.call('/api/state',headers=headers)[0],401)
+        from unittest.mock import patch
+        with patch('lan_workspace.local_address',side_effect=[True,False]):
+            self.assertEqual(self.call('/api/state')[0],401)
 
-    def test_development_browser_enters_and_reloads_without_login_or_cookie(self):
+    def test_browser_enters_and_reloads_without_login_or_cookie(self):
         import server
         from unittest.mock import patch
-        self.development_access()
         with patch.object(server,'LANWORKSPACE',self.lan),sync_playwright() as pw:
             browser=pw.chromium.launch(channel='msedge',headless=True)
             try:
@@ -95,42 +86,61 @@ class LanWorkspaceTests(unittest.TestCase):
                     if reload:page.reload(wait_until='domcontentloaded')
                     else:page.goto(self.lan_url,wait_until='domcontentloaded')
                     page.locator('#workspace').wait_for(state='visible')
-                    self.assertTrue(page.locator('#login').is_hidden())
-                    self.assertTrue(page.locator('#logout').is_hidden())
+                    self.assertEqual(page.locator('#login,#access-code').count(),0)
+                    self.assertEqual(page.locator('#logout').count(),0)
                     page.locator('#lan-settings-trigger').focus();page.keyboard.press('ArrowUp')
                     self.assertTrue(page.locator('#theme-cycle').evaluate('(node)=>node===document.activeElement'))
                     page.keyboard.press('Escape')
                     page.locator('#tab-search').click();page.wait_for_selector('#search-grid .lan-card')
-                    page.locator('#tab-archive').click();page.wait_for_selector('#archive-grid .lan-card')
+                    page.locator('#tab-quick').click();page.locator('#quick-query').fill('LC1234');page.wait_for_selector('#quick-grid .lan-quick-card')
                 self.assertEqual(logins,[]);self.assertEqual(context.cookies(),[])
                 page.goto(self.url,wait_until='domcontentloaded');page.locator('#asset-retrieval-open').click()
-                page.locator('#lan-workspace-open').click();page.locator('#lan-sharing-dialog').wait_for(state='visible')
+                page.locator('.retrieval-actions-menu > summary').click();page.locator('#lan-workspace-open').click();page.locator('#lan-sharing-dialog').wait_for(state='visible')
                 for control in ('lan-code','lan-reveal','lan-copy-code','lan-rotate'):
-                    self.assertTrue(page.locator('#'+control).is_hidden(),control)
-                self.assertIn('开发阶段无需访问码',page.locator('#lan-sharing-dialog').inner_text())
+                    self.assertEqual(page.locator('#'+control).count(),0,control)
+                self.assertIn('打开地址即可进入工作台',page.locator('#lan-sharing-dialog').inner_text())
                 self.assertFalse(errors,errors)
             finally:browser.close()
 
-    def test_login_sessions_rotation_and_restart(self):
-        self.assertEqual(self.call('/api/state')[0],401)
-        self.assertEqual(self.call('/api/login',{'code':'wrong'})[0],401)
-        headers=self.login();self.assertIn('HttpOnly',headers['Set-Cookie']);self.assertIn('SameSite=Strict',headers['Set-Cookie'])
-        status,state,_=self.call('/api/state');self.assertEqual(status,200);self.assertEqual(len(state['roots']),1)
-        serialized=json.dumps(state);self.assertNotIn('access_code',serialized);self.assertNotIn(str(self.base),serialized)
-        code=self.lan.config['access_code'];self.lan.configure({'rotate':True});self.assertNotEqual(code,self.lan.config['access_code'])
-        self.assertEqual(self.call('/api/state')[0],401)
-        self.login();self.assertEqual(self.call('/api/logout',{})[0],200);self.assertEqual(self.call('/api/state')[0],401)
+    def test_legacy_config_and_restart_keep_port_without_authentication(self):
+        self.lan.close()
+        self.lan.path.write_text(json.dumps({'enabled':True,'port':self.port,'access_code':{'obsolete':True}}),encoding='utf8')
+        self.lan=LanWorkspace(self.catalog,self.sku,self.service,fixture.ROOT/'演示方案')
+        self.assertTrue(self.lan.state()['enabled']);self.assertEqual(self.lan.state()['port'],self.port)
+        self.assert_access();self.assertFalse(self.call('/api/state')[1]['login_required'])
+        self.assertEqual(self.lan.config,{'enabled':True,'port':self.port})
+        self.lan.configure({'enabled':True,'port':self.port})
+        self.assertEqual(json.loads(self.lan.path.read_text(encoding='utf8')),self.lan.config)
         self.lan.close();self.lan=LanWorkspace(self.catalog,self.sku,self.service,fixture.ROOT/'演示方案')
-        self.assertTrue(self.lan.state()['enabled']);self.login();self.assertEqual(self.call('/api/state')[0],200)
+        self.assertTrue(self.lan.state()['enabled']);self.assert_access();self.assertEqual(len(self.jar),0)
+
+    def test_browser_connection_failure_retries_without_login(self):
+        with sync_playwright() as pw:
+            browser=pw.chromium.launch(channel='msedge',headless=True)
+            try:
+                page=browser.new_page();errors=[];page.on('pageerror',lambda error:errors.append(str(error)))
+                attempts=[]
+                def first_failure(route):
+                    attempts.append(route.request.url)
+                    if len(attempts)==1:route.fulfill(status=503,content_type='application/json',body='{"error":"工作站暂不可用"}')
+                    else:route.continue_()
+                page.route('**/api/state',first_failure)
+                page.goto(self.lan_url,wait_until='domcontentloaded')
+                page.wait_for_function('()=>document.getElementById("startup-message").textContent.includes("连接失败")')
+                self.assertEqual(page.locator('#access-code,#login').count(),0)
+                page.wait_for_selector('#workspace:not([hidden])',timeout=12000)
+                self.assertGreaterEqual(len(attempts),2);self.assertFalse(errors,errors)
+                self.assertEqual(page.context.cookies(),[])
+            finally:browser.close()
 
     def test_invalid_sharing_config_does_not_block_desktop_startup(self):
         self.lan.close();self.lan.path.write_text('{invalid',encoding='utf8')
         self.lan=LanWorkspace(self.catalog,self.sku,self.service,fixture.ROOT/'演示方案')
         self.assertFalse(self.lan.state()['enabled']);self.assertIn('配置不可读',self.lan.state()['error'])
-        self.lan.configure({'enabled':True,'port':self.port});self.login();self.assertEqual(self.call('/api/state')[0],200)
+        self.lan.configure({'enabled':True,'port':self.port});self.assert_access();self.assertEqual(self.call('/api/state')[0],200)
 
     def test_progress_deduplication_and_desktop_changes_visible(self):
-        self.login();_,before,_=self.call('/api/progress?project=plan&sheet=模特图')
+        self.assert_access();_,before,_=self.call('/api/progress?project=plan&sheet=模特图')
         self.assertEqual(before['counts'],{'total':2,'shot':1,'pending':1});self.assertEqual(len(before['rows']),2)
         revision=self.call('/api/changes')[1]['revision']
         with self.sku.connect() as c:c.execute("UPDATE sku_rows SET status='已拍摄',completed_at='2026-10-26T12:00:00+08:00' WHERE id='row3'")
@@ -140,7 +150,7 @@ class LanWorkspaceTests(unittest.TestCase):
         self.assertEqual(self.call('/api/progress/image?row=row1')[2]['Content-Type'],'image/jpeg')
 
     def test_progress_views_keep_source_rows_counts_and_desktop_context(self):
-        self.login();before=self.sku.project()
+        self.assert_access();before=self.sku.project()
         _,sheet,_=self.call('/api/progress?project=plan&sheet=模特图&view=sheet')
         self.assertEqual(sheet['counts'],{'total':2,'shot':1,'pending':1})
         self.assertEqual([r['number'] for r in sheet['rows']],[2,3,4])
@@ -172,7 +182,11 @@ class LanWorkspaceTests(unittest.TestCase):
         # 使用真实工作簿导入的列和图片，覆盖软件端资料在 Web 的还原。
         pid=self.sku.import_file('拍摄清单.xlsx',workbook.fixture_book())['project']['id']
         self.sku.configure(pid,None,'模特图');before=self.sku.project()
-        second=self.sku.import_file('另一份拍摄清单.xlsx',workbook.fixture_book())['project']['id']
+        # 导入按内容去重，不能依赖 ZIP 创建时间刚好不同来生成第二个任务。
+        from zipfile import ZipFile
+        second_book=io.BytesIO(workbook.fixture_book())
+        with ZipFile(second_book,'a') as archive:archive.comment=b'distinct-second-project'
+        second=self.sku.import_file('另一份拍摄清单.xlsx',second_book.getvalue())['project']['id']
         self.sku.activate(pid)
         with sync_playwright() as pw:
             browser=pw.chromium.launch(channel='msedge',headless=True)
@@ -181,17 +195,17 @@ class LanWorkspaceTests(unittest.TestCase):
                 errors=[];writes=[]
                 page.on('pageerror',lambda error:errors.append(str(error)))
                 page.on('request',lambda request:writes.append(request.url) if request.method=='POST' and request.url.endswith(('/import','/configure','/activate','/header','/cover')) else None)
-                page.goto(self.lan_url,wait_until='domcontentloaded');page.locator('#access-code').fill(self.lan.config['access_code']);page.locator('#login-submit').click()
+                page.goto(self.lan_url,wait_until='domcontentloaded')
                 page.wait_for_selector('#workspace:not([hidden])');page.wait_for_selector('#progress-sheets [data-sheet="模特图"]')
                 page.locator('#progress-sheets [data-sheet="模特图"]').click()
-                page.wait_for_function('()=>document.getElementById("progress-head").textContent.includes("拍摄完成时间")')
-                self.assertEqual(page.locator('#progress-head th').all_text_contents(),['序号','原表行','款号','图片','拍摄状态','款号图片','拍摄完成时间','备注'])
+                page.wait_for_function('()=>document.getElementById("progress-head").textContent.includes("备注")')
+                self.assertEqual(page.locator('#progress-head th').all_text_contents(),['序号','原表行','款号','款号图片','标签图片','图片','拍摄状态','拍摄完成时间','备注'])
                 self.assertEqual(page.locator('#progress-rows .lan-sequence').all_text_contents(),['1','2'])
                 self.assertEqual(page.locator('#progress-rows .lan-original-row').all_text_contents(),['2','3'])
                 self.assertEqual(page.locator('#panel-progress input[type=file],#panel-progress [contenteditable=true]').count(),0)
                 self.assertEqual(page.locator('#panel-progress button').filter(has_text='导入').count(),0)
                 self.assertEqual(page.locator('#progress-rows [data-header-key],#progress-rows [data-sku-cover]').count(),0)
-                page.locator('#progress-rows [data-progress-image]').first.click()
+                page.locator('#progress-rows [data-image-title$="表格图片"]').first.click()
                 page.wait_for_selector('#progress-image[open]')
                 page.wait_for_function('()=>document.getElementById("progress-image-content").naturalWidth>0')
                 page.keyboard.press('Escape');self.assertFalse(page.locator('#progress-image').is_visible())
@@ -245,7 +259,7 @@ class LanWorkspaceTests(unittest.TestCase):
             c.execute('''INSERT INTO jobs(id,project,session_id,capture_id,scope,status,captured_at,result,targets)
                 VALUES('label-proof','plan',?,?,'模特图','confirmed','2026-10-26T10:30:00+08:00','{}','[]')''',(sid,record['id']))
             c.execute("UPDATE sku_rows SET completion_job='label-proof' WHERE id='row1'")
-        self.login()
+        self.assert_access()
         status,payload,headers=self.call('/api/progress/image?row=row1&kind=completion')
         self.assertEqual(status,200);self.assertEqual(headers['Content-Type'],'image/jpeg')
         with Image.open(io.BytesIO(payload)) as image:
@@ -257,17 +271,19 @@ class LanWorkspaceTests(unittest.TestCase):
             self.assertEqual(self.call('/api/progress/image?'+suffix)[0],400)
 
     def test_search_archive_details_preview_and_same_database(self):
-        self.login();_,result,_=self.call('/api/search?q=红色');self.assertEqual(len(result['rows']),2)
+        self.assert_access();_,result,_=self.call('/api/search?q=红色');self.assertEqual(len(result['rows']),2)
         item=result['rows'][0];self.assertNotIn('path',item);self.assertNotIn('fingerprint',item)
         _,details,_=self.call('/api/details?item='+item['id']);self.assertTrue(details['parsed']);self.assertEqual(details['frames'][0]['result']['attributes']['color'],'红色')
         status,payload,headers=self.call('/api/preview?item='+item['id']+'&size=4096');self.assertEqual(status,200)
         with Image.open(io.BytesIO(payload)) as image:self.assertLessEqual(max(image.size),2048)
         self.assertEqual(headers['Content-Type'],'image/jpeg')
-        self.catalog.assign(item['id'],'LC9999');self.assertEqual(self.call('/api/search?q=LC9999')[1]['rows'][0]['id'],item['id'])
+        self.catalog.assign(item['id'],'LC9999');
+        while self.service.quick_index.sync():pass
+        self.assertEqual(self.call('/api/search?q=LC9999')[1]['rows'][0]['id'],item['id'])
         self.assertEqual(len(self.call('/api/archive')[1]['rows']),3)
 
     def test_image_search_and_content_removal(self):
-        self.login();item=self.rows[0]
+        self.assert_access();item=self.rows[0]
         status,result,_=self.call('/api/image',{'item_id':item['id']});self.assertEqual(status,200);self.assertTrue(result['rows'])
         status,strict,_=self.call('/api/image',{'item_id':item['id'],'threshold':.99,'limit':100})
         self.assertEqual(status,200);self.assertTrue(all(row['score']>=.99 for row in strict['rows']))
@@ -278,8 +294,22 @@ class LanWorkspaceTests(unittest.TestCase):
         self.assertEqual(self.call('/api/search?q=红色')[1]['rows'],[])
         self.assertEqual(self.call('/api/preview?item='+item['id'])[0],400)
 
+    def test_image_matching_mode_and_media_are_forwarded_to_independent_search(self):
+        from unittest.mock import patch
+        self.assert_access()
+        row={**self.rows[0],'score':.97,'semantic_score':.98,'match_mode':'semantic'}
+        with patch.object(self.service,'image_search',return_value={'rows':[row],'match_mode':'semantic','threshold_applied':.85,
+                'index_state':{'database':'C:/private/assets.db'},'verification_errors':[{'path':'C:/private/photo.jpg','error':'fixture'}]}) as search:
+            status,result,_=self.call('/api/image',{'image':'fixture','threshold':.85,'match_mode':'semantic','media':'image'})
+        self.assertEqual(status,200)
+        self.assertEqual(search.call_args.args[0]['match_mode'],'semantic')
+        self.assertEqual(search.call_args.args[0]['media'],'image')
+        self.assertEqual(result['match_mode'],'semantic');self.assertEqual(result['rows'][0]['match_mode'],'semantic')
+        self.assertNotIn('path',result['rows'][0])
+        self.assertNotIn('index_state',result);self.assertNotIn('verification_errors',result)
+
     def test_local_admin_and_files_never_exposed(self):
-        self.login()
+        self.assert_access()
         for route in ('/api/catalog/assign','/api/lan-workspace','/api/providers','/api/intelligence/control','/api/desktop/shutdown'):
             self.assertEqual(self.call(route,{})[0],405)
         for route in ('/api/state?file=../model-providers.json','/api/search?q=LC1234'):
@@ -287,12 +317,12 @@ class LanWorkspaceTests(unittest.TestCase):
         for route in ('/assets/../lan-workspace.json','/assets/desktop.js','/api/providers','/api/preview?item=../../file'):
             self.assertNotEqual(self.call(route)[0],200)
         self.assertEqual(self.call('/api/state',headers={'Host':'evil.invalid:'+str(self.port)})[0],401)
-        self.assertEqual(self.call('/api/state',headers={'Cookie':'malformed cookie'})[0],401)
+        self.assertEqual(self.call('/api/state',headers={'Cookie':'malformed cookie'})[0],200)
 
     def test_folder_navigation_pagination_and_filters_bound_cursor(self):
         root=self.rows[0]['root'];photos=Path(self.rows[0]['path']).parent;folder=photos/'子目录';folder.mkdir()
         for number in range(64):Image.new('RGB',(16,16),'green').save(folder/f'{number}.jpg')
-        self.catalog.scan(root);self.login()
+        self.catalog.scan(root);self.assert_access()
         _,first,_=self.call('/api/archive?root='+root)
         self.assertIn('子目录',[item['name'] for item in first['folders']]);self.assertTrue(first['has_more'])
         _,second,_=self.call('/api/archive?root='+root+'&cursor='+first['next_cursor'])
@@ -307,11 +337,11 @@ class LanWorkspaceTests(unittest.TestCase):
         addresses=[address for address in self.lan.state()['addresses'] if '127.0.0.1' not in address]
         if addresses:
             previous=self.lan_url;self.lan_url=addresses[0].rstrip('/')
-            try:self.login();self.assertEqual(self.call('/api/state')[0],200)
+            try:self.assert_access();self.assertEqual(self.call('/api/state')[0],200)
             finally:self.lan_url=previous
         with patch.object(server,'LANWORKSPACE',self.lan):
             with closing(build_opener(ProxyHandler({})).open(self.url+'/api/lan-workspace')) as response:
-                state=json.load(response);self.assertTrue(state['enabled']);self.assertIn('access_code',state)
+                state=json.load(response);self.assertTrue(state['enabled']);self.assertNotIn('access_code',state);self.assertFalse(state['access_code_required'])
             request=Request(self.url+'/api/lan-workspace',json.dumps({'enabled':False}).encode(),{'Content-Type':'application/json'})
             with self.assertRaises(HTTPError) as caught:build_opener(ProxyHandler({})).open(request)
             self.assertEqual(caught.exception.code,403);caught.exception.close();self.assertTrue(self.lan.state()['enabled'])
@@ -323,7 +353,7 @@ class LanWorkspaceTests(unittest.TestCase):
             browser=pw.chromium.launch(channel='msedge',headless=True)
             try:
                 page=browser.new_page();page.goto(self.url,wait_until='domcontentloaded')
-                page.locator('#asset-retrieval-open').click();page.locator('#lan-workspace-open').click()
+                page.locator('#asset-retrieval-open').click();page.locator('.retrieval-actions-menu > summary').click();page.locator('#lan-workspace-open').click()
                 page.wait_for_selector('#lan-sharing-dialog[open]');self.assertIn(self.lan_url,page.locator('#lan-addresses').inner_text())
                 page.locator('#lan-enabled').uncheck();page.locator('#lan-save').click()
                 page.wait_for_function('()=>document.getElementById("lan-sharing-message").textContent.includes("已关闭")')
@@ -338,10 +368,10 @@ class LanWorkspaceTests(unittest.TestCase):
                 context=browser.new_context(viewport={'width':1440,'height':960});page=context.new_page();errors=[]
                 image_requests=[];page.on('request',lambda request:image_requests.append(request) if request.method=='POST' and '/api/image' in request.url else None)
                 page.on('pageerror',lambda error:errors.append(str(error)))
-                page.goto(self.lan_url,wait_until='domcontentloaded');page.locator('#access-code').fill(self.lan.config['access_code']);page.locator('#login-submit').click()
+                page.goto(self.lan_url,wait_until='domcontentloaded')
                 page.wait_for_selector('#workspace:not([hidden])');page.wait_for_function('()=>document.getElementById("count-shot").textContent==="1"')
                 self.assertEqual(page.locator('.lan-tabs [role=tab]').count(),3)
-                self.assertEqual(page.locator('#workspace h1').count(),0)
+                self.assertEqual(page.locator('#workspace h1:visible').count(),0)
                 with self.sku.connect() as c:c.execute("UPDATE sku_rows SET status='已拍摄' WHERE id='row3'")
                 page.wait_for_function('()=>document.getElementById("count-shot").textContent==="2"',timeout=12000)
                 page.screenshot(path=str(out/'progress.png'))
@@ -355,18 +385,19 @@ class LanWorkspaceTests(unittest.TestCase):
                 page.wait_for_function('()=>document.querySelectorAll("#search-grid .lan-card").length<3')
                 page.locator('.reference-threshold').press('Home');page.wait_for_function('()=>document.querySelectorAll("#search-grid .lan-card").length===3')
                 self.assertEqual(len(image_requests),image_count)
-                page.locator('#clear-reference').click();page.locator('#tab-archive').click();page.wait_for_selector('#archive-grid .lan-card')
-                self.assertEqual(page.locator('#archive-grid .lan-card').count(),3)
-                self.catalog.assign(self.rows[0]['id'],'LC8888');page.wait_for_function('()=>document.getElementById("archive-grid").textContent.includes("LC8888")',timeout=12000)
-                page.screenshot(path=str(out/'archive.png'))
+                page.locator('#clear-reference').click();page.locator('#tab-quick').click();page.locator('#quick-query').fill('LC1234');page.wait_for_selector('#quick-grid .lan-quick-card')
+                self.assertEqual(page.locator('#quick-grid .lan-quick-card').count(),2)
+                self.catalog.assign(self.rows[0]['id'],'LC8888');
+                while self.service.quick_index.sync():pass
+                page.locator('#quick-query').fill('LC8888');page.wait_for_function('()=>document.getElementById("quick-grid").textContent.includes("LC8888")',timeout=12000)
+                page.screenshot(path=str(out/'quick.png'))
                 page.set_viewport_size({'width':390,'height':844});page.screenshot(path=str(out/'mobile.png'))
                 self.assertFalse(page.evaluate('document.documentElement.scrollWidth>innerWidth'))
-                self.lan.configure({'rotate':True});page.locator('#lan-settings-trigger').hover();page.locator('#refresh').click();page.wait_for_selector('#login:not([hidden])')
+                page.reload(wait_until='domcontentloaded');page.wait_for_selector('#workspace:not([hidden])');self.assertEqual(context.cookies(),[])
                 self.assertFalse(errors,errors)
             finally:browser.close()
 
     def test_search_live_input_enter_composition_and_latest_query(self):
-        self.development_access()
         with sync_playwright() as pw:
             browser=pw.chromium.launch(channel='msedge',headless=True)
             try:
@@ -420,7 +451,7 @@ class LanWorkspaceTests(unittest.TestCase):
             try:
                 page=browser.new_page(viewport={'width':1440,'height':950});errors=[]
                 page.on('pageerror',lambda error:errors.append(str(error)))
-                page.goto(self.lan_url,wait_until='domcontentloaded');page.locator('#access-code').fill(self.lan.config['access_code']);page.locator('#login-submit').click()
+                page.goto(self.lan_url,wait_until='domcontentloaded')
                 page.wait_for_selector('#workspace:not([hidden])');page.locator('#tab-search').click();page.wait_for_selector('#search-grid .lan-card')
                 self.assertEqual(page.locator('.lan-header .lan-tabs [role=tab]').count(),3)
                 self.assertEqual(page.locator('#search-form select').count(),3);self.assertEqual(page.locator('.lan-filters #search-root').count(),0)
@@ -448,7 +479,7 @@ class LanWorkspaceTests(unittest.TestCase):
                     page.screenshot(path=str(out/f'width-{width}.png'))
                 touch_context=browser.new_context(viewport={'width':390,'height':844},has_touch=True,is_mobile=True)
                 touch=touch_context.new_page();touch.goto(self.lan_url,wait_until='domcontentloaded')
-                touch.locator('#access-code').fill(self.lan.config['access_code']);touch.locator('#login-submit').tap();touch.wait_for_selector('#workspace:not([hidden])')
+                touch.wait_for_selector('#workspace:not([hidden])')
                 touch.locator('#lan-settings-trigger').tap();self.assertTrue(touch.locator('#lan-settings-menu').is_visible())
                 touch.locator('#lan-settings-trigger').tap();self.assertTrue(touch.locator('#lan-settings-menu').is_hidden())
                 touch_context.close()

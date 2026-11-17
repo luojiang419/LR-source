@@ -1,0 +1,18 @@
+{
+  "source_files_checked": 1243,
+  "expected_source_change": [
+    "开发任务/060-魔搭更新发布.md",
+    "开发任务/201-静默下载更新与状态闪烁修复.md",
+    "开发任务/202-重复二星款号字母后缀与分组隔离.md",
+    "更新系统/update-config.json"
+  ],
+  "installed_files_preserved": 870,
+  "installer_sha256": "163c41f7998b27e5a294518b99aef9606c21667b8c17cc17d00588d86cd1cfd2",
+  "apk_preserved": true,
+  "signing_key_retained": true,
+  "build_removed": true,
+  "dependency_cache_retained": true,
+  "bytes_removed": 8076545014,
+  "actual_free_delta": 7639195648,
+  "free_bytes": 353514500096
+}

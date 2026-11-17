@@ -1,0 +1,201 @@
+{
+  "version": "1.0.3",
+  "releaseId": "20261116071842",
+  "published": {
+    "published": true,
+    "version": "1.0.3",
+    "releaseId": "20261116071842",
+    "online_latest_activated": true,
+    "runtime_uploaded": false,
+    "package_bytes": 14405209,
+    "artifacts": [
+      {
+        "path": "minimal/20261116071842/SHIYING-Windows-x64.zip",
+        "size": 14405209,
+        "sha256": "4f750b35613a211b6116b73c7fff27950cc3a120affda6a40409e788464af537",
+        "url": "https://modelscope.cn/api/v1/models/jiangjiang419/framekeep-updates/repo?Revision=master&FilePath=minimal%2F20261116071842%2FSHIYING-Windows-x64.zip"
+      },
+      {
+        "path": "minimal/20261116071842/安装最小更新.exe",
+        "size": 1033728,
+        "sha256": "580cd18cc39c91bcfcf0825f5ae78f27a577122f58a06d60b55d7f8727bab887",
+        "url": "https://modelscope.cn/api/v1/models/jiangjiang419/framekeep-updates/repo?Revision=master&FilePath=minimal%2F20261116071842%2F%E5%AE%89%E8%A3%85%E6%9C%80%E5%B0%8F%E6%9B%B4%E6%96%B0.exe"
+      },
+      {
+        "path": "minimal/20261116071842/SHIYING-Setup.exe",
+        "size": 178176,
+        "sha256": "796f24d6102fc522997382f13e41246d2ef4d3cb39172325884849cbbb0d2209",
+        "url": "https://modelscope.cn/api/v1/models/jiangjiang419/framekeep-updates/repo?Revision=master&FilePath=minimal%2F20261116071842%2FSHIYING-Setup.exe"
+      },
+      {
+        "path": "minimal/20261116071842/envelope.json",
+        "size": 19600,
+        "sha256": "5f4fb1865cb746a354e5b270a2005bf383434745b90e07e935a2398f8a440223",
+        "url": "https://modelscope.cn/api/v1/models/jiangjiang419/framekeep-updates/repo?Revision=master&FilePath=minimal%2F20261116071842%2Fenvelope.json"
+      }
+    ],
+    "previous_release": "20261116034116",
+    "install_base": "20261116021119"
+  },
+  "verification": {
+    "status": "passed",
+    "version": "1.0.3",
+    "releaseId": "20261116071842",
+    "package_sha256": "4f750b35613a211b6116b73c7fff27950cc3a120affda6a40409e788464af537",
+    "baselines": {
+      "20261114043205": {
+        "frozen_worker_update": "complete",
+        "elapsed_seconds": 8.66,
+        "version": "1.0.3",
+        "runtime_files_preserved": 730,
+        "data_preserved": true,
+        "rollback_verified": true,
+        "next_worker_verified": true
+      },
+      "20261116013944": {
+        "frozen_worker_update": "complete",
+        "elapsed_seconds": 6.45,
+        "version": "1.0.3",
+        "runtime_files_preserved": 730,
+        "data_preserved": true,
+        "rollback_verified": true,
+        "next_worker_verified": true
+      },
+      "20261116021119": {
+        "frozen_worker_update": "complete",
+        "elapsed_seconds": 5.44,
+        "version": "1.0.3",
+        "runtime_files_preserved": 730,
+        "data_preserved": true,
+        "rollback_verified": true,
+        "next_worker_verified": true
+      },
+      "20261116030917": {
+        "frozen_worker_update": "complete",
+        "elapsed_seconds": 6.06,
+        "version": "1.0.3",
+        "runtime_files_preserved": 730,
+        "data_preserved": true,
+        "rollback_verified": true,
+        "next_worker_verified": true
+      },
+      "20261116034116": {
+        "frozen_worker_update": "complete",
+        "elapsed_seconds": 6.33,
+        "version": "1.0.3",
+        "runtime_files_preserved": 730,
+        "data_preserved": true,
+        "rollback_verified": true,
+        "next_worker_verified": true
+      }
+    },
+    "fresh_install_uses_complete_base": true,
+    "production_install_modified": false,
+    "frozen_feature_check": {
+      "status": "passed",
+      "frozen_engine": "G:\\app\\LR\\build\\tauri-release\\SHIYING 数字资产\\engine\\framekeep-engine.exe",
+      "historical_jobs_paused": 2,
+      "historical_photos_unchanged": true,
+      "new_jpeg_painted_ms": 174.6595000004163,
+      "notification_status": "active",
+      "page_errors": [],
+      "production_data_used": false
+    },
+    "update_tests_passed": 93,
+    "source_regression": {
+      "metadata_modules_tests_passed": 112,
+      "manual_backfill_final_tests_passed": 25,
+      "capture_modules_tests_passed": 64,
+      "capture_final_tests_passed": 12
+    }
+  },
+  "online_clients": {
+    "status": "passed",
+    "clients": {
+      "previous-1.0.2": {
+        "status": "downloaded",
+        "available": true,
+        "version": "1.0.3",
+        "releaseId": "20261116071842",
+        "package_bytes": 14405209,
+        "old_client_source": "frozen",
+        "client_code_sha256": "3bad3e932a8c290cd5115f54373c4f232ecf309dfccd04b83e53166591fee5fc",
+        "download_verified": true,
+        "cache_reused": false
+      },
+      "legacy-14": {
+        "status": "downloaded",
+        "available": true,
+        "version": "1.0.3",
+        "releaseId": "20261116071842",
+        "package_bytes": 14405209,
+        "old_client_source": "source",
+        "client_code_sha256": "95bb22d7c357b3a9a1f8e96ce10b84dfcd79ef656fde73d3737e45248be7ee00",
+        "download_verified": true,
+        "cache_reused": true
+      },
+      "legacy-16": {
+        "status": "downloaded",
+        "available": true,
+        "version": "1.0.3",
+        "releaseId": "20261116071842",
+        "package_bytes": 14405209,
+        "old_client_source": "source",
+        "client_code_sha256": "95bb22d7c357b3a9a1f8e96ce10b84dfcd79ef656fde73d3737e45248be7ee00",
+        "download_verified": true,
+        "cache_reused": true
+      },
+      "manual-patch": {
+        "status": "downloaded",
+        "available": true,
+        "version": "1.0.3",
+        "releaseId": "20261116071842",
+        "package_bytes": 14405209,
+        "old_client_source": "source",
+        "client_code_sha256": "95bb22d7c357b3a9a1f8e96ce10b84dfcd79ef656fde73d3737e45248be7ee00",
+        "download_verified": true,
+        "cache_reused": true
+      },
+      "new-version": {
+        "status": "checked",
+        "available": false,
+        "version": "1.0.3",
+        "releaseId": "20261116071842",
+        "package_bytes": 14405209,
+        "old_client_source": "current",
+        "client_code_sha256": "23ad2a17603e200c728b5b0941c43d8192bfa9a7d4220bec2ab28184407af073",
+        "download_verified": false,
+        "cache_reused": false
+      }
+    }
+  },
+  "preflight": {
+    "baseline": {
+      "version": "1.0.2",
+      "releaseId": "20261116034116"
+    },
+    "changed_modules": [
+      "archive_capture_service",
+      "asset_archive",
+      "direct_jpeg",
+      "file_safety",
+      "folder_watch",
+      "metadata_backfill",
+      "portable_capture_store",
+      "sku_writeback_status",
+      "server"
+    ]
+  },
+  "cleanup": {
+    "status": "blocked_by_automatic_approval",
+    "action": "remove isolated qa-publish and online-clients test directories",
+    "reason": "blocked by policy",
+    "deleted_bytes": 0,
+    "retained_targets": [
+      "G:\\app\\LR\\build\\task243-release\\qa-publish",
+      "G:\\app\\LR\\build\\task243-release\\online-clients"
+    ],
+    "retained_qa_publish_logical_bytes": 4699564073,
+    "free_bytes_observed_after_publication": 142787145728
+  }
+}

@@ -14,7 +14,7 @@ class WorkbenchBuildTests(unittest.TestCase):
             for name in (*WORKBENCH_FILES,*STARTUP_ASSETS):
                 shutil.copy2(ROOT/'演示方案'/name,web/name)
             validate_workbench_sources(web)
-            for name in ('asset-retrieval.js','asset-retrieval.css','workbench-ui.js'):
+            for name in ('asset-retrieval.js','asset-retrieval.css','workbench-ui.js','quick-search-appearance.js'):
                 with self.subTest(name=name):
                     path=web/name;source=path.read_bytes();path.write_bytes(source+b'\n/* stale */')
                     with self.assertRaisesRegex(RuntimeError,name.replace('.',r'\.')):

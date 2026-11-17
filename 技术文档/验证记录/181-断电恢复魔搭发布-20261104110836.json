@@ -1,0 +1,94 @@
+{
+  "task": 181,
+  "version": "1.0.0",
+  "releaseId": "20261104110836",
+  "verifiedAt": "2026-11-04T19:12:34+08:00",
+  "implementationCommit": "ffcfcfc",
+  "repository": "jiangjiang419/framekeep-updates",
+  "package": {
+    "passed": true,
+    "snapshot": "G:\\app\\LR\\build\\updates\\1.0.0-20261104110836",
+    "release": "20261104110836",
+    "files": 836,
+    "frozen_modules": 116,
+    "package_size": 276012341,
+    "package_sha256": "8bd0debaff73971f7ea6d9c3f5366e7d4abb45c404c77462acba74c56c80a267",
+    "installer_sha256": "218f9e7b7c202ac0ac072e00de69e54c5b68e001abd4d6ce81aac7571b8b97b4",
+    "installer_size": 14104576
+  },
+  "frozen": {
+    "passed": true,
+    "frozen_modules": 116,
+    "entrypoint_checked": true,
+    "source_mismatches": [],
+    "web_files": 71,
+    "tests": 12,
+    "failures": 0,
+    "errors": 0,
+    "skips": 0
+  },
+  "updateTests": {
+    "passed": true,
+    "tests": 64
+  },
+  "engineRecoverySmoke": {
+    "passed": true,
+    "isolated_data": true,
+    "actual_engine_killed_and_restarted": true,
+    "restored_project": true,
+    "confirmed_progress_retained": true,
+    "next_photo_bound": true,
+    "http_resources_match": true,
+    "exit_code": 0
+  },
+  "installer": {
+    "passed": true,
+    "files": 836,
+    "errors": [],
+    "unknown_preserved": true
+  },
+  "publication": {
+    "repository": "jiangjiang419/framekeep-updates",
+    "releaseId": "20261104110836",
+    "anonymousVerification": true,
+    "installerUrl": "https://modelscope.cn/api/v1/models/jiangjiang419/framekeep-updates/repo?Revision=master&FilePath=releases%2F1.0.0%2F20261104110836%2FFramekeep-Setup.exe",
+    "packageSize": 276012341,
+    "components": [
+      {
+        "path": "components/52d1df764521fb4fc071665dfdf889c3529c78e5438bfb66029eb19cd29e8ea9/llama-b11773-framekeep-win-x64.zip",
+        "sha256": "52d1df764521fb4fc071665dfdf889c3529c78e5438bfb66029eb19cd29e8ea9",
+        "size": 694127530
+      },
+      {
+        "path": "components/0625fb5c1e75be58a164e14f95aa58a3e5badb859b3d17c952385f3e4a9ff3e8/MicrosoftEdgeWebView2RuntimeInstallerX64.exe",
+        "sha256": "0625fb5c1e75be58a164e14f95aa58a3e5badb859b3d17c952385f3e4a9ff3e8",
+        "size": 214156024
+      }
+    ]
+  },
+  "clients": {
+    "old-public": {
+      "status": "checked",
+      "available": true,
+      "releaseId": "20261104110836",
+      "currentReleaseId": "20261104101853"
+    },
+    "installed-config": {
+      "status": "checked",
+      "available": true,
+      "releaseId": "20261104110836",
+      "currentReleaseId": "20261104071740"
+    },
+    "new-release": {
+      "status": "checked",
+      "available": false,
+      "releaseId": "20261104110836",
+      "currentReleaseId": "20261104110836"
+    }
+  },
+  "limitations": [
+    "客户原数据库未取得，未断言客户历史数据已恢复",
+    "未修改本机生产安装、客户电脑或原照片",
+    "没有推送 GitHub"
+  ]
+}

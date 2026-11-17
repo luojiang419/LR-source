@@ -36,7 +36,9 @@ class ArchivePipeline:
             self.sku.request_catalog(sid)
 
     def tick(self):
-        roots=self.catalog.state()['roots'];active={r['id'] for r in roots}
+        if getattr(self.catalog,'visits',None):return
+        if self._analysis_pending():return
+        roots=self.catalog.roots();active={r['id'] for r in roots}
         with self.store.connect() as c:
             tracked=[(r['key'].split(':',1)[1],r['value']) for r in c.execute("SELECT key,value FROM settings WHERE key LIKE 'archive_root:%'")]
             for rid,sid in tracked:
@@ -49,6 +51,7 @@ class ArchivePipeline:
             for values in (self.accepted,self.observed):
                 for key in [key for key in values if key[0]==rid]:values.pop(key,None)
         for root in roots:
+            if self._analysis_pending():return
             rid=root['id'];base=Path(root['path']);now=self.clock()
             signal=self.signals.get(rid)
             if (signal is None or signal.handle is None) and now-self.watch_attempts.get(rid,float('-inf'))>=60:
@@ -74,14 +77,23 @@ class ArchivePipeline:
                     c.execute('INSERT INTO audit VALUES (?,?,?,?)',(uid(),'archive_watch_error',dumps({'root':rid,'error':str(exc)[:250]}),time.time()))
         with self.archive.connect() as c:
             catalogued=[dict(r) for r in c.execute("SELECT l.path,a.sku,a.normalized FROM locations l JOIN files f ON f.id=l.file JOIN assets a ON a.id=f.asset WHERE l.status='online' AND a.sku!=''")]
+        if self._analysis_pending():return
         with self.catalog.connect() as c:
-            for row in catalogued:c.execute("UPDATE items SET sku=?,normalized=?,source='embedded',confidence=1 WHERE path=? COLLATE NOCASE AND source!='manual' AND (sku!=? OR source!='embedded')",(row['sku'],row['normalized'],row['path'],row['sku']))
+            for row in catalogued:
+                if self._analysis_pending():break
+                c.execute("UPDATE items SET sku=?,normalized=?,source='embedded',confidence=1 WHERE path=? COLLATE NOCASE AND source!='manual' AND (sku!=? OR source!='embedded')",(row['sku'],row['normalized'],row['path'],row['sku']))
+
+    def _analysis_pending(self):
+        scheduler=getattr(self.sku,'scheduler',None)
+        return bool(scheduler and scheduler.background_blocked())
 
     def _scan(self,root):
         base=Path(root['path']);rid=root['id'];ready=[];pending=False;present=set()
+        if self._analysis_pending():self.pending.add(rid);return
         with self.catalog.connect() as c:excluded={r[0] for r in c.execute('SELECT folder FROM exclusions WHERE root=?',(rid,))}
         # discover 保留相对路径，按目录配对 JPG/RAW；排除用户移出的子树。
         _,shots=media.discover(base,cancel=self.closed)
+        if self._analysis_pending():self.pending.add(rid);return
         sid=self.store.ensure_live_session(base)
         with self.store.connect() as c:
             c.execute('INSERT OR REPLACE INTO settings VALUES (?,?)',('archive_session:'+sid,str(base)))
@@ -92,6 +104,7 @@ class ArchivePipeline:
         existing={p.casefold():r for r in self.store.records(sid) for p in (r.get('raw'),r.get('jpg')) if p}
         for primary,companion in shots:
             if self.closed.is_set():return
+            if self._analysis_pending():self.pending.add(rid);return
             rel=primary.relative_to(base).as_posix();folder=primary.parent.relative_to(base).as_posix()
             if any(folder==skip or folder.startswith(skip+'/') for skip in excluded):continue
             paths=[primary]+([companion] if companion else []);key=(rid,rel);present.add(key)
@@ -107,6 +120,7 @@ class ArchivePipeline:
         if ready:
             exif=media.find_exiftool(self.store.root);records=[];embedded={}
             for start in range(0,len(ready),24):
+                if self._analysis_pending():self.pending.add(rid);return
                 batch=ready[start:start+24];metadata=media.read_metadata([r[0] for r in batch],exif,cancel=self.closed)
                 for (primary,companion,key,signature),info in zip(batch,metadata):
                     paths=[primary]+([companion] if companion else [])

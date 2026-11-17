@@ -1,0 +1,18 @@
+{
+  "SHIYING 更新器.exe": {
+    "size": 667136,
+    "sha256": "22202c2fd7b5db8e4d0c846e4cda27f9556be635cd51f707ec2380eb28cfc8d4"
+  },
+  "卸载SHIYING 数字资产.exe": {
+    "size": 32812544,
+    "sha256": "5cb502d2927b059dab0e7dad58ed030a51f96f8cf7fc78ffbfd2104dd1f2008b"
+  },
+  "update-worker.exe": {
+    "size": 2027706,
+    "sha256": "ea95b78ff77bc167e436be7801aebeed9f02b908af881354d35215e1c9408238"
+  },
+  "SHIYING 数字资产安装器.exe": {
+    "size": 32812544,
+    "sha256": "163c41f7998b27e5a294518b99aef9606c21667b8c17cc17d00588d86cd1cfd2"
+  }
+}

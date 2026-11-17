@@ -1,0 +1,154 @@
+{
+  "date": "2026-11-05",
+  "source_commit": "24e9d3d",
+  "branch": "chore/integrate-task182-local",
+  "merge": "fast-forward from ef639ea; no conflicts",
+  "build_passed": true,
+  "source_regression": {
+    "passed": 86,
+    "skipped": 2,
+    "skip_reason": "RAW samples absent",
+    "initial_command_error": "Nonexistent test_shooting_power_loss_recovery; corrected recovery suite passed 6 tests",
+    "recovery_passed": 6
+  },
+  "frozen": {
+    "passed": true,
+    "frozen_modules": 118,
+    "entrypoint_checked": true,
+    "source_mismatches": [],
+    "web_files": 71,
+    "tests": 32,
+    "failures": 0,
+    "errors": 0,
+    "skips": 0
+  },
+  "installation": {
+    "passed": true,
+    "session": "D:\\Program Files\\Framekeep\\.update-state\\local-task182-20261105-085207",
+    "desktop_pid": 59456,
+    "engine_pid": 64692,
+    "changed": [
+      "engine/_internal/base_library.zip",
+      "engine/_internal/metadata_memory_worker.pl",
+      "engine/_internal/演示方案/app.js",
+      "engine/_internal/演示方案/formal.js",
+      "engine/_internal/演示方案/sku-reconciliation.js",
+      "engine/_internal/演示方案/workbench-layout.js",
+      "engine/framekeep-engine.exe",
+      "完整使用说明.md",
+      "update/install-layout.json"
+    ],
+    "managed_files": 836,
+    "protected_data_files": 60325,
+    "data_preserved_before_launch": true,
+    "version": "1.0.0",
+    "releaseId": "20261104110836"
+  },
+  "ui": {
+    "ready": {
+      "application": "framekeep",
+      "process_id": 64692,
+      "ready": true
+    },
+    "feedback": {
+      "session_id": "4818779cffb33ab359fcc6ea",
+      "labels": [
+        {
+          "capture_id": "22177c96d62bbccf13619d84",
+          "status": "queued"
+        }
+      ],
+      "total": 1,
+      "confirmed": 0,
+      "review": 0,
+      "failed": 0,
+      "pending": 1
+    },
+    "library_http_seconds": [
+      0.0382,
+      0.0129,
+      0.0294
+    ],
+    "groups": 20,
+    "library_total": 1213,
+    "http_resources_match_source": true,
+    "sku_cards_seconds": 0.29,
+    "sku_first_image_seconds": 1.121,
+    "sku_cards": 72,
+    "all_visible_images_seconds": 23.873,
+    "passed": true,
+    "today_documents": 0,
+    "history_documents": 2,
+    "javascript_errors": [],
+    "production_edits": 0,
+    "mocked_responses": false,
+    "desktop_metrics": {
+      "desktop_pid": 59456,
+      "first_document_ready_ms": 5452,
+      "first_workbench_ready_ms": 5452,
+      "startup_animation_visible_ms": 650,
+      "web_timings": {
+        "data_ready_ms": 258.59999999403954,
+        "shell_ready_ms": 203.19999998807907,
+        "workbench_ready_ms": 397.89999997615814
+      }
+    }
+  },
+  "final_health": {
+    "/api/ready": {
+      "ok": true,
+      "seconds": 0.025,
+      "value": {
+        "application": "framekeep",
+        "process_id": 64692,
+        "ready": true
+      }
+    },
+    "/api/health": {
+      "ok": true,
+      "seconds": 0.413,
+      "value": {
+        "application": "framekeep",
+        "process_id": 64692,
+        "busy": false
+      }
+    },
+    "/api/task-status": {
+      "ok": false,
+      "seconds": 20.01,
+      "error": "timed out"
+    },
+    "/api/sku/feedback": {
+      "ok": true,
+      "seconds": 0.008,
+      "value": {
+        "session_id": "4818779cffb33ab359fcc6ea",
+        "labels": [
+          {
+            "capture_id": "22177c96d62bbccf13619d84",
+            "status": "queued"
+          }
+        ],
+        "total": 1,
+        "confirmed": 0,
+        "review": 0,
+        "failed": 0,
+        "pending": 1
+      }
+    }
+  },
+  "native_accessibility": "Actual installed window: 6 photos, retained monitor, 1 closed / 0 confirmed / 1 pending feedback",
+  "native_screenshot": "window capture timed out; inspected browser screenshot of same installed engine",
+  "preservation": {
+    "data_inventory_before_launch_unchanged": true,
+    "all_root_sqlite_wal_shm_sha256_before_launch_unchanged": true,
+    "model_and_watch_configuration_sha256_unchanged": true,
+    "registered_data_path": "D:/Program Files/Framekeep/data"
+  },
+  "portable_dist_synced": true,
+  "version_bumped": false,
+  "online_release": false,
+  "git_push": false,
+  "limitation": "Previously recorded /api/task-status timeout reproduced; ready/health/feedback and SKU library/document UI passed",
+  "evidence_directory": "build\\task182-integration-20261105"
+}

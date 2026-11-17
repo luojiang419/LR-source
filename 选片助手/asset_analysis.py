@@ -69,6 +69,8 @@ def vision(provider,image,prompt,schema):
         if 'HTTP 400' not in str(exc) or not provider.get('json_mode',True):raise
         body.pop('response_format',None);body.pop('text',None)
         data=request_json(url,body,provider.get('key',''),provider.get('timeout',90))
+    if provider['protocol']=='chat' and data['choices'][0].get('finish_reason')=='length':
+        raise ValueError('模型输出达到上限，结构化结果可能被截断；请在模型卡片调高最大输出 token 后重试')
     raw=data['choices'][0]['message']['content'] if provider['protocol']=='chat' else '\n'.join(p.get('text','') for o in data.get('output',[]) for p in o.get('content',[]) if p.get('type')=='output_text')
     return str(raw)[:100000]
 
@@ -108,6 +110,7 @@ PRAGMA user_version=1;''')
     def connect(self):
         c=sqlite3.connect(self.db,timeout=30);c.row_factory=sqlite3.Row
         try:
+            c.execute('PRAGMA mmap_size=1073741824')
             with c:yield c
         finally:c.close()
     def save_schema(self,name,prompt,schema,schema_id=None):
@@ -209,6 +212,8 @@ PRAGMA user_version=1;''')
         if p['protocol']=='local':
             from local_inference import resolve
             with self.providers.inference_slot(p,cancel=self.closed),resolve(p) as local:
+                if local.get('protocol')=='local_onnx':
+                    return {'ok':True,'model':p['model'],'models':[p['model']],'message':'纯 CPU OCR 加载通过；识别质量请使用实际样片验证'}
                 models=request_json(local['url']+'/v1/models',key=local['key'],timeout=10)
             return {'ok':True,'model':p['model'],'models':[r.get('id') for r in models.get('data',[])],'message':'内置模型加载通过；识别质量请使用实际样片验证'}
         models=self.providers.models({'id':pid});p={**p,'url':models['url']}
@@ -234,7 +239,7 @@ PRAGMA user_version=1;''')
                 if self.paused or self.closed.is_set() or job.get('trigger')=='auto' and not self.auto.get('enabled'):return False
                 with self.connect() as c:row=c.execute('SELECT status FROM jobs WHERE id=?',(job['id'],)).fetchone()
                 return bool(row and row['status']=='running')
-            with self.providers.inference_slot(snapshot,cancel=self.closed,valid=current),self.scheduler.slot(cancel=self.closed,independent=snapshot.get('protocol')!='local'):
+            with self.providers.inference_slot(snapshot,cancel=self.closed,valid=current),self.scheduler.slot(cancel=self.closed,independent=snapshot.get('protocol')!='local',stage='vision',valid=current):
                 if self.paused or self.closed.is_set():raise ValueError('解析已暂停')
                 image,source,fid=self.image(job['asset'],snapshot.get('image_size',1600))
                 if hashlib.sha256(image).hexdigest()!=job['input_sha']:raise ValueError('源图已变化，请建立新解析批次')
@@ -288,9 +293,9 @@ PRAGMA user_version=1;''')
         records={}
         for row in preparations:
             sid=row['session']
-            if sid not in records:records[sid]={r['id']:r for r in self.archive.store.records(sid)} if self.archive.store.session(sid) else {}
+            if sid not in records:records[sid]={r['id']:r for r in self.archive.store.records(sid,ids=[item['capture'] for item in preparations if item['session']==sid])} if self.archive.store.session(sid) else {}
             record=records[sid].get(row['capture'],{})
-            jobs.append({'id':f"auto:{sid}:{row['capture']}",'asset':'','name':record.get('jpg') or record.get('raw') or row['capture'],'preview':f"/api/preview/{sid}/{row['capture']}?size=180" if record else '', 'schema_id':self.auto.get('schema_id'),'schema_version':self.auto.get('version'),'status':row['status'],'reason':row['reason'] or '准备解析图片','created':row['created'],'result':'','trigger':'auto'})
+            jobs.append({'id':f"auto:{sid}:{row['capture']}",'asset':'','name':record.get('jpg') or record.get('raw') or row['capture'],'preview':f"/api/preview/{sid}/{row['capture']}?size=180&v={record.get('fingerprint','')}" if record else '', 'schema_id':self.auto.get('schema_id'),'schema_version':self.auto.get('version'),'status':row['status'],'reason':row['reason'] or '准备解析图片','created':row['created'],'result':'','trigger':'auto'})
         jobs.sort(key=lambda j:j['created'],reverse=True)
         return {'schemas':schemas,'jobs':jobs[:100],'counts':counts,'paused':self.paused,'scheduler':self.scheduler.state(),'automatic':dict(self.auto)}
 

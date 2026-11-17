@@ -80,15 +80,16 @@ class OcrMetadata:
             c.execute(f"UPDATE {table} SET status='cancelled',result='{{}}',run_token='',reason='标签不再是二星，识别已清空，再次二星将重新识别',updated=?{targets} WHERE session_id=? AND capture_id=?",(self.clock(),sid,cid))
 
     def ocr_details(self,sid,cid):
-        session=self.store.session(sid);record=next((r for r in self.store.records(sid) if r['id']==cid),None) if session else None
+        session=self.store.session(sid);record=next(iter(self.store.records(sid,ids=[cid])),None) if session else None
         if not record:raise ValueError('照片不存在，请重新选择')
         target=cid;source_record=record
         from sku_library import interval_rows
-        projected,_=interval_rows(self,sid)
+        # 二星本身就是区间末标签，目标必然是自己；不为读一张标签构造数千张投影。
+        projected=[] if self._rating(sid,record)==2 else interval_rows(self,sid)[0]
         linked=next((r for r in projected if r['capture_id']==cid and r.get('interval_id')),None)
         if linked:
             target=linked['interval_id'].rsplit(':',1)[-1]
-            source_record=next((r for r in self.store.records(sid) if r['id']==target),record)
+            source_record=next(iter(self.store.records(sid,ids=[target])),record)
         with self.connect() as c:
             documents=[dict(r) for r in c.execute('SELECT id,text,raw,updated FROM ocr_documents WHERE session_id=? AND capture_id IN (?,?) ORDER BY updated DESC,id LIMIT 50',(sid,cid,target))]
             chosen=c.execute('SELECT sku FROM ocr_choices WHERE session_id=? AND capture_id=?',(sid,target)).fetchone()
@@ -118,21 +119,30 @@ class OcrMetadata:
             'selected_sku':chosen[0] if chosen else '',**version,
             'has_ocr':bool(documents),'text':'\n\n'.join(dict.fromkeys(d['text'] for d in documents if d['text']))}
 
-    def choose_ocr_sku(self,sid,cid,code,reading_key,image_key,scope='',*,allow_manual=False,project_id=None,automatic=False,literal=False):
+    def choose_ocr_sku(self,sid,cid,code,reading_key,image_key,scope='',*,allow_manual=False,project_id=None,automatic=False,literal=False,defer_archive=False,portable_owned=False):
         if not isinstance(code,str) or not normalize(code) or len(code)>80 or any(ord(ch)<32 for ch in code):raise ValueError('请填写正确 SKU（最多 80 字符）')
         code=code.strip()
+        if defer_archive and self.archive:
+            # 首次标签登记可能等文件锁；在SKU业务锁之外完成，随后重新校验OCR代次。
+            with self.archive.connect() as db:linked=db.execute('SELECT 1 FROM catalog_links WHERE session=? AND capture=?',(sid,cid)).fetchone()
+            if not linked:self.archive.ensure(sid,cid)
         with self.lock:
             details=self.ocr_details(sid,cid)
             if not details['has_ocr'] and not allow_manual:raise ValueError('尚无 OCR 资料，请先识别图片')
             if details['reading_key']!=reading_key or details['image_key']!=image_key:raise ValueError('图片或 OCR 资料已更新，请重新打开资料核对')
             requested=cid;cid=details['target_capture_id']
+            frozen=self.shooting_context(sid,cid)
+            if frozen:
+                project_id=frozen['project'];scope=frozen['scope']
             project=self.project(project_id)
-            if not project or project['session_id']!=sid:project=self._automatic_project(sid)
+            if not project or (project['session_id']!=sid and not frozen):project=self._automatic_project(sid)
             scope=scope or project['scope'] or '现场记录'
             if not self.archive:raise ValueError('资产入库服务未就绪')
-            record=next(r for r in self.store.records(sid) if r['id']==cid)
+            record=next(iter(self.store.records(sid,ids=[cid])))
             boundary=self._rating(sid,record)==2
-            preview=self.archive.preview(sid,[cid],code,scope,project['id'],overwrite=True)
+            with self.archive.connect() as db:linked=db.execute('SELECT asset FROM catalog_links WHERE session=? AND capture=?',(sid,cid)).fetchone()
+            asset_ids=[linked[0]] if linked else None
+            preview=self.archive.preview(sid,[cid],code,scope,project['id'],overwrite=True,defer_io=True,asset_ids=asset_ids)
             old=preview['targets'][0]['before']
             version={'base_sku':code,'sku':code,'shoot_version':''}
             with self.connect() as c:
@@ -144,17 +154,16 @@ class OcrMetadata:
                              else allocate(c,self.archive,preview['targets'][0]['id'],sid,cid,code,self.clock()))
                     if version['sku']!=code:
                         code=version['sku']
-                        preview=self.archive.preview(sid,[cid],code,scope,project['id'],overwrite=True)
+                        preview=self.archive.preview(sid,[cid],code,scope,project['id'],overwrite=True,defer_io=True,asset_ids=[preview['targets'][0]['id']])
                         old=preview['targets'][0]['before']
                 if literal:
                     c.execute("UPDATE parse_jobs SET status='cancelled',run_token='',reason='手动款号已确认，旧识别任务已取消',updated=? WHERE session_id=? AND capture_id=? AND status IN ('queued','running')",(self.clock(),sid,cid))
                 # 历史上已单张人工备案的标签仍允许明确修正；其他人工照片由区间保护。
                 if not boundary or old.get('locked'):
                     if old.get('sku')!=code or old.get('scope')!=scope or not old.get('locked'):self.archive.apply(preview['preview_id'])
-                base=version['base_sku']
-                exact=[dict(r) for r in c.execute('SELECT * FROM sku_rows WHERE project=? AND sheet=? AND normalized=?',(project['id'],scope,normalize(base)))]
+                exact=[dict(r) for r in c.execute('SELECT * FROM sku_rows WHERE project=? AND sheet=? AND normalized=?',(project['id'],scope,normalize(code)))]
                 result={'row_ids':[r['id'] for r in exact]} if exact else self._record_unplanned({'project':project['id'],'session_id':sid,'capture_id':cid,'scope':scope},
-                    [{'codes':[base],'unscored':True}],{'status':'review','row_ids':[],'candidates':[]},accept_observed=True,connection=c)
+                    [{'codes':[code],'unscored':True}],{'status':'review','row_ids':[],'candidates':[]},accept_observed=True,connection=c,literal=literal)
                 c.execute('INSERT INTO ocr_choices VALUES (?,?,?,?,?) ON CONFLICT(session_id,capture_id) DO UPDATE SET sku=excluded.sku,reading_key=excluded.reading_key,updated=excluded.updated',(sid,cid,code,reading_key,self.clock()))
                 targets=json.dumps(result.get('row_ids',[]));stamp,time_source=capture_time(record)
                 c.execute("UPDATE jobs SET status='confirmed',targets=?,reason='用户已选择正确 SKU，其他 OCR 资料保留',updated=? WHERE project=? AND session_id=? AND capture_id=? AND scope=? AND status NOT IN ('ignored','cancelled')",(targets,self.clock(),project['id'],sid,cid,scope))
@@ -163,24 +172,33 @@ class OcrMetadata:
                     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(project,session_id,capture_id,fingerprint,scope)
                     DO UPDATE SET status='confirmed',targets=excluded.targets,result=excluded.result,reason=excluded.reason,captured_at=excluded.captured_at,capture_time_source=excluded.capture_time_source,trigger=CASE WHEN jobs.trigger='full_auto' THEN 'full_auto' ELSE 'choice' END,updated=excluded.updated''',
                     (uuid.uuid4().hex,project['id'],sid,cid,record['fingerprint'],scope,'confirmed',self.clock(),self.clock(),json.dumps({'codes':[code],'user_sku_choice':True}),targets,'用户已选择正确 SKU，同步拍摄记录',stamp,time_source,'choice',self.clock()))
-                if boundary:
+                if boundary and not portable_owned:
                     job={'id':'choice:'+sid+':'+cid,'kind':'ocr_choice','session_id':sid,'capture_id':cid,'project':project['id'],'scope':scope,'status':'confirmed','sku':code}
                     c.execute('INSERT INTO archive_events(id,job,payload) VALUES (?,?,?)',(uuid.uuid4().hex,job['id'],json.dumps(job,ensure_ascii=False)))
-                self._refresh_progress(c,project['id'])
+                if defer_archive:
+                    # 本次确认事实与命中行同事务保存；完整历史对账交给可重建读投影。
+                    from sku_progress import completion_order
+                    evidence=c.execute("SELECT * FROM jobs WHERE project=? AND session_id=? AND capture_id=? AND status='confirmed' ORDER BY updated DESC,created DESC,rowid DESC LIMIT 1",(project['id'],sid,cid)).fetchone()
+                    for rid in result.get('row_ids',[]):
+                        row=c.execute('SELECT completion_job FROM sku_rows WHERE id=?',(rid,)).fetchone()
+                        prior=c.execute('SELECT * FROM jobs WHERE id=?',(row[0],)).fetchone() if row and row[0] else None
+                        if evidence and (not prior or completion_order(evidence)>=completion_order(prior)):
+                            c.execute("UPDATE sku_rows SET status='已拍摄',completed_at=?,completion_job=? WHERE id=? AND project=?",(stamp,evidence['id'],rid,project['id']))
+                    getattr(self,'folder_progress_cache',{}).pop(project['id'],None)
+                else:self._refresh_progress(c,project['id'])
                 if automatic:c.execute("UPDATE jobs SET reason='公司款号包含规则唯一命中，已自动应用' WHERE session_id=? AND capture_id=? AND status='confirmed'",(sid,cid))
+            from pipeline_metrics import record as record_metric
+            record_metric('confirmed',session_id=sid,capture_id=cid,project_id=project['id'],automatic=automatic)
             warnings=[]
-            if boundary:
+            if boundary and not defer_archive:
                 try:self.deliver_events(self.archive)
                 except Exception as exc:
                     from operation_errors import record_error
                     record_error(self.store.data,'sku-choice-archive',exc)
                     warnings.append('SKU 和拍摄记录已保存，整款归档待后台重试')
-            try:self.export(project['id'])
-            except Exception as exc:
-                from operation_errors import record_error
-                record_error(self.store.data,'sku-choice-export',exc)
-                self.dirty.add(project['id']);self.wake.set()
-                warnings.append('SKU 和拍摄记录已保存，Excel 更新待重试')
+            self.dirty.add(project['id'])
+        if defer_archive:
+            return {'session_id':sid,'capture_id':requested,'target_capture_id':cid,**version,'saved':True,'automatic':automatic,'warnings':warnings,'archive_pending':not portable_owned}
         from metadata_group import group_context
         operation='';count=1
         try:

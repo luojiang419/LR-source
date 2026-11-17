@@ -11,6 +11,7 @@ import unittest
 from unittest.mock import patch
 from concurrent.futures import ThreadPoolExecutor
 import threading
+import time
 
 from PIL import Image,ImageOps
 import media_engine as media
@@ -81,6 +82,151 @@ class EmbeddedPreviewTests(unittest.TestCase):
                 self.assertEqual(ImageOps.exif_transpose(image).height>ImageOps.exif_transpose(image).width,True)
         self.assertEqual(raw.read_bytes(),b'raw container remains untouched')
 
+    def test_concurrent_raw_sizes_and_background_share_one_extraction(self):
+        raw=self.base/'concurrent.CR3';original=b'untouched raw source';raw.write_bytes(original)
+        catalog=AssetCatalog(self.base/'concurrent-data');self.addCleanup(catalog.close)
+        payload=jpeg(size=(1600,1000))
+        for background in (False,True):
+            with self.subTest(background=background):
+                entered=threading.Event();release=threading.Event();second_started=threading.Event()
+                version='concurrent-'+str(background)
+                def record():return {'fingerprint':version,'id':version,'raw':raw.name,'_catalog':True,'_source_root':str(self.base)}
+                def extract(*args):
+                    entered.set()
+                    if not release.wait(3):raise RuntimeError('测试提取等待未释放')
+                    return 6,payload
+                def first():
+                    if background:return catalog.render_preview_batch(record(),self.base,None)
+                    return catalog.render_preview(record(),self.base,420,None,read=True)
+                def second():
+                    second_started.set();return catalog.render_preview(record(),self.base,2048,None,read=True)
+                with patch.object(media,'raw_embedded_metadata',side_effect=extract) as fetch,ThreadPoolExecutor(max_workers=2) as pool:
+                    one=pool.submit(first)
+                    try:
+                        self.assertTrue(entered.wait(2));two=pool.submit(second)
+                        self.assertTrue(second_started.wait(2))
+                    finally:release.set()
+                    one.result(5);result=two.result(5)
+                self.assertEqual(fetch.call_count,1)
+                with Image.open(io.BytesIO(result)) as image:self.assertEqual(ImageOps.exif_transpose(image).size,(1000,1600))
+        self.assertEqual(raw.read_bytes(),original)
+
+    def test_cached_small_preview_does_not_wait_for_same_raw_large_generation(self):
+        raw=self.base/'cached.CR3';raw.write_bytes(b'raw untouched')
+        catalog=AssetCatalog(self.base/'cached-data');self.addCleanup(catalog.close)
+        record={'fingerprint':'cache-hit','id':'cache-hit','raw':raw.name,'_catalog':True,'_source_root':str(self.base)}
+        payload=jpeg(size=(1600,1000))
+        with patch.object(media,'raw_embedded_metadata',return_value=(6,payload)):
+            catalog.render_preview_batch(dict(record),self.base,None)
+        cache=cache_for(catalog.previews)
+        with cache.lock,cache.connect() as c:cache._remove(c,cache_name(dict(record,orientation=6),2048))
+        entered=threading.Event();release=threading.Event()
+        def extract(*args):
+            entered.set()
+            if not release.wait(3):raise RuntimeError('测试后台未释放')
+            return 6,payload
+        with patch.object(media,'raw_embedded_metadata',side_effect=extract),ThreadPoolExecutor(max_workers=2) as pool:
+            background=pool.submit(catalog.render_preview_batch,dict(record),self.base,None)
+            try:
+                self.assertTrue(entered.wait(2))
+                hit=pool.submit(catalog.render_preview,dict(record),self.base,420,None,read=True)
+                result=hit.result(timeout=.5)
+                with Image.open(io.BytesIO(result)) as image:self.assertEqual(ImageOps.exif_transpose(image).height>ImageOps.exif_transpose(image).width,True)
+            finally:release.set()
+            background.result(3)
+
+    def test_source_locks_release_after_failure_and_allow_different_versions(self):
+        catalog=AssetCatalog(self.base/'locks-data');self.addCleanup(catalog.close)
+        def record(version):return {'fingerprint':version,'id':version,'jpg':'photo.jpg','_catalog':True,'_source_root':str(self.base)}
+        barrier=threading.Barrier(2)
+        def warm(*args,**kwargs):barrier.wait(2)
+        with patch.object(media,'warm_previews',side_effect=warm),ThreadPoolExecutor(max_workers=2) as pool:
+            futures=[pool.submit(catalog.render_preview_batch,record(version),self.base,None) for version in ('one','two')]
+            for future in futures:future.result(3)
+        with patch.object(media,'warm_previews',side_effect=RuntimeError('source failed')):
+            with self.assertRaisesRegex(RuntimeError,'source failed'):catalog.render_preview_batch(record('one'),self.base,None)
+        with patch.object(media,'warm_previews') as warm:catalog.render_preview_batch(record('one'),self.base,None)
+        warm.assert_called_once()
+        self.assertNotIn('catalog-source:one',media._PREVIEW_LOCKS);self.assertNotIn('catalog-source:two',media._PREVIEW_LOCKS)
+
+    def test_cached_preview_honors_migration_gate_before_global_lock_is_taken(self):
+        photo=self.base/'migration.jpg';photo.write_bytes(jpeg())
+        record=media.capture_record(self.base,photo,None,{})
+        folder=self.base/'migration-data'/'catalog_previews'
+        media.preview(record,self.base,folder,None,2048)
+        index=cache_for(folder);budget=index.budget;read_entered=threading.Event();requested=threading.Event()
+        original=index.get
+        def read(*args,**kwargs):read_entered.set();return original(*args,**kwargs)
+        def migrate():
+            with budget.exclusive():pass
+        def cached():
+            requested.set();return media.cached_preview(record,folder,2048,read=True)
+        # 迁移先关闭 generation 门、等待已有读者，尚未持有全局索引锁。
+        lease=budget.generation();lease.__enter__()
+        with ThreadPoolExecutor(max_workers=2) as pool,patch.object(index,'get',side_effect=read):
+            migration=pool.submit(migrate)
+            try:
+                until=time.monotonic()+2
+                while not budget.switching and time.monotonic()<until:time.sleep(.005)
+                self.assertTrue(budget.switching)
+                pending=pool.submit(cached);self.assertTrue(requested.wait(1))
+                self.assertFalse(read_entered.wait(.1),'命中路径不能越过已经关闭的迁移门')
+            finally:lease.__exit__(None,None,None)
+            migration.result(2);self.assertTrue(pending.result(2).startswith(b'\xff\xd8'))
+
+    def test_warm_connections_close_before_migration_and_on_decode_failure(self):
+        photo=self.base/'scope.jpg';photo.write_bytes(jpeg(size=(1600,1000)))
+        record=media.capture_record(self.base,photo,None,{})
+        folder=self.base/'scope-data'/'previews';index=cache_for(folder);opened=[];connect=sqlite3.connect
+        class Tracked(sqlite3.Connection):
+            closed=False
+            def close(self):super().close();self.closed=True
+        def tracked(*args,**kwargs):
+            connection=connect(*args,**dict(kwargs,factory=Tracked));opened.append(connection);return connection
+        entered=threading.Event();release=threading.Event();migrated=threading.Event();source=media._jpeg_source
+        def paused(*args):
+            entered.set()
+            if not release.wait(3):raise RuntimeError('测试图片提取未释放')
+            return source(*args)
+        def migrate():
+            with index.budget.exclusive():
+                self.assertTrue(opened);self.assertTrue(all(connection.closed for connection in opened));migrated.set()
+        with patch.object(sqlite3,'connect',tracked),patch.object(media,'_jpeg_source',side_effect=paused),ThreadPoolExecutor(max_workers=2) as pool:
+            warm=pool.submit(media.warm_previews,record,self.base,folder,None)
+            try:
+                self.assertTrue(entered.wait(2));move=pool.submit(migrate)
+                self.assertFalse(migrated.wait(.1))
+            finally:release.set()
+            warm.result(4);move.result(4)
+        self.assertEqual(len(opened),2);self.assertTrue(all(connection.closed for connection in opened))
+        opened.clear()
+        with patch.object(sqlite3,'connect',tracked),patch.object(media,'_jpeg_source',side_effect=RuntimeError('decode failed')):
+            with self.assertRaisesRegex(RuntimeError,'decode failed'):media.warm_previews(dict(record,fingerprint='different'),self.base,folder,None)
+        self.assertTrue(opened);self.assertTrue(all(connection.closed for connection in opened))
+
+    def test_archive_http_preview_keeps_history_running_and_does_not_leak_pause(self):
+        # 只调用真实 Handler 路由；不启动正式服务或后台扫描。
+        with patch.dict(os.environ,{'FRAMEKEEP_DATA':str(self.base/'http-data')}):
+            import server
+        from types import SimpleNamespace
+        worker=PreviewWarmer(self.cache,None,autostart=False);self.addCleanup(worker.close)
+        photo=self.base/'http-background.jpg';photo.write_bytes(jpeg())
+        worker.enqueue(self.base,[media.capture_record(self.base,photo,None,{})])
+        replies=[];handler=object.__new__(server.Handler)
+        handler.path='/api/catalog/preview/test?size=2048';handler.trusted=lambda:True
+        handler.reply=lambda data,status=200,**kwargs:replies.append((data,status))
+        observed=[]
+        def preview(*args,**kwargs):
+            observed.append(worker.foreground_active)
+            self.assertTrue(worker.process_one())
+            return jpeg()
+        with patch.object(server,'PREVIEWS',worker),patch.object(server,'CATALOG',SimpleNamespace(preview=preview)):
+            handler.do_GET()
+        self.assertEqual(observed,[0]);self.assertEqual(worker.foreground_active,0);self.assertEqual(replies[-1][1],200)
+        with patch.object(server,'PREVIEWS',worker),patch.object(server,'CATALOG',SimpleNamespace(preview=lambda *a,**k:(_ for _ in ()).throw(ValueError('bad source')))):
+            handler.do_GET()
+        self.assertEqual(worker.foreground_active,0);self.assertEqual(replies[-1][1],400)
+
     def test_request_above_limit_reuses_2048_cache_offline_without_another_source_read(self):
         photo=self.base/'large.jpg';photo.write_bytes(jpeg(size=(3000,2000)))
         record=media.capture_record(self.base,photo,None,{})
@@ -147,18 +293,16 @@ class EmbeddedPreviewTests(unittest.TestCase):
     def test_archive_progress_snapshot_does_not_hold_cache_publication_lock(self):
         cache=cache_for(self.base/'data/previews');worker=PreviewWarmer(cache,None,autostart=False)
         self.addCleanup(worker.close);entered=threading.Event();release=threading.Event()
-        original=cache.connect
-        class Connection:
-            def __init__(self,connection):self.connection=connection
+        original=sqlite3.connect
+        class Connection(sqlite3.Connection):
             def execute(self,sql,*args):
                 if sql.startswith('SELECT root_id,state,count'):
                     entered.set()
                     if not release.wait(5):raise TimeoutError('统计未释放')
-                return self.connection.execute(sql,*args)
-        @contextmanager
-        def connect():
-            with original() as connection:yield Connection(connection)
-        with patch.object(cache,'connect',connect),ThreadPoolExecutor(max_workers=2) as pool:
+                return super().execute(sql,*args)
+        def connect(*args,**kwargs):
+            return original(*args,**kwargs,factory=Connection)
+        with patch.object(sqlite3,'connect',connect),ThreadPoolExecutor(max_workers=2) as pool:
             counting=pool.submit(worker.archive_state,['root']);self.assertTrue(entered.wait(2))
             try:self.assertEqual(pool.submit(cache.state).result(timeout=2)['images'],0)
             finally:release.set()

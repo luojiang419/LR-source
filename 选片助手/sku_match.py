@@ -6,15 +6,20 @@ import unicodedata
 CONFUSIONS=[set('0OQ'),set('1IL'),set('2Z'),set('5S'),set('8B'),set('6G')]
 
 
-def normalize(value):
+def normalize_code(value):
     return re.sub(r'[^A-Z0-9]','',unicodedata.normalize('NFKC',str(value)).upper())
+
+
+def normalize(value):
+    """传统款号沿用匹配键；纯文本使用非空文字键，实际SKU始终保留原文。"""
+    return normalize_code(value) or unicodedata.normalize('NFKC',str(value)).strip().upper()
 
 
 def extract_codes(text):
     result=[]
     for token in re.findall(r'[A-Za-z0-9Ａ-Ｚａ-ｚ０-９][A-Za-z0-9Ａ-Ｚａ-ｚ０-９\-－—_ /.]{3,45}',str(text)):
-        token=token.strip();key=normalize(token)
-        if len(key)>=4 and re.search(r'\d',key) and key not in [normalize(x) for x in result]:result.append(token)
+        token=token.strip();key=normalize_code(token)
+        if len(key)>=4 and re.search(r'\d',key) and key not in [normalize_code(x) for x in result]:result.append(token)
     return result[:12]
 
 
@@ -23,7 +28,7 @@ def extract_ocr_codes(text):
     text=str(text);explicit=[]
     for line in text.splitlines():
         field=re.search(r'(?:款\s*号|货\s*号|\bSKU\b|\bSTYLE(?:\s*NO\.?)?\b|\bITEM\s*NO\.?\b)\s*[:：#]?\s*([A-Za-z0-9Ａ-Ｚａ-ｚ０-９][A-Za-z0-9Ａ-Ｚａ-ｚ０-９_./－—\-]{3,79})',line,re.I)
-        if field and re.search(r'\d',normalize(field[1])) and field[1] not in explicit:explicit.append(field[1])
+        if field and re.search(r'\d',normalize_code(field[1])) and field[1] not in explicit:explicit.append(field[1])
     if explicit:return explicit[:12]
     codes=extract_codes(text)
     compact=[code for code in codes if re.fullmatch(r'[A-Za-z0-9Ａ-Ｚａ-ｚ０-９_./－—\-]{6,80}',code) and re.search(r'[A-Za-zＡ-Ｚａ-ｚ]',code)]
@@ -48,7 +53,7 @@ def match(readings,rows):
     ranked=[];evidence=[];ambiguous=False
     for reading in readings:
         codes=reading.get('codes') or extract_codes(reading.get('text',''))
-        codes=list(dict.fromkeys(normalize(c) for c in codes if normalize(c)))[:12]
+        codes=list(dict.fromkeys(normalize_code(c) for c in codes if normalize_code(c)))[:12]
         if len(codes)!=1:
             if len(codes)>1:ambiguous=True
             continue
@@ -89,7 +94,7 @@ def match_automatic(readings,rows):
     accepted=set();ambiguous=False;evidence=[]
     for reading in readings:
         for value in (reading.get('codes') or extract_codes(reading.get('text','')))[:12]:
-            code=normalize(value)
+            code=normalize_code(value)
             if len(code)<4:continue
             ranked=sorted((distance(code,key),key) for key in groups)
             if not ranked:continue

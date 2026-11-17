@@ -1,6 +1,7 @@
-"""参考搜索的手动提交、结果网格、大图浏览及固定参考联测。"""
+"""参考即时搜索、防抖、结果网格、大图浏览及固定参考联测。"""
 from contextlib import ExitStack
 from http.server import ThreadingHTTPServer
+import json
 from pathlib import Path
 import threading
 import time
@@ -21,6 +22,111 @@ ROOT = Path(__file__).resolve().parents[1]
 class ReferenceBrowserTests(unittest.TestCase):
     setUp = fixture.FullAutoWorkflowTests.setUp
     tearDown = fixture.FullAutoWorkflowTests.tearDown
+
+    def test_debounce_composition_stale_response_and_task_switch_preserve_reference(self):
+        import server
+        library = ReferenceLibrary(self.base/'debounced-reference')
+        http = None
+        try:
+            photos = self.base/'references';photos.mkdir()
+            for name in ('Look 000.JPG', 'Look 001.JPG', 'Other.JPG'):
+                Image.new('RGB', (240, 180), (40, 70, 160)).save(photos/name)
+            root = library.add_root(photos)['root_id']
+            deadline = time.monotonic()+10
+            while library._root(root)['status']!='ready':
+                self.assertLess(time.monotonic(), deadline);time.sleep(.02)
+            with ExitStack() as stack:
+                for name, value in dict(STORE=self.store, DATA=self.store.data, SKU=self.sku, MODELS=self.providers,
+                    ARCHIVE=self.archive, REFERENCES=library, MOUSE=None, WATCH=None, ANALYSIS=None,
+                    RAWLINK=None, FILESEARCH=None, COMPONENTS=None, DRIVER=None).items():
+                    stack.enter_context(patch.object(server, name, value))
+                http = ThreadingHTTPServer(('127.0.0.1', 0), server.Handler);http.daemon_threads = True
+                threading.Thread(target=http.serve_forever, daemon=True).start()
+                with sync_playwright() as pw:
+                    browser = pw.chromium.launch(executable_path='C:/Program Files/Google/Chrome/Application/chrome.exe', headless=True)
+                    try:
+                        page = browser.new_page(viewport={'width':1680, 'height':1050}, reduced_motion='reduce')
+                        queries, errors = [], []
+                        page.on('request', lambda request: queries.append(request.url) if '/api/reference/library/items?' in request.url else None)
+                        page.on('pageerror', lambda error: errors.append(str(error)))
+                        page.goto(f'http://127.0.0.1:{http.server_port}', wait_until='domcontentloaded')
+                        page.wait_for_selector('#split-preview-grid [data-row]', state='attached')
+                        page.locator('#view-open').click();page.locator('#layout-split').click();page.keyboard.press('Escape')
+                        search = page.locator('#split-search');grid = page.locator('#split-preview-grid')
+                        with page.expect_response('**/api/reference/library/items?*'):
+                            page.locator('#split-search-range').select_option('current')
+                        page.wait_for_function('()=>document.getElementById("split-results").textContent.startsWith("3 张")')
+                        # 组合输入期间停顿超过防抖时长也不能提交未选定的文字。
+                        before = len(queries)
+                        search.evaluate('''e=>{e.dispatchEvent(new CompositionEvent('compositionstart',{bubbles:true}));
+                            e.value='Look';e.dispatchEvent(new InputEvent('input',{bubbles:true,isComposing:true,data:'Look'}));}''')
+                        page.wait_for_timeout(450)
+                        self.assertEqual(len(queries), before)
+                        with page.expect_response('**/api/reference/library/items?*'):
+                            search.dispatch_event('compositionend')
+                        page.wait_for_function('()=>document.querySelectorAll("#split-preview-grid [data-row]").length===2')
+                        self.assertEqual(len(queries), before+1)
+                        # 搜索按钮立即提交并取消尚未执行的防抖请求。
+                        before = len(queries)
+                        with page.expect_response('**/api/reference/library/items?*'):
+                            search.fill('');page.locator('#split-search-submit').click()
+                        page.wait_for_timeout(450)
+                        self.assertEqual(len(queries), before+1)
+                        self.assertEqual(grid.locator('[data-row]').count(), 3)
+                        # 回车立即搜索并取消尚未执行的防抖请求。
+                        before = len(queries)
+                        with page.expect_response('**/api/reference/library/items?*'):
+                            search.fill('Other');search.press('Enter')
+                        page.wait_for_timeout(450)
+                        self.assertEqual(len(queries), before+1)
+                        self.assertEqual(grid.locator('[data-row] img').get_attribute('alt'), 'Other.JPG')
+                        held = []
+                        def delay_old_query(route):
+                            if parse_qs(urlsplit(route.request.url).query).get('q')==['Look 000']:
+                                held.append(route)
+                            else:
+                                route.continue_()
+                        page.route('**/api/reference/library/items?*', delay_old_query)
+                        with page.expect_request(lambda request: parse_qs(urlsplit(request.url).query).get('q')==['Look 000']):
+                            search.fill('Look 000')
+                        page.wait_for_timeout(50);self.assertEqual(len(held), 1)
+                        search.fill('Look 001')
+                        held.pop().fulfill(status=200, content_type='application/json', body=json.dumps(library.items(root, text='Look 000')))
+                        page.wait_for_timeout(80)
+                        self.assertEqual(grid.locator('[data-row] img').get_attribute('alt'), 'Other.JPG')
+                        page.wait_for_function('()=>document.querySelector("#split-preview-grid [data-row] img").alt==="Look 001.JPG"')
+                        grid.locator('[data-pin-row]').click()
+                        # 临时本机图片与固定参考都应跨拍摄目录和文档保留。
+                        with page.expect_file_chooser() as chooser:
+                            page.locator('#split-import').click()
+                        chooser.value.set_files(str(photos/'Other.JPG'))
+                        page.wait_for_function('()=>document.getElementById("split-reference-count").textContent==="2"')
+                        preview = page.locator('#split-reference-image');source = preview.get_attribute('src')
+                        self.assertTrue(source.startswith('blob:'))
+                        page.locator('#split-reference-tray').evaluate('(e)=>e.open=false')
+                        page.evaluate('()=>FramekeepIO.flush()')
+                        next_photos = self.base/'next-shoot';next_photos.mkdir()
+                        sid = self.store.ensure_live_session(next_photos);self.store.activate(sid)
+                        with page.expect_response('**/api/reference/task'):
+                            page.evaluate('(id)=>{FRAMEKEEP_SESSION.id=id;document.dispatchEvent(new CustomEvent("framekeep:selection"))}', sid)
+                        self.assertEqual(page.locator('#split-reference-count').inner_text(), '2')
+                        self.assertEqual(preview.get_attribute('src'), source)
+                        self.assertFalse(page.locator('#split-reference-tray').evaluate('(e)=>e.open'))
+                        with patch.object(self.sku, 'project', return_value={**self.sku.project(), 'id':'another-project'}):
+                            with page.expect_response('**/api/reference/task'):
+                                page.evaluate('()=>{const original=FramekeepSku.shootingTypes;FramekeepSku.shootingTypes=()=>({...original(),project_id:"another-project"});document.dispatchEvent(new CustomEvent("framekeep:sku-project"));}')
+                        self.assertEqual(page.locator('#split-reference-count').inner_text(), '2')
+                        self.assertEqual(preview.get_attribute('src'), source)
+                        self.assertEqual(len(library.preferences()['references']), 1)
+                        output = ROOT/'build/split-search-reference';output.mkdir(parents=True, exist_ok=True)
+                        page.locator('#split-reference-tray').evaluate('(e)=>e.open=true')
+                        page.screenshot(path=str(output/'retained-references.png'))
+                        self.assertFalse(errors, errors)
+                    finally:
+                        browser.close()
+        finally:
+            if http:http.shutdown();http.server_close()
+            library.close()
 
     def test_search_grid_single_pinning_zoom_and_local_remote_requests(self):
         import server
@@ -77,11 +183,11 @@ class ReferenceBrowserTests(unittest.TestCase):
                             with page.expect_response(lambda response: '/api/reference/library/items?' in response.url):
                                 root_button.click()
                         before = len(queries)
-                        search.press_sequentially('Look', delay=200);page.wait_for_timeout(300)
-                        self.assertEqual(len(queries), before)
                         with page.expect_response(lambda response: '/api/reference/library/items?' in response.url):
-                            page.locator('#split-search-submit').click()
+                            search.press_sequentially('Look', delay=100)
+                            self.assertEqual(len(queries), before)
                         page.wait_for_function('()=>document.querySelectorAll("#split-preview-grid [data-row]").length===60')
+                        self.assertEqual(len(queries), before+1)
                         self.assertTrue(grid.is_visible())
                         self.assertEqual(grid.locator('.split-folder-divider>span').all_text_contents(), ['系列 A','系列 B'])
                         self.assertEqual(queries[-1]['device'], [device])
@@ -155,12 +261,24 @@ class ReferenceBrowserTests(unittest.TestCase):
                         self.assertEqual(len(queries), before)
                         page.locator('#split-grid-scale').evaluate('(e)=>{e.value=100;e.dispatchEvent(new Event("input",{bubbles:true}))}')
                         self.assertTrue(grid.locator('[data-row="0"]>span').is_visible())
-                        search.fill('尚未提交')
+                        # 防抖尚未到期时翻页，先按新条件查询第一页。
+                        with page.expect_response(lambda response: '/api/reference/library/items?' in response.url):
+                            search.fill('Look 06');page.locator('#split-result-next').click()
+                        page.wait_for_function('()=>document.querySelectorAll("#split-preview-grid [data-row]").length===5')
+                        self.assertEqual(queries[-1]['q'], ['Look 06'])
+                        self.assertEqual(queries[-1]['offset'], ['0'])
+                        with page.expect_response(lambda response: '/api/reference/library/items?' in response.url):
+                            search.fill('Look')
+                        page.wait_for_function('()=>document.querySelectorAll("#split-preview-grid [data-row]").length===60')
                         with page.expect_response(lambda response: '/api/reference/library/items?' in response.url):
                             page.locator('#split-result-next').click()
                         self.assertEqual(queries[-1]['q'], ['Look'])
                         page.wait_for_function('()=>document.querySelectorAll("#split-preview-grid [data-row]").length===5')
-                        search.fill('')
+                        with page.expect_response(lambda response: '/api/reference/library/items?' in response.url):
+                            search.fill('')
+                        page.wait_for_function('()=>document.getElementById("split-result-page").textContent.startsWith("1 /")')
+                        self.assertEqual(queries[-1]['q'], [''])
+                        self.assertEqual(queries[-1]['offset'], ['0'])
                     page.locator('#split-search-range').select_option('all');search.fill('Look')
                     with page.expect_response('**/api/reference/search?*'):
                         page.locator('#split-search-submit').click()
@@ -177,10 +295,9 @@ class ReferenceBrowserTests(unittest.TestCase):
                     page.locator('#split-reference-stage').press('ArrowRight')
                     self.assertNotEqual(preview.get_attribute('src'),old_source)
                     page.locator('#split-reference-stage').press('Escape')
-                    page.locator('#split-search-range').select_option('current')
-                    with page.expect_response('**/api/reference/search?*'):
-                        page.locator('#split-result-next').click()
-                    self.assertIn('全部已添加目录',page.locator('#split-search-scope').inner_text())
+                    with page.expect_response('**/api/reference/library/items?*'):
+                        page.locator('#split-search-range').select_option('current')
+                    page.wait_for_function('()=>document.getElementById("split-search-scope").textContent.startsWith("当前目录及子目录")')
                     search.fill('Look 06')
                     with page.expect_response(lambda response:'/api/reference/library/items?' in response.url):
                         page.locator('#split-search-submit').click()
@@ -219,11 +336,12 @@ class ReferenceBrowserTests(unittest.TestCase):
                     next_session = self.store.ensure_live_session(next_photos);self.store.activate(next_session)
                     with page.expect_response(lambda response: response.url.endswith('/api/reference/task')):
                         page.evaluate('(id)=>{FRAMEKEEP_SESSION.id=id;document.dispatchEvent(new CustomEvent("framekeep:selection"))}', next_session)
-                    page.wait_for_function('()=>document.querySelectorAll("#split-reference-thumbnails [data-show-reference]").length===0')
-                    self.assertEqual(local.preferences()['references'], [])
-                    self.assertTrue(page.locator('#split-clear-reference').is_disabled())
-                    self.assertFalse(list(local.cache.folder.glob('*.webp')))
-                    self.assertFalse(list(local.cache.folder.glob('*.jpg')))
+                    self.assertEqual(page.locator('#split-reference-thumbnails [data-show-reference]').count(), 1)
+                    self.assertEqual(len(local.preferences()['references']), 1)
+                    self.assertFalse(page.locator('#split-clear-reference').is_disabled())
+                    self.assertTrue(list(local.cache.folder.glob('*.webp')) or list(local.cache.folder.glob('*.jpg')))
+                    page.reload();page.wait_for_selector('#split-reference-thumbnails [data-show-reference]')
+                    self.assertEqual(page.locator('#split-reference-thumbnails [data-show-reference]').count(), 1)
                     self.assertTrue(any(request.get('size')==['1800'] for request in previews))
                     self.assertFalse(errors, errors)
                     browser.close()

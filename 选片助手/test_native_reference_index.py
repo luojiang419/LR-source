@@ -41,6 +41,20 @@ class NativeReferenceTests(unittest.TestCase):
         self.assertEqual(result['total'],1);self.assertEqual(global_result['total'],1)
         self.assertIn('索引',result['engine']);self.assertNotIn('Everything',result['engine'])
 
+    def test_completed_folder_browsing_does_not_rescan_or_requeue_unchanged_files(self):
+        self.assertTrue(self.library._root(self.root)['native_complete'])
+        catalog=self.library.catalog(self.root)
+        with catalog.connect() as c:before=[tuple(row) for row in c.execute('SELECT id,last_seen FROM items')]
+        with patch('reference_library.os.scandir',side_effect=AssertionError('成熟目录列表不重扫文件')):
+            for _ in range(3):
+                self.library.folder_refresh.clear()
+                self.assertEqual(self.library.items(self.root)['total'],1)
+        with catalog.connect() as c:self.assertEqual([tuple(row) for row in c.execute('SELECT id,last_seen FROM items')],before)
+        # 列表不再同步枚举，真实增量通知仍能让新增照片进入同一目录。
+        Image.new('RGB',(20,20),'blue').save(self.photos/'NEW-200.JPG')
+        self.library._apply_changes(self.root,{'NEW-200.JPG'})
+        self.assertEqual(self.library.items(self.root)['total'],2)
+
     def test_everything_disappearing_automatically_builds_independent_index(self):
         from types import SimpleNamespace
         folder=self.base/'sdk-covered';folder.mkdir();photo=folder/'NO-SDK-500.JPG';Image.new('RGB',(20,20),'blue').save(photo)

@@ -1,0 +1,113 @@
+{
+  "date": "2026-11-04",
+  "base": "697aa56",
+  "branch": "chore/verify-integrated-local-20261104",
+  "build": "python -X utf8 选片助手/build_release.py --stage-only",
+  "build_passed": true,
+  "source_tests": {
+    "passed": 45,
+    "failures": 0,
+    "seconds": 202.013
+  },
+  "frozen": {
+    "passed": true,
+    "frozen_modules": 112,
+    "entrypoint_checked": true,
+    "source_mismatches": [],
+    "web_files": 69,
+    "tests": 1,
+    "failures": 0,
+    "errors": 0,
+    "skips": 0,
+    "unique_tests_covered": 33,
+    "initial_passed": 32,
+    "retried_passed": 1,
+    "single_run_all_passed": false,
+    "reason": "Verification harness cwd corrected; no product source changes",
+    "initial_log": "frozen.log",
+    "retry_log": "frozen-retry.log",
+    "source_regression_tests": 45
+  },
+  "installation": {
+    "passed": true,
+    "session": "D:\\Program Files\\Framekeep\\.update-state\\local-integration-check-20261104-105855",
+    "desktop_pid": 46404,
+    "engine_pid": 31652,
+    "changed": [
+      "engine/_internal/base_library.zip",
+      "engine/_internal/演示方案/archive-analysis.css",
+      "engine/_internal/演示方案/archive-analysis.js",
+      "engine/_internal/演示方案/asset-analysis.js",
+      "engine/_internal/演示方案/asset-retrieval.js",
+      "engine/_internal/演示方案/assets/camera-framing.svg",
+      "engine/_internal/演示方案/assets/camera-iris-still.svg",
+      "engine/_internal/演示方案/assets/camera-iris.svg",
+      "engine/_internal/演示方案/assets/camera-transfer.svg",
+      "engine/_internal/演示方案/desktop-lifecycle.css",
+      "engine/_internal/演示方案/lan-quick-search.css",
+      "engine/_internal/演示方案/multidimensional-workflow.js",
+      "engine/_internal/演示方案/ocr-feedback.css",
+      "engine/_internal/演示方案/preview-empty.css",
+      "engine/_internal/演示方案/preview-empty.js",
+      "engine/_internal/演示方案/quick-search-appearance.js",
+      "engine/_internal/演示方案/receiving-preview.js",
+      "engine/_internal/演示方案/selection-folders.css",
+      "engine/_internal/演示方案/selection-folders.js",
+      "engine/_internal/演示方案/sku-media-pool.css",
+      "engine/_internal/演示方案/sku-media-pool.js",
+      "engine/_internal/演示方案/startup-visual.js",
+      "engine/_internal/演示方案/startup.css",
+      "engine/_internal/演示方案/task-status.js",
+      "engine/_internal/演示方案/workbench.css",
+      "engine/framekeep-engine.exe",
+      "末帧选片.exe",
+      "update/install-layout.json"
+    ],
+    "managed_files": 833,
+    "protected_data_files": 60193,
+    "data_preserved_before_launch": true,
+    "version": "1.0.0",
+    "releaseId": "20261103060833"
+  },
+  "ui": {
+    "ready": {
+      "application": "framekeep",
+      "process_id": 31652,
+      "ready": true
+    },
+    "library_http_seconds": [
+      0.0154,
+      0.0135,
+      0.0216
+    ],
+    "groups": 19,
+    "library_total": 1207,
+    "http_resources_match_source": true,
+    "sku_cards_seconds": 0.519,
+    "sku_first_image_seconds": 0.698,
+    "sku_cards": 72,
+    "all_visible_images_seconds": 7.021,
+    "passed": true,
+    "today_documents": 0,
+    "history_documents": 2,
+    "javascript_errors": [],
+    "production_edits": 0,
+    "mocked_responses": false,
+    "desktop_metrics": {
+      "desktop_pid": 46404,
+      "first_document_ready_ms": 5764,
+      "first_workbench_ready_ms": 5764,
+      "startup_animation_visible_ms": 709,
+      "web_timings": {
+        "data_ready_ms": 317.20000000298023,
+        "shell_ready_ms": 249.89999999850988,
+        "workbench_ready_ms": 479
+      }
+    }
+  },
+  "native_window_accessibility": "Passed: actual installed window and SKU records",
+  "native_screenshot": "window capture timed out; browser screenshots inspect actual installed engine",
+  "online_release": false,
+  "git_push": false,
+  "evidence_directory": "build\\integration-check-20261104"
+}

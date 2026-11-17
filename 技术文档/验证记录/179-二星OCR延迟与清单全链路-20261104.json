@@ -1,0 +1,298 @@
+{
+  "task": 179,
+  "local_completed": true,
+  "customer_machine_verified": false,
+  "published": false,
+  "reference": {
+    "releaseId": "20261104071740",
+    "signature_verified": true,
+    "files": 835,
+    "mismatches": []
+  },
+  "baseline_ocr_only": {
+    "passed": true,
+    "release": "20261104071740",
+    "ocr_only": true,
+    "peak_requests": 3,
+    "all_four_visible_seconds": 6.84,
+    "footer": "拍摄进度 · 4 已拍摄",
+    "groups": [
+      {
+        "sku": "LC7877529-P105",
+        "submit_seconds": 5.136,
+        "database_seconds": 5.708,
+        "writeback_seconds": 17.353
+      },
+      {
+        "sku": "LC7877836-P1",
+        "submit_seconds": 0.112,
+        "database_seconds": 0.831,
+        "writeback_seconds": 19.971
+      },
+      {
+        "sku": "LC7832852-P305",
+        "submit_seconds": 0.111,
+        "database_seconds": 1.014,
+        "writeback_seconds": 27.258
+      },
+      {
+        "sku": "LC7832852-P804",
+        "submit_seconds": 0.142,
+        "database_seconds": 0.855,
+        "writeback_seconds": 35.182
+      }
+    ],
+    "model_requests": [
+      {
+        "model": "glm-ocr",
+        "seconds": 0.436,
+        "input_bytes": 553427,
+        "output_chars": 88
+      },
+      {
+        "model": "glm-ocr",
+        "seconds": 0.459,
+        "input_bytes": 296995,
+        "output_chars": 100
+      },
+      {
+        "model": "glm-ocr",
+        "seconds": 0.444,
+        "input_bytes": 437771,
+        "output_chars": 97
+      },
+      {
+        "model": "glm-ocr",
+        "seconds": 0.394,
+        "input_bytes": 467627,
+        "output_chars": 90
+      }
+    ],
+    "pixels_unchanged": true,
+    "fields_correct": true,
+    "originals_unchanged": true,
+    "writeback_hints_cleared": null,
+    "errors": [],
+    "exit_code": 0
+  },
+  "installed_ocr_only": {
+    "passed": true,
+    "release": "20261104071740",
+    "ocr_only": true,
+    "peak_requests": 4,
+    "all_four_visible_seconds": 4.382,
+    "footer": "拍摄进度 · 4 已拍摄",
+    "groups": [
+      {
+        "sku": "LC7877529-P105",
+        "submit_seconds": 0.401,
+        "database_seconds": 1.942,
+        "writeback_seconds": 13.773
+      },
+      {
+        "sku": "LC7877836-P1",
+        "submit_seconds": 0.093,
+        "database_seconds": 2.728,
+        "writeback_seconds": 28.271
+      },
+      {
+        "sku": "LC7832852-P305",
+        "submit_seconds": 0.118,
+        "database_seconds": 3.256,
+        "writeback_seconds": 20.561
+      },
+      {
+        "sku": "LC7832852-P804",
+        "submit_seconds": 0.106,
+        "database_seconds": 2.416,
+        "writeback_seconds": 36.09
+      }
+    ],
+    "model_requests": [
+      {
+        "model": "glm-ocr",
+        "seconds": 0.647,
+        "input_bytes": 555799,
+        "output_chars": 88
+      },
+      {
+        "model": "glm-ocr",
+        "seconds": 0.589,
+        "input_bytes": 295327,
+        "output_chars": 100
+      },
+      {
+        "model": "glm-ocr",
+        "seconds": 0.54,
+        "input_bytes": 438483,
+        "output_chars": 97
+      },
+      {
+        "model": "glm-ocr",
+        "seconds": 0.46,
+        "input_bytes": 466871,
+        "output_chars": 90
+      }
+    ],
+    "pixels_unchanged": true,
+    "fields_correct": true,
+    "originals_unchanged": true,
+    "writeback_hints_cleared": null,
+    "errors": [],
+    "exit_code": 0
+  },
+  "installed_original_config": {
+    "passed": true,
+    "release": "20261104071740",
+    "ocr_only": false,
+    "peak_requests": 4,
+    "all_four_visible_seconds": 3.728,
+    "footer": "拍摄进度 · 4 已拍摄",
+    "groups": [
+      {
+        "sku": "LC7877529-P105",
+        "submit_seconds": 0.159,
+        "database_seconds": 1.778,
+        "writeback_seconds": 13.919
+      },
+      {
+        "sku": "LC7877836-P1",
+        "submit_seconds": 0.136,
+        "database_seconds": 3.521,
+        "writeback_seconds": 29.289
+      },
+      {
+        "sku": "LC7832852-P305",
+        "submit_seconds": 0.112,
+        "database_seconds": 3.3,
+        "writeback_seconds": 21.373
+      },
+      {
+        "sku": "LC7832852-P804",
+        "submit_seconds": 0.09,
+        "database_seconds": 3.128,
+        "writeback_seconds": 37.016
+      }
+    ],
+    "model_requests": [
+      {
+        "model": "glm-ocr",
+        "seconds": 0.648,
+        "input_bytes": 555799,
+        "output_chars": 88
+      },
+      {
+        "model": "glm-ocr",
+        "seconds": 0.585,
+        "input_bytes": 295327,
+        "output_chars": 100
+      },
+      {
+        "model": "glm-ocr",
+        "seconds": 0.564,
+        "input_bytes": 438483,
+        "output_chars": 97
+      },
+      {
+        "model": "glm-ocr",
+        "seconds": 0.499,
+        "input_bytes": 466871,
+        "output_chars": 90
+      }
+    ],
+    "pixels_unchanged": true,
+    "fields_correct": true,
+    "originals_unchanged": true,
+    "writeback_hints_cleared": true,
+    "errors": [],
+    "exit_code": 0
+  },
+  "native_keyboard": {
+    "native_ui": true,
+    "first_shot_seconds": 1.526,
+    "passed": true,
+    "fields": {
+      "XSY_9288.JPG": "LC7877529-P105",
+      "XSY_9289.JPG": "LC7877529-P105",
+      "XSY_9290.JPG": "LC7877529-P105",
+      "XSY_9291.JPG": "LC7877529-P105"
+    }
+  },
+  "restart": {
+    "passed": true,
+    "counts": [
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4
+    ],
+    "jobs_before": 4,
+    "jobs_after": 4,
+    "ocr_before": 4,
+    "ocr_after": 4,
+    "written": {
+      "applied": 16
+    },
+    "exit_code": 0
+  },
+  "installed": {
+    "installed": "D:\\Program Files\\Framekeep",
+    "transaction": "D:\\Program Files\\Framekeep\\.update-state\\local-two-star-latency-20261104-165019",
+    "changed_files": [
+      "engine/_internal/base_library.zip",
+      "engine/_internal/更新系统/update-config.json",
+      "engine/_internal/演示方案/ocr-feedback.js",
+      "engine/_internal/演示方案/sku-reconciliation.js",
+      "engine/framekeep-engine.exe",
+      "update/update-worker.exe",
+      "update/卸载末帧选片.exe",
+      "update/末帧更新器.exe",
+      "update-config.json",
+      "update/install-layout.json"
+    ],
+    "all_program_files_verified": 835,
+    "business_databases_unchanged": true,
+    "version": "1.0.0",
+    "releaseId": "20261104071740",
+    "started": false
+  },
+  "frozen": {
+    "passed": true,
+    "frozen_modules": 115,
+    "entrypoint_checked": true,
+    "source_mismatches": [],
+    "web_files": 71,
+    "tests": 21,
+    "failures": 0,
+    "errors": 0,
+    "skips": 0
+  },
+  "package": {
+    "passed": true,
+    "files": 835,
+    "signature_verified": true,
+    "published": false,
+    "bundle": "G:\\app\\LR\\dist\\末帧选片-OCR即时解析修复-本地-20261104.zip",
+    "bytes": 288770267,
+    "sha256": "c6049b975f8dab651feb85193da25d2bb39af4f774fad1312d25102eea90bbdd"
+  },
+  "source_regressions": {
+    "input_flow": 35,
+    "capacity_input": 34,
+    "writeback": 26,
+    "background_slots": 4,
+    "note": "分组存在重叠，不合计为独立测试总数；旧中断组合不计为通过。"
+  }
+}

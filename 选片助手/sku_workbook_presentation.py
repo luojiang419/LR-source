@@ -1,6 +1,7 @@
 """在最终工作副本应用列名并附加全部款号汇总，保留原 XML 部件。"""
 import posixpath
 import re
+from datetime import datetime,timedelta,timezone
 from xml.etree import ElementTree as E
 from xml.sax.saxutils import escape,unescape,quoteattr
 from zipfile import ZipFile,ZIP_DEFLATED
@@ -32,17 +33,19 @@ def canonical_values(values,layout):
     return aliases
 
 
-def _patch_headers(raw,header_row,updates):
+def _patch_rows(raw,updates):
     xml=raw.decode('utf-8-sig');prefix=re.search(r'<((?:\w+:)?)worksheet\b',xml)[1]
     def patch(match):
-        if int(re.search(r'\br=["\'](\d+)["\']',match['attrs'])[1])!=header_row:return match[0]
+        number=int(re.search(r'\br=["\'](\d+)["\']',match['attrs'])[1])
+        if number not in updates:return match[0]
         body=match['body']
-        for index,title in updates.items():
-            ref=col_name(index)+str(header_row)
+        for index,title in updates[number].items():
+            ref=col_name(index)+str(number)
             pattern=r'<(?:\w+:)?c\b(?P<attrs>[^>]*\br=["\']'+ref+r'["\'][^>]*?)(?:/>|>.*?</(?:\w+:)?c>)'
             cell=re.search(pattern,body,re.S)
             attrs=re.sub(r'\s+t=["\'][^"\']*["\']','',cell['attrs']) if cell else f' r="{ref}"'
-            node=f'<{prefix}c{attrs} t="inlineStr"><{prefix}is><{prefix}t xml:space="preserve">{escape(title)}</{prefix}t></{prefix}is></{prefix}c>'
+            node=(f'<{prefix}c{attrs}><{prefix}v>{title}</{prefix}v></{prefix}c>' if isinstance(title,int) else
+                  f'<{prefix}c{attrs} t="inlineStr"><{prefix}is><{prefix}t xml:space="preserve">{escape(title)}</{prefix}t></{prefix}is></{prefix}c>')
             if cell:body=body[:cell.start()]+node+body[cell.end():]
             else:
                 later=next((m.start() for m in re.finditer(r'<(?:\w+:)?c\b[^>]*\br=["\']([A-Z]+)\d+["\']',body) if col_number(m[1])>index),len(body))
@@ -51,14 +54,62 @@ def _patch_headers(raw,header_row,updates):
     return re.sub(r'<(?P<tag>(?:\w+:)?row)\b(?P<attrs>[^>]*)>(?P<body>.*?)</(?P=tag)>',patch,xml,flags=re.S).encode('utf8')
 
 
+def _patch_headers(raw,header_row,updates):
+    return _patch_rows(raw,{header_row:updates})
+
+
+def _beijing_time(value):
+    """仅格式化明确的 ISO 时间；相机无偏移时间视作北京时间。"""
+    match=re.fullmatch(r'\d{4}-\d\d-\d\d[T ]\d\d:\d\d:\d\d(?P<fraction>\.\d+)?(?:Z|[+-]\d\d:\d\d)?',value)
+    if not match:return value
+    try:
+        stamp=datetime.fromisoformat(value.replace('Z','+00:00'))
+        if stamp.tzinfo is not None:stamp=stamp.astimezone(timezone(timedelta(hours=8)))
+        fraction=match['fraction'] or ''
+        return stamp.strftime('%Y-%m-%d %H:%M:%S')+fraction
+    except ValueError:return value
+
+
+def _export_values(parts,plan,entries,mapping):
+    from sku_workbook import cell_value,_column_width
+    raw=parts[plan['path']];doc=E.fromstring(raw)
+    strings=[''.join(s.itertext()) for s in E.fromstring(parts['xl/sharedStrings.xml']).findall('m:si',N)] if 'xl/sharedStrings.xml' in parts else []
+    cells={c.get('r'):c for c in doc.findall('m:sheetData/m:row/m:c',N)}
+    positions={key:mapping[index] for index,key,_ in entries}
+    times={mapping[index] for index,key,title in entries if key=='time' or title.strip() in ('记录时间','入库时间')}
+    updates={}
+    for seq,row in enumerate(sorted(plan['rows'],key=lambda r:r['excel_row']),1):
+        number=row['excel_row'];values={positions['seq']:seq}
+        for index in times:
+            cell=cells.get(col_name(index)+str(number))
+            if cell is None or cell.find('m:f',N) is not None:continue
+            value=cell_value(cell,strings);formatted=_beijing_time(value)
+            if formatted!=value:values[index]=formatted
+        updates[number]=values
+    xml=_patch_rows(raw,updates).decode('utf8');prefix=re.search(r'<((?:\w+:)?)worksheet\b',xml)[1]
+    xml=_column_width(xml,prefix,positions['seq'],9)
+    # 新序号列可能位于原 dimension 左侧，范围须覆盖新增数据。
+    addresses=[c.get('r') for c in E.fromstring(xml).findall('m:sheetData/m:row/m:c',N)]
+    def dimension(match):
+        refs=addresses+match[1].split(':');left=min(col_number(ref) for ref in refs);right=max(col_number(ref) for ref in refs)
+        rows=[int(re.sub('[A-Z]','',ref)) for ref in refs]
+        return match[0].replace(match[1],f'{col_name(left)}{min(rows)}:{col_name(right)}{max(rows)}')
+    parts[plan['path']]=re.sub(r'<(?:\w+:)?dimension\b[^>]*\bref="([A-Z0-9:]+)"[^>]*/>',dimension,xml,count=1).encode('utf8')
+
+
 def _positions(plan):
-    shift=lambda i:i+int(not plan.get('image_col') and i>=plan['status_col']+1)
-    last=max([shift(c['index']) for c in plan.get('columns',[])]+[shift(plan['time_col']),plan['status_col']+1])
+    photo=plan.get('image_col') or plan['status_col']+1
+    first=lambda i:i+int(not plan.get('image_col') and i>=photo)
+    label=first(plan['label_col']) if plan.get('label_col') else photo+1
+    second=lambda i:i+int(not plan.get('label_col') and i>=label)
+    shift=lambda i:second(first(i))
+    last=max([shift(c['index']) for c in plan.get('columns',[])]+[shift(plan['time_col']),shift(plan['status_col']),second(photo),label,shift(plan.get('seq_col') or 1)])
     notes=[shift(c['index']) for c in plan.get('columns',[]) if c['title'].strip()=='备注']
     order=[i for i in range(1,last+1) if i not in notes]+notes
     moved={old:new for new,old in enumerate(order,1)}
     entries=[(moved[shift(c['index'])],header_key(plan,c),c['title']) for c in plan.get('columns',[])]
-    entries.extend([(moved[plan['status_col']],'status','拍摄状态'),(moved[plan['status_col']+1],'photo','款号图片'),(moved[shift(plan['time_col'])],'time','拍摄完成时间')])
+    entries.extend([(moved[shift(plan['status_col'])],'status','拍摄状态'),(moved[second(photo)],'photo','款号图片'),(moved[label],'label','标签图片'),(moved[shift(plan['time_col'])],'time','拍摄完成时间')])
+    if plan.get('seq_col'):entries.append((moved[shift(plan['seq_col'])],'seq','序号'))
     return entries
 
 
@@ -114,13 +165,30 @@ def _structured_references(parts,tables):
 def finalize(path,plans,headers,groups,images):
     with ZipFile(path) as archive:
         parts={name:archive.read(name) for name in archive.namelist()};prior=read_layout(archive)
-    manifest=E.Element('framekeep-presentation',version='1');tables=[]
+    manifest=E.Element('framekeep-presentation',version='1');tables=[];moves={};mapped_titles={};value_plans=[]
     for plan in plans:
         if not plan.get('rows'):continue
-        entries=_positions(plan);updates={i:headers[key] for i,key,_ in entries if key in headers}
+        entries=_positions(plan)
+        last=max(col_number(c.get('r')) for c in E.fromstring(parts[plan['path']]).findall('m:sheetData/m:row/m:c',N))
+        if not any(key=='seq' for _,key,_ in entries):entries.append((last+1,'seq','序号'));last+=1
+        displayed={i:headers.get(key,'入库时间' if title=='记录时间' else title) for i,key,title in entries}
+        updates={i:displayed[i] for i,key,title in entries if key in headers or title=='记录时间' or key=='seq'}
         if updates:parts[plan['path']]=_patch_headers(parts[plan['path']],plan['header_row'],updates)
         element=E.SubElement(manifest,'sheet',path=plan['path'],name=plan['name'])
-        for i,key,canonical in entries:E.SubElement(element,'column',ref=col_name(i)+str(plan['header_row']),key=key,canonical=canonical,title=headers.get(key,canonical))
+        for i,key,canonical in entries:E.SubElement(element,'column',ref=col_name(i)+str(plan['header_row']),key=key,canonical=canonical,title=displayed[i])
+        positions={key:i for i,key,_ in entries};pictures={positions['photo'],positions['label']}
+        order=[]
+        for i in range(1,last+1):
+            if i in pictures or i in (positions['seq'],positions['status']):continue
+            if i==positions['sku']:order.append(positions['seq'])
+            order.append(i)
+            if i==positions['sku']:order.extend([positions['photo'],positions['label']])
+            if i==positions['time']:order.append(positions['status'])
+        mapping={old:new for new,old in enumerate(order,1)}
+        value_plans.append((plan,entries,mapping))
+        if any(old!=new for old,new in mapping.items()):moves[plan['name']]=mapping
+        mapped_titles[plan['name']]={mapping[i]:title for i,title in displayed.items()}
+        for c in element:c.set('ref',col_name(mapping[col_number(c.get('ref'))])+str(plan['header_row']))
         # Excel Table 的列名与表头保持一致，结构化引用随后同步。
         relpath=posixpath.join(posixpath.dirname(plan['path']),'_rels',posixpath.basename(plan['path'])+'.rels')
         if relpath in parts and updates:
@@ -140,6 +208,10 @@ def finalize(path,plans,headers,groups,images):
                 for c,title in zip(columns,titles):c.set('name',title)
                 parts[part]=E.tostring(doc,encoding='utf-8',xml_declaration=True)
     if tables:_structured_references(parts,tables)
+    if moves:
+        from sku_workbook_pictures import insert_columns
+        insert_columns(parts,plans,column_maps=moves,column_titles=mapped_titles)
+    for plan,entries,mapping in value_plans:_export_values(parts,plan,entries,mapping)
     _summary(parts,manifest,prior,headers,groups,images)
     parts[PART]=E.tostring(manifest,encoding='utf-8',xml_declaration=True)
     relpart='xl/_rels/workbook.xml.rels';rels=E.fromstring(parts[relpart])

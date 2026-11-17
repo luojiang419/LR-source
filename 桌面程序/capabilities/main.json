@@ -12,8 +12,12 @@
   "permissions": [
     "core:default",
     "allow-choose-folders",
+    "allow-choose-cache-folder",
+    "allow-choose-cache-backup",
     "allow-save-manifest",
+    "allow-save-inventory-report",
     "allow-save-sku-workbook",
+    "allow-save-archive-document",
     "allow-finish-close",
     "allow-desktop-ready",
     "allow-close-for-update",
@@ -25,6 +29,7 @@
     "allow-get-desktop-preferences",
     "allow-set-desktop-preferences",
     "allow-hide-to-tray",
+    "allow-toggle-fullscreen",
     "allow-startup-visible"
   ]
 }

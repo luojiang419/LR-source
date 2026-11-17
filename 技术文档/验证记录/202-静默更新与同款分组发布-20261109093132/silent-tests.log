@@ -1,0 +1,17 @@
+test_bad_signature_or_hash_never_reports_downloaded (test_silent_update.SilentDownloadTests.test_bad_signature_or_hash_never_reports_downloaded) ... ok
+test_download_failure_can_retry_and_restart_reuses_verified_cache (test_silent_update.SilentDownloadTests.test_download_failure_can_retry_and_restart_reuses_verified_cache) ... ok
+test_download_is_single_flight_and_open_requires_complete_package (test_silent_update.SilentDownloadTests.test_download_is_single_flight_and_open_requires_complete_package) ... ok
+test_latest_version_does_not_download (test_silent_update.SilentDownloadTests.test_latest_version_does_not_download) ... ok
+test_cached_page_refresh_and_retry_never_flash_header_status (test_silent_update.SilentUpdateBrowserTests.test_cached_page_refresh_and_retry_never_flash_header_status) ... ok
+test_full_workbench_header_stays_quiet_then_shows_ready_button (test_silent_update.SilentUpdateBrowserTests.test_full_workbench_header_stays_quiet_then_shows_ready_button) ... ok
+test_startup_download_is_quiet_and_prompts_once_only_after_completion (test_silent_update.SilentUpdateBrowserTests.test_startup_download_is_quiet_and_prompts_once_only_after_completion) ... ok
+test_adopts_only_handoff_bound_to_this_engine_and_desktop (test_update_handoff.UpdateHandoffTests.test_adopts_only_handoff_bound_to_this_engine_and_desktop) ... ok
+test_browser_recovers_poll_failure_and_waits_instead_of_cancelling (test_update_handoff.UpdateHandoffTests.test_browser_recovers_poll_failure_and_waits_instead_of_cancelling) ... ok
+test_file_writers_must_finish_before_close_returns (test_update_handoff.UpdateHandoffTests.test_file_writers_must_finish_before_close_returns) ... ok
+test_native_fallback_saves_before_exit_without_page_poll (test_update_handoff.UpdateHandoffTests.test_native_fallback_saves_before_exit_without_page_poll) ... ok
+test_save_failure_keeps_app_and_cancels_transaction (test_update_handoff.UpdateHandoffTests.test_save_failure_keeps_app_and_cancels_transaction) ... ok
+
+----------------------------------------------------------------------
+Ran 12 tests in 33.816s
+
+OK

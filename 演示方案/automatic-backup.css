@@ -1,0 +1,15 @@
+#automatic-backup-controls{display:block;padding:20px}
+#automatic-backup-form{display:flex;flex-direction:column;gap:14px;min-width:0}
+#automatic-backup-form .backup-toggle{display:flex;align-items:center;justify-content:flex-start;gap:10px;cursor:pointer}
+#automatic-backup-form .backup-toggle input{flex:none;width:18px;height:18px;min-width:0;margin:0}
+#automatic-backup-form .backup-toggle span{flex:none;font-size:14px;font-weight:600}
+#automatic-backup-form .backup-timing{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+#automatic-backup-form .backup-timing label{display:flex;flex-direction:column;gap:8px;min-width:0}
+#automatic-backup-form input,#automatic-backup-form select{max-width:100%;min-width:0}
+#automatic-backup-form .folder-input-row{display:flex;gap:8px;min-width:0}
+#automatic-backup-form .folder-input-row input{flex:1;width:0!important}
+#automatic-backup-form .folder-input-row button{flex:none}
+#automatic-backup-form .workspace-caption{margin:0;line-height:1.7;overflow-wrap:anywhere}
+#automatic-backup-form .asset-actions{gap:8px;flex-wrap:wrap}
+@media(max-width:550px){#automatic-backup-controls{padding:14px}#automatic-backup-form .backup-timing{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:550px){.workbench:has(#app-settings-page:not(.hidden) #settings-backup:not([hidden])) .workspace-bottom-bar .workspace-tab-label{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}}

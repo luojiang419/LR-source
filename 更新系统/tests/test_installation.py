@@ -45,13 +45,14 @@ class InstallPolicyTests(unittest.TestCase):
             drives[1]['free']=i.MIN_FREE-1
             self.assertEqual(i.choose_directory(drives,fallback=fallback,can_write=lambda p:True)['root'],r'E:\Program Files\Framekeep')
             drives[1]['free']=2*i.MIN_FREE
-            self.assertEqual(i.choose_directory(drives,fallback=fallback,can_write=lambda p:str(p).startswith('E:'))['root'],r'E:\Program Files\Framekeep')
+            self.assertEqual(i.choose_directory(drives,fallback=fallback,can_write=lambda p:str(p).startswith('E:'))['root'],r'D:\Program Files\Framekeep')
+            self.assertTrue(i.choose_directory(drives,fallback=fallback,can_write=lambda p:str(p).startswith('E:'))['requiresElevation'])
             for available in ([],[{'root':'C:\\','free':20*i.MIN_FREE}],[{'root':'D:\\','free':1}],[{'root':'D:\\','free':9*i.MIN_FREE,'type':'removable'}]):
                 self.assertEqual(i.choose_directory(available,fallback=fallback,can_write=lambda p:True)['root'],str(fallback))
 
     def test_existing_install_reused_and_user_fallback_needs_space(self):
         with tempfile.TemporaryDirectory() as folder:
-            root=Path(folder)/'old';root.mkdir();(root/'末帧选片.exe').write_bytes(b'old')
+            root=Path(folder)/'old';root.mkdir();(root/'SHIYING 数字资产.exe').write_bytes(b'old')
             self.assertEqual(i.choose_directory([],registered=str(root),can_write=lambda p:True)['root'],str(root))
             with patch.object(i.shutil,'disk_usage',return_value=shutil._ntuple_diskusage(100,99,1)),self.assertRaises(OSError):i.choose_directory([],fallback=root,can_write=lambda p:True)
             with self.assertRaises(OSError):i.choose_directory([],fallback=root,can_write=lambda p:False)
@@ -76,8 +77,8 @@ class InstallPolicyTests(unittest.TestCase):
 
     def test_portable_data_is_independent_of_parent_development_project(self):
         with tempfile.TemporaryDirectory() as folder:
-            project=Path(folder);(project/'启动末帧.ps1').write_text('fixture');data=project/'.framekeep';data.mkdir();(data/'framekeep.sqlite3').write_bytes(b'existing ratings')
-            root=project/'dist/末帧选片';root.mkdir(parents=True)
+            project=Path(folder);(project/'启动SHIYING.ps1').write_text('fixture');data=project/'.framekeep';data.mkdir();(data/'framekeep.sqlite3').write_bytes(b'existing ratings')
+            root=project/'dist/SHIYING 数字资产';root.mkdir(parents=True)
             (root/'.framekeep').mkdir();(root/'.framekeep/legacy.log').write_text('older portable residue')
             self.assertEqual(i.data_directory(root),root/'.framekeep')
             (root/'data').mkdir();(root/'data/settings.json').write_text('{}')
@@ -95,7 +96,7 @@ class ManagedUninstallTests(unittest.TestCase):
     def setUp(self):
         self.temp=tempfile.TemporaryDirectory();self.addCleanup(self.temp.cleanup)
         self.base=Path(self.temp.name);self.root=self.base/'程序';self.root.mkdir();self.data=self.base/'资料'
-        self.files={'末帧选片.exe':b'desktop','engine/framekeep-engine.exe':b'engine',i.UNINSTALLER:b'uninstaller','update/update-worker.exe':b'worker'}
+        self.files={'SHIYING 数字资产.exe':b'desktop','engine/framekeep-engine.exe':b'engine',i.UNINSTALLER:b'uninstaller','update/update-worker.exe':b'worker'}
         for name,content in self.files.items():
             p=self.root/name;p.parent.mkdir(parents=True,exist_ok=True);p.write_bytes(content)
         self.manifest={'version':'1.0.0','releaseId':'20261021000001','files':[{'path':name,'size':len(content),'sha256':i.digest(self.root/name)} for name,content in self.files.items()]}
@@ -110,7 +111,7 @@ class ManagedUninstallTests(unittest.TestCase):
         self.assertEqual(result['preservedModifiedFiles'],['engine/framekeep-engine.exe'])
         self.assertEqual(changed.read_bytes(),b'user-edited');self.assertEqual(unknown.read_bytes(),b'photo');self.assertEqual(model.read_bytes(),b'model')
         self.assertEqual((self.data/'ratings.sqlite3').read_bytes(),b'ratings')
-        self.assertFalse((self.root/'末帧选片.exe').exists());self.assertFalse((self.root/i.MARKER).exists())
+        self.assertFalse((self.root/'SHIYING 数字资产.exe').exists());self.assertFalse((self.root/i.MARKER).exists())
 
     def test_running_application_blocks_every_delete(self):
         with self.assertRaisesRegex(RuntimeError,'正常关闭'):i.uninstall(self.root,is_running=lambda root:True)
@@ -121,7 +122,7 @@ class ManagedUninstallTests(unittest.TestCase):
         for bad in ({**original,'root':str(self.base)},{**original,'product':'other'},{**original,'files':[original['files'][0],{'path':'../outside','sha256':'0'*64}]}):
             i.write_json(self.root/i.MARKER,bad)
             with self.assertRaises(ValueError):i.uninstall(self.root,is_running=lambda root:False)
-            self.assertTrue((self.root/'末帧选片.exe').exists())
+            self.assertTrue((self.root/'SHIYING 数字资产.exe').exists())
 
     def test_upgrade_remembers_old_managed_files_for_later_uninstall(self):
         extra=self.root/'engine/old-library.dll';extra.write_bytes(b'old library')
@@ -137,7 +138,7 @@ class ManagedUninstallTests(unittest.TestCase):
         subprocess.run(['cmd','/c','mklink','/J',str(self.root/'engine'),str(outside)],check=True,capture_output=True)
         try:
             with self.assertRaises(ValueError):i.uninstall(self.root,is_running=lambda root:False)
-            self.assertEqual((outside/'framekeep-engine.exe').read_bytes(),b'engine');self.assertTrue((self.root/'末帧选片.exe').exists())
+            self.assertEqual((outside/'framekeep-engine.exe').read_bytes(),b'engine');self.assertTrue((self.root/'SHIYING 数字资产.exe').exists())
         finally:(self.root/'engine').rmdir()
 
 
@@ -145,15 +146,46 @@ class ManagedUninstallTests(unittest.TestCase):
 class WindowsRegistrationTests(unittest.TestCase):
     def setUp(self):
         ManagedUninstallTests.setUp(self);identity=uuid.uuid4().hex
-        self.backend=i.WindowsIntegration(product_key='Software\\FramekeepInstallerTests\\'+identity,uninstall_key='Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Framekeep-Test-'+identity,desktop=self.base/'桌面',programs=self.base/'开始菜单',display_name='末帧选片安装测试 '+identity)
+        self.backend=i.WindowsIntegration(product_key='Software\\FramekeepInstallerTests\\'+identity,uninstall_key='Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Framekeep-Test-'+identity,desktop=self.base/'桌面',programs=self.base/'开始菜单',display_name='SHIYING 数字资产安装测试 '+identity)
         self.addCleanup(self.backend.replace,self.backend.product_key,None);self.addCleanup(self.backend.replace,self.backend.uninstall_key,None)
         self.backend.startup_key=self.backend.product_key+'\\Startup'
         self.addCleanup(self.backend.replace,self.backend.startup_key,None)
 
+    def test_brand_upgrade_migrates_shortcuts_and_startup_and_rolls_back(self):
+        import winreg
+        old=self.root/i.LEGACY_ENTRY;old.write_bytes(b'legacy')
+        self.assertEqual(i.choose_directory([],registered=str(self.root),can_write=lambda p:True)['root'],str(self.root))
+        args=' --startup --silent --data-dir "D:/用户资料"'
+        startup='"'+str(old)+'"'+args
+        self.backend.replace(self.backend.startup_key,{'Framekeep':(startup,winreg.REG_SZ),'OtherApp':('keep',winreg.REG_SZ)})
+        legacy=self.backend.legacy_shortcuts(self.root)
+        links=[{'path':str(p),'target':target} for p,target in legacy]
+        for p,_ in legacy:p.parent.mkdir(parents=True,exist_ok=True)
+        self.backend.shell("$s=New-Object -ComObject WScript.Shell;foreach($i in (ConvertFrom-Json $env:FRAMEKEEP_LINKS)){$l=$s.CreateShortcut($i.path);$l.TargetPath=$i.target;$l.Save()}",{'FRAMEKEEP_LINKS':json.dumps(links,ensure_ascii=False)})
+        before=self.backend.snapshot(self.root);session=self.base/'upgrade';session.mkdir()
+        i.complete_registration(self.root,i.prepare_marker(self.root,self.data,self.manifest,True),self.backend,session)
+        self.assertTrue(all(p.is_file() for p,_ in self.backend.shortcuts(self.root)))
+        self.assertTrue(all(not p.exists() for p,_ in legacy))
+        self.assertEqual(self.backend.values(self.backend.startup_key),{'Framekeep':('"'+str(self.root/i.ENTRY)+'"'+args,winreg.REG_SZ),'OtherApp':('keep',winreg.REG_SZ)})
+        self.assertEqual(self.backend.preferences()['DataLocation'],str(self.data))
+        i.rollback_registration(self.root,session,self.backend)
+        self.assertEqual([(p,p.read_bytes() if p.exists() else None) for p,_ in before['links']],before['links'])
+        self.assertEqual(self.backend.values(self.backend.startup_key)['Framekeep'][0],startup)
+
+    def test_legacy_registration_snapshot_can_be_recovered_after_rename(self):
+        before=self.backend.snapshot(self.root)
+        before.pop('startup')
+        before['links']=[(p,b'legacy shortcut') for p,_ in self.backend.legacy_shortcuts(self.root)]
+        session=self.base/'legacy-session';session.mkdir()
+        i.save_registration_snapshot(self.root,session,self.backend,before)
+        saved=i.read_json(session/'integration-before.json');saved.pop('startup');i.write_json(session/'integration-before.json',saved)
+        i.rollback_registration(self.root,session,self.backend)
+        self.assertTrue(all(p.read_bytes()==b'legacy shortcut' for p,_ in self.backend.legacy_shortcuts(self.root)))
+
     def test_uninstall_removes_only_its_own_startup_entry(self):
         import winreg
-        own='"'+str(self.root/'末帧选片.exe')+'" --startup --silent'
-        foreign='"'+str(self.base/'other/末帧选片.exe')+'" --startup'
+        own='"'+str(self.root/'SHIYING 数字资产.exe')+'" --startup --silent'
+        foreign='"'+str(self.base/'other/SHIYING 数字资产.exe')+'" --startup'
         self.backend.replace(self.backend.startup_key,{'Framekeep':(foreign,winreg.REG_SZ),'OtherApp':('keep',winreg.REG_SZ)})
         self.backend.unregister(self.root)
         self.assertEqual(self.backend.values(self.backend.startup_key)['Framekeep'][0],foreign)
@@ -188,7 +220,7 @@ class WindowsRegistrationTests(unittest.TestCase):
         self.assertIsNone(self.backend.values(self.backend.uninstall_key));self.assertTrue(all(not p.exists() for p,_ in self.backend.shortcuts(self.root)))
 
     def test_uninstall_old_copy_keeps_other_registered_install(self):
-        other=self.base/'other';other.mkdir();(other/'末帧选片.exe').write_bytes(b'other')
+        other=self.base/'other';other.mkdir();(other/'SHIYING 数字资产.exe').write_bytes(b'other')
         (other/'update').mkdir();(other/i.UNINSTALLER).write_bytes(b'uninstaller')
         self.backend.register(other,self.data,self.manifest)
         state=i.read_json(self.root/i.MARKER);state['integrated']=True;i.write_json(self.root/i.MARKER,state)
@@ -207,7 +239,7 @@ class WindowsRegistrationTests(unittest.TestCase):
         i.rollback_registration(self.root,session,self.backend)
         self.assertEqual(self.backend.values(self.backend.uninstall_key),before['uninstall'])
         self.assertEqual(self.backend.values(self.backend.product_key),before['product'])
-        self.assertEqual([(p,p.read_bytes()) for p,_ in before['links']],before['links'])
+        self.assertEqual([(p,p.read_bytes() if p.exists() else None) for p,_ in before['links']],before['links'])
 
 
 if __name__=='__main__':unittest.main()

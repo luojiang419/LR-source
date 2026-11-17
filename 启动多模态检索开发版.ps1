@@ -7,7 +7,7 @@ $taskExe = Join-Path $taskRoot '桌面程序\target\debug\framekeep-desktop.exe'
 # 每次由 Cargo 增量检查，确保主项目正式构建不会被当成独立开发版运行。
 $taskPreviousConfig = $env:TAURI_CONFIG
 try {
-    $env:TAURI_CONFIG = '{"productName":"末帧资产检索开发版","identifier":"com.framekeep.culling.multimodal-dev"}'
+    $env:TAURI_CONFIG = '{"productName":"SHIYING资产检索开发版","identifier":"com.framekeep.culling.multimodal-dev"}'
     cargo build --locked --manifest-path (Join-Path $taskRoot '桌面程序\Cargo.toml')
     if ($LASTEXITCODE -ne 0) { throw '桌面开发版构建失败' }
 } finally {
@@ -19,7 +19,6 @@ $env:FRAMEKEEP_PORT = '8779'
 $env:FRAMEKEEP_ENGINE = $taskPython
 $env:FRAMEKEEP_ENGINE_SCRIPT = Join-Path $taskRoot '选片助手\server.py'
 $env:FRAMEKEEP_CANON_REGISTRATION = '0'
-$env:FRAMEKEEP_DEV_WEB_NO_CODE = '1'
 # 只引用已有运行时，不复制模型、不改原版数据、不安装驱动或注册系统关联。
 $taskRuntimeRoot = Join-Path $taskRoot '.runtime'
 if (-not (Test-Path -LiteralPath $taskRuntimeRoot)) { $taskRuntimeRoot = 'G:\app\LR\.runtime' }

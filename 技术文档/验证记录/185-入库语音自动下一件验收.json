@@ -1,0 +1,47 @@
+{
+  "cases": [
+    {
+      "case": "voice",
+      "saved_to_next_ms": 2192,
+      "fresh_draft_and_product_stage": true,
+      "camera_ready": true,
+      "next_once": true
+    },
+    {
+      "case": "muted",
+      "saved_to_next_ms": 315,
+      "fresh_draft_and_product_stage": true,
+      "camera_ready": true,
+      "next_once": true
+    },
+    {
+      "case": "cancel",
+      "no_reopen_after_exit": true
+    },
+    {
+      "case": "background",
+      "no_new_capture_while_background": true,
+      "resume_once_after_foreground": true,
+      "camera_ready": true
+    }
+  ],
+  "saved_records": 4,
+  "tested_package": "com.framekeep.inventory.verification",
+  "production_records_modified": false,
+  "actual_saved_count_verified": 4,
+  "sha256": "c3ceb7a1f1e5a6547e9177219c55dcaf8017b675087f9dbc65a8cf034cfa0ee8",
+  "size": 43827250,
+  "gate_unit_tests": 5,
+  "java_unit_tests_total": 12,
+  "browser_tests_total": 13,
+  "latest_client_flow_tests": 5,
+  "release_build_passed": true,
+  "lint_passed": true,
+  "voice_asset_duration_seconds": 1.536,
+  "production_records_changed_by_tests": false,
+  "browser_viewer_tests": 8,
+  "browser_continuation_tests": 5,
+  "installed_apk_matches": true,
+  "verification_app_removed": true,
+  "production_records_untouched": true
+}

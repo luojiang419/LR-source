@@ -6,14 +6,15 @@ import os
 from pathlib import Path, PurePosixPath
 import shutil
 import sys
+import tarfile
 import threading
 import time
 import urllib.request
 import zipfile
 import uuid
 
-MODEL_IDS = ('glm-ocr-local', 'qwen2.5-vl-7b-q4')
-DEFAULT_MODEL_IDS = ('glm-ocr-local',)
+MODEL_IDS = ('qwen2.5-vl-7b-q4', 'pp-ocrv6-small-local', 'pp-ocrv6-medium-local')
+DEFAULT_MODEL_IDS = ('pp-ocrv6-medium-local',)
 
 
 def digest(path):
@@ -78,9 +79,9 @@ class ComponentManager:
         if self.callback:self.callback(self.snapshot())
 
     def _groups(self, groups):
-        groups = set(groups)
+        groups = {'pp-ocrv6-medium-local' if g=='glm-ocr-local' else g for g in groups}
         if not groups <= {'runtime','driver','webview',*MODEL_IDS}:raise ValueError('未知识别组件')
-        if groups.intersection(MODEL_IDS):groups.add('runtime')
+        if 'qwen2.5-vl-7b-q4' in groups:groups.add('runtime')
         return groups
 
     @contextmanager
@@ -178,6 +179,26 @@ class ComponentManager:
         self.checked[record['path']]=[record['sha256'],stat.st_size,stat.st_mtime_ns]
         write_json(self.stamps,self.checked)
 
+    def _model_archives(self, groups):
+        for item in self.manifest.get('model_archives',[]):
+            if item['group'] not in groups:continue
+            records=[r for r in self.manifest['assets'] if r.get('archive')==item['name']]
+            if not records or all(self._valid(r) for r in records):continue
+            archive=inside(self.root/'downloads',item['name'])
+            self._download(item['url'],archive,item['sha256'])
+            with tarfile.open(archive) as package:
+                for record in records:
+                    if self._valid(record):continue
+                    # 不 extractall，只读取清单中的普通文件；归档路径不作为写入路径。
+                    matches=[m for m in package.getmembers() if m.isfile() and PurePosixPath(m.name).name==PurePosixPath(record['path']).name]
+                    if len(matches)!=1 or matches[0].size!=record['size']:raise ValueError('OCR 模型归档内容不匹配')
+                    target=inside(self.root,record['path']);target.parent.mkdir(parents=True,exist_ok=True)
+                    temp=target.with_name(target.name+'.part')
+                    with package.extractfile(matches[0]) as src,temp.open('wb') as out:shutil.copyfileobj(src,out,1024*1024)
+                    if digest(temp)!=record['sha256']:temp.unlink();raise ValueError('OCR 模型文件校验失败')
+                    os.replace(temp,target);self._remember(record)
+            if all(self._valid(r) for r in records):archive.unlink(missing_ok=True)
+
     def ensure(self, groups):
         groups=self._groups(groups)
         with self.operation,self._process_lock():
@@ -196,9 +217,11 @@ class ComponentManager:
                     if target.is_file() and target.stat().st_size==record['size'] and digest(target)==record['sha256']:self._remember(record);continue
                     if self._seed(record,target):self._remember(record);continue
                     if record.get('url'):self._download(record['url'],target,record['sha256'],record['size']);self._remember(record)
-                    elif record.get('archive'):runtime_missing=True
+                    elif record.get('archive')=='llama':runtime_missing=True
+                    elif record.get('archive'):continue
                     else:raise ValueError('安装组件缺失，请运行新版完整安装器修复：'+record['path'])
                 if runtime_missing:self._runtime_archives()
+                self._model_archives(groups)
                 if any(not self._valid(r) for r in records):raise ValueError('组件未完整准备，请重试或使用完整安装包修复')
                 if groups.intersection(MODEL_IDS):self._configure_models()
                 self.progress('识别组件已就绪，正在继续操作',status='ready')
@@ -211,6 +234,10 @@ class ComponentManager:
         for group in MODEL_IDS:
             rows=[r for r in self.manifest['assets'] if r['group']==group]
             if not rows or not all(self._valid(r) for r in rows):continue
+            if group in ('pp-ocrv6-small-local','pp-ocrv6-medium-local'):
+                config['models'][group]={r['role']:str(self.root/r['path']) for r in rows if r.get('role')}
+                config['models'][group].update(backend='onnx',threads=4,det_limit=1280,rec_batch_size=1)
+                continue
             config['models'][group]={('mmproj' if Path(r['path']).name.startswith('mmproj') else 'model'):str(self.root/r['path']) for r in rows}
             config['models'][group].update(context=8192,gpu_layers=99)
         write_json(self.root/'local-models.json',config)

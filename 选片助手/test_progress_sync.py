@@ -52,7 +52,7 @@ class ProgressSyncTests(unittest.TestCase):
             result=self.sku.sync_progress(self.pid,self.sid)
             report=result['progress_sync'];self.assertEqual(report['matched_skus'],1)
             self.assertEqual(report['restored_rows'],1);self.assertEqual(report['pending_labels'],1)
-            self.assertTrue(report['workbook_updated'])
+            self.assertFalse(report['workbook_updated']);self.assertTrue(report['workbook_deferred'])
             row=next(r for r in result['rows'] if r['status']=='已拍摄')
             self.assertEqual(row['sheet'],'模特图');self.assertEqual(row['completion']['capture_id'],self.ids[1])
             self.assertEqual(result['project']['session_id'],project['session_id'])
@@ -65,7 +65,7 @@ class ProgressSyncTests(unittest.TestCase):
         self.assertEqual(self.snapshot(),before)
         self.assertEqual(self.original.read_bytes(),original)
         self.assertTrue(all(p.read_bytes()==content for p,content in hashes.items()))
-        with ZipFile(result['project']['export_path']) as workbook:
+        with ZipFile(self.sku.export(self.pid)) as workbook:
             self.assertIsNone(workbook.testzip())
             xml=''.join(workbook.read(name).decode('utf8') for name in workbook.namelist() if name.endswith('.xml'))
             self.assertIn('已拍摄',xml);self.assertIn('10:00:01',xml)
@@ -79,7 +79,7 @@ class ProgressSyncTests(unittest.TestCase):
         self.assertEqual({r['completed_at'][-8:] for r in rows},{'10:00:01','10:00:03'})
         self.assertEqual(result['project']['scope'],'模特图')
 
-    def test_unplanned_rows_are_deduplicated_and_export_failure_can_retry(self):
+    def test_unplanned_rows_are_deduplicated_without_exporting_during_sync(self):
         self.parse();self.choose('UNPLANNED-100');self.reimport_unbound()
         for error in (ValueError('文件被占用'),PermissionError('工作副本被占用')):
             with self.subTest(error=type(error).__name__),patch.object(self.sku,'export',side_effect=error):
@@ -88,7 +88,7 @@ class ProgressSyncTests(unittest.TestCase):
             self.assertEqual(result['progress_sync']['unplanned_skus'],1)
             self.assertEqual(len([r for r in result['rows'] if r['sheet']=='临时插拍']),1)
         retry=self.sku.sync_progress(self.pid,self.sid)
-        self.assertTrue(retry['progress_sync']['workbook_updated'])
+        self.assertFalse(retry['progress_sync']['workbook_updated']);self.assertTrue(retry['progress_sync']['workbook_deferred'])
         self.assertEqual(retry['progress_sync']['restored_rows'],0)
         self.assertEqual(len([r for r in retry['rows'] if r['sheet']=='临时插拍']),1)
 

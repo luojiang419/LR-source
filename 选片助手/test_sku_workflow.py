@@ -168,9 +168,10 @@ class SkuWorkflowTests(unittest.TestCase):
         self.assertEqual(self.sku.state()['jobs'][0]['scope'],'模特图')
         self.assertEqual(self.statuses()[('细节图',2)],'未拍摄')
 
-    def test_two_selected_models_can_auto_resolve_one_ocr_confusion(self):
+    def test_explicit_two_model_review_can_auto_resolve_one_ocr_confusion(self):
         public=self.providers.save({'name':'OCR','category':'ocr','protocol':'ocr_json','url':'http://127.0.0.1:1/ocr','model':'ocr-model','key':''})
         self.providers.select(public['providers'][-1]['id'])
+        self.providers.bind('sku_label',self.providers.selected('multimodal')['id'])
         self.sku.recognizer=lambda provider,image:reading('LC7877496-P9O5',provider['model'])
         self.rate(2);self.tick();self.assertEqual(self.sku.state()['jobs'][0]['status'],'matched')
         self.assertEqual(len(self.sku.state()['jobs'][0]['result']['readings']),2)
@@ -208,9 +209,10 @@ class SkuWorkflowTests(unittest.TestCase):
 
     def test_export_failure_does_not_erase_recognition(self):
         self.rate(2)
-        with patch('sku_service.export_workbook',side_effect=PermissionError('locked')):self.tick()
+        with patch('sku_service.export_workbook',side_effect=PermissionError('locked')) as export:
+            self.tick();export.assert_not_called()
         self.assertEqual(self.sku.state()['jobs'][0]['status'],'matched')
-        self.assertTrue(self.sku.project()['export_error']);self.assertEqual(self.statuses()[('模特图',2)],'已拍摄')
+        self.assertFalse(self.sku.project()['export_error']);self.assertEqual(self.statuses()[('模特图',2)],'已拍摄')
         self.sku.export(self.pid);self.assertFalse(self.sku.project()['export_error'])
 
     def test_missing_scope_uses_first_sheet_without_blocking_ocr(self):

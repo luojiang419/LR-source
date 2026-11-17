@@ -23,6 +23,52 @@ def available_port():
 
 
 class ReferenceTests(unittest.TestCase):
+    def test_background_reference_batch_yields_before_taking_the_catalog_writer(self):
+        from concurrent.futures import ThreadPoolExecutor,TimeoutError
+        from types import SimpleNamespace
+        from vision_scheduler import VisionScheduler
+        scheduler=VisionScheduler();self.library.warmer=SimpleNamespace(scheduler=scheduler,enqueue=lambda *args:None)
+        catalog=self.library.catalog(self.root);path=self.photos/'one.JPG';info=path.stat()
+        record={'path':str(path),'size':info.st_size,'modified_ns':info.st_mtime_ns}
+        with catalog.connect() as c:c.execute('UPDATE items SET last_seen=1 WHERE path=?',(str(path),))
+        scheduler.order_workflow('ocr-batch',True)
+        with ThreadPoolExecutor(1) as pool:
+            future=pool.submit(catalog.store_records,self.root,[record])
+            try:
+                with self.assertRaises(TimeoutError):future.result(timeout=.1)
+                with catalog.connect() as c:
+                    c.execute('PRAGMA busy_timeout=100');c.execute('BEGIN IMMEDIATE')
+                    self.assertEqual(c.execute('SELECT last_seen FROM items WHERE path=?',(str(path),)).fetchone()[0],1)
+            finally:scheduler.order_workflow('ocr-batch',False)
+            future.result(timeout=3)
+        with catalog.connect() as c:self.assertGreater(c.execute('SELECT last_seen FROM items WHERE path=?',(str(path),)).fetchone()[0],1)
+
+    def test_ocr_priority_defers_reference_scan_until_released(self):
+        from types import SimpleNamespace
+        from vision_scheduler import VisionScheduler
+        from reference_library import ReferenceCatalog
+        scheduler=VisionScheduler();scheduler.order_workflow('ocr-batch',True)
+        service=ReferenceLibrary(self.base/'priority-data',warmer=SimpleNamespace(scheduler=scheduler,enqueue=lambda *args:None),autostart=False)
+        self.libraries.append(service);root=service.add_root(self.photos)['root_id'];entered=threading.Event()
+        original=ReferenceCatalog.scan_with_progress
+        def scan(*args,**kwargs):entered.set();return original(*args,**kwargs)
+        with patch.object(ReferenceCatalog,'scan_with_progress',side_effect=scan,autospec=True):
+            service.start();self.assertFalse(entered.wait(.15))
+            scheduler.order_workflow('ocr-batch',False)
+            self.assertTrue(entered.wait(3));self.ready(service,root)
+
+    def test_close_interrupts_a_reference_batch_waiting_for_ocr(self):
+        from concurrent.futures import ThreadPoolExecutor,TimeoutError
+        from types import SimpleNamespace
+        from vision_scheduler import VisionScheduler
+        scheduler=VisionScheduler();self.library.warmer=SimpleNamespace(scheduler=scheduler,enqueue=lambda *args:None)
+        catalog=self.library.catalog(self.root);scheduler.order_workflow('ocr-batch',True)
+        with ThreadPoolExecutor(1) as pool:
+            future=pool.submit(catalog.store_records,self.root,[])
+            with self.assertRaises(TimeoutError):future.result(timeout=.1)
+            self.library.close();self.libraries.remove(self.library)
+            with self.assertRaises(InterruptedError):future.result(timeout=1)
+
     def test_all_roots_search_paginates_filters_hidden_and_deduplicates_overlaps(self):
         from reference_api import local_get
         extra=self.base/'other';extra.mkdir()
@@ -236,7 +282,7 @@ class ReferenceTests(unittest.TestCase):
         with self.assertRaises(PermissionError):
             library.preview(root, 'one.JPG', allowed=library.authorize(key['api_key']))
 
-    def test_reference_cache_task_cleanup_and_local_reveal_validation(self):
+    def test_reference_cache_survives_task_switch_and_manual_cleanup_validates_local_reveal(self):
         library = self.library
         library.sync_task('shoot-1', 'project-1')
         first = {'device':'local', 'root':self.root, 'relative':'one.JPG', 'name':'one.JPG'}
@@ -264,14 +310,18 @@ class ReferenceTests(unittest.TestCase):
         self.assertFalse(library.sync_task('shoot-1', 'project-1')['changed'])
         generation = library.cache.generation
         self.assertTrue(library.sync_task('shoot-1', 'project-2')['changed'])
+        self.assertEqual([row['relative'] for row in library.preferences()['references']], ['second.JPG'])
+        self.assertEqual(library.cache.generation, generation)
+        self.assertTrue(list(library.cache.folder.glob('*.webp')) or list(library.cache.folder.glob('*.jpg')))
+        self.assertTrue(library.sync_task('shoot-2', 'project-2')['changed'])
+        library.save_preferences({'references':[second], 'cache_generation':generation})
+        library.clear_reference(second, generation)
         self.assertEqual(library.preferences()['references'], [])
-        self.assertFalse(list(library.cache.folder.glob('*.webp')))
-        self.assertFalse(list(library.cache.folder.glob('*.jpg')))
         with self.assertRaises(ValueError):
-            library.save_preferences({'references':[first], 'cache_generation':generation})
+            library.save_preferences({'references':[first], 'cache_generation':generation+1})
         self.assertTrue(second_path.exists());self.assertTrue((self.photos/'one.JPG').exists())
 
-    def test_remote_search_and_previews_are_cached_until_task_changes(self):
+    def test_remote_search_and_previews_survive_task_changes_until_manual_cleanup(self):
         from reference_api import local_get
         self.library.configure_sharing(True, available_port())
         key = self.library.create_key('缓存客户端', [self.root])
@@ -288,6 +338,9 @@ class ReferenceTests(unittest.TestCase):
             self.assertEqual(local_get(client, 'library/preview', image), preview)
             self.assertEqual(request.call_count, 2)
         client.sync_task('shoot-2', None)
+        self.assertEqual(local_get(client, 'library/items', items), original)
+        self.assertEqual(local_get(client, 'library/preview', image), preview)
+        client.clear_reference({'device':peer, 'root':self.root, 'relative':'one.JPG'})
         with self.assertRaises(ValueError):
             local_get(client, 'library/preview', image)
 

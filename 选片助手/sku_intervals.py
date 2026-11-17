@@ -1,6 +1,7 @@
 """款末标签区间：只使用已有边界，按拍摄顺序重新划分，无模型调用。"""
 from datetime import datetime, timezone
 from pathlib import PurePosixPath
+from sku_shoot_versions import record_day
 
 
 def _time(record):
@@ -11,12 +12,20 @@ def _time(record):
         return None
 
 
-def partition(records, boundaries):
+def frozen_contexts(sku,sid):
+    if not sku:return {}
+    with sku.connect() as c:
+        if not c.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='shooting_captures'").fetchone():return {}
+        return {r['capture']:(r['project'],r['scope']) for r in c.execute('SELECT capture,project,scope FROM shooting_captures WHERE session=?',(sid,))}
+
+
+def partition(records, boundaries,*,contexts=None):
     """返回互不重叠的结束区间；缺少可信时间时保留整个相机流的入库顺序。"""
     streams={}
     for position,record in enumerate(records):
         relative=str(record.get('jpg') or record.get('raw') or '').replace('\\','/')
-        key=(PurePosixPath(relative).parent.as_posix(),record.get('cameraKey') or record.get('camera') or '')
+        key=(PurePosixPath(relative).parent.as_posix(),record.get('cameraKey') or record.get('camera') or '',record_day(record))
+        if contexts:key=(*key,contexts.get(record['id']))
         streams.setdefault(key,[]).append((position,record,_time(record)))
     intervals=[]
     for key,entries in streams.items():

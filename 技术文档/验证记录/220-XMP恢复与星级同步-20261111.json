@@ -1,0 +1,121 @@
+{
+  "date": "2026-11-11",
+  "branch": "fix/xmp-rating-metadata-sync",
+  "standard_exiftool_readback": [
+    {
+      "sample": "sample-rating-2.xmp",
+      "rating": 2,
+      "keywords": [
+        "SKU:TEMP-NEW-900",
+        "ShootType:现场记录"
+      ],
+      "custom_config": false
+    },
+    {
+      "sample": "sample-rating-5.xmp",
+      "rating": 5,
+      "keywords": [
+        "SKU:TEMP-NEW-900",
+        "ShootType:现场记录"
+      ],
+      "custom_config": false
+    },
+    {
+      "sample": "sample-rating-0.xmp",
+      "rating": 0,
+      "keywords": [
+        "SKU:TEMP-NEW-900",
+        "ShootType:现场记录"
+      ],
+      "custom_config": false
+    }
+  ],
+  "browser": {
+    "checks": [
+      {
+        "clicked_rating": 2,
+        "xmp_rating": 2,
+        "portable_rating": 2,
+        "sku": "TEMP-NEW-900",
+        "sidecars": [
+          "IMG_0002.xmp"
+        ]
+      },
+      {
+        "clicked_rating": 5,
+        "xmp_rating": 5,
+        "portable_rating": 5,
+        "sku": "TEMP-NEW-900",
+        "sidecars": [
+          "IMG_0002.xmp"
+        ]
+      },
+      {
+        "clicked_rating": 0,
+        "xmp_rating": 0,
+        "portable_rating": 0,
+        "sku": "TEMP-NEW-900",
+        "sidecars": [
+          "IMG_0002.xmp"
+        ]
+      }
+    ],
+    "page_errors": [],
+    "driver_errors": []
+  },
+  "rating_roundtrip": [
+    {
+      "rating": 5,
+      "xmp_rating": 5,
+      "portable_rating": 5,
+      "preset_exposure": 1.25
+    },
+    {
+      "rating": 1,
+      "xmp_rating": 1,
+      "portable_rating": 1,
+      "preset_exposure": 1.25
+    },
+    {
+      "rating": 0,
+      "xmp_rating": 0,
+      "portable_rating": 0,
+      "preset_exposure": 1.25
+    },
+    {
+      "rating": 2,
+      "xmp_rating": 2,
+      "portable_rating": 2,
+      "preset_exposure": 1.25
+    }
+  ],
+  "checks": {
+    "capture_suite": 86,
+    "writer_suite_total": 25,
+    "raw_sample_skips": 2,
+    "additional_unique_multi_client_case": 1,
+    "unique_passed": 110,
+    "known_existing_browser_timeout": 1,
+    "python_compile": true
+  },
+  "known_existing_failure": {
+    "test": "test_auto_save_four_fields_switch_and_themes",
+    "reason": "等待已自动保存元数据状态文本超时",
+    "before_change_reproduced": true,
+    "baseline_log": "build/capture-xmp-browser-baseline.log"
+  },
+  "evidence_logs": [
+    "build/capture-xmp-final-capture.log",
+    "build/capture-xmp-final-writer.log",
+    "build/capture-xmp-lan-regression.log",
+    "build/capture-xmp-browser-samples.log"
+  ],
+  "missing_xmp_repair_preserves_jpg_bytes": true,
+  "image_pixels_and_original_mtime_preserved": true,
+  "existing_preset_exposure": 1.25,
+  "production_photos_modified": false,
+  "installed_app_updated": false,
+  "third_party_apps_opened": false,
+  "validation_scope": "真实ExifTool、XML标准字段、隔离浏览器及独立随行档案读取；未打开第三方修图软件",
+  "source_backup": "backup/v003/选片助手"
+}

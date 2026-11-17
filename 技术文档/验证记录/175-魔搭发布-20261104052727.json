@@ -1,0 +1,125 @@
+{
+  "verified_at": "2026-11-04T13:33:05+08:00",
+  "source_commit": "3533cf7",
+  "branch": "fix/daily-shooting-document-overview",
+  "publication": {
+    "repository": "jiangjiang419/framekeep-updates",
+    "releaseId": "20261104052727",
+    "anonymousVerification": true,
+    "installerUrl": "https://modelscope.cn/api/v1/models/jiangjiang419/framekeep-updates/repo?Revision=master&FilePath=releases%2F1.0.0%2F20261104052727%2FFramekeep-Setup.exe",
+    "packageSize": 275992653,
+    "components": [
+      {
+        "path": "components/52d1df764521fb4fc071665dfdf889c3529c78e5438bfb66029eb19cd29e8ea9/llama-b11773-framekeep-win-x64.zip",
+        "sha256": "52d1df764521fb4fc071665dfdf889c3529c78e5438bfb66029eb19cd29e8ea9",
+        "size": 694127530
+      },
+      {
+        "path": "components/0625fb5c1e75be58a164e14f95aa58a3e5badb859b3d17c952385f3e4a9ff3e8/MicrosoftEdgeWebView2RuntimeInstallerX64.exe",
+        "sha256": "0625fb5c1e75be58a164e14f95aa58a3e5badb859b3d17c952385f3e4a9ff3e8",
+        "size": 214156024
+      }
+    ]
+  },
+  "package": {
+    "passed": true,
+    "snapshot": "G:\\app\\LR\\build\\updates\\1.0.0-20261104052727",
+    "release": "20261104052727",
+    "files": 835,
+    "frozen_modules": 114,
+    "package_size": 275992653,
+    "package_sha256": "747d60dce176bca6546272abdc0cd1d81cf6175c23e1c66a1cc597a137bce96b",
+    "installer_sha256": "96cd85b15d796437944fc3cf3dd0bfeaef8d36fbf88d90d883a0debe80d56813",
+    "installer_size": 14106112
+  },
+  "frozen": {
+    "passed": true,
+    "frozen_modules": 114,
+    "entrypoint_checked": true,
+    "source_mismatches": [],
+    "web_files": 71,
+    "tests": 6,
+    "failures": 0,
+    "errors": 0,
+    "skips": 0
+  },
+  "installer": {
+    "was_running": false,
+    "errors": [],
+    "passed": true,
+    "files": 835,
+    "status": {
+      "status": "complete",
+      "version": "1.0.0",
+      "releaseId": "20261104052727",
+      "pid": 36700,
+      "components": null
+    },
+    "unknown_preserved": true,
+    "health": {
+      "application": "framekeep",
+      "process_id": 69912,
+      "ready": true
+    },
+    "workflow": {
+      "config": {
+        "live_enabled": false,
+        "global_enabled": false,
+        "session_id": null,
+        "ocr_paused": false,
+        "vision_paused": false
+      },
+      "runs": {},
+      "error": "",
+      "active": [],
+      "timings": {},
+      "sku_writeback": {
+        "counts": {},
+        "failed": [],
+        "paused": false,
+        "loading": false,
+        "error": ""
+      }
+    }
+  },
+  "clients": {
+    "old-public": {
+      "status": "checked",
+      "message": "发现新版本",
+      "available": true,
+      "version": "1.0.0",
+      "releaseId": "20261104052727",
+      "notes": "修复同日重复创建拍摄文档，旧同日自动文档合并显示并保留原始记录；全部清单支持当日或历史范围及日期分隔；恢复旧款号标签与共享星级进度，断连后进度保持；拍摄实时保存，Excel按需后台导出并显示实际进度。",
+      "size": 275992653,
+      "currentVersion": "1.0.0",
+      "currentReleaseId": "20261104034523"
+    },
+    "installed-config": {
+      "status": "checked",
+      "message": "发现新版本",
+      "available": true,
+      "version": "1.0.0",
+      "releaseId": "20261104052727",
+      "notes": "修复同日重复创建拍摄文档，旧同日自动文档合并显示并保留原始记录；全部清单支持当日或历史范围及日期分隔；恢复旧款号标签与共享星级进度，断连后进度保持；拍摄实时保存，Excel按需后台导出并显示实际进度。",
+      "size": 275992653,
+      "currentVersion": "1.0.0",
+      "currentReleaseId": "20261104034523"
+    },
+    "new-release": {
+      "status": "checked",
+      "message": "当前已是最新版本",
+      "available": false,
+      "version": "1.0.0",
+      "releaseId": "20261104052727",
+      "notes": "修复同日重复创建拍摄文档，旧同日自动文档合并显示并保留原始记录；全部清单支持当日或历史范围及日期分隔；恢复旧款号标签与共享星级进度，断连后进度保持；拍摄实时保存，Excel按需后台导出并显示实际进度。",
+      "size": 275992653,
+      "currentVersion": "1.0.0",
+      "currentReleaseId": "20261104052727"
+    }
+  },
+  "update_tests": 64,
+  "source_tests": 75,
+  "feature_frozen_tests": 26,
+  "production_install_replaced": false,
+  "github_pushed": false
+}

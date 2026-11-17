@@ -21,6 +21,20 @@ import preview_cache as previews
 ROOT=Path(__file__).resolve().parents[1]
 
 class CacheStorageTests(unittest.TestCase):
+    def test_recovery_cache_survives_maintenance_and_migration_without_touching_foreign_file(self):
+        path=self.image();record=media.capture_record(self.photos,path,None,{})
+        canonical=media.preview(record,self.photos,self.data/'previews',None)
+        canonical.write_bytes(b'foreign contents must remain')
+        recovered=media.preview(record,self.photos,self.data/'previews',None)
+        payload=recovered.read_bytes();self.assertNotEqual(recovered,canonical)
+        self.storage.cache.retire_legacy()
+        self.assertEqual(recovered.read_bytes(),payload)
+        self.assertEqual(canonical.read_bytes(),b'foreign contents must remain')
+        destination=self.base/'recovery-ssd';self.storage.migrate(str(destination));path.unlink()
+        with patch.object(media,'_companion_preview',side_effect=AssertionError('迁移后命中无需源图')):
+            self.assertEqual(media.preview_bytes(record,self.photos,self.data/'previews',None),payload)
+        self.assertEqual(canonical.read_bytes(),b'foreign contents must remain')
+
     def setUp(self):
         self.temp=tempfile.TemporaryDirectory();self.base=Path(self.temp.name)
         self.photos=self.base/'原盘'/'照片';self.photos.mkdir(parents=True)
@@ -38,6 +52,116 @@ class CacheStorageTests(unittest.TestCase):
         self.image();root=self.catalog.add_root(str(self.photos))['root_id'];row=self.catalog.items()['rows'][0]
         for size in (420,1800):self.catalog.preview(row['id'],size)
         return root,row
+
+    def test_constructor_defers_file_maintenance_until_service_ready(self):
+        with patch.object(previews.PreviewCache,'retire_legacy',side_effect=AssertionError('不应启动清理')):
+            restarted=CacheStorage(self.data)
+            self.assertIsNone(restarted.thread)
+            self.assertEqual(restarted.state()['images'],0)
+            restarted.close()
+
+    def test_startup_scheduler_does_not_wait_for_maintenance_lock(self):
+        entered=threading.Event();release=threading.Event();cache=self.storage.cache
+        def blocked():
+            with cache.lock:
+                entered.set()
+                if not release.wait(4):raise RuntimeError('测试维护锁未释放')
+        with patch.object(cache,'reconcile',side_effect=blocked),ThreadPoolExecutor(max_workers=1) as pool:
+            future=pool.submit(self.storage.start_maintenance)
+            try:
+                self.assertTrue(entered.wait(2))
+                future.result(timeout=.5)
+            finally:release.set()
+            self.storage.thread.join(timeout=5)
+        self.assertEqual(self.storage.job['status'],'completed',self.storage.job)
+
+    def test_close_during_resize_batch_does_not_report_stalled_eviction(self):
+        def cancelled_batch(*args,**kwargs):
+            self.storage.closed.set();return False
+        with patch.object(self.storage.budget,'trim',side_effect=cancelled_batch):
+            self.assertEqual(self.storage.resize('1'),{'cancelled':True})
+        self.assertFalse(self.storage.config.exists())
+
+    def test_state_returns_committed_snapshot_while_cache_writer_is_blocked(self):
+        self.archive();before=self.storage.state()
+        entered=threading.Event();release=threading.Event()
+        def writer():
+            with self.storage.budget.lock,self.storage.cache.connect() as c:
+                c.execute('UPDATE usage SET bytes=bytes+100 WHERE id=1')
+                entered.set();release.wait(5)
+                c.rollback()
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            blocked=pool.submit(writer)
+            try:
+                self.assertTrue(entered.wait(2))
+                result=pool.submit(self.storage.state).result(timeout=.5)
+                self.assertEqual(result['bytes'],before['bytes'])
+                self.assertEqual(result['images'],before['images'])
+            finally:release.set();blocked.result(timeout=3)
+
+    def test_resize_suspends_background_claims_and_resumes_after_completion(self):
+        record=media.capture_record(self.photos,self.image(),None,{})
+        warmer=previews.PreviewWarmer(self.storage.cache,None,autostart=False)
+        self.addCleanup(warmer.close);warmer.enqueue(self.photos,[record])
+        entered=threading.Event();release=threading.Event();trim=self.storage.budget.trim
+        def blocked(*args,**kwargs):
+            entered.set();release.wait(5);return trim(*args,**kwargs)
+        with patch.object(self.storage.budget,'trim',side_effect=blocked),ThreadPoolExecutor(max_workers=1) as pool:
+            future=pool.submit(self.storage.resize,'1')
+            try:
+                self.assertTrue(entered.wait(2))
+                self.assertFalse(warmer.process_one())
+                self.assertEqual(self.storage.state()['pending'],1)
+            finally:release.set()
+            self.assertEqual(future.result(timeout=3),{'limit_gb':1})
+        self.assertFalse(self.storage.budget.resizing.is_set())
+        self.assertTrue(warmer.process_one())
+
+    def test_interrupted_legacy_batches_resume_without_marking_complete(self):
+        payload=self.image().read_bytes();cache=self.storage.cache
+        for i in range(35):
+            name=previews.cache_name({'fingerprint':str(i)},2048,version=5)
+            (cache.folder/name).write_bytes(payload)
+            with cache.connect() as c:
+                c.execute('INSERT INTO previews(name,bytes,accessed,fingerprint,edge,decoded,orientation,digest) VALUES (?,?,?,?,?,?,?,?)',
+                    (name,len(payload),1,str(i),2048,0,1,hashlib.sha256(payload).hexdigest()))
+        retire=cache.retire_legacy
+        def first_batch(**kwargs):
+            result=retire(**kwargs);self.storage.closed.set();return result
+        with patch.object(cache,'retire_legacy',side_effect=first_batch):
+            self.storage.start_maintenance();self.storage.thread.join(timeout=5)
+        self.assertEqual(self.storage.job['status'],'cancelled')
+        with cache.connect() as c:
+            self.assertIsNone(c.execute("SELECT value FROM configuration WHERE key='preview_policy'").fetchone())
+            self.assertEqual(c.execute('SELECT count(*) FROM previews').fetchone()[0],19)
+        restarted=CacheStorage(self.data);self.addCleanup(restarted.close)
+        restarted.start_maintenance();restarted.thread.join(timeout=5)
+        self.assertEqual(restarted.job['status'],'completed',restarted.job)
+        with cache.connect() as c:
+            self.assertEqual(c.execute('SELECT count(*) FROM previews').fetchone()[0],0)
+            self.assertEqual(c.execute("SELECT value FROM configuration WHERE key='preview_policy'").fetchone()[0],'embedded-jpeg-2048-v6')
+
+    def test_background_legacy_retirement_is_bounded_and_preserves_replaced_files(self):
+        payload=self.image().read_bytes();cache=self.storage.cache;paths=[]
+        for i in range(35):
+            record={'fingerprint':str(i),'orientation':1};name=previews.cache_name(record,2048,version=5)
+            path=cache.folder/name;path.write_bytes(payload);paths.append(path)
+            with cache.connect() as c:
+                c.execute('INSERT INTO previews(name,bytes,accessed,fingerprint,edge,decoded,orientation,digest) VALUES (?,?,?,?,?,?,?,?)',
+                    (name,len(payload),1,str(i),2048,0,1,hashlib.sha256(payload).hexdigest()))
+        replaced=paths[0];replacement=bytes([payload[0]^1])+payload[1:];replaced.write_bytes(replacement)
+        unknown=cache.folder/'user-photo.jpg';unknown.write_bytes(payload)
+        with patch.object(cache,'retire_legacy',wraps=cache.retire_legacy) as retire:
+            self.storage.start_maintenance();self.storage.thread.join(timeout=10)
+            self.assertFalse(self.storage.thread.is_alive())
+            self.assertEqual(self.storage.job['status'],'completed',self.storage.job)
+            self.assertGreaterEqual(retire.call_count,3)
+            self.assertTrue(all(call.kwargs['limit']==16 for call in retire.call_args_list))
+        self.assertEqual(replaced.read_bytes(),replacement);self.assertEqual(unknown.read_bytes(),payload)
+        self.assertEqual(sum(path.exists() for path in paths),1)
+        with cache.connect() as c:self.assertIsNone(c.execute("SELECT value FROM configuration WHERE key='preview_policy'").fetchone())
+        self.assertEqual(self.storage.preview_upgrade[0]['preserved_files'],1)
+        self.assertEqual(self.storage.preview_upgrade[0]['removed_files'],34)
 
     def test_migration_delta_seeks_publish_index_instead_of_sorting_names(self):
         self.archive();cache=self.storage.budget.caches[1]
@@ -81,7 +205,7 @@ class CacheStorageTests(unittest.TestCase):
     def test_migrate_preserves_sources_unknown_files_and_restarts_at_new_location(self):
         _,row=self.archive();self.storage.configure(32)
         old=self.storage.root;unknown=old/'catalog_previews/user.jpg';unknown.write_bytes(b'keep')
-        destination=self.base/'高速SSD'/'末帧缓存';result=self.storage.migrate(str(destination))
+        destination=self.base/'高速SSD'/'SHIYING缓存';result=self.storage.migrate(str(destination))
         self.assertTrue(result['source_retained']);self.assertEqual(self.storage.state()['path'],str(destination))
         self.assertEqual(unknown.read_bytes(),b'keep');self.assertFalse((destination/'catalog_previews/user.jpg').exists())
         self.assertTrue(list((old/'catalog_previews').glob('*.jpg')))

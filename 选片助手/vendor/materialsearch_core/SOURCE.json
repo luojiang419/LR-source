@@ -1,0 +1,11 @@
+{
+  "project": "MaterialSearch Core",
+  "url": "https://github.com/chn-lee-yumi/MaterialSearch-core",
+  "upstream": "d0e6c39e372b405b1bfe54427c63d9bfbddd1e36",
+  "adapted": "28f9061c3c2f5265efe553b279fc66e83bb56420",
+  "license": "LGPL-3.0-only",
+  "author": "Yumin Li",
+  "local_changes": [
+    "视频采样 BGR 转 RGB，与图片参考图一致；清理一处上游空白；原库四表与搜索接口保留"
+  ]
+}

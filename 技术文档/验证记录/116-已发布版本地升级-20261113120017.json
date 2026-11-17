@@ -1,0 +1,38 @@
+{
+  "status": "complete",
+  "installed": "D:\\Program Files\\Framekeep",
+  "data": "D:\\Program Files\\Framekeep\\data",
+  "version": "1.0.1",
+  "releaseId": "20261113120017",
+  "files_verified": 945,
+  "protected_files": 49,
+  "data_unchanged_before_start": true,
+  "native_health": {
+    "pid": 31828,
+    "releaseId": "20261113120017",
+    "version": "1.0.1"
+  },
+  "api": {
+    "/api/ready": {
+      "application": "framekeep",
+      "process_id": 79016,
+      "ready": true,
+      "services_ready": true
+    },
+    "/api/health": {
+      "application": "framekeep",
+      "process_id": 79016,
+      "busy": false
+    }
+  },
+  "database_replaced": false,
+  "session": "D:\\Program Files\\Framekeep\\.update-state\\local-published-20261113120017",
+  "data_preservation": {
+    "protected_files": 49,
+    "attributes_and_digests_unchanged": true,
+    "method": "Full SHA-256 below 512MiB; size/mtime plus five 1MiB samples for larger files. Package excludes data/.",
+    "database_replaced": false
+  },
+  "publication_commit": "e3920ea",
+  "github_pushed": false
+}

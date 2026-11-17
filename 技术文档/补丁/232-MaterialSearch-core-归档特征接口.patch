@@ -1,0 +1,473 @@
+diff --git a/README.md b/README.md
+index d320274..7c746aa 100644
+--- a/README.md
++++ b/README.md
+@@ -4,6 +4,49 @@
+ 
+ Core Python library for [**MaterialSearch**](https://github.com/chn-lee-yumi/MaterialSearch) project.
+ 
++### 本地改造：供资产归档系统调用的独立特征接口
++
++`materialsearch_core.embeddings.FeatureEncoder` 不依赖本项目扫描器、业务数据库或环境配置，导入及构造不会加载模型。宿主传入已统一方向、RGB 颜色和尺寸的图片预览，接口返回单位化 `float32` 特征。默认 CPU、只读本地模型，调用串行，支持有上限的批处理及图文共用模型。
++
++```python
++from materialsearch_core.embeddings import FeatureEncoder
++
++encoder = FeatureEncoder(r"D:/models/exact-snapshot", dimension=768)
++vectors = encoder.encode_images([rgb_preview])  # PIL RGB 图片或 RGB 数组
++text_vectors = encoder.encode_texts(["红色短袖上衣"])
++encoder.close()
++```
++
++原 `process_assets` 的图片与文字入口复用此接口，原 CLI 仍允许按模型名下载；宿主独立接口默认禁止联网。接口兼容 Tensor 与带 `pooler_output` 的返回，完整传递文字 attention mask，拒绝零向量、非有限数和维数不一致。这不代表所有历史入口已支持任意新版依赖。
++
++宿主负责目录发现、RAW/PSD 解码、视频抽帧、任务持久化、取消及源版本校验。索引需记录模型 revision、预处理规格和维数，不混用不同模型向量。OCR/VLM 描述属于独立结果，不应清除图像向量。
++
++### 独立的以图搜图数据库
++
++沿用原项目的 **SQLAlchemy + SQLite**，数据库文件单独放在 `visual-search/assets.db`。直接复用 `models.py` 和 `database.py` 中原有的 `image`、`image_features`、`video`、`video_features` 表及特征读写，查询也复用原 `search.py` 接口。SKU、EXIF/XMP 和归档业务记录留在宿主元数据库，不往其中增加以图搜图表。
++
++```python
++import os
++
++# 必须在独立工作进程首次导入 core 之前指定；不能在已导入后切换环境变量。
++os.environ["SQLALCHEMY_DATABASE_URL"] = "sqlite:///D:/app-data/visual-search/assets.db"
++from materialsearch_core.models import create_tables, DatabaseSession
++from materialsearch_core.database import add_image
++from materialsearch_core.search import search_image_by_image
++
++create_tables()
++# modify_time 与 checksum 沿用原项目的时间和文件 SHA1 语义。
++with DatabaseSession() as session:
++    add_image(session, original_path, modify_time, checksum, vectors[0].tobytes())
++results = search_image_by_image(image_id)
++```
++
++独立进程配置模型、扫描范围和临时目录，避免模块级默认连接混入宿主。每个库只使用一个明确的模型 revision 和预处理规格；切模型时另建独立模型目录及库，不能把同维度的不同模型特征混存。复用原表结构，不另造向量数据库或新搜索引擎。
++
++当前改造仅验证独立特征接口与原数据库/查询兼容。自动发现全部归档、增量调度、暂停恢复、NAS 离线保护、RAW/PSD 预览接入及正式页面路由仍待接入。原搜索会整批读取范围内特征，生产大库性能必须实测；未承诺百万规模实时性能。旧 `assets.db` 及元数据库不删除、不迁移。
++
++改造保留原作者及 LICENSE，尚未提交上游 PR。单元测试：`PYTHONPATH=src python -m unittest discover -s tests -v`。
++
+ TODO: Not compatible with new PyTorch / Transformers version yet.
+ 
+ ## Installation
+diff --git a/src/materialsearch_core/embeddings.py b/src/materialsearch_core/embeddings.py
+new file mode 100644
+index 0000000..809c501
+--- /dev/null
++++ b/src/materialsearch_core/embeddings.py
+@@ -0,0 +1,117 @@
++"""供宿主资产库调用的独立特征接口；不导入扫描、数据库或环境配置。
++
++基于 MaterialSearch / Yumin Li 的图文特征流程改造。
++与 MaterialSearch Core 一同按 LGPL-3.0-only 分发，见仓库 LICENSE。
++"""
++from threading import RLock
++
++
++def _load_components(model_name, device, local_files_only):
++    # 仅导入本接口时不初始化 Torch、探测 GPU 或下载模型。
++    from transformers import AutoModelForZeroShotImageClassification, AutoProcessor
++
++    processor = AutoProcessor.from_pretrained(model_name, local_files_only=local_files_only)
++    model = AutoModelForZeroShotImageClassification.from_pretrained(
++        model_name, local_files_only=local_files_only
++    ).to(device).eval()
++    return model, processor
++
++
++class FeatureEncoder:
++    """延迟加载并串行使用模型，返回单位化的 float32 二维特征矩阵。
++
++    输入为宿主已解码的 RGB 图片列表或文字列表，不读取业务库和归档文件。
++    RAW、PSD、视频抽帧及源版本校验由宿主负责；建议放在独立工作进程中。
++    """
++
++    def __init__(self, model_name, *, device="cpu", local_files_only=True,
++                 dimension=None, max_batch_size=8, max_text_length=52):
++        if not isinstance(model_name, str) or not model_name.strip():
++            raise ValueError("模型名称或本地目录不能为空")
++        for name, value in (("max_batch_size", max_batch_size),
++                            ("max_text_length", max_text_length)):
++            if type(value) is not int or value < 1:
++                raise ValueError(name + " 必须为正整数")
++        if dimension is not None and (type(dimension) is not int or dimension < 1):
++            raise ValueError("dimension 必须为正整数")
++        if type(local_files_only) is not bool:
++            raise ValueError("local_files_only 必须为布尔值")
++        self.model_name = model_name
++        self.device = device
++        self.local_files_only = local_files_only
++        self.max_batch_size = max_batch_size
++        self.max_text_length = max_text_length
++        self.dimension = dimension
++        self._lock = RLock()
++        self._model = self._processor = None
++
++    @property
++    def loaded(self):
++        with self._lock:
++            return self._model is not None
++
++    def _components(self):
++        if self._model is None:
++            model, processor = _load_components(self.model_name, self.device, self.local_files_only)
++            self._model, self._processor = model, processor
++        return self._model, self._processor
++
++    def _batch(self, values):
++        if not isinstance(values, (list, tuple)) or not values:
++            raise ValueError("请提供非空的图片或文字列表")
++        if len(values) > self.max_batch_size:
++            raise ValueError("批次超过 max_batch_size，请由宿主拆分")
++        if any(value is None for value in values):
++            raise ValueError("批次包含空输入")
++        return list(values)
++
++    def _normalize(self, features, rows):
++        import torch
++
++        if not isinstance(features, torch.Tensor):
++            features = getattr(features, "pooler_output", None)
++        if not isinstance(features, torch.Tensor) or features.ndim != 2:
++            raise ValueError("模型未返回二维投影特征")
++        features = features.float()
++        if features.shape[0] != rows or features.shape[1] < 1:
++            raise ValueError("模型返回的特征行数或维数不正确")
++        if self.dimension is not None and features.shape[1] != self.dimension:
++            raise ValueError("图像和文字特征维数与当前索引不一致")
++        norms = features.norm(dim=1, keepdim=True)
++        if not torch.isfinite(features).all() or not torch.isfinite(norms).all() or (norms <= 0).any():
++            raise ValueError("模型返回零向量或非有限特征")
++        normalized = (features / norms).detach().cpu().numpy()
++        self.dimension = features.shape[1]
++        return normalized
++
++    def encode_images(self, images):
++        """图片应先按宿主统一的方向、RGB 和预览规格处理。"""
++        images = self._batch(images)
++        with self._lock:
++            model, processor = self._components()
++            import torch
++
++            with torch.inference_mode():
++                inputs = processor(images=images, return_tensors="pt")
++                inputs = {key: value.to(self.device) for key, value in inputs.items()}
++                return self._normalize(model.get_image_features(**inputs), len(images))
++
++    def encode_texts(self, texts):
++        texts = self._batch(texts)
++        if any(not isinstance(text, str) or not text.strip() for text in texts):
++            raise ValueError("文字批次包含空字符串或非文字输入")
++        with self._lock:
++            model, processor = self._components()
++            import torch
++
++            with torch.inference_mode():
++                inputs = processor(text=texts, return_tensors="pt", padding=True,
++                                   truncation=True, max_length=self.max_text_length)
++                # 保留 attention_mask 等处理器返回的模型输入。
++                inputs = {key: value.to(self.device) for key, value in inputs.items()}
++                return self._normalize(model.get_text_features(**inputs), len(texts))
++
++    def close(self):
++        """释放模型引用；不停止宿主线程，不更改全局 GPU/线程配置。"""
++        with self._lock:
++            self._model = self._processor = None
+diff --git a/src/materialsearch_core/process_assets.py b/src/materialsearch_core/process_assets.py
+index e7db3b5..eb52b24 100644
+--- a/src/materialsearch_core/process_assets.py
++++ b/src/materialsearch_core/process_assets.py
+@@ -10,16 +10,15 @@ import requests
+ import torch.cuda
+ from PIL import Image
+ from tqdm import trange
+-from transformers import AutoModelForZeroShotImageClassification, AutoProcessor
++from materialsearch_core.embeddings import FeatureEncoder
+ 
+ from materialsearch_core.config import *
+ 
+ logger = logging.getLogger(__name__)
+ 
+-logger.info("Loading model...")
+-model = AutoModelForZeroShotImageClassification.from_pretrained(MODEL_NAME).to(DEVICE)
+-processor = AutoProcessor.from_pretrained(MODEL_NAME)
+-logger.info("Model loaded.")
++# 保留原 CLI 在线模型配置；宿主独立接口默认离线，模型在首次推理时加载。
++encoder = FeatureEncoder(MODEL_NAME, device=DEVICE, local_files_only=False,
++                         max_batch_size=max(1, SCAN_PROCESS_BATCH_SIZE))
+ 
+ 
+ def get_image_feature(images):
+@@ -27,14 +26,11 @@ def get_image_feature(images):
+     :param images: 图片列表
+     :return: feature
+     """
+-    if images is None or len(images) == 0:
++    if images is None or (isinstance(images, (list, tuple)) and not images):
+         return None
+     features = None
+     try:
+-        inputs = processor(images=images, return_tensors="pt")["pixel_values"].to(DEVICE)
+-        features = model.get_image_features(inputs)
+-        normalized_features = features / torch.norm(features, dim=1, keepdim=True)  # 归一化，方便后续计算余弦相似度
+-        features = normalized_features.detach().cpu().numpy()
++        features = encoder.encode_images(images if isinstance(images, (list, tuple)) else [images])
+     except Exception as e:
+         logger.exception("处理图片报错：type=%s error=%s" % (type(images), repr(e)))
+         traceback.print_stack()
+@@ -201,10 +197,7 @@ def process_text(input_text):
+     if not input_text:
+         return None
+     try:
+-        text = processor(text=input_text, return_tensors="pt", padding=True)["input_ids"].to(DEVICE)
+-        feature = model.get_text_features(text)
+-        normalize_feature = feature / torch.norm(feature, dim=1, keepdim=True)  # 归一化，方便后续计算余弦相似度
+-        feature = normalize_feature.detach().cpu().numpy()
++        feature = encoder.encode_texts([input_text])
+     except Exception as e:
+         logger.exception("处理文字报错：text=%s error=%s" % (input_text, repr(e)))
+         traceback.print_stack()
+diff --git a/tests/test_embeddings.py b/tests/test_embeddings.py
+new file mode 100644
+index 0000000..4ecd44b
+--- /dev/null
++++ b/tests/test_embeddings.py
+@@ -0,0 +1,137 @@
++"""独立特征接口契约；替身不作为模型识别准确率的证据。"""
++from concurrent.futures import ThreadPoolExecutor
++import importlib
++import subprocess
++import sys
++from types import ModuleType, SimpleNamespace
++import unittest
++from unittest.mock import patch
++
++import numpy as np
++import torch
++
++from materialsearch_core.embeddings import FeatureEncoder
++
++
++class FakeProcessor:
++    def __init__(self): self.calls = []
++
++    def __call__(self, **kwargs):
++        self.calls.append(kwargs)
++        count = len(kwargs.get('images', kwargs.get('text', [])))
++        if 'images' in kwargs: return {'pixel_values': torch.ones((count, 3))}
++        return {'input_ids': torch.ones((count, 2), dtype=torch.long),
++                'attention_mask': torch.ones((count, 2), dtype=torch.long)}
++
++
++class FakeModel:
++    def __init__(self): self.pooled = False; self.output = None; self.grad_flags = []
++
++    def features(self, rows):
++        self.grad_flags.append(torch.is_grad_enabled())
++        output = self.output if self.output is not None else torch.tensor([[3., 4.] for _ in range(rows)])
++        return SimpleNamespace(pooler_output=output) if self.pooled else output
++
++    def get_image_features(self, pixel_values): return self.features(len(pixel_values))
++
++    def get_text_features(self, input_ids, attention_mask):
++        assert torch.equal(attention_mask, torch.ones_like(input_ids))
++        return self.features(len(input_ids))
++
++
++class EncoderTests(unittest.TestCase):
++    def setUp(self):
++        self.model, self.processor = FakeModel(), FakeProcessor()
++        self.loader = self.enterContext(patch('materialsearch_core.embeddings._load_components',
++                                             return_value=(self.model, self.processor)))
++        self.encoder = FeatureEncoder('fixture-snapshot', dimension=2, max_batch_size=2)
++
++    def test_import_does_not_initialize_model_stack_config_or_database(self):
++        code = "from materialsearch_core.embeddings import FeatureEncoder; import sys; e=FeatureEncoder('fixture'); assert not e.loaded; assert not any(n in sys.modules for n in ('torch','transformers','materialsearch_core.config','materialsearch_core.models')); print('inert')"
++        result = subprocess.run([sys.executable, '-c', code], capture_output=True, text=True, check=True)
++        self.assertEqual(result.stdout.strip(), 'inert')
++
++    def test_image_and_text_share_one_lazy_model_and_float32_units(self):
++        self.assertFalse(self.encoder.loaded); self.loader.assert_not_called()
++        image = self.encoder.encode_images([object(), object()])
++        text = self.encoder.encode_texts(['红色衣服'])
++        self.assertEqual(image.shape, (2, 2)); self.assertEqual(text.shape, (1, 2))
++        self.assertEqual(image.dtype, np.float32)
++        np.testing.assert_allclose(np.linalg.norm(image, axis=1), 1)
++        np.testing.assert_allclose(image[0], text[0])
++        self.loader.assert_called_once_with('fixture-snapshot', 'cpu', True)
++        self.assertEqual(self.model.grad_flags, [False, False])
++
++    def test_pooled_output_is_supported(self):
++        self.model.pooled = True
++        np.testing.assert_allclose(self.encoder.encode_images([object()]), [[.6, .8]])
++
++    def test_attention_mask_and_text_truncation_are_preserved(self):
++        self.encoder.encode_texts(['短句', '另一个句子'])
++        call = self.processor.calls[-1]
++        self.assertTrue(call['padding']); self.assertTrue(call['truncation'])
++        self.assertEqual(call['max_length'], 52)
++
++    def test_invalid_batch_does_not_load_model(self):
++        for value in ([], None, 'path.jpg', [None], [object()] * 3):
++            with self.subTest(value=str(value)), self.assertRaises(ValueError): self.encoder.encode_images(value)
++        for value in ([''], ['  '], [123], [None]):
++            with self.subTest(value=value), self.assertRaises(ValueError): self.encoder.encode_texts(value)
++        self.loader.assert_not_called()
++
++    def test_zero_nonfinite_wrong_dimension_and_wrong_rows_are_rejected(self):
++        for output in (torch.zeros((1, 2)), torch.tensor([[float('nan'), 1]]),
++                       torch.tensor([[float('inf'), 1]]), torch.ones((1, 3)),
++                       torch.ones((2, 2)), torch.ones(2)):
++            self.model.output = output
++            with self.subTest(shape=tuple(output.shape)), self.assertRaises(ValueError): self.encoder.encode_images([object()])
++
++    def test_dimension_is_inferred_and_shared_across_images_and_text(self):
++        encoder = FeatureEncoder('fixture')
++        encoder.encode_images([object()]); self.assertEqual(encoder.dimension, 2)
++        self.model.output = torch.ones((1, 3))
++        with self.assertRaises(ValueError): encoder.encode_texts(['文字'])
++
++    def test_model_load_failure_can_retry_without_partial_state(self):
++        self.loader.side_effect = [RuntimeError('fixture load error'), (self.model, self.processor)]
++        with self.assertRaisesRegex(RuntimeError, 'fixture load error'): self.encoder.encode_images([object()])
++        self.assertFalse(self.encoder.loaded)
++        self.encoder.encode_images([object()]); self.assertTrue(self.encoder.loaded)
++
++    def test_concurrent_callers_only_load_once(self):
++        with ThreadPoolExecutor(max_workers=3) as pool:
++            results = list(pool.map(lambda _: self.encoder.encode_images([object()]), range(6)))
++        self.assertEqual(len(results), 6); self.loader.assert_called_once()
++
++    def test_close_releases_and_reloads(self):
++        self.encoder.encode_images([object()]); self.encoder.close(); self.assertFalse(self.encoder.loaded)
++        self.encoder.encode_images([object()]); self.assertEqual(self.loader.call_count, 2)
++
++    def test_constructor_rejects_invalid_configuration(self):
++        for options in ({'dimension': 0}, {'max_batch_size': True}, {'max_text_length': 0}, {'local_files_only': 'false'}):
++            with self.subTest(options=options), self.assertRaises(ValueError): FeatureEncoder('fixture', **options)
++
++    def test_legacy_entrypoints_share_lazy_encoder_accept_pil_and_keep_empty_semantics(self):
++        # 原生扩展须在 sys.modules 替换范围外加载，避免撤销替身时卸载后重复初始化。
++        import cv2
++        from PIL import Image
++        config = ModuleType('materialsearch_core.config')
++        for name, value in {'MODEL_NAME':'fixture', 'DEVICE':'cpu', 'SCAN_PROCESS_BATCH_SIZE':2}.items():
++            setattr(config, name, value)
++        with patch.dict(sys.modules, {'materialsearch_core.config': config}):
++            legacy = importlib.import_module('materialsearch_core.process_assets')
++        try:
++            self.loader.assert_not_called()
++            self.assertIsNone(legacy.get_image_feature(None))
++            self.assertIsNone(legacy.get_image_feature([]))
++            self.assertIsNone(legacy.process_text(''))
++            image = legacy.get_image_feature(Image.new('RGB', (64, 64), 'red'))
++            text = legacy.process_text('红色')
++            np.testing.assert_allclose(image, text)
++            self.loader.assert_called_once_with('fixture', 'cpu', False)
++        finally:
++            legacy.encoder.close()
++            sys.modules.pop('materialsearch_core.process_assets', None)
++
++
++if __name__ == '__main__': unittest.main()
+diff --git a/tests/test_upstream_database.py b/tests/test_upstream_database.py
+new file mode 100644
+index 0000000..a3047f5
+--- /dev/null
++++ b/tests/test_upstream_database.py
+@@ -0,0 +1,93 @@
++"""验证原 SQLAlchemy/SQLite 表和搜索接口能在独立文件中直接复用。"""
++from contextlib import closing
++import datetime
++import importlib
++from pathlib import Path
++import sqlite3
++import sys
++import tempfile
++from types import ModuleType
++import unittest
++from unittest.mock import patch
++
++import numpy as np
++from sqlalchemy import create_engine
++from sqlalchemy.orm import sessionmaker
++
++
++class UpstreamDatabaseTests(unittest.TestCase):
++    @classmethod
++    def setUpClass(cls):
++        cls.import_temp = tempfile.TemporaryDirectory()
++        config = ModuleType('materialsearch_core.config')
++        values = {'SQLALCHEMY_DATABASE_URL':'sqlite:///' + str(Path(cls.import_temp.name)/'unused-default.db'),
++                  'MODEL_NAME':'fixture-no-download','DEVICE':'cpu','SCAN_PROCESS_BATCH_SIZE':2,
++                  'CACHE_SIZE':4,'POSITIVE_THRESHOLD':0,'NEGATIVE_THRESHOLD':100,'IMAGE_THRESHOLD':85}
++        for name, value in values.items(): setattr(config, name, value)
++        cls.config_patch = patch.dict(sys.modules, {'materialsearch_core.config':config})
++        cls.config_patch.start()
++        cls.models = importlib.import_module('materialsearch_core.models')
++        cls.database = importlib.import_module('materialsearch_core.database')
++        cls.search = importlib.import_module('materialsearch_core.search')
++
++    @classmethod
++    def tearDownClass(cls):
++        cls.search.clean_cache(); cls.models.engine.dispose()
++        cls.config_patch.stop()
++        for name in ('search','database','models','process_assets'):
++            sys.modules.pop('materialsearch_core.' + name, None)
++        cls.import_temp.cleanup()
++
++    def setUp(self):
++        self.temp = tempfile.TemporaryDirectory(); self.base = Path(self.temp.name)
++        self.visual = self.base/'visual-search'/'assets.db'; self.visual.parent.mkdir()
++        self.engine = create_engine('sqlite:///' + str(self.visual))
++        self.models.BaseModel.metadata.create_all(bind=self.engine)
++        self.sessions = sessionmaker(bind=self.engine)
++        self.search_patch = patch.object(self.search, 'DatabaseSession', self.sessions); self.search_patch.start()
++        self.search.clean_cache()
++        self.modified = datetime.datetime(2026,11,14,12,0)
++
++    def tearDown(self):
++        self.search.clean_cache(); self.search_patch.stop(); self.engine.dispose(); self.temp.cleanup()
++
++    def add(self, path, checksum, vector):
++        with self.sessions() as session:
++            self.database.add_image(session,path,self.modified,checksum,np.asarray(vector,dtype=np.float32).tobytes())
++            return session.query(self.models.Image).filter_by(path=path).one().id
++
++    def test_original_schema_and_image_id_search_use_only_separate_database(self):
++        metadata = self.base/'asset_catalog.sqlite3'
++        with closing(sqlite3.connect(metadata)) as c:
++            with c:
++                c.execute('CREATE TABLE items(id TEXT,sku TEXT)'); c.execute("INSERT INTO items VALUES('asset','LC1234')")
++        image_id = self.add('red.jpg', 'a'*40, [1,0])
++        self.add('blue.jpg', 'b'*40, [0,1])
++        result = self.search.search_image_by_image(image_id)
++        self.assertEqual(result[0]['path'],'red.jpg'); self.assertAlmostEqual(result[0]['score'],1)
++        with closing(sqlite3.connect(self.visual)) as c:
++            tables = {row[0] for row in c.execute("SELECT name FROM sqlite_master WHERE type='table'")}
++        self.assertEqual(tables, {'image','image_features','video','video_features'})
++        with closing(sqlite3.connect(metadata)) as c:
++            self.assertEqual(c.execute('SELECT * FROM items').fetchall(),[('asset','LC1234')])
++            self.assertEqual(c.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall(),[('items',)])
++
++    def test_original_checksum_deduplication_is_preserved(self):
++        self.add('one.jpg','a'*40,[1,0]); self.add('copy.jpg','a'*40,[1,0])
++        with self.sessions() as session:
++            self.assertEqual(session.query(self.models.Image).count(),2)
++            self.assertEqual(session.query(self.models.ImageFeatures).count(),1)
++        result = self.search.search_image_by_feature(np.asarray([[1,0]],dtype=np.float32))
++        self.assertEqual({row['path'] for row in result},{'one.jpg','copy.jpg'})
++
++    def test_original_video_tables_keep_frame_times_and_features(self):
++        frames = [(0,np.asarray([1,0],dtype=np.float32).tobytes()),
++                  (2,np.asarray([0,1],dtype=np.float32).tobytes())]
++        with self.sessions() as session:
++            self.database.add_video(session,'clip.mp4',self.modified,'c'*40,iter(frames))
++            rows = session.query(self.models.VideoFeatures).order_by(self.models.VideoFeatures.frame_time).all()
++            self.assertEqual([row.frame_time for row in rows],[0,2])
++            self.assertEqual([row.features for row in rows],[value for _,value in frames])
++
++
++if __name__ == '__main__': unittest.main()

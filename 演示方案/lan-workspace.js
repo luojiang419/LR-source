@@ -4,37 +4,37 @@
   let state=null,current='progress',revision='',pollTimer=null,polling=false,typingTimer=null,progressOffset=0,progressSequence=0;
   let progressView='all',progressKey='',searchTimer=null,searchComposing=false;
   document.documentElement.dataset.lanPage='progress';
-  let reference='',referenceItem='',folder='',selected=null,detailSequence=0,facetValues={},facetsSequence=0;
-  const contexts={search:{rows:[],cursor:'',controller:null,sequence:0,imageData:null},archive:{rows:[],cursor:'',controller:null,sequence:0,imageData:null}};
+  let reference='',referenceItem='',selected=null,detailSequence=0,facetValues={},facetsSequence=0;
+  const contexts={search:{rows:[],cursor:'',controller:null,sequence:0,imageData:null}};
   const referencePanel=FramekeepReferenceSearch.mount($('web-reference'),{
     inputId:'reference-file',prepare:(file,signal)=>api('/api/reference',file,signal),
     onChange:value=>{reference=value.image;referenceItem=value.itemId;referenceControls(value.active);contexts.search.imageData=null;assets('search')},
-    onRefresh:()=>assets('search'),onThreshold:()=>paintImageResults()
+    onRefresh:()=>assets('search'),onThreshold:()=>{paintImageResults();clearTimeout(searchTimer);searchTimer=setTimeout(()=>assets('search'),220)}
   });
   $('web-reference').querySelector('[data-reference="clear"]').id='clear-reference';
+  const quick=FramekeepLanQuickSearch.mount($('panel-quick'),{api,isActive:()=>current==='quick',open:item=>detail(item)});
   function message(id,text,error=false){$(id).textContent=text;$(id).classList.toggle('error',error)}
   async function api(path,body,signal){
     const binary=body instanceof Blob;
     const response=await fetch(path,{method:body===undefined?'GET':'POST',credentials:'same-origin',headers:body===undefined?{}:{'Content-Type':binary?'application/octet-stream':'application/json',...(binary?{'X-Reference-Name':encodeURIComponent(body.name||'clipboard.jpg')}:{})},...(body===undefined?{}:{body:binary?body:JSON.stringify(body)}),signal:binary?signal:signal?AbortSignal.any([signal,AbortSignal.timeout(190000)]):AbortSignal.timeout(190000)});
     const type=response.headers.get('content-type')||'';const value=type.includes('application/json')?await response.json():null;
-    if(!response.ok){if(response.status===401)showLogin();throw Error(value?.error||'请求失败，请稍后重试')}
+    if(!response.ok)throw Error(value?.error||'请求失败，请稍后重试');
     return value;
   }
-  function showLogin(){clearTimeout(pollTimer);$('login').hidden=false;$('workspace').hidden=true;state=null;$('asset-detail').close();$('progress-image').close();$('access-code').value=''}
   function options(id,rows,first,label='name'){
     const select=$(id),value=select.value,html=(first===null?'':`<option value="">${esc(first)}</option>`)+rows.map(row=>`<option value="${esc(row.id)}">${esc(row[label]||row.id)}</option>`).join('');
     if(select.innerHTML!==html){select.innerHTML=html;if([...select.options].some(option=>option.value===value))select.value=value}
   }
   async function summary(){
-    state=await api('/api/state');$('logout').hidden=state.login_required===false;const priorProject=$('project').value;options('project',state.projects,null);
+    state=await api('/api/state');const priorProject=$('project').value;options('project',state.projects,null);
     if(!priorProject&&state.active_project)$('project').value=state.active_project;
-    options('search-root',state.roots,'全部归档');options('archive-root',state.roots,'全部归档');
+    options('search-root',state.roots,'全部归档');
     options('dimension',Object.entries({...state.dimensions,...Object.fromEntries(state.custom_dimensions.map(key=>[key,key]))}).map(([id,name])=>({id,name})),'常用维度');
     $('search-mode').querySelector('[value=semantic]').disabled=state.visual_backend!=='clip';
   }
   function syncLabel(){const text=new Date().toLocaleTimeString('zh-CN',{hour12:false});$('sync-time').textContent='最近同步 '+text;message('connection','已连接 · 自动同步')}
   async function enter(){
-    await summary();revision=state.revision;$('login').hidden=true;$('workspace').hidden=false;
+    await summary();revision=state.revision;$('startup').hidden=true;$('workspace').hidden=false;
     await load();await loadFacets();syncLabel();schedule();
   }
   function schedule(){clearTimeout(pollTimer);if(state)pollTimer=setTimeout(poll,3000)}
@@ -54,17 +54,21 @@
     }catch(error){if(state)message('connection','连接中断，正在重连…',true)}
     finally{polling=false;schedule()}
   }
-  async function load(){if(current==='progress')return progress();return assets(current)}
+  async function load(){if(current==='progress')return progress();if(current==='quick')return quick.refresh();return assets('search')}
   function switchTab(name){
-    if(!['progress','search','archive'].includes(name))return;
+    if(!['progress','search','quick'].includes(name))return;
+    if(current==='quick'&&name!=='quick')quick.suspend();
     current=name;document.documentElement.dataset.lanPage=name;clearTimeout(typingTimer);clearTimeout(searchTimer);contexts.search.queued=false;
-    for(const key of ['progress','search','archive']){$('panel-'+key).hidden=key!==name;$('tab-'+key).setAttribute('aria-selected',String(key===name));$('tab-'+key).tabIndex=key===name?0:-1}
-    load().catch(error=>message(name==='progress'?'progress-message':name+'-message',error.message,true));
+    for(const key of ['progress','search','quick']){$('panel-'+key).hidden=key!==name;$('tab-'+key).setAttribute('aria-selected',String(key===name));$('tab-'+key).tabIndex=key===name?0:-1}
+    if(name==='quick')quick.activate();
+    load().catch(error=>message(name==='progress'?'progress-message':name==='quick'?'quick-status':'search-message',error.message,true));
     if(name==='search')loadFacets().catch(()=>{});
   }
   function progressPicture(row,url=row.preview,title=row.sku+' 款号图片'){
-    return `<button type="button" class="lan-progress-picture" data-progress-image="${esc(url)}" data-image-title="${esc(title)}" title="查看 ${esc(title)}"><img src="${esc(url)}" alt="${esc(title)}" loading="lazy"><span class="lan-picture-missing" hidden>暂无图片</span></button>`;
+    return `<button type="button" class="lan-progress-picture" data-progress-image="${esc(url)}" data-image-title="${esc(title)}" title="查看 ${esc(title)}"><img src="${esc(url+'&size=240')}" alt="${esc(title)}" loading="lazy"><span class="lan-picture-missing" hidden>暂无图片</span></button>`;
   }
+  function labelPicture(row){return row.label_preview?progressPicture(row,row.label_preview,row.sku+' 标签图片'):'—'}
+  function captureTime(row){return `<td class="lan-completed-at">${row.completed_at?esc(row.completed_at.replace('T',' ')):row.shot?'拍摄时间缺失':'—'}</td>`}
   function progressSources(row,statuses=false){
     const sheets=new Map();for(const source of row.sources||[])sheets.set(source.sheet,(sheets.get(source.sheet)||false)||source.shot);
     return [...sheets].map(([sheet,shot])=>`<button type="button" class="lan-progress-source" data-view-sheet="${esc(sheet)}"><span>${esc(sheet)}</span>${statuses?`<span class="${shot?'lan-shot':'lan-pending'}">${shot?'已拍摄':'未拍摄'}</span>`:''}</button>`).join('');
@@ -86,12 +90,12 @@
     const code=row=>`<span class="lan-progress-code">${query?`<span class="lan-progress-memberships">${progressSources(row)}</span>`:''}<strong>${esc(row.sku)}</strong></span>`;
     if(data.view==='sheet'){
       const primary=columns.filter(col=>!col.note),notes=columns.filter(col=>col.note);
-      headings=[title('seq','序号'),title('row','原表行'),...primary.map(col=>esc(col.title)),title('status','拍摄状态'),title('photo','款号图片'),title('time','拍摄完成时间'),...notes.map(col=>esc(col.title))];
-      const cells=(row,list)=>list.map(col=>{const images=(row.images||[]).filter(image=>image.letter===col.letter);return `<td>${images.length?images.map(image=>progressPicture(row,image.url,row.sku+' 表格图片')).join(''):col.sku?code(row):esc(row.values?.[col.letter]||'')}</td>`}).join('');
-      html=data.rows.map((row,index)=>`<tr class="${row.shot?'lan-row-shot':''}" data-progress-row="${esc(row.id)}"><td class="lan-sequence">${offset+index+1}</td><td class="lan-original-row">${row.number}</td>${cells(row,primary)}<td><span class="${row.shot?'lan-shot':'lan-pending'}">${row.shot?'已拍摄':'未拍摄'}</span></td><td>${progressPicture(row)}</td><td class="lan-completed-at">${row.completed_at?(row.completion?`<button type="button" data-progress-image="/api/progress/image?row=${esc(row.id)}&amp;kind=completion&amp;v=${esc(data.revision)}" data-image-title="${esc(row.sku+' · '+row.completed_at+' · 标签照片')}">${esc(row.completed_at.replace('T',' '))}</button>`:esc(row.completed_at.replace('T',' '))):row.shot?'拍摄时间缺失':'—'}</td>${cells(row,notes)}</tr>`).join('');
+      headings=[title('seq','序号'),title('row','原表行'),...primary.flatMap(col=>[esc(col.title),...(col.sku?[title('photo','款号图片'),title('label','标签图片')]:[])]),title('status','拍摄状态'),title('time','拍摄完成时间'),...notes.map(col=>esc(col.title))];
+      const cells=(row,list)=>list.map(col=>{const images=(row.images||[]).filter(image=>image.letter===col.letter);return `<td>${images.length?images.map(image=>progressPicture(row,image.url,row.sku+' 表格图片')).join(''):col.sku?code(row):esc(row.values?.[col.letter]||'')}</td>`+(col.sku?`<td>${progressPicture(row)}</td><td>${labelPicture(row)}</td>`:'')}).join('');
+      html=data.rows.map((row,index)=>`<tr class="${row.shot?'lan-row-shot':''}" data-progress-row="${esc(row.id)}"><td class="lan-sequence">${offset+index+1}</td><td class="lan-original-row">${row.number}</td>${cells(row,primary)}<td><span class="${row.shot?'lan-shot':'lan-pending'}">${row.shot?'已拍摄':'未拍摄'}</span></td>${captureTime(row)}${cells(row,notes)}</tr>`).join('');
     }else{
-      headings=data.view==='all'?[title('seq','序号'),title('row','原表行'),title('sku','款号'),title('photo','款号图片'),title('source','所属工作表')]:[title('seq','序号'),title('sku','款号'),'所属工作表与拍摄状态',title('photo','款号图片')];
-      html=data.rows.map((row,index)=>`<tr class="${row.shot?'lan-row-shot':''}" data-progress-row="${esc(row.id)}"><td class="lan-sequence">${offset+index+1}</td>${data.view==='all'?`<td class="lan-source-rows">${row.sources.map(source=>`<span>${esc(source.sheet)} · ${source.number}</span>`).join('')}</td>`:''}<td><strong>${esc(row.sku)}</strong></td>${data.view==='common'?`<td>${progressSources(row,true)}</td>`:''}<td>${progressPicture(row)}</td>${data.view==='all'?`<td>${progressSources(row,true)}</td>`:''}</tr>`).join('');
+      headings=data.view==='all'?[title('seq','序号'),title('row','原表行'),title('sku','款号'),title('photo','款号图片'),title('label','标签图片'),title('time','拍摄完成时间'),title('source','所属工作表')]:[title('seq','序号'),title('sku','款号'),title('photo','款号图片'),title('label','标签图片'),title('time','拍摄完成时间'),'所属工作表与拍摄状态'];
+      html=data.rows.map((row,index)=>`<tr class="${row.shot?'lan-row-shot':''}" data-progress-row="${esc(row.id)}"><td class="lan-sequence">${offset+index+1}</td>${data.view==='all'?`<td class="lan-source-rows">${row.sources.map(source=>`<span>${esc(source.sheet)} · ${source.number}</span>`).join('')}</td>`:''}<td><strong>${esc(row.sku)}</strong></td><td>${progressPicture(row)}</td><td>${labelPicture(row)}</td>${captureTime(row)}<td>${progressSources(row,true)}</td></tr>`).join('');
     }
     $('progress-head').innerHTML='<tr>'+headings.map(text=>`<th scope="col">${text}</th>`).join('')+'</tr>';
     if(append)$('progress-rows').insertAdjacentHTML('beforeend',html);else $('progress-rows').innerHTML=html||`<tr><td colspan="${headings.length}" class="lan-empty">${data.project?'没有符合条件的款号。':'请先在软件端导入拍摄表格或开始拍摄。'}</td></tr>`;
@@ -117,7 +121,7 @@
     const context=contexts[name];
     if(name==='search'){
       clearTimeout(searchTimer);
-      const key=JSON.stringify([$('search-query').value,$('search-mode').value,$('search-root').value,$('search-media').value,facetValues,reference,referenceItem,append?context.cursor:'']);
+      const key=JSON.stringify([$('search-query').value,$('search-mode').value,$('search-root').value,$('search-media').value,facetValues,reference,referenceItem,referencePanel.value.threshold,referencePanel.value.matchMode,append?context.cursor:'']);
       if(context.loading){
         if(key!==context.activeKey||context.sequence!==context.activeSequence){++context.sequence;context.queued=true}
         return;
@@ -129,19 +133,15 @@
     try{
       let data;
       if(name==='search'&&(reference||referenceItem||($('search-mode').value==='semantic'&&$('search-query').value.trim()))){
-        data=await api('/api/image',{...(referenceItem?{item_id:referenceItem}:reference?{image:reference}:{text:$('search-query').value}),root:$('search-root').value,threshold:0,limit:100},context.controller.signal);
+        data=await api('/api/image',{...(referenceItem?{item_id:referenceItem}:reference?{image:reference}:{text:$('search-query').value}),root:$('search-root').value,media:$('search-media').value,...(reference||referenceItem?{threshold:referencePanel.value.threshold/100,match_mode:referencePanel.value.matchMode}:{}),limit:100},context.controller.signal);
       }else{
-        const query=name==='search'?{q:$('search-query').value,root:$('search-root').value,media:$('search-media').value,facets:JSON.stringify(facetValues)}:{q:$('archive-query').value,root:$('archive-root').value,media:$('archive-media').value,folder};
+        const query={q:$('search-query').value,root:$('search-root').value,media:$('search-media').value,facets:JSON.stringify(facetValues)};
         data=await api('/api/'+name+'?'+new URLSearchParams({...query,cursor:append?context.cursor:''}),undefined,context.controller.signal);
       }
       if(sequence!==context.sequence)return;
       if(name==='search'&&(reference||referenceItem)){context.imageData=data;paintImageResults();return}
       context.imageData=null;context.rows=append?[...context.rows,...data.rows]:data.rows;context.cursor=data.next_cursor||'';cards(name);$(name+'-more').hidden=!data.has_more;
       message(name+'-message',`${context.rows.length} 项${data.has_more?' · 还有更多':''}${data.elapsed_ms!==undefined?' · '+data.elapsed_ms+' ms':''}${data.approximate?' · 近似相似图召回':''}${data.incomplete?' · 已达查询预算，可缩小范围':''}`);
-      if(name==='archive'){
-        const parts=folder.split('/').filter(Boolean);$('breadcrumbs').innerHTML='<button type="button" data-folder="">全部目录</button>'+parts.map((part,index)=>`<button type="button" data-folder="${esc(parts.slice(0,index+1).join('/'))}">${esc(part)}</button>`).join('');
-        $('archive-folders').innerHTML=(data.folders||[]).map(item=>`<button type="button" data-folder="${esc(item.folder)}">▸ ${esc(item.name)}</button>`).join('')+(data.folders_truncated?'<span>目录较多，请缩小位置继续查找。</span>':'');
-      }
     }catch(error){if(sequence===context.sequence&&error.name!=='AbortError')message(name+'-message',error.message,true)}finally{
       if(name==='search'){
         context.loading=false;
@@ -170,7 +170,7 @@
   function paintImageResults(){
     const context=contexts.search,data=context.imageData;if(!data)return;
     context.rows=referencePanel.filter(data.rows);context.cursor='';cards('search');$('search-more').hidden=true;
-    message('search-message',`${context.rows.length} / ${data.rows.length} 项候选 · 相似度 ≥ ${referencePanel.value.threshold}% · ${data.backend?.startsWith('chinese-clip')?'CLIP 语义相似':'布局与配色相似'}${data.approximate?' · 近似召回':''}${data.incomplete?' · 已达查询预算':''}`);
+    message('search-message',`${context.rows.length} / ${data.rows.length} 项候选 · 相似度 ≥ ${referencePanel.value.threshold}% · ${data.match_mode==='frame'?'画面细节相似':data.backend?.startsWith('chinese-clip')?'CLIP 内容相似':'布局与配色相似'}${data.approximate?' · 近似召回':''}${data.incomplete?' · 部分候选尚未完成核验':''}`);
   }
   async function upload(file){await referencePanel.upload(file)}
   function resetReference(){reference='';referenceItem='';referencePanel.clear(false);contexts.search.imageData=null;referenceControls(false)}
@@ -190,12 +190,10 @@
   });
   document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!settingsMenu.hidden){event.preventDefault();event.stopPropagation();closeSettings(true)}});
   document.addEventListener('pointerdown',event=>{if(!settingsRoot.contains(event.target))closeSettings()});
-  $('login-form').onsubmit=async event=>{event.preventDefault();$('login-submit').disabled=true;try{await api('/api/login',{code:$('access-code').value});await enter()}catch(error){message('login-message',error.message,true)}finally{$('login-submit').disabled=false}};
-  $('logout').onclick=async()=>{closeSettings();try{await api('/api/logout',{})}finally{showLogin()}};
   $('refresh').onclick=async()=>{closeSettings();try{await summary();await load();syncLabel()}catch(error){message('connection',error.message,true)}};
   $('theme-cycle').onclick=()=>{closeSettings();const modes=['dark','light','pure-white','hardcore'];FramekeepTheme.set(modes[(modes.indexOf(FramekeepTheme.get())+1)%modes.length])};
-  for(const name of ['progress','search','archive'])$('tab-'+name).onclick=()=>switchTab(name);
-  document.querySelector('.lan-tabs').onkeydown=event=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;event.preventDefault();const names=['progress','search','archive'],index=names.indexOf(current);switchTab(names[event.key==='Home'?0:event.key==='End'?2:(index+(event.key==='ArrowLeft'?-1:1)+3)%3]);$('tab-'+current).focus()};
+  for(const name of ['progress','search','quick'])$('tab-'+name).onclick=()=>switchTab(name);
+  document.querySelector('.lan-tabs').onkeydown=event=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;event.preventDefault();const names=['progress','search','quick'],index=names.indexOf(current);switchTab(names[event.key==='Home'?0:event.key==='End'?2:(index+(event.key==='ArrowLeft'?-1:1)+3)%3]);$('tab-'+current).focus()};
   function chooseProgress(view,sheet=''){
     progressView=view;$('sheet').value=view==='common'?'/common/':sheet;progressOffset=0;clearTimeout(typingTimer);progress();
   }
@@ -219,7 +217,7 @@
   document.addEventListener('keydown',event=>{if(event.key==='Escape'&&progressNarrow.matches&&progressWorkspace.classList.contains('sidebar-open')&&!document.querySelector('dialog[open]')){event.preventDefault();$('progress-sidebar-close').click()}});
   $('progress-rows').onclick=event=>{
     const sheet=event.target.closest('[data-view-sheet]');if(sheet){chooseProgress('sheet',sheet.dataset.viewSheet);return}
-    const image=event.target.closest('[data-progress-image]');if(!image)return;progressImageOrigin=image;$('progress-image-title').textContent=image.dataset.imageTitle;$('progress-image-status').textContent='正在加载图片…';$('progress-image-content').hidden=false;$('progress-image-content').alt=image.dataset.imageTitle;$('progress-image').showModal();$('progress-image-content').src=image.dataset.progressImage;
+    const image=event.target.closest('[data-progress-image]');if(!image)return;progressImageOrigin=image;$('progress-image-title').textContent=image.dataset.imageTitle;$('progress-image-status').textContent='正在加载图片…';$('progress-image-content').hidden=false;$('progress-image-content').alt=image.dataset.imageTitle;$('progress-image').showModal();$('progress-image-content').src=image.dataset.progressImage+'&size=2048';
   };
   function scheduleSearch(){
     clearTimeout(searchTimer);contexts.search.queued=false;++contexts.search.sequence;$('search-more').hidden=true;
@@ -229,11 +227,9 @@
   $('search-query').addEventListener('compositionstart',()=>{searchComposing=true;scheduleSearch()});
   $('search-query').addEventListener('compositionend',()=>{searchComposing=false;scheduleSearch()});
   $('search-query').onkeydown=event=>{if(event.key==='Enter'&&(searchComposing||event.isComposing||event.keyCode===229))event.preventDefault()};
-  $('search-form').onsubmit=event=>{event.preventDefault();if(!searchComposing)assets('search')};$('archive-form').onsubmit=event=>{event.preventDefault();assets('archive')};
-  for(const name of ['search','archive']){$(name+'-more').onclick=()=>assets(name,true);$(name+'-grid').onclick=event=>{const button=event.target.closest('[data-item]');if(button)detail(contexts[name].rows[Number(button.dataset.item)])}}
+  $('search-form').onsubmit=event=>{event.preventDefault();if(!searchComposing)assets('search')};
+  for(const name of ['search']){$(name+'-more').onclick=()=>assets(name,true);$(name+'-grid').onclick=event=>{const button=event.target.closest('[data-item]');if(button)detail(contexts[name].rows[Number(button.dataset.item)])}}
   for(const id of ['search-root','search-media','search-mode'])$(id).onchange=()=>assets('search');
-  for(const id of ['archive-root','archive-media'])$(id).onchange=()=>{folder='';assets('archive')};
-  for(const id of ['breadcrumbs','archive-folders'])$(id).onclick=event=>{const button=event.target.closest('[data-folder]');if(button){folder=button.dataset.folder;assets('archive')}};
   $('dimension').onchange=()=>loadFacets().catch(error=>message('search-message',error.message,true));
   $('facets').onclick=event=>{const button=event.target.closest('[data-facet-key]');if(!button)return;const key=button.dataset.facetKey,value=button.dataset.facetValue;if(facetValues[key]===value)delete facetValues[key];else facetValues[key]=value;$('clear-facets').hidden=!Object.keys(facetValues).length;loadFacets();assets('search')};
   $('clear-facets').onclick=()=>{facetValues={};$('clear-facets').hidden=true;loadFacets();assets('search')};
@@ -244,6 +240,14 @@
   $('detail-sku').onclick=()=>{const sku=selected?.sku;if(!sku)return;closeDetail();resetReference();$('search-query').value=sku;switchTab('search')};
   document.addEventListener('error',event=>{if(event.target instanceof HTMLImageElement){event.target.hidden=true;if(event.target.closest('.lan-progress-picture'))event.target.closest('.lan-progress-picture').querySelector('.lan-picture-missing').hidden=false;if(event.target.id==='detail-image')$('detail-status').textContent='预览暂不可用，仍可查阅已有资料。'}},true);
   document.addEventListener('visibilitychange',()=>{if(!document.hidden&&state)poll()});
-  $('login').hidden=true;
-  enter().catch(error=>{showLogin();if(!error.message.includes('访问码'))message('login-message','请使用工作站提供的访问码登录。')});
+  async function connect(){
+    clearTimeout(pollTimer);$('startup-retry').disabled=true;
+    try{await enter()}catch(error){
+      if(!$('workspace').hidden)message('connection',error.message+' · 正在重试',true);
+      else message('startup-message','连接失败：'+error.message+'。请保持工作站与软件运行，正在自动重试。',true);
+      pollTimer=setTimeout(connect,3000);
+    }finally{$('startup-retry').disabled=false}
+  }
+  $('startup-retry').onclick=connect;
+  connect();
 })();

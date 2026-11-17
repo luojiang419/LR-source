@@ -17,13 +17,25 @@
     return result;
   }
   let token=session.requestToken||null,revision=session.revision,timer=null,conflicted=false,lastSaved=canonical(sharedState(session.saved,session.sharedRatings)),saving=Promise.resolve(),bridgeTimer=null;
-  async function api(path,body,timeout=20000,signal=null){
+  async function api(path,body,timeout=20000,signal=null,fresh=false){
+    const capturePath=new URL(path,location.href).pathname;
+    const captureRead=body===undefined&&['/api/state','/api/folders','/api/watch','/api/watch/direct'].includes(capturePath);
+    const captureWrite=body!==undefined&&['/api/activate','/api/watch/start','/api/watch/stop'].includes(capturePath);
+    const ready=captureRead||captureWrite?window.FramekeepBoot?.captureReady:window.FramekeepBoot?.servicesReady;
+    if(ready&&await ready===false)throw new Error('后台服务未能启动，请重启软件');
+    const views=window.FramekeepViewCache;
+    if(body===undefined&&!fresh&&views?.accepts(path))return views.read(path,nextSignal=>api(path,undefined,timeout,nextSignal,true),signal);
     const finish=window.FramekeepTaskStatus?.begin(path,body);
     try{
     if(body!==undefined)await window.FramekeepComponents?.before(path,body);
     if(body!==undefined)body={session_id:session.id,...body};
     if(body!==undefined&&!token){const response=await fetch('/api/state',{signal:AbortSignal.timeout(timeout)});if(!response.ok)throw new Error('无法获取写入凭证，请稍后重试');const state=await response.json();token=state.request_token}
-    const response=await fetch(path,{...(body===undefined?{}:{method:'POST',headers:{'Content-Type':'application/json','X-Framekeep-Token':token},body:JSON.stringify(body)}),signal:signal?AbortSignal.any([signal,AbortSignal.timeout(timeout)]):AbortSignal.timeout(timeout)});const data=await response.json();if(!response.ok){if(response.status===409&&['/api/session','/api/session/patch'].includes(path))conflicted=true;throw new Error(data.error||`请求失败 ${response.status}`)}return data;
+    const response=await fetch(path,{...(body===undefined?{headers:{'X-Framekeep-View-Session':session.id||''}}:{method:'POST',headers:{'Content-Type':'application/json','X-Framekeep-Token':token},body:JSON.stringify(body)}),signal:signal?AbortSignal.any([signal,AbortSignal.timeout(timeout)]):AbortSignal.timeout(timeout)});const data=await response.json();if(!response.ok){if(response.status===409&&['/api/session','/api/session/patch'].includes(path))conflicted=true;throw new Error(data.error||`请求失败 ${response.status}`)}if(body!==undefined&&views?.mutates(path))views.invalidate(path);return data;
+    }catch(error){
+      if(error.name==='TimeoutError'&&!signal?.aborted){
+        const failure=new Error(Framekeep.errorMessage(error),{cause:error});failure.name='TimeoutError';throw failure;
+      }
+      throw error;
     }finally{finish?.()}
   }
   function stash(){if(!session.id)return;try{localStorage.setItem('framekeep:'+session.id,JSON.stringify({snapshot:session.snapshot,revision,state:Framekeep.persistedState()}))}catch{}}
@@ -39,7 +51,7 @@
     clearTimeout(timer);if(!session.id)return;
     // 入队时冻结本次操作，避免保存中的快速 2→0→2 被合并为重复二星。
     const serialized=canonical(Framekeep.persistedState()),state=JSON.parse(serialized);
-    saving=saving.catch(()=>{}).then(async()=>{if(serialized===lastSaved)return;$('save-status').textContent='保存中…';const paged=!!session.browser?.paged,body=partialBody(state);if(!paged)body.state=state;const result=await api(paged?'/api/session/patch':'/api/session',body);revision=result.revision;conflicted=false;const previous=JSON.parse(lastSaved);lastSaved=serialized;stash();$('save-status').textContent='已保存';window.FramekeepPaging?.saved(previous,state);if(canonical(previous.overrides||{})!==canonical(state.overrides||{}))document.dispatchEvent(new CustomEvent('framekeep:ratings-saved',{detail:{session_id:session.id}}));if(result.sku_error)Framekeep.notify(result.sku_error)});
+    saving=saving.catch(()=>{}).then(async()=>{if(serialized===lastSaved)return;$('save-status').textContent='保存中…';const paged=!!session.browser?.paged,body=partialBody(state);if(!paged)body.state=state;const result=await api(paged?'/api/session/patch':'/api/session',body);revision=result.revision;conflicted=false;const previous=JSON.parse(lastSaved);lastSaved=serialized;stash();$('save-status').textContent='已保存';window.FramekeepPaging?.saved(previous,state);if(canonical(previous.overrides||{})!==canonical(state.overrides||{}))document.dispatchEvent(new CustomEvent('framekeep:ratings-saved',{detail:{session_id:session.id,overrides:body.changes?.overrides||{}}}));if(result.sku_error){document.dispatchEvent(new CustomEvent('framekeep:ocr-enqueue-failed',{detail:{session_id:session.id,capture_ids:Object.keys(state.overrides||{}).filter(id=>state.overrides[id]===2&&previous.overrides?.[id]!==2),message:result.sku_error}}))}});
     return saving;
   }
   function schedule(){if(switching||window.FramekeepPaging?.busy)return;stash();clearTimeout(timer);const save=()=>flush().catch(e=>{$('save-status').textContent=e.message});if(canonical(Framekeep.persistedState().overrides||{})!==canonical(JSON.parse(lastSaved).overrides||{}))save();else timer=setTimeout(save,450)}
@@ -57,6 +69,34 @@
     lastSaved=canonical(Framekeep.persistedState());stash();sessionDetails();
   }
   window.FramekeepIO={flush,api,openSession,refreshFolders,refreshLive,reloadRatings,
+    restoreStartup(data){
+      // 用户或现场监控已进入其它会话时，迟到的历史恢复不能切回旧目录。
+      if(!session.restoring||session.id||switching){if(session.id)session.restoring=false;return false}
+      const next=data.session;
+      revision=next.revision;conflicted=false;
+      Framekeep.loadSession({...next,restoring:false},data.photos);
+      lastSaved=canonical(Framekeep.persistedState());sessionDetails();folderSelection();
+      document.dispatchEvent(new CustomEvent('framekeep:session-restored'));
+      return true;
+    },
+    async followSync(sid){
+      if(!sid||switching)return false;
+      await window.FramekeepPaging?.whenIdle();
+      const current=session.id,same=sid===current,local=same?Framekeep.persistedState():null;
+      const query=new URLSearchParams({session_id:sid,fresh:1,...(local?{around:local.selectedId||'',filter:local.filter,sort:local.sort,q:local.query,folder:local.folderPrefix,keep:local.keep,threshold:local.threshold}:{})});
+      const next=await api('/api/state?'+query);
+      if(next.session?.id!==sid||switching||session.id!==current)return false;
+      if(local&&['selectedId','filter','query','sort','folderPrefix'].some(key=>local[key]!==Framekeep.persistedState()[key]))return false;
+      switching=true;
+      try{
+        await saving.catch(()=>{});
+        await api('/api/activate',{session_id:sid});revision=next.session.revision;conflicted=false;
+        if(same)Framekeep.refreshSyncedPage(next.session,next.catalog);
+        else Framekeep.loadSession({...next.session,saved:next.session.state||{},demo:false},next.catalog);
+        lastSaved=canonical(Framekeep.persistedState());stash();sessionDetails();folderSelection();
+        return true;
+      }finally{switching=false}
+    },
     adoptPage(next){revision=next.revision;conflicted=false;lastSaved=canonical({...Framekeep.persistedState(),...next.browser?.storedOptions,selectedId:next.state.selectedId??null});stash();sessionDetails()},
     manifest:async selected=>{await flush();return api('/api/export',{selected_only:selected})}};
   let count=session.browser?.total??window.DEMO_PHOTOS.length;
@@ -178,6 +218,7 @@
     catch(e){$('folder-activity').classList.remove('hidden');$('folder-activity').textContent='文件夹列表暂不可用，正在重新连接';throw e}
     finally{if(request===folderRequest)folderTimer=setTimeout(()=>refreshFolders().catch(()=>{}),folderState.scans.some(busy)?1000:5000)}
   }
+  document.addEventListener('framekeep:view-updated',event=>{if(event.detail.path==='/api/folders'&&window.FramekeepWorkspace?.current()==='selection')refreshFolders().catch(()=>{})});
   const folderMenu=document.createElement('div');folderMenu.id='folder-context-menu';folderMenu.className='photo-context-menu';folderMenu.setAttribute('role','menu');folderMenu.hidden=true;
   folderMenu.innerHTML='<button role="menuitem" data-folder-action="open">打开路径</button><button role="menuitem" data-folder-action="remove" title="只从软件移除，保留磁盘照片和内部评级记录">从软件移除</button>';document.body.append(folderMenu);
   let menuFolder=null,folderFocus=null;
@@ -232,8 +273,13 @@
   async function bridgeStatus(){const status=await api('/api/bridge/status');let text=status.connected?'LR 桥接已连接':status.last_seen?'LR 最近联系：'+new Date(status.last_seen).toLocaleString('zh-CN',{timeZone:'Asia/Shanghai'})+'（等待恢复或 LR 对话框操作）':'尚未连接 LR 桥接插件';if(status.latest_job){const job=status.latest_job;text+='\n最近同步：'+({pending:'等待 LR 预览确认',applied:'已写入星级',failed:'失败',cancelled:'已取消',superseded:'已被后续任务替代'}[job.status]||job.status);if(job.result)text+='\n'+JSON.stringify(job.result)}if(status.diagnostic?.directories?.length)text+='\nLR 实际对应目录：\n'+status.diagnostic.directories.map(d=>`${d.path}（${d.count} 张，当前清单路径匹配 ${d.matchedPaths}）`).join('\n');$('bridge-status').textContent=text;return status}
   $('send-lr').addEventListener('click',()=>{$('bridge-dialog').showModal();bridgeStatus().catch(e=>Framekeep.notify(e.message));clearInterval(bridgeTimer);bridgeTimer=setInterval(()=>{if($('bridge-dialog').open)bridgeStatus().catch(()=>{});else clearInterval(bridgeTimer)},2000)});
   $('queue-bridge').addEventListener('click',async()=>{try{await flush();await api('/api/bridge',{});await bridgeStatus();Framekeep.notify('已发送，等待 LR 中预览确认')}catch(e){Framekeep.notify(e.message)}});
-  $('install-bridge').addEventListener('click',async()=>{try{const result=await api('/api/bridge/install',{});$('bridge-status').textContent=`已安装到 ${result.path}\n请在 LR 增效工具管理器添加/重新加载插件，再运行“连接末帧工作台”。`}catch(e){Framekeep.notify(e.message)}});
+  $('install-bridge').addEventListener('click',async()=>{try{const result=await api('/api/bridge/install',{});$('bridge-status').textContent=`已安装到 ${result.path}\n请在 LR 增效工具管理器添加/重新加载插件，再运行“连接SHIYING工作台”。`}catch(e){Framekeep.notify(e.message)}});
   refreshFolders().catch(()=>{});
+  document.addEventListener('framekeep:services-ready',()=>{
+    window.FramekeepViewCache?.invalidate('/api/folders');
+    refreshFolders().catch(()=>{});
+    if(session.id)reloadRatings().catch(error=>Framekeep.notify(error.message));
+  },{once:true});
   sessionDetails();
   schedule();
 })();

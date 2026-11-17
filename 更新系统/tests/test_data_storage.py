@@ -24,8 +24,8 @@ class DataStorageTests(unittest.TestCase):
         self.assertEqual(i.prepare_data_directory(self.root,target),target)
         (target/'ratings.txt').write_text('人工星级')
         self.assertEqual(i.data_directory(self.root),target)
-        (self.root/'末帧选片.exe').write_bytes(b'app')
-        manifest={'version':'1.0.0','releaseId':'20261023000001','files':[{'path':'末帧选片.exe','sha256':i.digest(self.root/'末帧选片.exe'),'size':3}]}
+        (self.root/'SHIYING 数字资产.exe').write_bytes(b'app')
+        manifest={'version':'1.0.0','releaseId':'20261023000001','files':[{'path':'SHIYING 数字资产.exe','sha256':i.digest(self.root/'SHIYING 数字资产.exe'),'size':3}]}
         i.complete_registration(self.root,i.prepare_marker(self.root,target,manifest,False))
         i.uninstall(self.root,is_running=lambda _:False)
         self.assertEqual((target/'ratings.txt').read_text(),'人工星级')

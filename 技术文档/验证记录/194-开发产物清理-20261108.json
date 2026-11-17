@@ -1,0 +1,1858 @@
+{
+  "date": "2026-11-08",
+  "status": "verified",
+  "root": "G:\\app\\LR",
+  "installed": "D:\\Program Files\\Framekeep",
+  "session": "C:\\Users\\jiang\\AppData\\Local\\Temp\\framekeep-cleanup-20261108",
+  "targets": [
+    {
+      "path": "D:\\Program Files\\Framekeep\\data-import-backups",
+      "bytes": 250049544,
+      "files": 31
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\data-reset-backups",
+      "bytes": 10812602,
+      "files": 15
+    },
+    {
+      "path": "G:\\app\\LR\\backup",
+      "bytes": 6947421,
+      "files": 384
+    },
+    {
+      "path": "G:\\app\\LR\\build",
+      "bytes": 207880352891,
+      "files": 62184
+    },
+    {
+      "path": "G:\\app\\LR\\dist",
+      "bytes": 16869105267,
+      "files": 6438
+    },
+    {
+      "path": "G:\\app\\LR\\outputs",
+      "bytes": 20179380,
+      "files": 132
+    },
+    {
+      "path": "G:\\app\\LR\\新建文件夹 (2)",
+      "bytes": 0,
+      "files": 0
+    },
+    {
+      "path": "G:\\app\\LR\\测试文件夹",
+      "bytes": 2179648128,
+      "files": 579
+    },
+    {
+      "path": "G:\\app\\LR\\错误",
+      "bytes": 8776883,
+      "files": 6
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\inventory-usb-20261106-141655",
+      "bytes": 78757009,
+      "files": 117
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\inventory-usb-20261106-172143",
+      "bytes": 13912683,
+      "files": 14
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\inventory-usb-20261106-172611",
+      "bytes": 13870459,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-archive-exclusion-20261107-161337",
+      "bytes": 327149,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-archive-exclusion-final-20261107-161834",
+      "bytes": 327063,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-archive-instant-20261108-113227",
+      "bytes": 326976,
+      "files": 9
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-archive-instant-v2-20261108-115125",
+      "bytes": 326988,
+      "files": 9
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-archive-instant-v3-20261108-115856",
+      "bytes": 326885,
+      "files": 9
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-archive-path-fix-20261107-123016",
+      "bytes": 327155,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-archive-reconnect-ui-20261107-180934",
+      "bytes": 570585,
+      "files": 12
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-archive-repair-20261029-231650",
+      "bytes": 1630998081,
+      "files": 1667
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-archive-repair-20261029-231936",
+      "bytes": 418770,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-archive-repair-20261029-233402",
+      "bytes": 319744,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-archive-repair-20261029-234439",
+      "bytes": 319668,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-archive-repair-20261030-002638",
+      "bytes": 319822,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-archive-repair-20261030-005706",
+      "bytes": 319735,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-archive-repair-20261030-064426",
+      "bytes": 319697,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-archive-repair-20261030-072126",
+      "bytes": 319928,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-archive-repair-20261030-083604",
+      "bytes": 319821,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-archive-repair-20261030-091338",
+      "bytes": 319833,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-archive-restart-20261108-113936",
+      "bytes": 318,
+      "files": 2
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-archive-restart-20261108-115410",
+      "bytes": 318,
+      "files": 2
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-archive-restart-20261108-120046",
+      "bytes": 318,
+      "files": 2
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-archive-sku-source-20261107-152944",
+      "bytes": 327026,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-archive-speed-progress-20261107-170452",
+      "bytes": 327271,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-archive-speed-progress-20261107-192959",
+      "bytes": 327188,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-archive-speed-progress-20261107-204115",
+      "bytes": 327081,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-archive-speed-progress-20261107-222309",
+      "bytes": 327103,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-archive-speed-progress-20261107-231327",
+      "bytes": 327114,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-archive-speed-progress-20261108-013554",
+      "bytes": 327203,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-archive-speed-progress-20261108-110648",
+      "bytes": 327239,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-archive-speed-progress-20261108-111256",
+      "bytes": 327139,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-archive-startup-20261031-173248",
+      "bytes": 320289,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-archive-startup-20261031-174158",
+      "bytes": 320198,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-cache-count-20261102-000357",
+      "bytes": 320317,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-cache-count-20261102-003554",
+      "bytes": 320259,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-cache-display-20261031-161744",
+      "bytes": 320221,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-camera-disconnect-20261103-231236",
+      "bytes": 19444506,
+      "files": 22
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-catalog-eta-20261030-151333",
+      "bytes": 319920,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-decode-control-20261101-220254",
+      "bytes": 320470,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-decode-control-20261101-221313",
+      "bytes": 320183,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-decode-control-20261101-222832",
+      "bytes": 320183,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-decode-control-20261101-223613",
+      "bytes": 320112,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-decode-control-20261101-224839",
+      "bytes": 320183,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-decode-pause-20261030-110555",
+      "bytes": 320032,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-decode-progress-20261028-095405",
+      "bytes": 1630131097,
+      "files": 1658
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-decode-progress-retry-20261028-100236",
+      "bytes": 16934936,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-decode-progress-retry-20261028-100254",
+      "bytes": 176878,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-decode-restart-20261030-160809",
+      "bytes": 319811,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-deferred-export-20261104-130459",
+      "bytes": 18973106,
+      "files": 16
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-design-preview-20261031-164749",
+      "bytes": 320314,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-design-preview-20261031-170717",
+      "bytes": 320850,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-desktop-layout-20261027-123744",
+      "bytes": 33931538,
+      "files": 56
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-folder-latency-20261030-100044",
+      "bytes": 319710,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-full-speed-20261030-133954",
+      "bytes": 319715,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-full-speed-fill-20261102-012546",
+      "bytes": 320455,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-full-speed-fill-20261102-020048",
+      "bytes": 320275,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-incremental-decode-20261101-033514",
+      "bytes": 419284,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-incremental-decode-20261101-035447",
+      "bytes": 419242,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-incremental-decode-20261101-050447",
+      "bytes": 419240,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-incremental-decode-20261101-102647",
+      "bytes": 320159,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-incremental-decode-20261101-103148",
+      "bytes": 320088,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-incremental-decode-20261101-103533",
+      "bytes": 320079,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-integration-check-20261104-105855",
+      "bytes": 32469138,
+      "files": 60
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-lan-no-code-20261105-113756",
+      "bytes": 19255505,
+      "files": 21
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-lan-web-quick-20261104-002321",
+      "bytes": 19029050,
+      "files": 22
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-latest-20261028-092632",
+      "bytes": 416882,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-latest-20261028-143536",
+      "bytes": 416872,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-latest-20261028-220453",
+      "bytes": 417345,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-latest-20261029-000447",
+      "bytes": 417379,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-latest-20261029-080909",
+      "bytes": 417337,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-latest-20261029-084017",
+      "bytes": 417355,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-latest-20261029-091928",
+      "bytes": 417369,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-latest-20261029-094910",
+      "bytes": 417376,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-latest-20261029-101736",
+      "bytes": 417566,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-latest-20261029-102811",
+      "bytes": 417568,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-latest-20261029-140519",
+      "bytes": 1630408037,
+      "files": 1663
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-latest-20261029-143823",
+      "bytes": 417927,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-latest-20261029-214557",
+      "bytes": 1630782006,
+      "files": 1665
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-latest-20261029-215251",
+      "bytes": 418575,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-metadata-latency-20261104-174343",
+      "bytes": 18858491,
+      "files": 11
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-multidimensional-workflow-20261030-174120",
+      "bytes": 320643,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-multidimensional-workflow-20261030-175420",
+      "bytes": 320219,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-ocr-sku-writeback-20261103-132341",
+      "bytes": 320454,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-ocr-sku-writeback-20261103-133216",
+      "bytes": 320140,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-ocr-sku-writeback-20261103-133810",
+      "bytes": 320150,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-ocr-sku-writeback-20261103-134925",
+      "bytes": 320253,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-offline-progress-20261104-123029",
+      "bytes": 75656400,
+      "files": 28
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-progress-column-order-20261103-232923",
+      "bytes": 19037382,
+      "files": 14
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-quick-details-20261031-162700",
+      "bytes": 320251,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-quick-frosted-20261031-160517",
+      "bytes": 320171,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-quick-grid-20261031-145745",
+      "bytes": 320529,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-quick-grid-20261031-151024",
+      "bytes": 320125,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-quick-search-response-20261102-224148",
+      "bytes": 320643,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-quick-search-response-20261102-224808",
+      "bytes": 320133,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-quick-search-response-20261102-225509",
+      "bytes": 320202,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-quick-search-response-20261102-230437",
+      "bytes": 320274,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-quick-search-response-20261102-230611",
+      "bytes": 437,
+      "files": 1
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-quick-search-response-20261102-232342",
+      "bytes": 320173,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-quick-search-response-20261102-233042",
+      "bytes": 320062,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-quick-search-response-20261102-233723",
+      "bytes": 320182,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-quick-search-response-20261102-234603",
+      "bytes": 320152,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-quick-search-response-20261102-235153",
+      "bytes": 320126,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-quick-search-response-20261103-000917",
+      "bytes": 320295,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-quick-search-response-20261103-002844",
+      "bytes": 320204,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-quick-search-response-20261103-003951",
+      "bytes": 320178,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-quick-search-response-20261103-004656",
+      "bytes": 320376,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-quick-search-response-20261103-073620",
+      "bytes": 320227,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-quick-search-response-20261103-074628",
+      "bytes": 320229,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-quick-search-response-20261103-081249",
+      "bytes": 320476,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-quick-search-response-20261103-082141",
+      "bytes": 320184,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-quick-search-response-20261103-085342",
+      "bytes": 320252,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-quick-search-response-20261103-090539",
+      "bytes": 320149,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-quick-search-response-20261103-092546",
+      "bytes": 320157,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-quick-search-response-20261103-101546",
+      "bytes": 320272,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-quick-search-response-20261103-104214",
+      "bytes": 320173,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-quick-search-response-20261103-105448",
+      "bytes": 320175,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-quick-search-response-20261103-113007",
+      "bytes": 320266,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-quick-search-response-20261103-115017",
+      "bytes": 320161,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-repair-handoff-20261031-170629",
+      "bytes": 953548748,
+      "files": 836
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-repair-handoff-20261031-172948",
+      "bytes": 953556069,
+      "files": 836
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-repair-handoff-20261031-173149",
+      "bytes": 953556068,
+      "files": 836
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-repair-handoff-20261031-173359",
+      "bytes": 145440,
+      "files": 4
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-repair-handoff-20261031-174107",
+      "bytes": 953561768,
+      "files": 836
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-repair-handoff-20261031-174341",
+      "bytes": 145440,
+      "files": 4
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-repair-handoff-20261101-102200",
+      "bytes": 953562790,
+      "files": 835
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-repair-handoff-20261101-190404",
+      "bytes": 145444,
+      "files": 4
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-repair-handoff-20261101-191908",
+      "bytes": 145437,
+      "files": 4
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-repair-handoff-20261101-193448",
+      "bytes": 145472,
+      "files": 4
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-repair-handoff-20261101-194507",
+      "bytes": 145472,
+      "files": 4
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-repair-handoff-20261101-194956",
+      "bytes": 145473,
+      "files": 4
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-repair-handoff-20261101-200537",
+      "bytes": 953598921,
+      "files": 836
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-repair-handoff-20261101-200730",
+      "bytes": 953598921,
+      "files": 836
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-repair-handoff-20261101-201057",
+      "bytes": 953599000,
+      "files": 836
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-repair-handoff-20261101-201435",
+      "bytes": 145432,
+      "files": 4
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-repair-handoff-20261101-220212",
+      "bytes": 953609504,
+      "files": 836
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-repair-handoff-20261101-221128",
+      "bytes": 953609514,
+      "files": 836
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-repair-handoff-20261101-222717",
+      "bytes": 953610664,
+      "files": 836
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-repair-handoff-20261101-223514",
+      "bytes": 953611012,
+      "files": 836
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-repair-handoff-20261101-224708",
+      "bytes": 953612822,
+      "files": 836
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-repair-handoff-20261102-003133",
+      "bytes": 953634658,
+      "files": 836
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-repair-handoff-20261102-015940",
+      "bytes": 953642797,
+      "files": 836
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-search-index-20261031-124706",
+      "bytes": 320215,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-search-index-20261031-130100",
+      "bytes": 320227,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-search-index-20261031-134525",
+      "bytes": 320219,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-search-index-20261031-141233",
+      "bytes": 320116,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-settings-cache-timeout-20261101-102615",
+      "bytes": 320316,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-settings-cache-timeout-20261101-103207",
+      "bytes": 320145,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-settings-cache-timeout-20261101-105725",
+      "bytes": 320149,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-settings-cache-timeout-20261101-110325",
+      "bytes": 320147,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-shooting-documents-20261104-095252",
+      "bytes": 9659756,
+      "files": 10
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-shooting-documents-20261104-095937",
+      "bytes": 94961563,
+      "files": 24
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-shooting-documents-20261104-100915",
+      "bytes": 94903123,
+      "files": 20
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-shooting-documents-ui-final",
+      "bytes": 410002,
+      "files": 3
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-shooting-label-20261103-222512",
+      "bytes": 32514223,
+      "files": 24
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-shooting-search-20261105-155143",
+      "bytes": 13017235131,
+      "files": 50
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-shooting-search-20261105-162552",
+      "bytes": 103744564,
+      "files": 11
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-shooting-search-20261105-163206",
+      "bytes": 102808884,
+      "files": 9
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-shooting-search-20261105-164108",
+      "bytes": 102894988,
+      "files": 9
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-shooting-search-20261105-164940",
+      "bytes": 102210063,
+      "files": 12
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-shooting-search-20261105-165540",
+      "bytes": 101927972,
+      "files": 13
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-shooting-search-20261105-171417",
+      "bytes": 103327663,
+      "files": 12
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-sku-browser-20261104-103025",
+      "bytes": 19738945,
+      "files": 64
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-sku-folder-archive-20261107-120540",
+      "bytes": 327080,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-sku-progress-correction-20261030-162805",
+      "bytes": 319741,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-sku-range-20261104-081844",
+      "bytes": 9647507,
+      "files": 12
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-sku-range-20261104-082226",
+      "bytes": 19113598,
+      "files": 18
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-sku-search-response-20261103-124203",
+      "bytes": 320302,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-sku-write-visual-20261104-085811",
+      "bytes": 796117,
+      "files": 12
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-startup-initialization-20261101-191252",
+      "bytes": 320122,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-startup-initialization-20261101-193323",
+      "bytes": 320247,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-startup-initialization-20261101-193846",
+      "bytes": 320162,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-startup-initialization-20261101-194758",
+      "bytes": 320170,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-startup-initialization-20261101-201223",
+      "bytes": 320108,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-task182-20261105-085207",
+      "bytes": 19504319,
+      "files": 23
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-two-star-latency-20261104-165019",
+      "bytes": 75442463,
+      "files": 24
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-ui-retrieval-detail-20261103-083254",
+      "bytes": 353928,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-wal-io-recovery-20261030-230624",
+      "bytes": 320098,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-wal-io-recovery-20261030-231251",
+      "bytes": 320123,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-wal-io-recovery-20261030-231753",
+      "bytes": 320127,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-wal-startup-20261030-130244",
+      "bytes": 962594707,
+      "files": 839
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-wal-startup-20261030-131532",
+      "bytes": 319782,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-wal-startup-20261030-132544",
+      "bytes": 319715,
+      "files": 8
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-workbench-all-pages-20261108-135231",
+      "bytes": 327444,
+      "files": 9
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-workbench-index-yield-20261108-152052",
+      "bytes": 327255,
+      "files": 9
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-workbench-instant-20261108-125624",
+      "bytes": 328489,
+      "files": 9
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-workbench-instant-complete-20261108-131309",
+      "bytes": 327458,
+      "files": 9
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-workbench-preview-fixed-20261108-140614",
+      "bytes": 327261,
+      "files": 9
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-workbench-readonly-post-20261108-145900",
+      "bytes": 327363,
+      "files": 9
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-workbench-restart-20261108-140931",
+      "bytes": 320,
+      "files": 2
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-workbench-restart-20261108-142422",
+      "bytes": 320,
+      "files": 2
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-workbench-restart-20261108-144634",
+      "bytes": 320,
+      "files": 2
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-workbench-restart-20261108-150024",
+      "bytes": 320,
+      "files": 2
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-workbench-restart-20261108-152216",
+      "bytes": 320,
+      "files": 2
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-workbench-restart-persist-20261108-142254",
+      "bytes": 327371,
+      "files": 9
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\local-workbench-task-preview-20261108-144509",
+      "bytes": 327265,
+      "files": 9
+    },
+    {
+      "path": "D:\\Program Files\\Framekeep\\.update-state\\shooting-export-readable-20261106-224620",
+      "bytes": 19203589,
+      "files": 12
+    },
+    {
+      "path": "G:\\app\\LR\\.framekeep\\acceptance",
+      "bytes": 2744659,
+      "files": 67
+    },
+    {
+      "path": "G:\\app\\LR\\.framekeep\\ai-retirement-acceptance",
+      "bytes": 18539570,
+      "files": 303
+    },
+    {
+      "path": "G:\\app\\LR\\.framekeep\\asset_archive.sqlite3",
+      "bytes": 6471680,
+      "files": 1
+    },
+    {
+      "path": "G:\\app\\LR\\.framekeep\\asset_archive.sqlite3-shm",
+      "bytes": 32768,
+      "files": 1
+    },
+    {
+      "path": "G:\\app\\LR\\.framekeep\\asset_archive.sqlite3-wal",
+      "bytes": 0,
+      "files": 1
+    },
+    {
+      "path": "G:\\app\\LR\\.framekeep\\asset_catalog.sqlite3",
+      "bytes": 1671168,
+      "files": 1
+    },
+    {
+      "path": "G:\\app\\LR\\.framekeep\\asset_catalog.sqlite3-shm",
+      "bytes": 32768,
+      "files": 1
+    },
+    {
+      "path": "G:\\app\\LR\\.framekeep\\asset_catalog.sqlite3-wal",
+      "bytes": 0,
+      "files": 1
+    },
+    {
+      "path": "G:\\app\\LR\\.framekeep\\bridge-check-id",
+      "bytes": 38,
+      "files": 1
+    },
+    {
+      "path": "G:\\app\\LR\\.framekeep\\bridge-diagnostic.json",
+      "bytes": 849,
+      "files": 1
+    },
+    {
+      "path": "G:\\app\\LR\\.framekeep\\canon-link",
+      "bytes": 9174,
+      "files": 2
+    },
+    {
+      "path": "G:\\app\\LR\\.framekeep\\catalog.sqlite3",
+      "bytes": 90112,
+      "files": 1
+    },
+    {
+      "path": "G:\\app\\LR\\.framekeep\\catalog.sqlite3-shm",
+      "bytes": 32768,
+      "files": 1
+    },
+    {
+      "path": "G:\\app\\LR\\.framekeep\\catalog.sqlite3-wal",
+      "bytes": 0,
+      "files": 1
+    },
+    {
+      "path": "G:\\app\\LR\\.framekeep\\catalog_previews",
+      "bytes": 155648,
+      "files": 3
+    },
+    {
+      "path": "G:\\app\\LR\\.framekeep\\dark-grid-acceptance",
+      "bytes": 3780350,
+      "files": 50
+    },
+    {
+      "path": "G:\\app\\LR\\.framekeep\\desktop-metrics.json",
+      "bytes": 52,
+      "files": 1
+    },
+    {
+      "path": "G:\\app\\LR\\.framekeep\\engine.log",
+      "bytes": 2269,
+      "files": 1
+    },
+    {
+      "path": "G:\\app\\LR\\.framekeep\\folder-watch.json",
+      "bytes": 198,
+      "files": 1
+    },
+    {
+      "path": "G:\\app\\LR\\.framekeep\\framekeep.sqlite3",
+      "bytes": 9605120,
+      "files": 1
+    },
+    {
+      "path": "G:\\app\\LR\\.framekeep\\framekeep.sqlite3-shm",
+      "bytes": 32768,
+      "files": 1
+    },
+    {
+      "path": "G:\\app\\LR\\.framekeep\\framekeep.sqlite3-wal",
+      "bytes": 0,
+      "files": 1
+    },
+    {
+      "path": "G:\\app\\LR\\.framekeep\\legacy-recovery-cleanup.json",
+      "bytes": 761,
+      "files": 1
+    },
+    {
+      "path": "G:\\app\\LR\\.framekeep\\local-inference-logs",
+      "bytes": 301143,
+      "files": 2
+    },
+    {
+      "path": "G:\\app\\LR\\.framekeep\\maintenance",
+      "bytes": 14400188,
+      "files": 10
+    },
+    {
+      "path": "G:\\app\\LR\\.framekeep\\metadata-backups",
+      "bytes": 277837039,
+      "files": 18
+    },
+    {
+      "path": "G:\\app\\LR\\.framekeep\\metadata-history",
+      "bytes": 21013,
+      "files": 42
+    },
+    {
+      "path": "G:\\app\\LR\\.framekeep\\multi-folder-acceptance",
+      "bytes": 7125463,
+      "files": 1237
+    },
+    {
+      "path": "G:\\app\\LR\\.framekeep\\multi-folder-upgrade-before.json",
+      "bytes": 1108,
+      "files": 1
+    },
+    {
+      "path": "G:\\app\\LR\\.framekeep\\package-smoke",
+      "bytes": 66683142,
+      "files": 12
+    },
+    {
+      "path": "G:\\app\\LR\\.framekeep\\plugin-backups",
+      "bytes": 15662,
+      "files": 9
+    },
+    {
+      "path": "G:\\app\\LR\\.framekeep\\previews",
+      "bytes": 73863397,
+      "files": 402
+    },
+    {
+      "path": "G:\\app\\LR\\.framekeep\\reference-library",
+      "bytes": 20880,
+      "files": 2
+    },
+    {
+      "path": "G:\\app\\LR\\.framekeep\\remove_ai_ui.py",
+      "bytes": 5032,
+      "files": 1
+    },
+    {
+      "path": "G:\\app\\LR\\.framekeep\\server.stderr.log",
+      "bytes": 0,
+      "files": 1
+    },
+    {
+      "path": "G:\\app\\LR\\.framekeep\\server.stdout.log",
+      "bytes": 42,
+      "files": 1
+    },
+    {
+      "path": "G:\\app\\LR\\.framekeep\\session-switch-acceptance",
+      "bytes": 109694,
+      "files": 17
+    },
+    {
+      "path": "G:\\app\\LR\\.framekeep\\sku-projects",
+      "bytes": 3349775,
+      "files": 2
+    },
+    {
+      "path": "G:\\app\\LR\\.framekeep\\sku.sqlite3",
+      "bytes": 970752,
+      "files": 1
+    },
+    {
+      "path": "G:\\app\\LR\\.framekeep\\tauri-acceptance",
+      "bytes": 110141,
+      "files": 17
+    },
+    {
+      "path": "G:\\app\\LR\\.framekeep\\update_retirement_docs.py",
+      "bytes": 3550,
+      "files": 1
+    },
+    {
+      "path": "G:\\app\\LR\\.framekeep\\verify_ai_retirement.py",
+      "bytes": 2455,
+      "files": 1
+    },
+    {
+      "path": "G:\\app\\LR\\.framekeep\\vision_analysis.sqlite3",
+      "bytes": 73728,
+      "files": 1
+    },
+    {
+      "path": "G:\\app\\LR\\.framekeep\\vision_analysis.sqlite3-shm",
+      "bytes": 32768,
+      "files": 1
+    },
+    {
+      "path": "G:\\app\\LR\\.framekeep\\vision_analysis.sqlite3-wal",
+      "bytes": 0,
+      "files": 1
+    },
+    {
+      "path": "G:\\app\\LR\\.framekeep\\visual-8k-acceptance",
+      "bytes": 61494745,
+      "files": 227
+    },
+    {
+      "path": "G:\\app\\LR\\.framekeep\\visual-acceptance",
+      "bytes": 5655299,
+      "files": 395
+    },
+    {
+      "path": "G:\\app\\LR\\.framekeep\\visual-ui",
+      "bytes": 3656106,
+      "files": 67
+    },
+    {
+      "path": "G:\\app\\LR\\.framekeep\\多文件夹更新全屏.jpg",
+      "bytes": 94872,
+      "files": 1
+    },
+    {
+      "path": "G:\\app\\LR\\.framekeep\\多文件夹更新完成.jpg",
+      "bytes": 12219,
+      "files": 1
+    },
+    {
+      "path": "G:\\app\\LR\\.framekeep\\文件夹平滑切换-全屏.jpg",
+      "bytes": 67315,
+      "files": 1
+    },
+    {
+      "path": "G:\\app\\LR\\.framekeep\\文件夹平滑切换-左栏.jpg",
+      "bytes": 14882,
+      "files": 1
+    },
+    {
+      "path": "G:\\app\\LR\\.framekeep\\正式工作台.png",
+      "bytes": 174037,
+      "files": 1
+    },
+    {
+      "path": "G:\\app\\LR\\.framekeep\\移除导航预览-全屏.jpg",
+      "bytes": 96960,
+      "files": 1
+    },
+    {
+      "path": "G:\\app\\LR\\.framekeep\\移除导航预览-左栏.jpg",
+      "bytes": 14484,
+      "files": 1
+    },
+    {
+      "path": "G:\\app\\LR\\.framekeep\\胶片条深灰验证-全屏.jpg",
+      "bytes": 112054,
+      "files": 1
+    },
+    {
+      "path": "G:\\app\\LR\\.framekeep\\胶片条深灰验证.jpg",
+      "bytes": 24623,
+      "files": 1
+    },
+    {
+      "path": "G:\\app\\LR\\.framekeep\\胶片条滚轮验证-全屏.jpg",
+      "bytes": 108293,
+      "files": 1
+    },
+    {
+      "path": "G:\\app\\LR\\.framekeep\\胶片条滚轮验证.jpg",
+      "bytes": 52715,
+      "files": 1
+    },
+    {
+      "path": "G:\\app\\LR\\.framekeep\\胶片条高亮验证-全屏.jpg",
+      "bytes": 112312,
+      "files": 1
+    },
+    {
+      "path": "G:\\app\\LR\\.framekeep\\胶片条高亮验证.jpg",
+      "bytes": 42990,
+      "files": 1
+    },
+    {
+      "path": "G:\\app\\LR\\.runtime\\canon-r6m2-analysis",
+      "bytes": 233830019,
+      "files": 252
+    },
+    {
+      "path": "G:\\app\\LR\\.runtime\\ffmpeg-jgu9v2t3",
+      "bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "G:\\app\\LR\\.runtime\\gpu-downloads",
+      "bytes": 84741189,
+      "files": 3
+    },
+    {
+      "path": "G:\\app\\LR\\.runtime\\last-archive-labels.json",
+      "bytes": 680,
+      "files": 1
+    },
+    {
+      "path": "G:\\app\\LR\\.runtime\\last-archive-modes.json",
+      "bytes": 957,
+      "files": 1
+    },
+    {
+      "path": "G:\\app\\LR\\.runtime\\last-archive-report.json",
+      "bytes": 6741,
+      "files": 1
+    },
+    {
+      "path": "G:\\app\\LR\\.runtime\\main-archive-acceptance.json",
+      "bytes": 481,
+      "files": 1
+    },
+    {
+      "path": "G:\\app\\LR\\.runtime\\main-archive-progress-acceptance.json",
+      "bytes": 481,
+      "files": 1
+    },
+    {
+      "path": "G:\\app\\LR\\.runtime\\main-archive-reconnect-acceptance.json",
+      "bytes": 481,
+      "files": 1
+    },
+    {
+      "path": "G:\\app\\LR\\tools\\__pycache__",
+      "bytes": 33751,
+      "files": 2
+    },
+    {
+      "path": "G:\\app\\LR\\安卓出入库\\.gradle",
+      "bytes": 15199590,
+      "files": 15
+    },
+    {
+      "path": "G:\\app\\LR\\安卓出入库\\.kotlin",
+      "bytes": 0,
+      "files": 0
+    },
+    {
+      "path": "G:\\app\\LR\\安卓出入库\\build",
+      "bytes": 142207,
+      "files": 1
+    },
+    {
+      "path": "G:\\app\\LR\\更新系统\\__pycache__",
+      "bytes": 106108,
+      "files": 2
+    },
+    {
+      "path": "G:\\app\\LR\\桌面程序\\gen",
+      "bytes": 340961,
+      "files": 4
+    },
+    {
+      "path": "G:\\app\\LR\\桌面程序\\target",
+      "bytes": 328801,
+      "files": 1633
+    },
+    {
+      "path": "G:\\app\\LR\\选片助手\\__pycache__",
+      "bytes": 6471897,
+      "files": 258
+    },
+    {
+      "path": "G:\\app\\LR\\tools\\multinode_sync_demo\\__pycache__",
+      "bytes": 191906,
+      "files": 6
+    },
+    {
+      "path": "G:\\app\\LR\\安卓出入库\\app\\build",
+      "bytes": 0,
+      "files": 0
+    },
+    {
+      "path": "G:\\app\\LR\\安卓出入库\\tests\\__pycache__",
+      "bytes": 124980,
+      "files": 8
+    },
+    {
+      "path": "G:\\app\\LR\\更新系统\\scripts\\__pycache__",
+      "bytes": 22964,
+      "files": 2
+    },
+    {
+      "path": "G:\\app\\LR\\更新系统\\tests\\__pycache__",
+      "bytes": 122592,
+      "files": 5
+    },
+    {
+      "path": "G:\\app\\LR\\桌面程序\\permissions\\autogenerated",
+      "bytes": 7110,
+      "files": 18
+    },
+    {
+      "path": "G:\\app\\LR\\演示方案\\quick-search-dual-demo\\node_modules",
+      "bytes": 84613873,
+      "files": 20049
+    },
+    {
+      "path": "G:\\app\\LR\\演示方案\\sku-archive-demo\\node_modules",
+      "bytes": 91270127,
+      "files": 11386
+    },
+    {
+      "path": "G:\\app\\LR\\选片助手\\mouse_native\\__pycache__",
+      "bytes": 42058,
+      "files": 7
+    }
+  ],
+  "links": [
+    "G:\\app\\LR\\build\\sku-startup\\worktree\\.runtime",
+    "G:\\app\\LR\\build\\sku-startup\\worktree\\build\\update-tools",
+    "G:\\app\\LR\\outputs\\01a1a8e8-18dc-7921-a0ff-eb4cb23d16f8\\nas-sku-table\\node_modules"
+  ],
+  "planned_bytes": 264547406704,
+  "planned_files": 128230,
+  "source_files": 1197,
+  "installed_files": 850,
+  "retained_private_patches": 5,
+  "before_progress": {
+    "rows": 56,
+    "shot": 56
+  },
+  "before_free_bytes": {
+    "C": 93850456064,
+    "D": 203066658816,
+    "G": 74176913408
+  },
+  "deleted": [
+    "D:\\Program Files\\Framekeep\\data-import-backups",
+    "D:\\Program Files\\Framekeep\\data-reset-backups",
+    "G:\\app\\LR\\backup",
+    "G:\\app\\LR\\build",
+    "G:\\app\\LR\\dist",
+    "G:\\app\\LR\\outputs",
+    "G:\\app\\LR\\新建文件夹 (2)",
+    "G:\\app\\LR\\测试文件夹",
+    "G:\\app\\LR\\错误",
+    "D:\\Program Files\\Framekeep\\.update-state\\inventory-usb-20261106-141655",
+    "D:\\Program Files\\Framekeep\\.update-state\\inventory-usb-20261106-172143",
+    "D:\\Program Files\\Framekeep\\.update-state\\inventory-usb-20261106-172611",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-archive-exclusion-20261107-161337",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-archive-exclusion-final-20261107-161834",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-archive-instant-20261108-113227",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-archive-instant-v2-20261108-115125",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-archive-instant-v3-20261108-115856",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-archive-path-fix-20261107-123016",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-archive-reconnect-ui-20261107-180934",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-archive-repair-20261029-231650",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-archive-repair-20261029-231936",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-archive-repair-20261029-233402",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-archive-repair-20261029-234439",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-archive-repair-20261030-002638",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-archive-repair-20261030-005706",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-archive-repair-20261030-064426",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-archive-repair-20261030-072126",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-archive-repair-20261030-083604",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-archive-repair-20261030-091338",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-archive-restart-20261108-113936",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-archive-restart-20261108-115410",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-archive-restart-20261108-120046",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-archive-sku-source-20261107-152944",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-archive-speed-progress-20261107-170452",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-archive-speed-progress-20261107-192959",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-archive-speed-progress-20261107-204115",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-archive-speed-progress-20261107-222309",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-archive-speed-progress-20261107-231327",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-archive-speed-progress-20261108-013554",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-archive-speed-progress-20261108-110648",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-archive-speed-progress-20261108-111256",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-archive-startup-20261031-173248",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-archive-startup-20261031-174158",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-cache-count-20261102-000357",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-cache-count-20261102-003554",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-cache-display-20261031-161744",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-camera-disconnect-20261103-231236",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-catalog-eta-20261030-151333",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-decode-control-20261101-220254",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-decode-control-20261101-221313",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-decode-control-20261101-222832",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-decode-control-20261101-223613",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-decode-control-20261101-224839",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-decode-pause-20261030-110555",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-decode-progress-20261028-095405",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-decode-progress-retry-20261028-100236",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-decode-progress-retry-20261028-100254",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-decode-restart-20261030-160809",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-deferred-export-20261104-130459",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-design-preview-20261031-164749",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-design-preview-20261031-170717",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-desktop-layout-20261027-123744",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-folder-latency-20261030-100044",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-full-speed-20261030-133954",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-full-speed-fill-20261102-012546",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-full-speed-fill-20261102-020048",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-incremental-decode-20261101-033514",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-incremental-decode-20261101-035447",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-incremental-decode-20261101-050447",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-incremental-decode-20261101-102647",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-incremental-decode-20261101-103148",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-incremental-decode-20261101-103533",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-integration-check-20261104-105855",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-lan-no-code-20261105-113756",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-lan-web-quick-20261104-002321",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-latest-20261028-092632",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-latest-20261028-143536",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-latest-20261028-220453",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-latest-20261029-000447",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-latest-20261029-080909",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-latest-20261029-084017",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-latest-20261029-091928",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-latest-20261029-094910",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-latest-20261029-101736",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-latest-20261029-102811",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-latest-20261029-140519",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-latest-20261029-143823",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-latest-20261029-214557",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-latest-20261029-215251",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-metadata-latency-20261104-174343",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-multidimensional-workflow-20261030-174120",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-multidimensional-workflow-20261030-175420",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-ocr-sku-writeback-20261103-132341",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-ocr-sku-writeback-20261103-133216",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-ocr-sku-writeback-20261103-133810",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-ocr-sku-writeback-20261103-134925",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-offline-progress-20261104-123029",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-progress-column-order-20261103-232923",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-quick-details-20261031-162700",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-quick-frosted-20261031-160517",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-quick-grid-20261031-145745",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-quick-grid-20261031-151024",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-quick-search-response-20261102-224148",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-quick-search-response-20261102-224808",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-quick-search-response-20261102-225509",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-quick-search-response-20261102-230437",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-quick-search-response-20261102-230611",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-quick-search-response-20261102-232342",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-quick-search-response-20261102-233042",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-quick-search-response-20261102-233723",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-quick-search-response-20261102-234603",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-quick-search-response-20261102-235153",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-quick-search-response-20261103-000917",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-quick-search-response-20261103-002844",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-quick-search-response-20261103-003951",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-quick-search-response-20261103-004656",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-quick-search-response-20261103-073620",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-quick-search-response-20261103-074628",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-quick-search-response-20261103-081249",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-quick-search-response-20261103-082141",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-quick-search-response-20261103-085342",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-quick-search-response-20261103-090539",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-quick-search-response-20261103-092546",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-quick-search-response-20261103-101546",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-quick-search-response-20261103-104214",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-quick-search-response-20261103-105448",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-quick-search-response-20261103-113007",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-quick-search-response-20261103-115017",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-repair-handoff-20261031-170629",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-repair-handoff-20261031-172948",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-repair-handoff-20261031-173149",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-repair-handoff-20261031-173359",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-repair-handoff-20261031-174107",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-repair-handoff-20261031-174341",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-repair-handoff-20261101-102200",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-repair-handoff-20261101-190404",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-repair-handoff-20261101-191908",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-repair-handoff-20261101-193448",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-repair-handoff-20261101-194507",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-repair-handoff-20261101-194956",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-repair-handoff-20261101-200537",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-repair-handoff-20261101-200730",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-repair-handoff-20261101-201057",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-repair-handoff-20261101-201435",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-repair-handoff-20261101-220212",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-repair-handoff-20261101-221128",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-repair-handoff-20261101-222717",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-repair-handoff-20261101-223514",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-repair-handoff-20261101-224708",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-repair-handoff-20261102-003133",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-repair-handoff-20261102-015940",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-search-index-20261031-124706",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-search-index-20261031-130100",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-search-index-20261031-134525",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-search-index-20261031-141233",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-settings-cache-timeout-20261101-102615",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-settings-cache-timeout-20261101-103207",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-settings-cache-timeout-20261101-105725",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-settings-cache-timeout-20261101-110325",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-shooting-documents-20261104-095252",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-shooting-documents-20261104-095937",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-shooting-documents-20261104-100915",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-shooting-documents-ui-final",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-shooting-label-20261103-222512",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-shooting-search-20261105-155143",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-shooting-search-20261105-162552",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-shooting-search-20261105-163206",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-shooting-search-20261105-164108",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-shooting-search-20261105-164940",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-shooting-search-20261105-165540",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-shooting-search-20261105-171417",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-sku-browser-20261104-103025",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-sku-folder-archive-20261107-120540",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-sku-progress-correction-20261030-162805",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-sku-range-20261104-081844",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-sku-range-20261104-082226",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-sku-search-response-20261103-124203",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-sku-write-visual-20261104-085811",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-startup-initialization-20261101-191252",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-startup-initialization-20261101-193323",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-startup-initialization-20261101-193846",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-startup-initialization-20261101-194758",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-startup-initialization-20261101-201223",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-task182-20261105-085207",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-two-star-latency-20261104-165019",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-ui-retrieval-detail-20261103-083254",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-wal-io-recovery-20261030-230624",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-wal-io-recovery-20261030-231251",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-wal-io-recovery-20261030-231753",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-wal-startup-20261030-130244",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-wal-startup-20261030-131532",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-wal-startup-20261030-132544",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-workbench-all-pages-20261108-135231",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-workbench-index-yield-20261108-152052",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-workbench-instant-20261108-125624",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-workbench-instant-complete-20261108-131309",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-workbench-preview-fixed-20261108-140614",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-workbench-readonly-post-20261108-145900",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-workbench-restart-20261108-140931",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-workbench-restart-20261108-142422",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-workbench-restart-20261108-144634",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-workbench-restart-20261108-150024",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-workbench-restart-20261108-152216",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-workbench-restart-persist-20261108-142254",
+    "D:\\Program Files\\Framekeep\\.update-state\\local-workbench-task-preview-20261108-144509",
+    "D:\\Program Files\\Framekeep\\.update-state\\shooting-export-readable-20261106-224620",
+    "G:\\app\\LR\\.framekeep\\acceptance",
+    "G:\\app\\LR\\.framekeep\\ai-retirement-acceptance",
+    "G:\\app\\LR\\.framekeep\\asset_archive.sqlite3",
+    "G:\\app\\LR\\.framekeep\\asset_archive.sqlite3-shm",
+    "G:\\app\\LR\\.framekeep\\asset_archive.sqlite3-wal",
+    "G:\\app\\LR\\.framekeep\\asset_catalog.sqlite3",
+    "G:\\app\\LR\\.framekeep\\asset_catalog.sqlite3-shm",
+    "G:\\app\\LR\\.framekeep\\asset_catalog.sqlite3-wal",
+    "G:\\app\\LR\\.framekeep\\bridge-check-id",
+    "G:\\app\\LR\\.framekeep\\bridge-diagnostic.json",
+    "G:\\app\\LR\\.framekeep\\canon-link",
+    "G:\\app\\LR\\.framekeep\\catalog.sqlite3",
+    "G:\\app\\LR\\.framekeep\\catalog.sqlite3-shm",
+    "G:\\app\\LR\\.framekeep\\catalog.sqlite3-wal",
+    "G:\\app\\LR\\.framekeep\\catalog_previews",
+    "G:\\app\\LR\\.framekeep\\dark-grid-acceptance",
+    "G:\\app\\LR\\.framekeep\\desktop-metrics.json",
+    "G:\\app\\LR\\.framekeep\\engine.log",
+    "G:\\app\\LR\\.framekeep\\folder-watch.json",
+    "G:\\app\\LR\\.framekeep\\framekeep.sqlite3",
+    "G:\\app\\LR\\.framekeep\\framekeep.sqlite3-shm",
+    "G:\\app\\LR\\.framekeep\\framekeep.sqlite3-wal",
+    "G:\\app\\LR\\.framekeep\\legacy-recovery-cleanup.json",
+    "G:\\app\\LR\\.framekeep\\local-inference-logs",
+    "G:\\app\\LR\\.framekeep\\maintenance",
+    "G:\\app\\LR\\.framekeep\\metadata-backups",
+    "G:\\app\\LR\\.framekeep\\metadata-history",
+    "G:\\app\\LR\\.framekeep\\multi-folder-acceptance",
+    "G:\\app\\LR\\.framekeep\\multi-folder-upgrade-before.json",
+    "G:\\app\\LR\\.framekeep\\package-smoke",
+    "G:\\app\\LR\\.framekeep\\plugin-backups",
+    "G:\\app\\LR\\.framekeep\\previews",
+    "G:\\app\\LR\\.framekeep\\reference-library",
+    "G:\\app\\LR\\.framekeep\\remove_ai_ui.py",
+    "G:\\app\\LR\\.framekeep\\server.stderr.log",
+    "G:\\app\\LR\\.framekeep\\server.stdout.log",
+    "G:\\app\\LR\\.framekeep\\session-switch-acceptance",
+    "G:\\app\\LR\\.framekeep\\sku-projects",
+    "G:\\app\\LR\\.framekeep\\sku.sqlite3",
+    "G:\\app\\LR\\.framekeep\\tauri-acceptance",
+    "G:\\app\\LR\\.framekeep\\update_retirement_docs.py",
+    "G:\\app\\LR\\.framekeep\\verify_ai_retirement.py",
+    "G:\\app\\LR\\.framekeep\\vision_analysis.sqlite3",
+    "G:\\app\\LR\\.framekeep\\vision_analysis.sqlite3-shm",
+    "G:\\app\\LR\\.framekeep\\vision_analysis.sqlite3-wal",
+    "G:\\app\\LR\\.framekeep\\visual-8k-acceptance",
+    "G:\\app\\LR\\.framekeep\\visual-acceptance",
+    "G:\\app\\LR\\.framekeep\\visual-ui",
+    "G:\\app\\LR\\.framekeep\\多文件夹更新全屏.jpg",
+    "G:\\app\\LR\\.framekeep\\多文件夹更新完成.jpg",
+    "G:\\app\\LR\\.framekeep\\文件夹平滑切换-全屏.jpg",
+    "G:\\app\\LR\\.framekeep\\文件夹平滑切换-左栏.jpg",
+    "G:\\app\\LR\\.framekeep\\正式工作台.png",
+    "G:\\app\\LR\\.framekeep\\移除导航预览-全屏.jpg",
+    "G:\\app\\LR\\.framekeep\\移除导航预览-左栏.jpg",
+    "G:\\app\\LR\\.framekeep\\胶片条深灰验证-全屏.jpg",
+    "G:\\app\\LR\\.framekeep\\胶片条深灰验证.jpg",
+    "G:\\app\\LR\\.framekeep\\胶片条滚轮验证-全屏.jpg",
+    "G:\\app\\LR\\.framekeep\\胶片条滚轮验证.jpg",
+    "G:\\app\\LR\\.framekeep\\胶片条高亮验证-全屏.jpg",
+    "G:\\app\\LR\\.framekeep\\胶片条高亮验证.jpg",
+    "G:\\app\\LR\\.runtime\\canon-r6m2-analysis",
+    "G:\\app\\LR\\.runtime\\ffmpeg-jgu9v2t3",
+    "G:\\app\\LR\\.runtime\\gpu-downloads",
+    "G:\\app\\LR\\.runtime\\last-archive-labels.json",
+    "G:\\app\\LR\\.runtime\\last-archive-modes.json",
+    "G:\\app\\LR\\.runtime\\last-archive-report.json",
+    "G:\\app\\LR\\.runtime\\main-archive-acceptance.json",
+    "G:\\app\\LR\\.runtime\\main-archive-progress-acceptance.json",
+    "G:\\app\\LR\\.runtime\\main-archive-reconnect-acceptance.json",
+    "G:\\app\\LR\\tools\\__pycache__",
+    "G:\\app\\LR\\安卓出入库\\.gradle",
+    "G:\\app\\LR\\安卓出入库\\.kotlin",
+    "G:\\app\\LR\\安卓出入库\\build",
+    "G:\\app\\LR\\更新系统\\__pycache__",
+    "G:\\app\\LR\\桌面程序\\gen",
+    "G:\\app\\LR\\桌面程序\\target",
+    "G:\\app\\LR\\选片助手\\__pycache__",
+    "G:\\app\\LR\\tools\\multinode_sync_demo\\__pycache__",
+    "G:\\app\\LR\\安卓出入库\\app\\build",
+    "G:\\app\\LR\\安卓出入库\\tests\\__pycache__",
+    "G:\\app\\LR\\更新系统\\scripts\\__pycache__",
+    "G:\\app\\LR\\更新系统\\tests\\__pycache__",
+    "G:\\app\\LR\\桌面程序\\permissions\\autogenerated",
+    "G:\\app\\LR\\演示方案\\quick-search-dual-demo\\node_modules",
+    "G:\\app\\LR\\演示方案\\sku-archive-demo\\node_modules",
+    "G:\\app\\LR\\选片助手\\mouse_native\\__pycache__"
+  ],
+  "failures": [],
+  "source_hashes_unchanged": 1197,
+  "installed_hashes_unchanged": 850,
+  "required_dependencies_present": [
+    ".runtime\\exiftool\\package\\bin\\exiftool.exe",
+    ".runtime/ffmpeg/ffmpeg.exe",
+    ".runtime/ffmpeg/ffprobe.exe",
+    ".runtime/everything/Everything64.dll",
+    ".framekeep/components/runtime/llama-server.exe",
+    ".framekeep/components/models/ocr/GLM-OCR-f16.gguf",
+    "安卓出入库/gradlew.bat",
+    "桌面程序/Cargo.toml",
+    "选片助手/server.py"
+  ],
+  "after_progress": {
+    "rows": 56,
+    "shot": 56,
+    "product_images": 56,
+    "label_images": 56
+  },
+  "preview_dimensions": [
+    [
+      240,
+      160
+    ],
+    [
+      240,
+      160
+    ]
+  ],
+  "launcher_windows_powershell_verified": true,
+  "after_free_bytes": {
+    "C": 94065459200,
+    "D": 239512989696,
+    "G": 293033144320
+  },
+  "released_bytes_by_drive": {
+    "C": 215003136,
+    "D": 36446330880,
+    "G": 218856230912
+  },
+  "released_bytes": 255302561792,
+  "released_measurement_drives": [
+    "D",
+    "G"
+  ],
+  "actual_launcher_start_verified": true,
+  "transient_cleanup": {
+    "bytes": 288559.0,
+    "files": [
+      {
+        "path": "C:\\Users\\jiang\\AppData\\Local\\Temp\\framekeep-cleanup-20261108\\program-before.json",
+        "bytes": 115104
+      },
+      {
+        "path": "C:\\Users\\jiang\\AppData\\Local\\Temp\\framekeep-cleanup-20261108\\source-before.json",
+        "bytes": 163093
+      },
+      {
+        "path": "C:\\Users\\jiang\\AppData\\Local\\Temp\\framekeep-prepare-cleanup.py",
+        "bytes": 5529
+      },
+      {
+        "path": "C:\\Users\\jiang\\AppData\\Local\\Temp\\framekeep-execute-cleanup.ps1",
+        "bytes": 4833
+      }
+    ],
+    "reason": "blocked by policy",
+    "status": "blocked_by_automatic_approval"
+  }
+}

@@ -191,10 +191,10 @@ mod tests {
     }
     #[test]
     fn startup_commands_quote_paths_and_only_silent_mode_hides() {
-        let exe = Path::new("C:/软件 目录/末帧.exe"); let data = Path::new("D:/照片资料");
+        let exe = Path::new("C:/软件 目录/SHIYING.exe"); let data = Path::new("D:/照片资料");
         assert_eq!(startup_command(exe, data, StartupMode::Disabled), None);
         let normal = startup_command(exe, data, StartupMode::Window).unwrap();
-        assert!(normal.starts_with("\"C:/软件 目录/末帧.exe\" --startup --data-dir \""));
+        assert!(normal.starts_with("\"C:/软件 目录/SHIYING.exe\" --startup --data-dir \""));
         assert!(!normal.contains("--silent"));
         let silent = startup_command(exe, data, StartupMode::Tray).unwrap();
         let args = vec!["app.exe".into(), "--startup".into(), "--silent".into(), "--data-dir".into(), data.to_string_lossy().into_owned()];
@@ -212,7 +212,7 @@ mod tests {
         let (key, _) = hkcu.create_subkey(&path).unwrap();
         key.set_value("OtherApp", &"keep").unwrap();
         for mode in [StartupMode::Window, StartupMode::Tray, StartupMode::Disabled] {
-            let command = startup_command(Path::new("C:/程序 目录/末帧.exe"), Path::new("D:/用户 资料"), mode);
+            let command = startup_command(Path::new("C:/程序 目录/SHIYING.exe"), Path::new("D:/用户 资料"), mode);
             write_startup(&key, command.as_deref()).unwrap();
             if let Some(command) = command { assert_eq!(key.get_value::<String, _>(startup_value_name()).unwrap(), command); }
             else { assert_eq!(key.get_value::<String, _>(startup_value_name()).unwrap_err().kind(), std::io::ErrorKind::NotFound); }

@@ -1,0 +1,414 @@
+{
+  "date": "2026-11-13",
+  "kind": "read_only_db_vs_direct_benchmark",
+  "methodology": {
+    "trials": 3,
+    "cache_state": "No OS/NAS cache flush; first measured access and repeated calls are reported separately. The existing index build time is excluded.",
+    "scope": "Two NAS devices; no universal claim for local SSD",
+    "search_code": "Unmodified QuickFileIndex.query; ready 885MB existing index, read-only adapter; separate disk and RAM measurements; response result-cache cleared each trial",
+    "source_hashes_match_installed_build": {
+      "asset_catalog.py": "50ddbd4b986c61657f5b0ce692b5a931d5a2ec13a9d5796d1705df0f1d5b7112",
+      "quick_file_index.py": "2d354592b75d5b8a49c6086db4d439677ad0603ac073bc096e30280cd53cef6e",
+      "media_engine.py": "368797ed62d4eae906efb1fc9282925152ffda31b97e06d525a83250a30f6689",
+      "archive_thumbnails.py": "09034764d657738a4dfae766cafa0cf1d3c8b7b36440afc3b3b316260925001c"
+    }
+  },
+  "directory_listing": [
+    {
+      "case": "nas181_813",
+      "label": "NAS-A：实际813张",
+      "db_ms": [
+        1531.345,
+        2.703,
+        2.422
+      ],
+      "file_ms": [
+        59.763,
+        89.483,
+        47.309
+      ],
+      "db_files": 421,
+      "file_files": 813,
+      "same_result": false
+    },
+    {
+      "case": "nas188_161",
+      "label": "NAS-B：80张",
+      "db_ms": [
+        82.017,
+        1.831,
+        1.761
+      ],
+      "file_ms": [
+        2.89,
+        0.592,
+        0.514
+      ],
+      "db_files": 80,
+      "file_files": 80,
+      "same_result": true
+    },
+    {
+      "case": "nas181_large",
+      "label": "NAS-A：实际4217张",
+      "db_ms": [
+        3977.544,
+        9.731,
+        8.511
+      ],
+      "file_ms": [
+        15161.536,
+        513.487,
+        466.349
+      ],
+      "db_files": 2816,
+      "file_files": 4217,
+      "same_result": false
+    }
+  ],
+  "directory_equivalence": [
+    {
+      "case": "nas181_813",
+      "database_files": 421,
+      "filesystem_files": 813,
+      "only_in_database": 0,
+      "only_in_filesystem": 392,
+      "different_size": 0,
+      "missing_sample": [
+        {
+          "name": "xsy_4566.jpg",
+          "indexed_record": null
+        },
+        {
+          "name": "xsy_4567.jpg",
+          "indexed_record": null
+        },
+        {
+          "name": "xsy_4568.jpg",
+          "indexed_record": null
+        },
+        {
+          "name": "xsy_4569.jpg",
+          "indexed_record": null
+        },
+        {
+          "name": "xsy_4570.jpg",
+          "indexed_record": null
+        },
+        {
+          "name": "xsy_4573.jpg",
+          "indexed_record": null
+        },
+        {
+          "name": "xsy_4574.jpg",
+          "indexed_record": null
+        },
+        {
+          "name": "xsy_4577.jpg",
+          "indexed_record": null
+        }
+      ]
+    },
+    {
+      "case": "nas188_161",
+      "database_files": 80,
+      "filesystem_files": 80,
+      "only_in_database": 0,
+      "only_in_filesystem": 0,
+      "different_size": 0,
+      "missing_sample": []
+    },
+    {
+      "case": "nas181_large",
+      "database_files": 2816,
+      "filesystem_files": 4217,
+      "only_in_database": 0,
+      "only_in_filesystem": 1401,
+      "different_size": 955,
+      "missing_sample": [
+        {
+          "name": "xsy_2236.jpg",
+          "indexed_record": [
+            "c3ce738625a789bbd8ed7f80ce18edc9",
+            "LC78/LC7877836-P1",
+            1,
+            822598
+          ]
+        },
+        {
+          "name": "xsy_2242.jpg",
+          "indexed_record": [
+            "c3ce738625a789bbd8ed7f80ce18edc9",
+            "LC78/LC7877836-P1",
+            1,
+            766977
+          ]
+        },
+        {
+          "name": "xsy_2244.jpg",
+          "indexed_record": [
+            "c3ce738625a789bbd8ed7f80ce18edc9",
+            "LC78/LC7877836-P1",
+            1,
+            711264
+          ]
+        },
+        {
+          "name": "xsy_2248.jpg",
+          "indexed_record": [
+            "c3ce738625a789bbd8ed7f80ce18edc9",
+            "LC78/LC7877836-P1",
+            1,
+            665938
+          ]
+        },
+        {
+          "name": "xsy_2249.jpg",
+          "indexed_record": [
+            "c3ce738625a789bbd8ed7f80ce18edc9",
+            "LC78/LC7877836-P1",
+            1,
+            664394
+          ]
+        },
+        {
+          "name": "xsy_2252.jpg",
+          "indexed_record": [
+            "c3ce738625a789bbd8ed7f80ce18edc9",
+            "LC78/LC7877836-P1",
+            1,
+            672666
+          ]
+        },
+        {
+          "name": "xsy_2259.jpg",
+          "indexed_record": [
+            "c3ce738625a789bbd8ed7f80ce18edc9",
+            "LC78/LC7877836-P1",
+            1,
+            697686
+          ]
+        },
+        {
+          "name": "xsy_2260.jpg",
+          "indexed_record": [
+            "c3ce738625a789bbd8ed7f80ce18edc9",
+            "LC78/LC7877836-P1",
+            1,
+            716709
+          ]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "samples": 6,
+    "validated_fields": [
+      "Make",
+      "Model",
+      "LensModel",
+      "DateTimeOriginal",
+      "ImageWidth",
+      "ImageHeight",
+      "ISO",
+      "Rating"
+    ],
+    "fingerprints_current": true,
+    "different_validated_fields": 0,
+    "database_repeat_median_ms": 0.0975,
+    "file_full_exif_repeat_median_ms": 26.256,
+    "file_basic_fields_repeat_median_ms": 18.645,
+    "first_exiftool_launch_ms": 1072.29,
+    "cache_status": "All tested database records were queued for revalidation; eight common fields and file fingerprints matched. Full payload / SKU / OCR equivalence not claimed."
+  },
+  "quick_search": {
+    "index_bytes": 885280768,
+    "index_items": 678836,
+    "scope_online_items": 445230,
+    "ram_prepare_ms": 18677.784,
+    "methods": {
+      "sqlite_disk": {
+        "filename": [
+          {
+            "elapsed_ms": 3450.148,
+            "complete_page": false,
+            "error": "检索超过时间预算，请缩小归档范围或补充关键词后重试"
+          },
+          {
+            "elapsed_ms": 2022.986,
+            "complete_page": false,
+            "error": "检索超过时间预算，请缩小归档范围或补充关键词后重试"
+          },
+          {
+            "elapsed_ms": 1371.133,
+            "rows": 21,
+            "has_more": false,
+            "complete_page": true,
+            "path_sha256": "4bf903806bb107791b27c80721c1be485492553573b4ef0ebf2ebbf99d06dec7"
+          }
+        ],
+        "sku": [
+          {
+            "elapsed_ms": 880.48,
+            "rows": 60,
+            "has_more": true,
+            "complete_page": true,
+            "path_sha256": "560f0c36d085431070a64b4c8f709ef0dac5af2f740e7791a3c51174cb5e7bf5"
+          },
+          {
+            "elapsed_ms": 1.212,
+            "rows": 60,
+            "has_more": true,
+            "complete_page": true,
+            "path_sha256": "560f0c36d085431070a64b4c8f709ef0dac5af2f740e7791a3c51174cb5e7bf5"
+          },
+          {
+            "elapsed_ms": 1.082,
+            "rows": 60,
+            "has_more": true,
+            "complete_page": true,
+            "path_sha256": "560f0c36d085431070a64b4c8f709ef0dac5af2f740e7791a3c51174cb5e7bf5"
+          }
+        ],
+        "absent": [
+          {
+            "elapsed_ms": 174.403,
+            "rows": 0,
+            "has_more": false,
+            "complete_page": true,
+            "path_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+          },
+          {
+            "elapsed_ms": 53.724,
+            "rows": 0,
+            "has_more": false,
+            "complete_page": true,
+            "path_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+          },
+          {
+            "elapsed_ms": 41.567,
+            "rows": 0,
+            "has_more": false,
+            "complete_page": true,
+            "path_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+          }
+        ]
+      },
+      "sqlite_ram": {
+        "filename": [
+          {
+            "elapsed_ms": 13.251,
+            "rows": 21,
+            "has_more": false,
+            "complete_page": true,
+            "path_sha256": "4bf903806bb107791b27c80721c1be485492553573b4ef0ebf2ebbf99d06dec7"
+          },
+          {
+            "elapsed_ms": 15.175,
+            "rows": 21,
+            "has_more": false,
+            "complete_page": true,
+            "path_sha256": "4bf903806bb107791b27c80721c1be485492553573b4ef0ebf2ebbf99d06dec7"
+          },
+          {
+            "elapsed_ms": 16.168,
+            "rows": 21,
+            "has_more": false,
+            "complete_page": true,
+            "path_sha256": "4bf903806bb107791b27c80721c1be485492553573b4ef0ebf2ebbf99d06dec7"
+          }
+        ],
+        "sku": [
+          {
+            "elapsed_ms": 1.279,
+            "rows": 60,
+            "has_more": true,
+            "complete_page": true,
+            "path_sha256": "560f0c36d085431070a64b4c8f709ef0dac5af2f740e7791a3c51174cb5e7bf5"
+          },
+          {
+            "elapsed_ms": 1.087,
+            "rows": 60,
+            "has_more": true,
+            "complete_page": true,
+            "path_sha256": "560f0c36d085431070a64b4c8f709ef0dac5af2f740e7791a3c51174cb5e7bf5"
+          },
+          {
+            "elapsed_ms": 1.046,
+            "rows": 60,
+            "has_more": true,
+            "complete_page": true,
+            "path_sha256": "560f0c36d085431070a64b4c8f709ef0dac5af2f740e7791a3c51174cb5e7bf5"
+          }
+        ],
+        "absent": [
+          {
+            "elapsed_ms": 8.611,
+            "rows": 0,
+            "has_more": false,
+            "complete_page": true,
+            "path_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+          },
+          {
+            "elapsed_ms": 15.97,
+            "rows": 0,
+            "has_more": false,
+            "complete_page": true,
+            "path_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+          },
+          {
+            "elapsed_ms": 14.989,
+            "rows": 0,
+            "has_more": false,
+            "complete_page": true,
+            "path_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+          }
+        ]
+      }
+    },
+    "file_traversal": {
+      "seconds": 90.033,
+      "files": 271444,
+      "directories": 3139,
+      "complete": false,
+      "filename_first_hit_seconds": 2.718,
+      "sku_found_in_partial_scan": 0,
+      "note": "Partial scan; zero matches does not prove absence. Filesystem search checks paths/names only; indexed search also supports saved SKU/OCR."
+    },
+    "query_validation": {
+      "scope_item_counts_equal": true,
+      "filename_21_path_results_equal_current_catalog": true,
+      "sku_first_page_paths_exist": 60
+    },
+    "default_path_state": "The default data/quick_search.sqlite3 was not ready at inspection; the prebuilt FR-TEMP index was explicitly selected for this read-only query benchmark. This is not a claim that the running UI already uses it."
+  },
+  "decision": {
+    "directory_browser": "Read the filesystem for current directory contents",
+    "cross_directory_search": "Retain a lightweight persistent index and warm it into RAM",
+    "large_metadata_store": "Not required for the measured quick-index query itself; reducing/removing it needs preserving the metadata/fulltext/OCR functions that still use it",
+    "production_database_deleted_or_replaced": false,
+    "production_database_bytes": 25050898432,
+    "user_confirmation": "那就保留数据库吧",
+    "retain_production_database_and_quick_index": true
+  },
+  "maintenance": {
+    "compacted_copy_validated": true,
+    "compacted_copy_not_applied": true,
+    "unused_deployment_staging_deleted_bytes": 24610861056,
+    "recovery_and_validated_work_copies_retained_under": "build/latest-install-20261113/db-maintenance/",
+    "validated_work_copy_deleted_after_benchmark": true,
+    "work_copy_deleted_bytes": 24610861056,
+    "recovery_snapshot_retained": true,
+    "preserved_business_table_count": 25,
+    "rowid_checked_tables": [
+      "items",
+      "catalog_metadata"
+    ]
+  },
+  "limitations": [
+    "Disk filename query first two attempts timed out at 3450ms and 2023ms under the current 2-second query budget; third succeeded at 1371ms.",
+    "RAM mirror preparation took 18.68 seconds; not included in per-query timings.",
+    "Database directory snapshot differed from live filesystem in two directories; their latencies are not treated as equal-output wins.",
+    "Only one 90-second bounded direct recursive scan; full traversal time was not measured."
+  ]
+}

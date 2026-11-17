@@ -40,8 +40,8 @@ class DocumentTests(unittest.TestCase):
         self.assertEqual(self.own('细节图')['status'],'未拍摄');self.assertEqual(browse(self.sku,code=fixture.CODE)['total'],2)
         for index in (0,1):self.assertEqual(self.archive.writer.read(self.photos/f'{index}.JPG')['XMP-fk:SKU'],fixture.CODE)
         output=self.sku.export(self.pid);cells=self.cells(output)
-        self.assertEqual([cells[x+'1'] for x in 'CDEF'],['拍摄状态','款号图片','拍摄完成时间','备注']);self.assertEqual(cells['E2'],row['completed_at'])
-        plan=inspect_workbook(output)[0];picture=next(i for i in plan['images'] if i['cell']=='D2')
+        self.assertEqual([cells[x+'1'] for x in 'ABCDEFGH'],['序号','款号','款号图片','标签图片','图片','拍摄完成时间','拍摄状态','备注']);self.assertEqual(cells['F2'],row['completed_at'].replace('T',' '))
+        plan=inspect_workbook(output)[0];picture=next(i for i in plan['images'] if i['cell']=='C2')
         data,_=read_image(output,picture['media'])
         with Image.open(io.BytesIO(data)) as image:self.assertLess(sum(abs(a-b) for a,b in zip(image.getpixel((10,10)),(40,80,100))),8)
         self.assertEqual(original,(self.sku.root/self.pid/'source.xlsx').read_bytes())
@@ -51,6 +51,30 @@ class DocumentTests(unittest.TestCase):
         self.sku.choose_ocr_sku(self.sid,self.ids[1],fixture.CODE,before['reading_key'],before['image_key'])
         self.reading['text']+='\n新增颜色资料';self.parse()
         with self.assertRaisesRegex(ValueError,'已更新'):self.sku.choose_ocr_sku(self.sid,self.ids[1],fixture.CODE,before['reading_key'],before['image_key'])
+
+    def test_label_embeds_2048_pixels_with_small_anchor_and_survives_offline_reimport(self):
+        Image.new('RGB',(3600,2400),(230,180,70)).save(self.photos/'1.JPG')
+        self.parse();self.choose()
+        output=self.sku.export(self.pid);plan=inspect_workbook(output)[0]
+        self.assertEqual(plan['label_col'],4);self.assertEqual(plan['time_col'],6)
+        label=next(im for im in plan['images'] if im['cell']=='D2')
+        data,_=read_image(output,label['media'])
+        with Image.open(io.BytesIO(data)) as image:self.assertEqual(image.size,(2048,1365))
+        with ZipFile(output) as archive:
+            anchors=[a for name in archive.namelist() if name.startswith('xl/drawings/') and name.endswith('.xml') for a in E.fromstring(archive.read(name))]
+            anchor=next(a for a in anchors if any(n.get('name')=='FramekeepLabelRow2' for n in a.iter('{'+DRAW+'}cNvPr')))
+            extent=anchor.find('{'+DRAW+'}ext')
+            self.assertLessEqual(int(extent.get('cx')),144*9525);self.assertLessEqual(int(extent.get('cy')),92*9525)
+        content=output.read_bytes()
+        pid=self.sku.import_file('offline.xlsx',content)['project']['id']
+        for photo in self.photos.glob('*.JPG'):photo.unlink()
+        row=next(r for r in self.sku.state()['rows'] if r['sheet']=='模特图' and r['excel_row']==2)
+        self.assertTrue(row['label_image']['imported'])
+        again=self.sku.export(pid);plan=inspect_workbook(again)[0]
+        self.assertEqual(plan['label_col'],4);self.assertEqual(plan['time_col'],6)
+        self.assertEqual(sum(im['cell']=='D2' for im in plan['images']),1)
+        label=next(im for im in plan['images'] if im['cell']=='D2')
+        with Image.open(io.BytesIO(read_image(again,label['media'])[0])) as image:self.assertEqual(image.size,(2048,1365))
     def test_full_auto_choice_and_nonstarred_picture_survive_restart(self):
         self.sku.set_full_auto(True,self.sid)
         for _ in range(4):self.sku.tick()
@@ -112,11 +136,11 @@ class DocumentTests(unittest.TestCase):
         pid=self.sku.import_file('again.xlsx',first,self.sid)['project']['id'];row=next(r for r in self.sku.state()['rows'] if r['sheet']=='模特图' and r['excel_row']==2)
         self.assertTrue(row['sku_image']['imported']);out=self.sku.export(pid);cells=self.cells(out)
         self.assertEqual(sum(value=='款号图片' for ref,value in cells.items() if ref.endswith('1')),1)
-        self.assertEqual(next(i for i in inspect_workbook(out)[0]['images'] if i['cell']=='D2')['cell'],'D2')
+        self.assertEqual(next(i for i in inspect_workbook(out)[0]['images'] if i['cell']=='C2')['cell'],'C2')
     def test_missing_image_keeps_status_and_time_and_records_unavailability(self):
         self.parse();self.choose();(self.photos/'0.JPG').unlink()
         with patch('media_engine.preview_bytes',side_effect=OSError('fixture missing')):output=self.sku.export(self.pid)
-        cells=self.cells(output);self.assertEqual(cells['D2'],'图片暂不可用');self.assertEqual(cells['C2'],'已拍摄');self.assertEqual(cells['E2'],'2026-10-21T10:00:01')
+        cells=self.cells(output);self.assertEqual(cells['C2'],'图片暂不可用');self.assertEqual(cells['G2'],'已拍摄');self.assertEqual(cells['D2'],'图片暂不可用');self.assertEqual(cells['F2'],'2026-10-21 10:00:01')
     def test_legacy_time_column_shifts_references_and_preserves_original_images(self):
         source=self.base/'legacy.xlsx'
         with ZipFile(self.sku.root/self.pid/'source.xlsx') as z:parts={name:z.read(name) for name in z.namelist()}
@@ -158,7 +182,7 @@ class DocumentTests(unittest.TestCase):
                         page.locator('#asset-parse-sku').click();page.wait_for_selector('#asset-ocr-codes [data-ocr-code="'+fixture.CODE+'"]');page.locator('#asset-ocr-codes [data-ocr-code="'+fixture.CODE+'"]').click()
                         page.wait_for_function('async()=>{const s=await(await fetch("/api/sku")).json();return s.rows.some(r=>r.sheet==="模特图"&&r.status==="已拍摄")}',timeout=15000)
                         self.drain();page.locator('#sku-open').click();page.wait_for_selector('#sku-rows [data-sku-row] .sku-product-images img')
-                        headers=page.locator('#sku-rows th').all_text_contents();at=headers.index('拍摄状态');self.assertEqual(headers[at+1:at+3],['款号图片','拍摄完成时间']);self.assertEqual(headers[-1],'备注')
+                        headers=page.locator('#sku-rows th').all_text_contents();at=headers.index('款号');self.assertEqual(headers[at+1:at+3],['款号图片','标签图片']);self.assertEqual(headers[-1],'备注')
                         row=page.locator('#sku-rows [data-sku-row="'+self.own()['id']+'"]');image=row.locator('td').nth(at+1).locator('img')
                         viewer=page.locator('.sku-image-dialog');preview=page.locator('#sku-image-stage img');stage=page.locator('#sku-image-stage')
                         def loaded():page.wait_for_function('()=>{const e=document.querySelector("#sku-image-stage img");return e?.naturalWidth>0&&!e.hidden}')
@@ -176,6 +200,7 @@ class DocumentTests(unittest.TestCase):
                         self.assertIn(self.ids[0],image.get_attribute('src'));image.click();page.wait_for_selector('#sku-cover-dialog[open]')
                         page.wait_for_selector('#sku-cover-groups img');self.assertTrue(page.locator('#sku-cover-group').is_visible());page.keyboard.press('Escape')
                         self.assertFalse(viewer.evaluate('e=>e.open'))
+                        label_button=row.locator('[data-sku-label]');label_button.dblclick();loaded();fits();self.assertIn('size=2048',preview.get_attribute('src'));self.assertEqual(max(preview.evaluate('e=>[e.naturalWidth,e.naturalHeight]')),2048);page.keyboard.press('Escape')
                         trigger=row.locator('[data-completion]');trigger.click();loaded();fits();self.assertIn(self.ids[1],preview.get_attribute('src'))
                         original=self.store.session(self.sid)['state']['overrides'].copy()
                         box=stage.bounding_box();cx=box['x']+box['width']/2;cy=box['y']+box['height']/2
@@ -204,7 +229,7 @@ class DocumentTests(unittest.TestCase):
                         page.set_viewport_size({'width':1440,'height':900});trigger.click();loaded();page.locator('#sku-image-plus').click()
                         page.set_viewport_size({'width':700,'height':500});page.locator('#sku-image-fit').click();fits();page.keyboard.press('Escape')
                         # 网络失败仍可退出，重新打开恢复正常图片和初始缩放。
-                        route='**/api/preview/**?size=1600';page.route(route,lambda r:r.abort());trigger.click()
+                        route='**/api/preview/**?size=2048';page.route(route,lambda r:r.abort());trigger.click()
                         page.wait_for_function('()=>document.getElementById("sku-image-status").textContent.includes("无法加载")')
                         self.assertTrue(page.locator('#sku-image-plus').is_disabled());page.keyboard.press('Escape');self.assertFalse(viewer.evaluate('e=>e.open'))
                         page.unroute(route);trigger.click();loaded();fits();page.keyboard.press('Escape')

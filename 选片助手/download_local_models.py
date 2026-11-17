@@ -11,7 +11,7 @@ import urllib.request
 REPOS={
     'qwen':('ggml-org/Qwen2.5-VL-7B-Instruct-GGUF',[
         'Qwen2.5-VL-7B-Instruct-Q4_K_M.gguf','mmproj-Qwen2.5-VL-7B-Instruct-Q8_0.gguf']),
-    'ocr':('ggml-org/GLM-OCR-GGUF',['GLM-OCR-f16.gguf','mmproj-GLM-OCR-Q8_0.gguf'])}
+}
 
 def digest(path):
     h=hashlib.sha256()
@@ -20,6 +20,14 @@ def digest(path):
     return h.hexdigest()
 
 def download(root,kind):
+    if kind=='ocr':
+        from component_setup import ComponentManager
+        manager=ComponentManager(Path(root).resolve().parent,seeds=[Path(root).resolve().parent])
+        try:
+            manager.ensure(['pp-ocrv6-medium-local'])
+            print('已准备纯 CPU PP-OCRv6 Medium：'+str(manager.root),flush=True)
+            return manager.snapshot()
+        finally:manager.close()
     repo,names=REPOS[kind]
     with urllib.request.urlopen(f'https://modelscope.cn/api/v1/models/{repo}/repo/files?Recursive=true',timeout=30) as r:metadata=json.load(r)
     rows={r['Name']:r for r in metadata['Data']['Files']}
@@ -51,6 +59,6 @@ def download(root,kind):
     return manifest
 
 if __name__=='__main__':
-    p=argparse.ArgumentParser();p.add_argument('--root',type=Path,default=Path('.runtime/models'));p.add_argument('--model',choices=['qwen','ocr','all'],default='all');a=p.parse_args()
-    kinds=list(REPOS) if a.model=='all' else [a.model]
+    p=argparse.ArgumentParser();p.add_argument('--root',type=Path,default=Path('.runtime/models'));p.add_argument('--model',choices=['qwen','ocr','all'],default='ocr');a=p.parse_args()
+    kinds=['ocr','qwen'] if a.model=='all' else [a.model]
     with ThreadPoolExecutor(max_workers=2) as pool:list(pool.map(lambda k:download(a.root,k),kinds))

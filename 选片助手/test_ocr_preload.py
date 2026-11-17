@@ -16,7 +16,7 @@ class OcrPreloadTests(unittest.TestCase):
     def setUp(self):
         self.temp=tempfile.TemporaryDirectory();self.root=Path(self.temp.name)
         for name in ('server.exe','model.gguf','mmproj.gguf'):(self.root/name).touch()
-        self.config=self.root/'local-models.json';self.config.write_text(json.dumps({'executable':str(self.root/'server.exe'),'models':{'glm-ocr-local':{'model':str(self.root/'model.gguf'),'mmproj':str(self.root/'mmproj.gguf')}}}),'utf8')
+        self.config=self.root/'local-models.json';self.config.write_text(json.dumps({'executable':str(self.root/'server.exe'),'models':{'qwen2.5-vl-7b-q4':{'model':str(self.root/'model.gguf'),'mmproj':str(self.root/'mmproj.gguf')}}}),'utf8')
         self.runtime=LocalInference(self.config,self.root/'logs');self.stack=ExitStack()
         self.process=MagicMock();self.process.poll.return_value=None
         self.start=self.stack.enter_context(patch('local_inference.subprocess.Popen',return_value=self.process))
@@ -40,14 +40,14 @@ class OcrPreloadTests(unittest.TestCase):
         components.snapshot.return_value={'status':'working','message':'正在准备 model.gguf','done':42,'total':100}
         components.ensure.side_effect=lambda _: (entered.set(),release.wait(3))
         self.runtime.components=components
-        begin=time.monotonic();self.runtime.preload({'model':'glm-ocr-local'})
+        begin=time.monotonic();self.runtime.preload({'model':'qwen2.5-vl-7b-q4'})
         self.assertLess(time.monotonic()-begin,.25);self.assertTrue(entered.wait(1))
         before=time.monotonic();state=self.runtime.snapshot()
         self.assertLess(time.monotonic()-before,.1);self.assertEqual(state['percent'],42)
         self.assertEqual(state['progress_label'],'当前文件准备进度');self.assertFalse(self.start.called)
-        self.runtime.preload({'model':'glm-ocr-local'});release.set()
+        self.runtime.preload({'model':'qwen2.5-vl-7b-q4'});release.set()
         self.wait(lambda:self.runtime.snapshot()['status']=='ready')
-        with self.runtime.resolve({'model':'glm-ocr-local'}) as endpoint:
+        with self.runtime.resolve({'model':'qwen2.5-vl-7b-q4'}) as endpoint:
             self.assertEqual(endpoint['protocol'],'chat')
         self.assertEqual(self.start.call_count,1);self.assertEqual(components.ensure.call_count,1)
         self.assertNotIn('key',self.runtime.snapshot());self.assertNotIn('url',self.runtime.snapshot())
@@ -59,20 +59,20 @@ class OcrPreloadTests(unittest.TestCase):
             if not ready.is_set():raise OSError('loading')
             response=MagicMock();response.__enter__.return_value.status=200;return response
         self.health.side_effect=health
-        self.runtime.preload({'model':'glm-ocr-local'});self.assertTrue(entered.wait(1))
+        self.runtime.preload({'model':'qwen2.5-vl-7b-q4'});self.assertTrue(entered.wait(1))
         self.assertEqual(self.runtime.snapshot()['status'],'loading');self.assertIsNone(self.runtime.snapshot()['percent'])
         self.runtime.preload(None);self.wait(lambda:self.runtime.warm_thread is None)
         self.process.terminate.assert_called_once();self.assertEqual(self.runtime.snapshot()['status'],'idle')
-        ready.set();self.runtime.preload({'model':'glm-ocr-local'})
+        ready.set();self.runtime.preload({'model':'qwen2.5-vl-7b-q4'})
         self.wait(lambda:self.runtime.snapshot()['status']=='ready');self.assertEqual(self.start.call_count,2)
 
     def test_progress_snapshot_is_scoped_to_job_generation_and_reads_model_bytes(self):
-        progress=OcrProgress();self.runtime._publish('preparing','glm-ocr-local','准备组件')
+        progress=OcrProgress();self.runtime._publish('preparing','qwen2.5-vl-7b-q4','准备组件')
         components=MagicMock();components.snapshot.return_value={'done':45,'total':90,'message':'正在复制模型'}
         self.runtime.components=components
         with patch('local_inference._runtime',self.runtime):
             with progress.track('jobs','one','new') as update:
-                update('loading_model',{'protocol':'local','model':'glm-ocr-local','key':'private'})
+                update('loading_model',{'protocol':'local','model':'qwen2.5-vl-7b-q4','key':'private'})
                 self.assertIsNone(progress.snapshot('jobs','one','old'))
                 state=progress.snapshot('jobs','one','new');self.assertEqual(state['percent'],50)
                 self.assertNotIn('private',json.dumps(state));self.assertGreaterEqual(state['elapsed_seconds'],0)

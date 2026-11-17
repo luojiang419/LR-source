@@ -1,0 +1,196 @@
+{
+  "published": true,
+  "repository": "jiangjiang419/framekeep-updates",
+  "version": "1.0.1",
+  "releaseId": "20261114052850",
+  "anonymous_verified": true,
+  "full_installer_url": "https://modelscope.cn/api/v1/models/jiangjiang419/framekeep-updates/repo?Revision=master&FilePath=releases%2F1.0.1%2F20261114052850%2FSHIYING-Full-Setup.exe",
+  "light_installer_url": "https://modelscope.cn/api/v1/models/jiangjiang419/framekeep-updates/repo?Revision=master&FilePath=releases%2F1.0.1%2F20261114052850%2FSHIYING-Setup.exe",
+  "artifacts": {
+    "SHIYING-Windows-x64.zip": {
+      "bytes": 332733442,
+      "sha256": "7be22647650d4d4ab4058641a1bf5f348ca2a87794785cdd763ca712c4b18cf5"
+    },
+    "SHIYING-Setup.exe": {
+      "bytes": 32812544,
+      "sha256": "b167be6f10e170db410c02cb793f1f306dd26078b11924f88076471b237ba5b4"
+    },
+    "SHIYING-Full-Setup.exe": {
+      "bytes": 751631360,
+      "sha256": "93058cd6bdf9741c9cbfbce806fdf8dac00efb35b25721a0a987f087a654bab9"
+    }
+  },
+  "components": [
+    {
+      "path": "components/52d1df764521fb4fc071665dfdf889c3529c78e5438bfb66029eb19cd29e8ea9/llama-b11773-framekeep-win-x64.zip",
+      "sha256": "52d1df764521fb4fc071665dfdf889c3529c78e5438bfb66029eb19cd29e8ea9",
+      "size": 694127530
+    },
+    {
+      "path": "components/d218f6fbf0f1c23d2161bd6ac7f5eaa6104fa89955c09290497e31008e2618e4/PP-OCRv6_small_det.tar",
+      "sha256": "d218f6fbf0f1c23d2161bd6ac7f5eaa6104fa89955c09290497e31008e2618e4",
+      "size": 9891840
+    },
+    {
+      "path": "components/d267ab077a44a0eedb1ea8f8c542d263f211de8e9d7a029bf9fcfff7e5a88fb1/PP-OCRv6_small_rec.tar",
+      "sha256": "d267ab077a44a0eedb1ea8f8c542d263f211de8e9d7a029bf9fcfff7e5a88fb1",
+      "size": 21319680
+    },
+    {
+      "path": "components/d8cc46c7163c83a151aef8fce5856b965860df90a875029216d605b0f607eaec/PP-OCRv6_medium_rec.tar",
+      "sha256": "d8cc46c7163c83a151aef8fce5856b965860df90a875029216d605b0f607eaec",
+      "size": 76718080
+    },
+    {
+      "path": "components/c5adb0b15de1b1838934eba1dd72e7529e7d80132216c6ee6d26eba6fa054fcf/PP-OCRv6_medium_det.tar",
+      "sha256": "c5adb0b15de1b1838934eba1dd72e7529e7d80132216c6ee6d26eba6fa054fcf",
+      "size": 62044160
+    },
+    {
+      "path": "components/0625fb5c1e75be58a164e14f95aa58a3e5badb859b3d17c952385f3e4a9ff3e8/MicrosoftEdgeWebView2RuntimeInstallerX64.exe",
+      "sha256": "0625fb5c1e75be58a164e14f95aa58a3e5badb859b3d17c952385f3e4a9ff3e8",
+      "size": 214156024
+    }
+  ],
+  "previous_release": {
+    "version": "1.0.1",
+    "releaseId": "20261114043205"
+  },
+  "local_install_modified": false,
+  "clients": {
+    "old-public": {
+      "status": "downloaded",
+      "available": true,
+      "downloaded": true,
+      "version": "1.0.1",
+      "releaseId": "20261114052850",
+      "currentVersion": "1.0.1",
+      "currentReleaseId": "20261114043205"
+    },
+    "local-installed": {
+      "status": "downloaded",
+      "available": true,
+      "downloaded": true,
+      "version": "1.0.1",
+      "releaseId": "20261114052850",
+      "currentVersion": "1.0.1",
+      "currentReleaseId": "20261114043205"
+    },
+    "current": {
+      "status": "checked",
+      "available": false,
+      "downloaded": false,
+      "version": "1.0.1",
+      "releaseId": "20261114052850",
+      "currentVersion": "1.0.1",
+      "currentReleaseId": "20261114052850"
+    }
+  },
+  "source_verification": {
+    "status": "passed",
+    "frozen_module_count": 164,
+    "web_file_count": 79,
+    "config_locations": [
+      "G:\\app\\LR\\build\\tauri-release\\SHIYING 数字资产\\update-config.json",
+      "G:\\app\\LR\\build\\tauri-release\\SHIYING 数字资产\\engine\\_internal\\更新系统\\update-config.json",
+      "G:\\app\\LR\\build\\tauri-release\\SHIYING 数字资产\\update\\_internal\\更新系统\\update-config.json"
+    ],
+    "releaseId": "20261114052850",
+    "source_hashes_unchanged": true,
+    "desktop_reused_verified": true
+  },
+  "installer_verification": {
+    "status": "passed",
+    "version": "1.0.1",
+    "releaseId": "20261114052850",
+    "program_files_verified": 963,
+    "signature_verified": true,
+    "light_native_runtime_verified": true,
+    "full_payload_verified": true,
+    "artifacts": {
+      "SHIYING-Windows-x64.zip": {
+        "bytes": 332733442,
+        "sha256": "7be22647650d4d4ab4058641a1bf5f348ca2a87794785cdd763ca712c4b18cf5"
+      },
+      "SHIYING-Setup.exe": {
+        "bytes": 32812544,
+        "sha256": "b167be6f10e170db410c02cb793f1f306dd26078b11924f88076471b237ba5b4"
+      },
+      "SHIYING-Full-Setup.exe": {
+        "bytes": 751631360,
+        "sha256": "93058cd6bdf9741c9cbfbce806fdf8dac00efb35b25721a0a987f087a654bab9"
+      }
+    },
+    "installed": false,
+    "production_data_used": false,
+    "published": false
+  },
+  "frozen_monitor_qa": {
+    "status": "passed",
+    "phase": "qa-frozen",
+    "checks": [
+      "native add",
+      "native file rename",
+      "native directory rename",
+      "native delete",
+      "restart reconciliation",
+      "desktop idle/search/clear",
+      "quick dialog idle/search/clear",
+      "full quick idle/search/clear",
+      "minimal quick idle/search/clear",
+      "no empty search requests"
+    ],
+    "quick_count": 1,
+    "split_count": 1,
+    "images_ready": true,
+    "errors": [],
+    "production_data_used": false
+  },
+  "update_tests": {
+    "passed": 79,
+    "seconds": 8.543
+  },
+  "private_source_sha256": "225b609f1fcafaf7518a39cdfcef1c6571b20937b41be959876f5de1ffb9cf63",
+  "private_source_file_count": 576,
+  "completed_at_utc": "2026-11-14T05:35:35.136644+00:00",
+  "github_pushed": false,
+  "production_install_modified": false,
+  "cleanup": {
+    "deleted_bytes": 2314688186,
+    "free_before": 210901053440,
+    "free_after": 213217075200,
+    "free_delta": 2316021760,
+    "removed": [
+      {
+        "path": "G:\\app\\LR\\build\\task234-modelscope-publish-20261114\\engine-dist",
+        "bytes": 747878290
+      },
+      {
+        "path": "G:\\app\\LR\\build\\task234-modelscope-publish-20261114\\full-payload-qa",
+        "bytes": 750935297
+      },
+      {
+        "path": "G:\\app\\LR\\build\\task234-modelscope-publish-20261114\\light-runtime-qa\\ascii",
+        "bytes": 32123228
+      },
+      {
+        "path": "G:\\app\\LR\\build\\task234-modelscope-publish-20261114\\light-runtime-qa\\中文 空格",
+        "bytes": 32123228
+      },
+      {
+        "path": "G:\\app\\LR\\build\\task234-modelscope-publish-20261114\\light-runtime-qa\\damaged-check",
+        "bytes": 296
+      },
+      {
+        "path": "G:\\app\\LR\\build\\task234-modelscope-publish-20261114\\light-runtime-qa\\damaged-installer.exe",
+        "bytes": 32812544
+      },
+      {
+        "path": "G:\\app\\LR\\build\\single-installer\\20261114052850\\offline-payload.zip",
+        "bytes": 718815303
+      }
+    ],
+    "kept": [],
+    "final_installers_signed_package_private_sources_models_business_data_preserved": true
+  }
+}

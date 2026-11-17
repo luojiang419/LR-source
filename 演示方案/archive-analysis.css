@@ -1,0 +1,41 @@
+#full-auto-archive-card{margin-top:16px}
+#full-auto-archive[type=checkbox]{flex:0 0 52px;width:52px;height:30px;min-height:30px;margin:0;padding:0;border:1px solid var(--theme-border-strong);border-radius:30px;background:var(--theme-control)}
+#full-auto-archive[type=checkbox]::before{left:3px;top:3px;width:22px;height:22px;background:var(--theme-toggle-knob)}
+#full-auto-archive[type=checkbox]:checked{background:var(--accent);border-color:var(--accent)}
+#full-auto-archive[type=checkbox]:checked::before{transform:translateX(22px);background:var(--theme-toggle-knob-on)}
+#full-auto-archive-card>p{font-size:12px;line-height:1.7;color:var(--theme-text-soft)}
+#full-auto-archive-status{border-top:1px solid var(--theme-border);padding-top:14px}
+#full-auto-archive-manage{margin-top:8px}
+#catalog-analysis-dialog{width:min(720px,calc(100vw - 32px));box-sizing:border-box}
+#catalog-analysis-dialog .dialog-heading{align-items:flex-start}
+#catalog-analysis-dialog .dialog-heading p{margin-bottom:0}
+.archive-analysis-phase{padding:18px;border-radius:10px;background:var(--theme-soft);border:1px solid var(--theme-border)}
+#catalog-analysis-phase{font-size:18px;font-weight:600;color:var(--theme-text)}
+#catalog-analysis-order{font-size:12px;line-height:1.6;color:var(--theme-text-soft)}
+#catalog-analysis-progress{width:100%;height:8px;accent-color:var(--theme-emphasis)}
+.archive-analysis-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:20px 0}
+.archive-analysis-metrics>div{display:flex;flex-direction:column;gap:8px;padding:12px;background:var(--theme-soft);border-radius:8px}
+.archive-analysis-metrics span{font-size:11px;color:var(--theme-text-soft)}
+.archive-analysis-metrics strong{font-size:23px;color:var(--theme-text);font-variant-numeric:tabular-nums}
+#catalog-analysis-message{min-height:20px;font-size:12px;color:var(--theme-warning);overflow-wrap:anywhere}
+#catalog-analysis-dialog .dialog-actions{flex-wrap:wrap}
+.catalog-decode-actions{display:flex;gap:8px;margin-top:8px}
+.catalog-decode-actions button{flex:1;min-width:0;padding:6px 8px;white-space:nowrap}
+#catalog-decode-message:empty{display:none}
+.shooting-automation-switches{display:flex;align-items:center;gap:10px;flex-wrap:nowrap}
+.shooting-automation-switches .shooting-auto-line{display:flex;flex:1;min-width:0;align-items:center;justify-content:space-between;gap:4px;border:0;padding:0;font-size:11px;white-space:nowrap}
+.shooting-automation-switches #shooting-full-auto,.shooting-automation-switches #shooting-multidimensional{width:32px;min-width:32px;height:18px;min-height:18px;flex:0 0 32px;margin:0}
+.shooting-automation-switches input.toggle-switch::before{width:12px;height:12px;top:2px;left:2px}
+.shooting-automation-switches input.toggle-switch:checked::before{transform:translateX(14px)}
+.workflow-settings-actions{display:flex;gap:12px;align-items:center;flex-shrink:0}
+.workflow-execute{position:relative;isolation:isolate;overflow:hidden;min-width:106px;font-variant-numeric:tabular-nums}
+#app-settings-page .workflow-execute.is-running{background:linear-gradient(90deg,color-mix(in srgb,var(--accent) 45%,var(--theme-control)) var(--task-progress),var(--theme-control) var(--task-progress));opacity:1}
+.workflow-execute.is-running::after{content:'';position:absolute;inset:0;z-index:-1;background:linear-gradient(110deg,transparent,rgba(255,255,255,.2),transparent);animation:workflow-sheen 1.8s linear infinite}
+#app-settings-page .workflow-execute.is-complete{border-color:color-mix(in srgb,#65b88e 65%,var(--theme-border));background:color-mix(in srgb,#65b88e 12%,var(--theme-control))}
+.workflow-execute.has-failures{border-color:var(--theme-warning)}
+.workflow-last-run,.workflow-run-progress{font-size:12px;line-height:1.6;color:var(--theme-text-soft)}
+.workflow-run-progress{padding:12px 18px;border:1px solid var(--theme-border);border-radius:10px;margin-bottom:16px}
+@keyframes workflow-sheen{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
+@media(prefers-reduced-motion:reduce){.workflow-execute.is-running::after{animation:none}}
+@media(max-width:520px){.workflow-settings-actions{gap:8px}.workflow-execute{min-width:92px;padding-inline:8px}.mouse-auto-heading{flex-wrap:wrap}}
+@media(max-width:520px){.archive-analysis-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}#catalog-analysis-dialog{padding:16px}.archive-analysis-phase{padding:12px}}

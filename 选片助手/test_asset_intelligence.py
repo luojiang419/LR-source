@@ -42,6 +42,110 @@ class IntelligenceTests(unittest.TestCase):
     def tearDown(self):
         self.service.close();self.catalog.close();self.tmp.cleanup()
 
+    def test_quick_appearance_persists_without_reindex_and_rejects_invalid_changes(self):
+        self.parse()
+        before=self.service.state()['counts']
+        appearance={'quick_mode':'minimal','quick_background':False,'quick_blur':37,'quick_brightness':62}
+        self.service.configure(appearance)
+        self.assertEqual(self.service.state()['counts'],before)
+        for bad in ({'quick_mode':'unknown'},{'quick_blur':49},{'quick_blur':True},
+                    {'quick_brightness':-1},{'quick_background':'false'}):
+            with self.assertRaises(ValueError):self.service.configure({**appearance,**bad})
+            self.assertEqual({key:self.service.config[key] for key in appearance},appearance)
+        self.service.close()
+        self.service=AssetIntelligence(self.catalog,self.providers,autostart=False)
+        self.assertEqual({key:self.service.config[key] for key in appearance},appearance)
+        self.assertEqual(self.service.state()['counts'],before)
+
+    def test_configuration_read_and_appearance_save_do_not_require_search_or_models(self):
+        with patch.object(self.catalog,'connect',side_effect=AssertionError('外观设置不能打开大库')):
+            self.assertEqual(self.service.configuration_state()['config']['quick_blur'],18)
+            with patch.object(self.service,'state',side_effect=AssertionError('保存外观不能统计全库')), \
+                 patch.object(self.service,'_provider',side_effect=AssertionError('外观不能检查模型')), \
+                 patch.object(self.service,'_sync_ordering',side_effect=AssertionError('外观不能改解析阶段')):
+                saved=self.service.configure({'quick_blur':27},include_state=False)
+        self.assertEqual(saved['config']['quick_blur'],27)
+        self.assertTrue(saved['config']['enabled'])
+
+    def test_appearance_save_does_not_wait_for_general_configuration_write_lock(self):
+        from contextlib import contextmanager
+        from concurrent.futures import ThreadPoolExecutor
+        import threading
+        entered=threading.Event();release=threading.Event();connect=self.catalog.connect
+        @contextmanager
+        def blocked():
+            with connect() as c:
+                entered.set();release.wait(5);yield c
+        with patch.object(self.catalog,'connect',side_effect=blocked),ThreadPoolExecutor(max_workers=2) as pool:
+            general=pool.submit(self.service.configure,{'paused':True},include_state=False)
+            try:
+                self.assertTrue(entered.wait(2))
+                result=pool.submit(self.service.configure,{'quick_blur':31},include_state=False).result(timeout=.5)
+                self.assertEqual(result['config']['quick_blur'],31)
+            finally:release.set()
+            general.result(timeout=3)
+        self.assertTrue(self.service.config['paused'])
+        self.assertEqual(self.service.config['quick_blur'],31)
+
+    def test_empty_search_uses_independent_index_and_keeps_scope_and_pairing(self):
+        self.service.quick_index.build()
+        root=self.rows[0]['root']
+        expected=self.catalog.items(root=root,media='image')['rows']
+        # 预览缓存地址补充是独立阶段；这里只验证分页内容来自轻量副本。
+        with patch.object(self.catalog,'cached_preview_hints'),patch.object(self.catalog,'connect',side_effect=AssertionError('空词浏览不能读取大库')):
+            actual=self.service.search(text='',root=root,media='image')['rows']
+        self.assertEqual([row['id'] for row in actual],[row['id'] for row in expected])
+
+    def test_quick_search_defers_new_previews_without_waiting_for_cache_resize_io(self):
+        from concurrent.futures import ThreadPoolExecutor
+        from types import SimpleNamespace
+        import threading
+        import preview_cache
+        cache=preview_cache.cache_for(self.catalog.previews);budget=cache.budget
+        foreground=[]
+        from contextlib import contextmanager
+        @contextmanager
+        def foreground_scope():
+            foreground.append('enter')
+            try:yield
+            finally:foreground.append('leave')
+        self.catalog.preview_warmer=SimpleNamespace(cache=cache,foreground=foreground_scope)
+        self.service.quick_index.build();budget.resizing.set()
+        entered=threading.Event();release=threading.Event()
+        original=self.service.quick_index.query
+        def delayed(*args,**kwargs):
+            entered.set();release.wait(4);return original(*args,**kwargs)
+        def eviction():
+            with budget.lock:return True
+        try:
+            with patch.object(self.service.quick_index,'query',side_effect=delayed),ThreadPoolExecutor(max_workers=2) as pool:
+                search=pool.submit(self.service.search,text='',quick=True)
+                try:
+                    self.assertTrue(entered.wait(2))
+                    maintenance=pool.submit(eviction)
+                    self.assertTrue(maintenance.result(timeout=.5))
+                finally:release.set()
+                self.assertTrue(search.result(timeout=3)['rows']);self.assertTrue(maintenance.result(timeout=2))
+                self.assertEqual(foreground,['enter','leave'])
+        finally:budget.resizing.clear();del self.catalog.preview_warmer
+
+    def test_recent_groups_keep_priority_and_read_only_bounded_evidence(self):
+        root=self.rows[0]['root']
+        records=[(f'confirmed-{i:05d}',root,'/',str(i),'LC1234','confirmed','',json.dumps({'total':3,'parsed':3}),float(i)) for i in range(3000)]
+        records.extend((name,root,'/',name,'LC1234',status,'',json.dumps({'total':3,'parsed':2}),updated)
+                       for name,status,updated in [('review','review',-3),('ready','ready',-2),('legacy','legacy',9000),('rejected','rejected',9999)])
+        with self.catalog.connect() as c:c.executemany('INSERT INTO intelligence_groups VALUES (?,?,?,?,?,?,?,?,?)',records)
+        with self.catalog.connect() as c:
+            calls=0
+            def budget():
+                nonlocal calls
+                calls+=1;return calls>20
+            c.set_progress_handler(budget,1000)
+            groups=self.service._recent_groups(c)
+        self.assertEqual(len(groups),50)
+        self.assertEqual([row['id'] for row in groups[:4]],['ready','review','legacy','confirmed-02999'])
+        self.assertNotIn('rejected',[row['id'] for row in groups])
+
     def parse(self, values=None):
         values = values or {}
         self.service.discover_tick()
@@ -158,11 +262,10 @@ class IntelligenceTests(unittest.TestCase):
         rows=self.service.search(text='LC12')['rows']
         self.assertEqual(rows[0]['name'],'one.jpg');self.assertEqual(rows[0]['priority'],0)
 
-    def test_reference_image_search_uses_real_features(self):
+    def test_legacy_metadata_vectors_do_not_enable_independent_image_search(self):
         self.seed('one.jpg');self.seed('three.jpg')
-        data=self.service.image_search({'item_id':self.by_name['one.jpg']['id']})
-        self.assertEqual(data['rows'][0]['name'],'one.jpg');self.assertAlmostEqual(data['rows'][0]['score'],1,places=4)
-        self.assertEqual(data['backend'],APPEARANCE)
+        with self.assertRaisesRegex(ValueError,'自动建立图搜图库'):
+            self.service.image_search({'item_id':self.by_name['one.jpg']['id']})
 
     def test_jobs_survive_restart_and_cancelled_work_is_not_requeued(self):
         self.service.discover_tick()
@@ -172,13 +275,19 @@ class IntelligenceTests(unittest.TestCase):
         self.service.control('cancel');self.service.seed_done=False;self.service.seed_cursor=0;self.service.discover_tick()
         self.assertEqual(self.service.state()['counts'],{'cancelled':3})
 
-    def test_pause_cancels_result_commit_and_resume_can_continue(self):
+    def test_pause_finishes_current_image_and_resume_skips_completed_work(self):
         self.service.discover_tick()
         def inference(*args):
             self.service.configure({'paused':True});return json.dumps(result())
         with patch('asset_intelligence.vision',side_effect=inference):self.service.tick()
-        self.assertEqual(self.service.state()['coverage'],0)
+        self.assertEqual(self.service.state()['coverage'],1)
         self.assertEqual(self.service.state()['counts'].get('running',0),0)
+        self.assertFalse(self.service.tick())
+        self.service.control('resume')
+        with patch('asset_intelligence.vision',return_value=json.dumps(result())) as call:
+            while self.service.tick():pass
+        self.assertEqual(call.call_count,2)
+        self.assertEqual(self.service.state()['coverage'],3)
 
     def test_provider_and_dimension_change_enqueues_new_version(self):
         self.parse();self.service.configure({'custom_dimensions':['电商卖点']});self.service.discover_tick()
@@ -204,7 +313,7 @@ class IntelligenceTests(unittest.TestCase):
         upgraded=Providers(self.base/'data')
         self.assertTrue(upgraded.public()['builtin_enabled'])
         self.assertEqual(upgraded.selected('multimodal')['model'],'qwen2.5-vl-7b-q4')
-        self.assertEqual(upgraded.selected('ocr')['model'],'glm-ocr-local')
+        self.assertEqual(upgraded.selected('ocr')['model'],'pp-ocrv6-medium-local')
 
     def test_online_database_backup_contains_verified_results(self):
         import sqlite3
@@ -247,7 +356,10 @@ class IntelligenceTests(unittest.TestCase):
                     (item,row['root'],str(self.folder/(item+'.jpg')),item+'.jpg','/',item+'.jpg',item))
                 vector=rng.random(192,dtype=np.float32);vector=vector/np.linalg.norm(vector)
                 store_vector(c,item,0,APPEARANCE,'test',vector.tolist())
-        response=self.service.image_search({'item_id':row['id'],'threshold':.999,'root':row['root']})
+        # 历史共库索引仍可读取；正式图搜图入口已迁至独立 MaterialSearch 库。
+        with self.catalog.connect() as c:
+            saved=c.execute('SELECT vector FROM intelligence_vectors WHERE item=? AND backend=?',(row['id'],APPEARANCE)).fetchone()[0]
+        response=image_query(self.catalog,np.frombuffer(saved,dtype=np.float32),APPEARANCE,threshold=.999,root=row['root'])
         self.assertTrue(response['approximate']);self.assertFalse(response['incomplete'])
         self.assertLessEqual(response['candidates'],6000)
         self.assertEqual(response['rows'][0]['id'],row['id'])

@@ -1,6 +1,6 @@
 fn main() {
     let root=std::path::PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap());
-    for name in ["startup.css","startup.svg","startup-visual.js","desktop.js","desktop-lifecycle.css"] {
+    for name in ["brand.svg","startup.css","startup.svg","startup-visual.js","desktop.js","desktop-lifecycle.css"] {
         let source=root.parent().unwrap().join("演示方案").join(name);
         let target=root.join("frontend").join(name);
         println!("cargo:rerun-if-changed={}",source.display());
@@ -10,12 +10,17 @@ fn main() {
     tauri_build::try_build(tauri_build::Attributes::new().app_manifest(
         tauri_build::AppManifest::new().commands(&[
             "choose_folders",
+            "choose_cache_folder",
+            "choose_cache_backup",
             "save_manifest",
+            "save_inventory_report",
             "save_sku_workbook",
+            "save_archive_document",
             "finish_close",
             "get_desktop_preferences",
             "set_desktop_preferences",
             "hide_to_tray",
+            "toggle_fullscreen",
             "desktop_ready",
             "startup_status",
             "startup_visible",

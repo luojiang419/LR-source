@@ -1,0 +1,95 @@
+{
+  "published": true,
+  "repository": "jiangjiang419/framekeep-updates",
+  "version": "1.0.1",
+  "releaseId": "20261113145022",
+  "full_installer_url": "https://modelscope.cn/api/v1/models/jiangjiang419/framekeep-updates/repo?Revision=master&FilePath=releases%2F1.0.1%2F20261113145022%2FSHIYING-Full-Setup.exe",
+  "light_installer_url": "https://modelscope.cn/api/v1/models/jiangjiang419/framekeep-updates/repo?Revision=master&FilePath=releases%2F1.0.1%2F20261113145022%2FSHIYING-Setup.exe",
+  "full_installer_sha256": "4a340cd09869724228dae89dca2e1859d19d39927463fcc165cc720e128baeef",
+  "light_installer_sha256": "ceb243eafab54afb3b4f7ddada530be82c89dc8164708cd5f3b0eadc806bc8d2",
+  "package_sha256": "cf5a2b778326473bf04af197ccb9fe07d2a95c5ad687a73b7b281eaa80e5fab5",
+  "anonymous_verified": true,
+  "clients": {
+    "old-public": {
+      "status": "downloaded",
+      "available": true,
+      "downloaded": true,
+      "version": "1.0.1",
+      "releaseId": "20261113145022",
+      "currentVersion": "1.0.1",
+      "currentReleaseId": "20261113120017"
+    },
+    "local-installed": {
+      "status": "downloaded",
+      "available": true,
+      "downloaded": true,
+      "version": "1.0.1",
+      "releaseId": "20261113145022",
+      "currentVersion": "1.0.1",
+      "currentReleaseId": "20261113120017"
+    },
+    "new-release": {
+      "status": "checked",
+      "available": false,
+      "downloaded": false,
+      "version": "1.0.1",
+      "releaseId": "20261113145022",
+      "currentVersion": "1.0.1",
+      "currentReleaseId": "20261113145022"
+    }
+  },
+  "production_installed": false,
+  "recorded_at": "2026-11-13T16:06:17.390600+08:00",
+  "branch": "fix/archive-rating-timeout",
+  "publication_base_commit": "d2dc4a7",
+  "build_record": "技术文档/验证记录/116-本地安装包-1.0.1-20261113145022.json",
+  "source_business_base_commit": "13e1b4b",
+  "package_bytes": 332619975,
+  "package_files": 945,
+  "component_verifications": [
+    {
+      "path": "components/52d1df764521fb4fc071665dfdf889c3529c78e5438bfb66029eb19cd29e8ea9/llama-b11773-framekeep-win-x64.zip",
+      "sha256": "52d1df764521fb4fc071665dfdf889c3529c78e5438bfb66029eb19cd29e8ea9",
+      "size": 694127530
+    },
+    {
+      "path": "components/d218f6fbf0f1c23d2161bd6ac7f5eaa6104fa89955c09290497e31008e2618e4/PP-OCRv6_small_det.tar",
+      "sha256": "d218f6fbf0f1c23d2161bd6ac7f5eaa6104fa89955c09290497e31008e2618e4",
+      "size": 9891840
+    },
+    {
+      "path": "components/d267ab077a44a0eedb1ea8f8c542d263f211de8e9d7a029bf9fcfff7e5a88fb1/PP-OCRv6_small_rec.tar",
+      "sha256": "d267ab077a44a0eedb1ea8f8c542d263f211de8e9d7a029bf9fcfff7e5a88fb1",
+      "size": 21319680
+    },
+    {
+      "path": "components/d8cc46c7163c83a151aef8fce5856b965860df90a875029216d605b0f607eaec/PP-OCRv6_medium_rec.tar",
+      "sha256": "d8cc46c7163c83a151aef8fce5856b965860df90a875029216d605b0f607eaec",
+      "size": 76718080
+    },
+    {
+      "path": "components/c5adb0b15de1b1838934eba1dd72e7529e7d80132216c6ee6d26eba6fa054fcf/PP-OCRv6_medium_det.tar",
+      "sha256": "c5adb0b15de1b1838934eba1dd72e7529e7d80132216c6ee6d26eba6fa054fcf",
+      "size": 62044160
+    },
+    {
+      "path": "components/0625fb5c1e75be58a164e14f95aa58a3e5badb859b3d17c952385f3e4a9ff3e8/MicrosoftEdgeWebView2RuntimeInstallerX64.exe",
+      "sha256": "0625fb5c1e75be58a164e14f95aa58a3e5badb859b3d17c952385f3e4a9ff3e8",
+      "size": 214156024
+    }
+  ],
+  "official_public_key_unchanged": true,
+  "private_source_snapshot": {
+    "path": "G:\\app\\LR\\.update-private\\release-sources\\20261113145022.zip",
+    "bytes": 2246800,
+    "sha256": "08c7e7561b5b0e87c40d07984c6015d1a4dbe84bb4dec5a7317dcfb360590654",
+    "uploaded": false
+  },
+  "github_pushed": false,
+  "client_validation_note": "隔离客户端实际读取公网签名清单，旧版本下载复用已验哈希程序ZIP缓存，未重复联网下载两份相同程序包。",
+  "cleanup": {
+    "logical_unlinked_bytes": 665239950,
+    "actual_free_space_delta": 0,
+    "hard_links_only": true
+  }
+}

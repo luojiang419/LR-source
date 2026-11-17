@@ -1,0 +1,164 @@
+[
+  {
+    "path": "G:\\app\\LR\\build\\cache-maintenance",
+    "bytes": 1340,
+    "files": 1,
+    "newest": 1794203047.1973624
+  },
+  {
+    "path": "G:\\app\\LR\\build\\duplicate-label-baseline.log",
+    "bytes": 11633,
+    "files": 1,
+    "newest": 1794215847.1584945
+  },
+  {
+    "path": "G:\\app\\LR\\build\\duplicate-label-cover-browser.log",
+    "bytes": 279,
+    "files": 1,
+    "newest": 1794216465.3300903
+  },
+  {
+    "path": "G:\\app\\LR\\build\\duplicate-label-cover.log",
+    "bytes": 1598,
+    "files": 1,
+    "newest": 1794216284.622412
+  },
+  {
+    "path": "G:\\app\\LR\\build\\duplicate-label-focused.log",
+    "bytes": 2841,
+    "files": 1,
+    "newest": 1794215990.3397343
+  },
+  {
+    "path": "G:\\app\\LR\\build\\duplicate-label-isolation.log",
+    "bytes": 6710,
+    "files": 1,
+    "newest": 1794216247.5513537
+  },
+  {
+    "path": "G:\\app\\LR\\build\\duplicate-label-regression.log",
+    "bytes": 15360,
+    "files": 1,
+    "newest": 1794216188.6518385
+  },
+  {
+    "path": "G:\\app\\LR\\build\\duplicate-labels",
+    "bytes": 467801,
+    "files": 6,
+    "newest": 1794216485.9699237
+  },
+  {
+    "path": "G:\\app\\LR\\build\\folder-shooting-progress",
+    "bytes": 249816,
+    "files": 2,
+    "newest": 1794216228.3852515
+  },
+  {
+    "path": "G:\\app\\LR\\build\\inventory-background-ocr",
+    "bytes": 217909,
+    "files": 4,
+    "newest": 1794213245.0340488
+  },
+  {
+    "path": "G:\\app\\LR\\build\\inventory-capture-feedback",
+    "bytes": 478267,
+    "files": 4,
+    "newest": 1794213248.5184383
+  },
+  {
+    "path": "G:\\app\\LR\\build\\inventory-paddle-ocr",
+    "bytes": 395577667,
+    "files": 24,
+    "newest": 1794213390.8813741
+  },
+  {
+    "path": "G:\\app\\LR\\build\\inventory-record-edit",
+    "bytes": 3346450048,
+    "files": 12492,
+    "newest": 1794214853.222319
+  },
+  {
+    "path": "G:\\app\\LR\\build\\inventory-record-trash",
+    "bytes": 356691,
+    "files": 4,
+    "newest": 1794213277.9167604
+  },
+  {
+    "path": "G:\\app\\LR\\build\\lan-sync-manual",
+    "bytes": 7871732,
+    "files": 71,
+    "newest": 1794215012.8413672
+  },
+  {
+    "path": "G:\\app\\LR\\build\\lan-sync-validation",
+    "bytes": 718497,
+    "files": 8,
+    "newest": 1794214760.672884
+  },
+  {
+    "path": "G:\\app\\LR\\build\\modelscope-20261109-fixes",
+    "bytes": 6052325031,
+    "files": 8604,
+    "newest": 1794217223.8603432
+  },
+  {
+    "path": "G:\\app\\LR\\build\\ocr-quick-apply",
+    "bytes": 424278,
+    "files": 12,
+    "newest": 1794216092.7217855
+  },
+  {
+    "path": "G:\\app\\LR\\build\\ocr-repair",
+    "bytes": 144519,
+    "files": 1,
+    "newest": 1794216085.841942
+  },
+  {
+    "path": "G:\\app\\LR\\build\\paddle-ocr-sdk",
+    "bytes": 5017925,
+    "files": 442,
+    "newest": 1794214716.4417336
+  },
+  {
+    "path": "G:\\app\\LR\\build\\shooting-documents",
+    "bytes": 315823,
+    "files": 3,
+    "newest": 1794216137.1998901
+  },
+  {
+    "path": "G:\\app\\LR\\build\\shooting-presentation",
+    "bytes": 1069311,
+    "files": 9,
+    "newest": 1794216464.2621546
+  },
+  {
+    "path": "G:\\app\\LR\\build\\silent-update",
+    "bytes": 221760,
+    "files": 6,
+    "newest": 1794215545.5743484
+  },
+  {
+    "path": "G:\\app\\LR\\build\\sku-media-pool-acceptance",
+    "bytes": 282051,
+    "files": 4,
+    "newest": 1794216176.2961028
+  },
+  {
+    "path": "G:\\app\\LR\\build\\sku-rules",
+    "bytes": 280341,
+    "files": 2,
+    "newest": 1794216115.9891648
+  },
+  {
+    "path": "G:\\app\\LR\\build\\sku-shoot-versions",
+    "bytes": 366583,
+    "files": 2,
+    "newest": 1794215980.9466684
+  },
+  {
+    "path": "G:\\app\\LR\\dist\\SHIYING 库存管理.apk",
+    "bytes": 207670845,
+    "files": 1,
+    "newest": 1794214724.5195758
+  }
+]

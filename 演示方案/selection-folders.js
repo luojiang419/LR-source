@@ -52,6 +52,7 @@
   }
   async function refresh(){if(loading||!opened)return;loading=true;try{const data=await FramekeepIO.api('/api/selection/tree');const next=JSON.stringify(data.roots);if(next!==signature){roots=data.roots;signature=next;build()}}catch(e){$('selection-folder-tree').textContent='目录读取失败：'+e.message}finally{loading=false}}
   $('selection-tree-refresh').onclick=()=>{signature='';refresh()};
+  document.addEventListener('framekeep:view-updated',event=>{if(event.detail.path==='/api/selection/tree')refresh()});
   document.addEventListener('framekeep:folders',refresh);document.addEventListener('framekeep:metadata-imported',refresh);
   document.addEventListener('framekeep:selection',markSelection);
   async function syncStatus(){clearTimeout(syncTimer);try{const data=await FramekeepIO.api('/api/ratings/sync');$('rating-file-status').textContent=data.failed?`星级已入库，${data.failed} 个文件同步失败`:data.pending?`星级写入 XMP：${data.pending} 个待同步`:'星级自动保存到数据库与 XMP';$('rating-file-status').title=data.issues.map(i=>i.path+'：'+i.reason).join('\n');$('rating-file-retry').hidden=!data.failed}catch{}finally{syncTimer=setTimeout(syncStatus,3000)}}

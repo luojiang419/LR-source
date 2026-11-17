@@ -1,0 +1,30 @@
+{
+  "root": "G:\\app\\LR",
+  "evidence": "G:\\app\\LR\\技术文档\\验证记录\\202-静默更新与同款分组发布-20261109093132",
+  "releaseId": "20261109093132",
+  "targets": [
+    "G:\\app\\LR\\build\\modelscope-20261109-fixes",
+    "G:\\app\\LR\\build\\inventory-record-edit\\app",
+    "G:\\app\\LR\\build\\silent-update\\updater-compile-check.exe",
+    "G:\\app\\LR\\选片助手\\__pycache__",
+    "G:\\app\\LR\\更新系统\\__pycache__",
+    "G:\\app\\LR\\更新系统\\scripts\\__pycache__",
+    "G:\\app\\LR\\更新系统\\tests\\__pycache__",
+    "G:\\app\\LR\\tools\\__pycache__"
+  ],
+  "detachLinks": {
+    "G:\\app\\LR\\build\\modelscope-20261109-fixes\\source\\.runtime": "G:\\app\\LR\\.runtime",
+    "G:\\app\\LR\\build\\modelscope-20261109-fixes\\source\\.update-private": "G:\\app\\LR\\.update-private"
+  },
+  "retained": [
+    "dist/SHIYING 数字资产安装器.exe",
+    "dist/SHIYING 库存管理.apk",
+    "build/inventory-record-edit/gradle-home",
+    "build/inventory-record-edit/baseline.json",
+    "build/inventory-record-edit/implementation.patch",
+    ".runtime",
+    ".framekeep",
+    ".update-private",
+    "EDSDK132011CD(13.20.11)"
+  ]
+}

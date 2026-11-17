@@ -2,10 +2,12 @@
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import ExitStack
 import hashlib
+import io
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
 from pathlib import Path
 import tempfile
+import tarfile
 import threading
 import time
 import unittest
@@ -23,14 +25,40 @@ def record(path, group, raw, **extra):
 
 
 class ComponentSetupTests(unittest.TestCase):
-    def test_default_install_never_requests_reserved_multimodal_assets(self):
+    def test_onnx_tar_is_verified_without_llama_and_cannot_write_archive_paths(self):
         with tempfile.TemporaryDirectory() as folder:
-            base=Path(folder);seed,manifest=self.fixture(base)
-            manifest['assets'].append(record('models/qwen/model.gguf','qwen2.5-vl-7b-q4',b'future',url='https://example.invalid/future'))
-            manager=ComponentManager(base/'data',[seed],manifest)
-            with patch('urllib.request.urlopen',side_effect=AssertionError('默认安装不应请求多模态')):manager.ensure([*DEFAULT_MODEL_IDS,'driver'])
-            self.assertEqual(DEFAULT_MODEL_IDS,('glm-ocr-local',));self.assertFalse((manager.root/'models/qwen').exists())
-            self.assertEqual(set(json.loads((manager.root/'local-models.json').read_text('utf8'))['models']),{'glm-ocr-local'})
+            base=Path(folder);archive=base/'source.tar';raw=b'verified detector'
+            with tarfile.open(archive,'w') as package:
+                entry=tarfile.TarInfo('../../escape/inference.onnx');entry.size=len(raw)
+                package.addfile(entry,io.BytesIO(raw))
+            asset=record('models/paddle/det/inference.onnx','pp-ocrv6-small-local',raw,archive='small.tar',role='detector')
+            manifest={'assets':[asset],'archives':[], 'model_archives':[{'name':'small.tar','group':'pp-ocrv6-small-local','url':archive.as_uri(),'sha256':hashlib.sha256(archive.read_bytes()).hexdigest()}]}
+            manager=ComponentManager(base/'data',manifest=manifest)
+            def download(url,target,expected,size=None):
+                target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes(archive.read_bytes())
+            with patch.object(manager,'_download',side_effect=download):manager.ensure(['pp-ocrv6-small-local'])
+            self.assertEqual((manager.root/asset['path']).read_bytes(),raw)
+            self.assertFalse((manager.root/'runtime').exists());self.assertFalse((base/'escape').exists())
+            config=json.loads((manager.root/'local-models.json').read_text('utf8'))
+            self.assertEqual(config['models']['pp-ocrv6-small-local']['backend'],'onnx')
+            self.assertFalse((manager.root/'downloads/small.tar').exists())
+            (manager.root/asset['path']).unlink();asset['sha256']='0'*64
+            with patch.object(manager,'_download',side_effect=download),self.assertRaisesRegex(ValueError,'校验失败'):manager.ensure(['pp-ocrv6-small-local'])
+
+    def test_default_install_only_prepares_medium_without_glm_llama_or_qwen(self):
+        with tempfile.TemporaryDirectory() as folder:
+            base=Path(folder);seed=base/'seed';assets=[]
+            for role in ('detector','recognizer','dictionary'):
+                name='models/medium/'+role;raw=role.encode();p=seed/name;p.parent.mkdir(parents=True,exist_ok=True);p.write_bytes(raw)
+                assets.append(record(name,'pp-ocrv6-medium-local',raw,role=role,bundled=True))
+            for group in ('qwen2.5-vl-7b-q4','glm-ocr-local','runtime'):
+                assets.append(record('unused/'+group,group,b'future',url='https://example.invalid/future'))
+            manager=ComponentManager(base/'data',[seed],{'assets':assets,'archives':[]})
+            with patch('urllib.request.urlopen',side_effect=AssertionError('默认安装不应请求 GLM/llama/Qwen')):
+                manager.ensure([*DEFAULT_MODEL_IDS,'driver'])
+            self.assertEqual(DEFAULT_MODEL_IDS,('pp-ocrv6-medium-local',))
+            self.assertFalse((manager.root/'unused').exists())
+            self.assertEqual(set(json.loads((manager.root/'local-models.json').read_text('utf8'))['models']),{'pp-ocrv6-medium-local'})
 
     def test_progress_replace_retries_transient_windows_reader_lock(self):
         import os
@@ -57,7 +85,7 @@ class ComponentSetupTests(unittest.TestCase):
         seed=base/'seed'
         for name, raw in files.items():
             target=seed/name;target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes(raw)
-        manifest={'assets':[record(name,'runtime' if name.startswith('runtime') else 'glm-ocr-local',raw,bundled=True) for name,raw in files.items()],'archives':[]}
+        manifest={'assets':[record(name,'runtime' if name.startswith('runtime') else 'qwen2.5-vl-7b-q4',raw,bundled=True) for name,raw in files.items()],'archives':[]}
         return seed,manifest
 
     def test_offline_prepare_restart_and_corrupt_file_repair(self):
@@ -65,13 +93,13 @@ class ComponentSetupTests(unittest.TestCase):
             base=Path(folder);seed,manifest=self.fixture(base)
             manager=ComponentManager(base/'data',[seed],manifest)
             with patch('urllib.request.urlopen',side_effect=AssertionError('离线不应联网')):
-                manager.ensure(['glm-ocr-local'])
+                manager.ensure(['qwen2.5-vl-7b-q4'])
                 config=json.loads((manager.root/'local-models.json').read_text(encoding='utf8'))
                 self.assertEqual(config['executable'],str(manager.root/'runtime/llama-server.exe'))
                 reopened=ComponentManager(base/'data',[seed],manifest)
-                self.assertIn('glm-ocr-local',reopened.snapshot()['ready'])
+                self.assertIn('qwen2.5-vl-7b-q4',reopened.snapshot()['ready'])
                 target=manager.root/'models/ocr/model.gguf';target.write_bytes(b'xxxxx')
-                reopened.ensure(['glm-ocr-local']);self.assertEqual(target.read_bytes(),b'model')
+                reopened.ensure(['qwen2.5-vl-7b-q4']);self.assertEqual(target.read_bytes(),b'model')
 
     def test_resume_range_and_server_ignoring_range_are_handled(self):
         raw=b'hello world'*10000;requests=[];ignore=[False]
@@ -85,12 +113,12 @@ class ComponentSetupTests(unittest.TestCase):
         http=ThreadingHTTPServer(('127.0.0.1',0),Handler);threading.Thread(target=http.serve_forever,daemon=True).start()
         try:
             with tempfile.TemporaryDirectory() as folder:
-                r=record('models/ocr/model.gguf','glm-ocr-local',raw,url=f'http://127.0.0.1:{http.server_port}/file')
+                r=record('models/ocr/model.gguf','qwen2.5-vl-7b-q4',raw,url=f'http://127.0.0.1:{http.server_port}/file')
                 manifest={'assets':[r],'archives':[]};manager=ComponentManager(folder,manifest=manifest)
                 target=manager.root/r['path'];target.parent.mkdir(parents=True);target.with_name(target.name+'.part').write_bytes(raw[:100])
-                manager.ensure(['glm-ocr-local']);self.assertEqual(requests,[100]);self.assertEqual(target.read_bytes(),raw)
+                manager.ensure(['qwen2.5-vl-7b-q4']);self.assertEqual(requests,[100]);self.assertEqual(target.read_bytes(),raw)
                 target.unlink();target.with_name(target.name+'.part').write_bytes(raw[:200]);ignore[0]=True
-                manager.ensure(['glm-ocr-local']);self.assertEqual(target.read_bytes(),raw)
+                manager.ensure(['qwen2.5-vl-7b-q4']);self.assertEqual(target.read_bytes(),raw)
         finally:http.shutdown();http.server_close()
 
     def test_concurrent_requests_share_preparation_and_progress(self):
@@ -99,9 +127,9 @@ class ComponentSetupTests(unittest.TestCase):
             original=manager._seed;calls=[]
             def delayed(r,t):calls.append(r['path']);time.sleep(.02);return original(r,t)
             manager._seed=delayed
-            with ThreadPoolExecutor(2) as pool:list(pool.map(lambda _:manager.ensure(['glm-ocr-local']),range(2)))
+            with ThreadPoolExecutor(2) as pool:list(pool.map(lambda _:manager.ensure(['qwen2.5-vl-7b-q4']),range(2)))
             self.assertEqual(len(calls),3)
-            manager.start(['glm-ocr-local'])
+            manager.start(['qwen2.5-vl-7b-q4'])
             thread=manager.thread
             if thread:thread.join(3)
             self.assertEqual(manager.snapshot()['status'],'ready')
@@ -109,11 +137,11 @@ class ComponentSetupTests(unittest.TestCase):
     def test_missing_files_low_space_and_bad_paths_fail_clearly(self):
         with tempfile.TemporaryDirectory() as folder:
             base=Path(folder);seed,manifest=self.fixture(base);manager=ComponentManager(base/'data',[seed],manifest)
-            with patch('component_setup.shutil.disk_usage',return_value=Mock(free=0)),self.assertRaisesRegex(OSError,'空间不足'):manager.ensure(['glm-ocr-local'])
+            with patch('component_setup.shutil.disk_usage',return_value=Mock(free=0)),self.assertRaisesRegex(OSError,'空间不足'):manager.ensure(['qwen2.5-vl-7b-q4'])
             for path in ('../x','/x','C:/x','models\\x','a/../x'):
                 with self.assertRaises(ValueError):inside(base,path)
             (seed/'runtime/llama-server.exe').write_bytes(b'broken')
-            with self.assertRaisesRegex(ValueError,'安装组件缺失'):manager.ensure(['glm-ocr-local'])
+            with self.assertRaisesRegex(ValueError,'安装组件缺失'):manager.ensure(['qwen2.5-vl-7b-q4'])
 
     def test_runtime_resolve_prepares_before_start_without_external_fallback(self):
         with tempfile.TemporaryDirectory() as folder:
@@ -121,9 +149,9 @@ class ComponentSetupTests(unittest.TestCase):
             local=LocalInference(base/'missing.json',base/'logs',manager)
             # 真实完成自动准备后才进入进程启动；这里停止在虚拟可执行文件边界。
             with patch('local_inference.subprocess.Popen',side_effect=OSError('test process boundary')),self.assertRaisesRegex(OSError,'test process boundary'):
-                local._start('glm-ocr-local')
+                local._start('qwen2.5-vl-7b-q4')
             self.assertEqual(local.config,manager.root/'local-models.json')
-            self.assertIn('glm-ocr-local',manager.snapshot()['ready']);local.close()
+            self.assertIn('qwen2.5-vl-7b-q4',manager.snapshot()['ready']);local.close()
 
 
 class DriverSetupTests(unittest.TestCase):

@@ -21,9 +21,19 @@ def recognize(provider,image_bytes):
         if provider.get('_progress'):provider['_progress']('loading_model')
         with resolve(provider) as local:
             result=recognize(local,image_bytes)
-        result['engine']='local|'+provider['model']
+        result['engine']='local|'+result['model']
         return result
     if provider.get('_progress'):provider['_progress']('recognizing')
+    if provider.get('protocol')=='local_onnx':
+        from local_inference import runtime
+        from paddle_ocr import candidate_text
+        output=runtime().ocr.recognize(image_bytes)
+        codes=extract_ocr_codes(candidate_text(output['text']))
+        # 行级 CTC 分数未校准为整张标签/款号正确率，保持人工复核语义。
+        return {'text':output['text'][:20000],'codes':codes[:12],'ocr_candidates':list(dict.fromkeys(codes+extract_codes(output['text'])))[:40],
+                'confidence':0,'unscored':True,'is_label':False,'handwritten':False,
+                'auxiliary':{**output,'text':output['text'][:20000],'lines':output['lines'][:200]},'provider_id':provider['id'],'model':provider['model'],
+                'engine':'local|'+provider['model']}
     local_ocr=str(provider.get('model','')).lower().rsplit('/',1)[-1] in ('glm-ocr','glm-ocr-local')
     prompt=PROMPT
     if local_ocr:

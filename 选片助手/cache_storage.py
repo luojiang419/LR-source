@@ -37,27 +37,49 @@ class CacheStorage:
         previews._LOCATIONS[self.data]=self.root
         self.cache=previews.cache_for(self.data/'previews');self.budget=self.cache.budget
         self.preview_upgrade=[]
-        for cache in self.budget.caches:
-            with cache.connect() as c:policy=c.execute("SELECT value FROM configuration WHERE key='preview_policy'").fetchone()
-            if not policy or policy[0]!='embedded-jpeg-2048-v6':
-                self.preview_upgrade.append(dict(cache=cache.folder.name,**cache.retire_legacy()))
-        if any(r['preserved_files'] for r in self.preview_upgrade):
-            self.warning+=' 部分旧预览被占用或已被外部修改，已保留并将在下次启动复核。'
-        if saved.get('limit_gb') and self.budget.state()['bytes']<=saved['limit_gb']*1024**3:self.budget.configure(saved['limit_gb'])
         self.previous=saved.get('previous_path','');self.recovery=saved.get('recovery','')
         self.lock=threading.RLock();self.job={'status':'idle','message':'缓存已就绪'};self.thread=None
-        startup_target=saved.get('pending_limit_gb') or saved.get('limit_gb') or self.budget.limit//1024**3
-        if saved.get('pending_limit_gb') or self.budget.state()['bytes']>startup_target*1024**3:self.start('resize',str(startup_target))
+        self.closed=threading.Event();self.maintenance_started=False
+        self.startup_target=saved.get('pending_limit_gb') or saved.get('limit_gb') or self.budget.limit//1024**3
+        self.startup_resize=bool(saved.get('pending_limit_gb'))
+
+    def start_maintenance(self):
+        """HTTP 就绪后由启动调度器调用；文件核对及旧策略退役不挡住首屏。"""
+        with self.lock:
+            if self.closed.is_set() or self.maintenance_started:return
+            if self.job['status']=='running':return
+            self.maintenance_started=True
+            self._launch('maintenance','')
+
+    def maintenance(self,_):
+        for cache in self.budget.caches:
+            if self.closed.is_set():return {'cancelled':True}
+            cache.reconcile()
+            with cache.connect() as c:policy=c.execute("SELECT value FROM configuration WHERE key='preview_policy'").fetchone()
+            if policy and policy[0]=='embedded-jpeg-2048-v6':continue
+            report=dict(cache=cache.folder.name,removed_files=0,freed_bytes=0,preserved_files=0);cursor=''
+            while not self.closed.is_set():
+                batch=cache.retire_legacy(limit=16,after=cursor,preserved_before=report['preserved_files'])
+                for key in ('removed_files','freed_bytes','preserved_files'):report[key]+=batch[key]
+                cursor=batch['cursor']
+                if batch['complete']:break
+                self.closed.wait(.01)
+            with self.lock:
+                self.preview_upgrade.append(report)
+                if report['preserved_files']:self.warning+=' 部分旧预览被占用或已被外部修改，已保留并将在下次启动复核。'
+        if self.closed.is_set():return {'cancelled':True}
+        if (self.startup_resize or self.budget.limit!=self.startup_target*1024**3
+                or self.budget.state()['bytes']>self.startup_target*1024**3):
+            return self.resize(str(self.startup_target))
 
     def state(self):
         with self.lock:job=dict(self.job)
         result=self.budget.state()
         result.update(path=str(self.root),default_path=str(self.data),job=job,preview_policy='embedded-jpeg-2048',preview_upgrade=self.preview_upgrade,
                       previous_path=self.previous,layout_version=VERSION,warning=self.warning,fingerprint='SHA-256（完整文件内容，不含盘符或路径）')
-        with self.budget.lock:
-            result['portable_images']=0
-            for cache in self.budget.caches:
-                with cache.connect() as c:result['portable_images']+=c.execute('SELECT portable FROM cache_totals WHERE id=1').fetchone()[0]
+        result['portable_images']=0
+        for cache in self.budget.caches:
+            with cache.read_connection() as c:result['portable_images']+=c.execute('SELECT portable FROM cache_totals WHERE id=1').fetchone()[0]
         return result
 
     def configure(self,gb):
@@ -76,11 +98,22 @@ class CacheStorage:
     def resize(self,value):
         gb=int(value)
         if not 1<=gb<=256:raise ValueError('缓存上限超出范围')
+        # 暂停领取新的预生成任务，避免一边缩容一边按旧额度补满。
+        # 已在途任务与前台预览仍可完成；最终配置成功后自动恢复领取。
+        self.budget.resizing.set()
+        try:return self._resize_batches(gb)
+        finally:self.budget.resizing.clear()
+
+    def _resize_batches(self,gb):
         while True:
-            before=self.budget.state()['bytes']
+            if self.closed.is_set():return {'cancelled':True}
             with self.budget.lock,self.cache.connect() as c:
+                before=self.budget.state()['bytes']
                 finished=self.budget.trim(self.cache,c,limit=gb*1024**3,max_entries=16)
-            after=self.budget.state()['bytes']
+                # 在同一锁内核对本批实际删除量，不能把并发新增算作删除失败。
+                after=c.execute('SELECT bytes FROM usage WHERE id=1').fetchone()[0]
+                after+=sum(cache.local_state()['bytes'] for cache in self.budget.caches if cache is not self.cache)
+            if self.closed.is_set():return {'cancelled':True}
             self.progress(f'正在分批整理缓存，完成后应用 {gb} GB 上限…',remaining_bytes=after)
             if finished:
                 with self.budget.lock:
@@ -94,13 +127,17 @@ class CacheStorage:
             time.sleep(.01)
 
     def start(self,action,path):
-        if action not in ('migrate','export','import','prepare','clean_previous','resize'):raise ValueError('未知的缓存管理操作')
-        if action not in ('prepare','clean_previous') and (not isinstance(path,str) or not path.strip()):raise ValueError('请填写缓存操作路径')
-        with self.lock:
-            if self.job['status']=='running':raise ValueError('已有缓存管理任务正在运行，请等待完成')
-            self.job={'id':uuid.uuid4().hex,'action':action,'status':'running','message':'正在准备…','done':0,'total':0}
-            self.thread=threading.Thread(target=self._run,args=(action,path),daemon=True,name='cache-storage');self.thread.start()
+        if action not in ('migrate','export','import','prepare','clean_previous','resize','maintenance'):raise ValueError('未知的缓存管理操作')
+        if action not in ('prepare','clean_previous','maintenance') and (not isinstance(path,str) or not path.strip()):raise ValueError('请填写缓存操作路径')
+        with self.lock:self._launch(action,path)
         return self.state()
+
+    def _launch(self,action,path):
+        # 调用方持 self.lock；启动任务不能再读取可能被维护线程占用的缓存状态。
+        if self.job['status']=='running':raise ValueError('已有缓存管理任务正在运行，请等待完成')
+        if self.closed.is_set():raise RuntimeError('缓存管理已关闭')
+        self.job={'id':uuid.uuid4().hex,'action':action,'status':'running','message':'正在准备…','done':0,'total':0}
+        self.thread=threading.Thread(target=self._run,args=(action,path),daemon=True,name='cache-storage');self.thread.start()
 
     def progress(self,message,**values):
         with self.lock:self.job.update(message=message,**values)
@@ -108,7 +145,9 @@ class CacheStorage:
     def _run(self,action,path):
         try:
             result=getattr(self,action)(path) or {}
-            self.progress('缓存'+{'migrate':'迁移','export':'备份导出','import':'备份导入','prepare':'指纹准备','clean_previous':'旧位置清理','resize':'上限调整'}[action]+'已完成',status='completed',**result)
+            if result.pop('cancelled',False):
+                self.progress('缓存维护已停止，下次启动继续核对',status='cancelled',**result);return
+            self.progress('缓存'+{'migrate':'迁移','export':'备份导出','import':'备份导入','prepare':'指纹准备','clean_previous':'旧位置清理','resize':'上限调整','maintenance':'维护'}[action]+'已完成',status='completed',**result)
         except Exception as exc:self.progress(str(exc),status='failed')
 
     def _registered(self,cache,after_seq=None):
@@ -178,7 +217,10 @@ class CacheStorage:
         if path.exists() and any(path.iterdir()):raise ValueError('请指定空文件夹，系统不会接管或覆盖已有文件')
         if self.store:
             sources=[Path(s['root']).resolve() for s in self.store.sessions()]
-            if self.catalog:sources += [Path(r['path']).resolve() for r in self.catalog.state()['roots']]
+            if self.catalog:
+                # 迁移前只需校验归档根，不能为此统计 NAS 全库素材。
+                with self.catalog.connect() as c:
+                    sources += [Path(row[0]).resolve() for row in c.execute('SELECT path FROM roots WHERE removed=0')]
             if any(path==p or path.is_relative_to(p) or p.is_relative_to(path) for p in sources):raise ValueError('缓存目录不能与照片目录重叠')
         path.mkdir(parents=True,exist_ok=True)
         return path
@@ -186,14 +228,19 @@ class CacheStorage:
     def migrate(self,value):
         destination=self._destination(value);old=self.root
         atomic_write(destination/'.framekeep-image-cache.json',json.dumps({'schema':SCHEMA,'version':VERSION,'id':uuid.uuid4().hex}).encode())
-        count=0
+        count=copied_bytes=total=total_bytes=0
+        for cache in self.budget.caches:
+            with cache.lock,cache.connect() as c:
+                row=c.execute("SELECT count(*),coalesce(sum(bytes),0) FROM previews WHERE digest IS NOT NULL AND digest<>''").fetchone()
+                total+=row[0];total_bytes+=row[1]
+        self.progress('正在核对待迁移缓存…',done=0,total=total,copied_bytes=0,total_bytes=total_bytes,percent=0)
         with tempfile.TemporaryDirectory(dir=destination,prefix='.framekeep-migration-') as folder, closing(sqlite3.connect(Path(folder)/'inventory.sqlite3')) as inventory:
             inventory.execute('CREATE TABLE copied(cache TEXT,name TEXT,digest TEXT,bytes INTEGER,PRIMARY KEY(cache,name))')
             marks={}
             for cache in self.budget.caches:
                 with cache.lock,cache.connect() as c:marks[cache.folder.name]=c.execute('SELECT revision FROM cache_totals WHERE id=1').fetchone()[0]
             def copy_registered(incremental=False):
-                nonlocal count
+                nonlocal count,copied_bytes
                 for cache in self.budget.caches:
                     for row in self._registered(cache,marks[cache.folder.name] if incremental else None):
                         key=(cache.folder.name,row['name'])
@@ -206,11 +253,13 @@ class CacheStorage:
                             shutil.copyfile(cache.folder/row['name'],target)
                             if cache._digest(target)!=row['digest']:raise OSError('迁移缓存校验失败，原目录仍保留')
                         inventory.execute('INSERT OR REPLACE INTO copied VALUES (?,?,?,?)',(*key,row['digest'],row['bytes']))
-                        count+=1
-                        if count%128==0:inventory.commit();self.progress('正在复制并校验缓存…',done=count)
+                        count+=1;copied_bytes+=row['bytes']
+                        if count%32==0:
+                            inventory.commit();self.progress('正在复制并校验缓存…',done=count,total=total,copied_bytes=copied_bytes,total_bytes=total_bytes,
+                                percent=min(99,int(copied_bytes*100/total_bytes)) if total_bytes else 100)
                 inventory.commit()
             copy_registered()
-            self.progress('正在提交增量与数据库快照并切换位置…',done=count)
+            self.progress('正在提交增量与数据库快照并切换位置…',done=count,total=total,copied_bytes=copied_bytes,total_bytes=total_bytes,percent=100)
             with self.budget.exclusive():
                 # 持久发布序号只检查迁移期间新发布的缓存，不再全盘逐文件核对。
                 copy_registered(True)
@@ -236,7 +285,7 @@ class CacheStorage:
                     previews._CACHES[previous]=cache;previews._CACHES[cache.folder]=cache
                 previews._BUDGETS[destination]=self.budget;previews._LOCATIONS[self.data]=destination
                 self.root=destination;self.warning='';self.previous=str(old);self.recovery=recovery
-        return {'path':str(destination),'previous_path':str(old),'copied':count,'source_retained':True}
+        return {'path':str(destination),'previous_path':str(old),'copied':count,'total':total,'copied_bytes':copied_bytes,'total_bytes':total_bytes,'percent':100,'source_retained':True}
 
     def clean_previous(self,_=None):
         if not self.previous or not re.fullmatch(r'image-cache-migration-[0-9a-f]{32}\.(?:json|sqlite3)',self.recovery):raise ValueError('没有可清理的已迁移缓存')
@@ -280,7 +329,7 @@ class CacheStorage:
         if not folder.is_dir():raise ValueError('请选择已存在的备份保存文件夹')
         if folder==self.root or folder.is_relative_to(self.root):raise ValueError('备份请保存到缓存目录以外的位置')
         preparation=self.prepare()
-        target=folder/('末帧图片缓存-'+datetime.now().strftime('%Y%m%d-%H%M%S')+'-'+uuid.uuid4().hex[:6]+'.framekeep-cache.zip')
+        target=folder/('SHIYING 图片缓存-'+datetime.now().strftime('%Y%m%d-%H%M%S')+'-'+uuid.uuid4().hex[:6]+'.framekeep-cache.zip')
         temp=folder/('.framekeep-cache-'+uuid.uuid4().hex+'.tmp')
         manifest={'schema':SCHEMA,'version':BACKUP_VERSION,'fingerprint':'sha256-full-v1','chunks':[]}
         count=0;portable=0
@@ -368,7 +417,7 @@ class CacheStorage:
             photo=json.loads(photo[0])
             if any(row.get(k)!=photo.get(k) for k in ('edge','orientation','decoded')):raise ValueError('内容指纹与预览参数不符')
             recipe=row.get('recipe',4)
-            if recipe not in (3,4,5,6) or previews.cache_name({'fingerprint':photo['fingerprint'],'orientation':photo['orientation']},photo['edge'],bool(photo['decoded']),version=recipe)!=photo['name']:raise ValueError('内容指纹与生成版本不符')
+            if recipe not in (3,4,5,6,7,8,9,10) or previews.cache_name({'fingerprint':photo['fingerprint'],'orientation':photo['orientation']},photo['edge'],bool(photo['decoded']),version=recipe)!=photo['name']:raise ValueError('内容指纹与生成版本不符')
             if row.get('probe') is not None and not HEX.fullmatch(str(row['probe'])):raise ValueError('缓存候选预筛指纹无效')
         db.commit()
         return db.execute('SELECT count(*) FROM images').fetchone()[0]
@@ -400,7 +449,7 @@ class CacheStorage:
                     existing=None
                     for alias_payload, in db.execute('SELECT payload FROM aliases WHERE cache=? AND name=?',(row['cache'],row['name'])):
                         alias=json.loads(alias_payload)
-                        if alias.get('recipe',4) in (4,5,6):
+                        if alias.get('recipe',4) in (4,5,6,7,8,9,10):
                             existing=cache.find_content(alias['content'],alias['edge'],alias['orientation'],alias['decoded'])
                             if existing is not None:break
                     if existing is not None:
@@ -426,6 +475,7 @@ class CacheStorage:
         return dict(preparation,imported=imported,reused=reused,skipped=skipped,conflicts=conflicts)
 
     def close(self):
+        self.closed.set()
         if self.thread and self.thread.is_alive():self.thread.join(timeout=3)
 
 

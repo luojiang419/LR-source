@@ -1,0 +1,15 @@
+test_defaults_cards_failure_reload_builtin_and_visuals (test_model_defaults_browser.ModelDefaultsBrowserTests.test_defaults_cards_failure_reload_builtin_and_visuals) ... ok
+test_fetch_search_save_select_edit_and_late_response (test_model_discovery.DiscoveryBrowserTests.test_fetch_search_save_select_edit_and_late_response) ... ok
+test_draft_and_saved_key_discovery_never_persists_or_selects (test_model_discovery.DiscoveryTests.test_draft_and_saved_key_discovery_never_persists_or_selects) ... ok
+test_failures_are_actionable_and_do_not_leak_keys_or_follow_redirect (test_model_discovery.DiscoveryTests.test_failures_are_actionable_and_do_not_leak_keys_or_follow_redirect) ... ok
+test_http_any_host_and_shorthand_normalization (test_model_discovery.DiscoveryTests.test_http_any_host_and_shorthand_normalization) ... ok
+test_scheme_fallback_domain_root_formats_and_explicit_protocol (test_model_discovery.DiscoveryTests.test_scheme_fallback_domain_root_formats_and_explicit_protocol) ... ok
+test_shorthand_custom_paths_and_inference_use_discovered_endpoint (test_model_discovery.DiscoveryTests.test_shorthand_custom_paths_and_inference_use_discovered_endpoint) ... ok
+test_validation_and_save_select_category_isolation_restart (test_model_discovery.DiscoveryTests.test_validation_and_save_select_category_isolation_restart) ... ok
+test_toggle_locks_all_cards_and_restores_external_selection (test_builtin_switch_browser.BuiltinSwitchBrowserTests.test_toggle_locks_all_cards_and_restores_external_selection) ... ok
+test_presets_custom_values_and_saved_budget_round_trip (test_model_output_presets.ModelOutputPresetTests.test_presets_custom_values_and_saved_budget_round_trip) ... ok
+
+----------------------------------------------------------------------
+Ran 10 tests in 28.107s
+
+OK

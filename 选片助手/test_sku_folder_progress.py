@@ -39,15 +39,15 @@ class FolderProgressTests(unittest.TestCase):
         self.assertTrue(self.sku.project(old)['metadata']['removed_at'])
         count=len(state['rows']);self.assertEqual(len(self.sku.state()['rows']),count)
 
-    def test_repeated_versioned_shoots_create_one_temporary_base_row(self):
+    def test_repeated_versioned_shoots_keep_independent_temporary_rows(self):
         self.parse();self.choose('OTHER-100')
         self.sku.parse_capture(self.sid,self.ids[3]);self.choose('OTHER-100',self.ids[3])
         _,state=self.new_plan()
         temp=[r for r in state['rows'] if r['sheet']=='临时插拍']
-        self.assertEqual(len(temp),1);self.assertEqual(temp[0]['sku'],'OTHER-100')
-        self.assertEqual(temp[0]['status'],'已拍摄')
+        self.assertEqual(len(temp),2);self.assertEqual({r['sku'] for r in temp},{'OTHER-100','OTHER-100-A'})
+        self.assertEqual({r['status'] for r in temp},{'已拍摄'})
         self.assertEqual(state['folder_progress']['confirmed_labels'],2)
-        self.assertEqual(state['folder_progress']['confirmed_skus'],1)
+        self.assertEqual(state['folder_progress']['confirmed_skus'],2)
         self.assertEqual(len(self.sku.state()['rows']),len(state['rows']))
 
     def test_unknown_type_does_not_mark_two_matching_sheets_complete(self):
@@ -77,6 +77,22 @@ class FolderProgressTests(unittest.TestCase):
         state=self.sku.state();self.assertEqual(sum(s['shot'] for s in state['progress']),0)
         self.assertEqual(state['folder_progress']['confirmed_labels'],0)
 
+    def test_persisted_shared_rating_restores_progress_without_local_override(self):
+        self.parse();self.choose();self.new_plan()
+        record=self.store.records(self.sid,ids=[self.ids[1]])[0]
+        self.archive.ratings.set(self.archive.ratings.paths(self.sid,record),2)
+        session=self.store.session(self.sid);updated=copy.deepcopy(session['state'])
+        updated['overrides'].pop(self.ids[1])
+        self.store.save(self.sid,session['revision'],updated)
+        state=self.sku.state()
+        self.assertEqual(sum(s['shot'] for s in state['progress']),1)
+        self.assertEqual(state['folder_progress']['confirmed_labels'],1)
+        # 共享评级变更不更新会话 revision，也必须使进度缓存失效。
+        self.archive.ratings.set(self.archive.ratings.paths(self.sid,record),0)
+        state=self.sku.state()
+        self.assertEqual(sum(s['shot'] for s in state['progress']),0)
+        self.assertEqual(state['folder_progress']['confirmed_labels'],0)
+
     def test_replaced_photo_does_not_keep_old_confirmation_in_progress(self):
         self.parse();self.choose();_,state=self.new_plan()
         record=next(r for r in self.store.records(self.sid) if r['id']==self.ids[1])
@@ -103,6 +119,11 @@ class FolderProgressTests(unittest.TestCase):
         import server
         self.parse();self.choose();_,state=self.new_plan()
         row=next(r for r in state['rows'] if r['status']=='已拍摄')
+        record=self.store.records(self.sid,ids=[self.ids[1]])[0]
+        self.archive.ratings.set(self.archive.ratings.paths(self.sid,record),2)
+        session=self.store.session(self.sid);updated=copy.deepcopy(session['state'])
+        updated['overrides'].pop(self.ids[1]);self.store.save(self.sid,session['revision'],updated)
+        out=fixture.ROOT/'build/folder-shooting-progress';out.mkdir(parents=True,exist_ok=True)
         values=dict(STORE=self.store,DATA=self.store.data,SKU=self.sku,MODELS=self.providers,ARCHIVE=self.archive,
                     CATALOG=None,ANALYSIS=None,WATCH=None,MOUSE=None,CANON=None,RAWLINK=None,FILESEARCH=None,
                     UPDATES=None,COMPONENTS=None,DRIVER=None)
@@ -122,11 +143,29 @@ class FolderProgressTests(unittest.TestCase):
                         expect(summary).to_contain_text('已确认 1 张 / 1 款')
                         expect(summary).to_contain_text('待确认 1 张')
                         expect(page.locator('#progress-shot')).to_have_text('1')
+                        expect(page.locator('#sku-open')).to_contain_text('1 已入库')
                         node=page.locator('[data-sku-row="'+row['id']+'"]')
                         node.locator('[data-completion]').click()
                         expect(page.locator('#sku-image-stage img')).to_have_attribute('src',re.compile(self.ids[1]))
                         page.keyboard.press('Escape')
-                        out=fixture.ROOT/'build/folder-shooting-progress';out.mkdir(parents=True,exist_ok=True)
+                        # 断连后查看空目录：目录小计为零，文档完成数仍保留。
+                        empty=self.base/'disconnected';empty.mkdir()
+                        other=self.store.ensure_live_session(empty)
+                        self.sku.configure(self.pid,other,'模特图');self.store.activate(other)
+                        page.reload(wait_until='domcontentloaded');page.wait_for_function('()=>!FramekeepBoot.loading')
+                        page.locator('#sku-open').click()
+                        expect(page.locator('.progress-folder-summary')).to_contain_text('已确认 0 张 / 0 款')
+                        expect(page.locator('#progress-shot')).to_have_text('1')
+                        expect(page.locator('#sku-open')).to_contain_text('1 已拍摄')
+                        page.locator('#startup-screen').wait_for(state='detached')
+                        page.screenshot(path=str(out/'disconnected-progress.png'))
+                        # 接回原目录后，统计不依赖鼠标服务恢复。
+                        self.sku.configure(self.pid,self.sid,'模特图');self.store.activate(self.sid)
+                        page.reload(wait_until='domcontentloaded');page.wait_for_function('()=>!FramekeepBoot.loading')
+                        page.locator('#sku-open').click()
+                        expect(page.locator('#progress-shot')).to_have_text('1')
+                        expect(page.locator('#sku-open')).to_contain_text('1 已入库')
+                        page.locator('#startup-screen').wait_for(state='detached')
                         page.screenshot(path=str(out/'source-restored-progress.png'))
                         self.assertFalse(errors,errors)
                     finally:browser.close()

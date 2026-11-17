@@ -82,6 +82,7 @@ def assign_sku(archive,catalog,item_id,sku):
 
 def save(archive,catalog,item_id,values,expected_token):
     fields=validate(values);path,root=source(catalog,item_id)
+    if getattr(archive,'capture_service',None):archive.capture_service.guard([path])
     from asset_archive import uid,dumps
     with archive.lock:
         if token(path)!=expected_token:raise ValueError('图片或 XMP 已被修改，请重新打开图片后再编辑')

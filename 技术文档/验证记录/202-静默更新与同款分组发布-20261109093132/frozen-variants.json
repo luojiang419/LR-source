@@ -1,0 +1,22 @@
+{
+  "health": {
+    "application": "framekeep",
+    "process_id": 51012,
+    "busy": false
+  },
+  "separate_skus": [
+    "LC7832773-P805",
+    "LC7832773-P805-A"
+  ],
+  "actual_cpu_auto_labels": true,
+  "browser_errors": [],
+  "header_no_refresh_notice": true,
+  "actual_file_skus": [
+    "LC7832773-P805",
+    "LC7832773-P805",
+    "LC7832773-P805-BLUE",
+    "LC7832773-P805-BLUE"
+  ],
+  "ok": true,
+  "process_stopped": true
+}

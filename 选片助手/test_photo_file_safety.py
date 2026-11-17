@@ -7,7 +7,7 @@ import unittest
 from unittest.mock import patch
 
 from PIL import Image
-from canon_link import atomic_write
+from file_safety import atomic_write
 from preview_cache import PreviewCache,cache_name
 from file_safety import delete_verified,publish_new,write_verified,overwrite_stream
 from metadata_writer import MetadataWriter,sha
@@ -35,9 +35,12 @@ class PhotoFileSafetyTests(unittest.TestCase):
 
     def test_cache_publish_must_not_replace_file_arriving_after_check(self):
         cache,record,temp,target=self.cache_fixture();original=b'customer original arriving concurrently'
+        generated=temp.read_bytes()
         with patch.object(cache,'_trim',side_effect=lambda *a:target.write_bytes(original)):
-            with self.assertRaises(OSError):cache.publish(temp,target,record,480,False)
+            published=cache.publish(temp,target,record,480,False)
         self.assertEqual(target.read_bytes(),original)
+        self.assertNotEqual(published,target);self.assertEqual(published.read_bytes(),generated)
+        with cache.connect() as c:self.assertIsNone(c.execute('SELECT 1 FROM previews WHERE name=?',(target.name,)).fetchone())
 
     def test_cache_delete_must_not_unlink_external_replacement_after_check(self):
         cache,record,temp,target=self.cache_fixture();cache.publish(temp,target,record,480,False)

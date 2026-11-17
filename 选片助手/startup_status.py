@@ -10,13 +10,18 @@ import traceback
 from file_safety import atomic_write
 
 MESSAGES={
+    'shell ready':'工作台已打开，正在后台恢复服务…',
+    'capture ready':'现场监控已就绪，其他服务正在后台加载…',
     'initializing':'正在读取照片资料…',
     'catalog ready':'正在恢复图片缓存…',
     'preview queue ready':'正在恢复选片设置与星级…',
     'ratings ready':'正在接入参考资料…',
     'reference library ready':'正在准备拍摄工作台…',
+    'analysis ready':'正在接入快捷检索索引…',
+    'intelligence ready':'正在准备工作台服务…',
     'http ready':'正在载入工作台…',
 }
+STACK_LIMIT = 1024 * 1024
 
 
 class StartupProgress:
@@ -49,7 +54,9 @@ class StartupProgress:
             if frame is None:return
             diagnostic=f'\n[startup] pid={os.getpid()} elapsed={time.monotonic()-self.started:.3f}s stage={self.stage}\n'+''.join(traceback.format_stack(frame))
             try:
-                with (self.data/'engine-startup-stacks.log').open('a',encoding='utf8') as output:output.write(diagnostic)
+                path=self.data/'engine-startup-stacks.log'
+                mode='w' if path.exists() and path.stat().st_size+len(diagnostic.encode('utf8'))>STACK_LIMIT else 'a'
+                with path.open(mode,encoding='utf8') as output:output.write(diagnostic)
             except OSError:pass
             finally:del frame
 

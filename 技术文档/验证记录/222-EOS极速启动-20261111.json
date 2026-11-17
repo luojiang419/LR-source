@@ -1,0 +1,95 @@
+{
+  "date": "2026-11-11",
+  "scope": "EOS拉起、现场监控核心提前、非必要导入与服务延后",
+  "source_tests": 46,
+  "rust_tests": 13,
+  "frozen_source_modules": {
+    "startup_lazy": true,
+    "startup_gate": true,
+    "startup_tasks": true,
+    "startup_status": true,
+    "catalog_store": true,
+    "folder_watch": true,
+    "server": true
+  },
+  "installed": {
+    "complete": true,
+    "installed": "D:\\Program Files\\Framekeep",
+    "verified_files": 953,
+    "changed_files": 3,
+    "protected_files": 40,
+    "production_data_unchanged": true,
+    "version": "1.0.0",
+    "releaseId": "20261111133211",
+    "health": {
+      "pid": 43040,
+      "releaseId": "20261111133211",
+      "version": "1.0.0"
+    },
+    "metrics": {
+      "capture_monitor_ready_ms": 1947,
+      "desktop_pid": 43040,
+      "first_document_ready_ms": 1681,
+      "first_photo_visible_ms": 1947,
+      "first_workbench_ready_ms": 1681,
+      "photos_restored_ms": 1947,
+      "startup_animation_visible_ms": 657,
+      "web_timings": {
+        "data_ready_ms": 622.5,
+        "first_photo_ready_ms": 636.5,
+        "monitor_ready_ms": 643.2999999970198,
+        "services_ready": true,
+        "shell_ready_ms": 221.20000000298023,
+        "workbench_ready_ms": 360.90000000596046
+      }
+    },
+    "published": false,
+    "session": "D:\\Program Files\\Framekeep\\.update-state\\local-eos-instant-lazy-20261111"
+  },
+  "early_monitor": {
+    "monitor_ms": 1031.0000000026776,
+    "second_photo_ms": 156.99999999196734,
+    "archive_constructor_still_blocked": true,
+    "images": [
+      {
+        "alt": "EOS-连拍-2.JPG",
+        "width": 843,
+        "height": 562,
+        "natural": 960,
+        "opacity": "1"
+      }
+    ],
+    "errors": []
+  },
+  "camera_shutter_tested": false,
+  "production_data_used_for_runtime_test": false,
+  "system_file_cache_cleared": false,
+  "cleanup": {
+    "retained": "保留当前程序构建、事务回滚备份和验收证据",
+    "freeBefore": {
+      "G": 262863458304,
+      "D": 206744748032
+    },
+    "deletedBytes": 812436374.0,
+    "freeAfter": {
+      "G": 263611785216,
+      "D": 206809657344
+    },
+    "targets": [
+      {
+        "path": "G:\\app\\LR\\build\\instant-entry\\frozen-engine",
+        "bytes": 747591740.0
+      },
+      {
+        "path": "D:\\Program Files\\Framekeep\\.update-state\\local-eos-instant-20261111\\stage",
+        "bytes": 54517789.0
+      },
+      {
+        "path": "D:\\Program Files\\Framekeep\\.update-state\\local-eos-instant-lazy-20261111\\stage",
+        "bytes": 10326845.0
+      }
+    ]
+  },
+  "installation_marker_updated": true,
+  "managed_files": 957
+}

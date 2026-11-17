@@ -61,6 +61,43 @@ class SelectionFoldersXmpTests(unittest.TestCase):
             self.assertEqual(media.read_metadata([path],media.find_exiftool(ROOT))[0]['Rating'],rating)
         with Image.open(path) as im:self.assertEqual(im.tobytes(),pixels)
 
+    def test_rating_repairs_missing_sku_at_same_rating_and_preserves_other_metadata(self):
+        path=self.paths[0];writer=self.archive.writer
+        writer.run('-overwrite_original','-XMP-fk:SKU=款号-100','-XMP-xmp:Rating=2',path)
+        side=path.with_suffix('.xmp');extra=Path(str(path)+'.xmp')
+        writer.run('-XMP-xmp:Rating=2','-XMP-dc:Description=保留说明','-XMP-dc:Subject=棉质','-XMP-crs:Exposure2012=1.25',side)
+        writer.run('-XMP-xmp:Rating=2','-XMP-fk:SKU=侧车独立款号','-XMP-dc:Subject=SKU:侧车独立款号',extra)
+        with Image.open(path) as im:pixels=im.tobytes()
+        writer.write_rating(path,2)
+        actual=writer.read(side,True)
+        self.assertEqual(actual['XMP-xmp:Rating'],2)
+        self.assertEqual(actual['XMP-fk:SKU'],'款号-100')
+        self.assertEqual(actual['XMP-dc:Subject'],['棉质','SKU:款号-100'])
+        self.assertEqual(actual['XMP-dc:Description'],'保留说明')
+        self.assertEqual(actual['XMP-crs:Exposure2012'],1.25)
+        self.assertEqual(writer.read(extra)['XMP-fk:SKU'],'侧车独立款号')
+        before=[hashlib.sha256(p.read_bytes()).hexdigest() for p in (path,side,extra)]
+        writer.write_rating(path,2)
+        self.assertEqual(before,[hashlib.sha256(p.read_bytes()).hexdigest() for p in (path,side,extra)])
+        writer.write_rating(path,0)
+        for target in (path,side):
+            actual=writer.read(target)
+            self.assertEqual(actual['XMP-xmp:Rating'],0)
+            self.assertEqual(actual['XMP-fk:SKU'],'款号-100')
+        with Image.open(path) as im:self.assertEqual(im.tobytes(),pixels)
+
+    def test_raw_rating_sidecar_inherits_sku_from_full_filename_sidecar(self):
+        raw=self.photos/'款号.CR3';raw.write_bytes(b'RAW bytes remain unchanged')
+        extra=Path(str(raw)+'.xmp');writer=self.archive.writer
+        writer.run('-XMP-fk:SKU=款号-RAW','-XMP-dc:Subject=SKU:款号-RAW',extra)
+        writer.write_rating(raw,2)
+        for side in (raw.with_suffix('.xmp'),extra):
+            actual=writer.read(side)
+            self.assertEqual(actual['XMP-fk:SKU'],'款号-RAW')
+            self.assertEqual(actual['XMP-xmp:Rating'],2)
+            self.assertIn('SKU:款号-RAW',actual['XMP-dc:Subject'])
+        self.assertEqual(raw.read_bytes(),b'RAW bytes remain unchanged')
+
     def test_latest_revision_restart_offline_retry_and_raw_untouched(self):
         raw=self.photos/'原图.CR3';raw.write_bytes(b'RAW sensor fixture')
         digest=hashlib.sha256(raw.read_bytes()).hexdigest()

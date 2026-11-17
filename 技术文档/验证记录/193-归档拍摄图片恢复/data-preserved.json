@@ -1,0 +1,51 @@
+{
+  "files": 33,
+  "sqlite_checks": {
+    "asset_archive.sqlite3": {
+      "mode": "full-sha256",
+      "sha256": "5bf51ab2c0febbd5aad9350fbe45f9bb1b1b88e39f2739405f4cb6caa3560078"
+    },
+    "asset_catalog.sqlite3": {
+      "mode": "first-middle-last-1MiB",
+      "size": 16278716416,
+      "sha256": "440d16c6e6ec56157320f8894fbc3b4b6698786a09a34872b9d994f73a0f5303"
+    },
+    "asset_catalog.sqlite3-shm": {
+      "mode": "full-sha256",
+      "sha256": "9fd5ea5c6b599af5edba713abd8aee5ea22966886b259a850a7320ec90f9454f"
+    },
+    "asset_catalog.sqlite3-wal": {
+      "mode": "full-sha256",
+      "sha256": "7d2371ae939110b405446709b9654e6f20a5f8fd31cbbb337b0c82f756b9cfcc"
+    },
+    "folder-archive-metadata.sqlite3": {
+      "mode": "full-sha256",
+      "sha256": "f955155f38fa64b3bd0c0dcd76d06bbd87027d9ce5d00c3f832f2df6245a05e0"
+    },
+    "framekeep.sqlite3": {
+      "mode": "full-sha256",
+      "sha256": "19afd556093e31631f769483144451aee29030f3f641f319ea5381cf1b7b7813"
+    },
+    "image-cache-migration-07c3ce9bf22c416fa701e74d45f59a60.sqlite3": {
+      "mode": "full-sha256",
+      "sha256": "cd4a67fdab0fc5fef487d5d347810c646e0e83140134ca729149a723d9c4c81d"
+    },
+    "image-cache-migration-49f8c4a1f6e6451b8ad12e6fec90f73b.sqlite3": {
+      "mode": "full-sha256",
+      "sha256": "1524781fed7edf1618d6c3a3670716525aaaafa53c23f9cc988e7c4849c54707"
+    },
+    "sku.sqlite3": {
+      "mode": "full-sha256",
+      "sha256": "a65f8bb1244b238193ea049648c7fe9b7fa3682a467516ed515e381370e87d39"
+    },
+    "vision_analysis.sqlite3": {
+      "mode": "full-sha256",
+      "sha256": "61732ef239480a5376a9c60588416686b9ec47b1997088c5184f57e8bb554767"
+    }
+  },
+  "changed_program_files": [
+    "engine/_internal/base_library.zip",
+    "engine/framekeep-engine.exe",
+    "update/install-layout.json"
+  ]
+}

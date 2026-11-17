@@ -93,7 +93,19 @@ class SkuRules:
         if any(value is not None for value in limits.values()):values+=reading_tokens(readings)
         return list(dict.fromkeys(code.strip() for code in values if isinstance(code,str) and length_allowed(code,limits) and not any(ord(ch)<32 for ch in code)))[:12]
 
-    def apply_sku_rules(self,sid,cid,readings):
+    def apply_sku_rules(self,sid,cid,readings,*,defer_archive=False,project_id=None,scope=''):
+        from contextlib import ExitStack
+        from pathlib import Path
+        # 星级写回会合法改变图片签名。自动确认的两次校验必须在同一文件锁内，
+        # 否则自身写星会把正确OCR留在review，而旧代次已不再自动重试。
+        with ExitStack() as stack:
+            if defer_archive and self.archive:
+                session=self.store.session(sid);record=next(iter(self.store.records(sid,ids=[cid])),None)
+                if not session or not record:return None
+                for path in sorted({str(Path(session['root'])/record[k]) for k in ('raw','jpg') if record.get(k)}):stack.enter_context(self.archive.writer.file_lock(path))
+            return self._apply_sku_rules(sid,cid,readings,defer_archive=defer_archive,project_id=project_id,scope=scope)
+
+    def _apply_sku_rules(self,sid,cid,readings,*,defer_archive=False,project_id=None,scope=''):
         with self.lock:
             config=self.sku_rules();matches=match_rules(readings,config['rules'])
             eligible=[code for code in matches['exact'] if length_allowed(code,config['length_filter'])]
@@ -105,9 +117,9 @@ class SkuRules:
                 assigned=c.execute('SELECT a.sku FROM assets a JOIN catalog_links l ON l.asset=a.id WHERE l.session=? AND l.capture=?',(sid,cid)).fetchone()
             if assigned and assigned['sku']:return None
             from sku_shoot_versions import VersionLimitError
-            try:return self.choose_ocr_sku(sid,cid,eligible[0],details['reading_key'],details['image_key'],automatic=True)
-            except VersionLimitError as exc:
-                with self.connect() as c:
-                    c.execute("UPDATE jobs SET reason=?,result=json_set(result,'$.rule_error',?) WHERE session_id=? AND capture_id=? AND status IN ('review','unmatched')",(str(exc),str(exc),sid,cid))
-                    c.execute("UPDATE parse_jobs SET reason=?,result=json_set(result,'$.rule_error',?) WHERE session_id=? AND capture_id=? AND status='completed'",(str(exc),str(exc),sid,cid))
-                raise
+        try:return self.choose_ocr_sku(sid,cid,eligible[0],details['reading_key'],details['image_key'],automatic=True,defer_archive=defer_archive,project_id=project_id,scope=scope)
+        except VersionLimitError as exc:
+            with self.connect() as c:
+                c.execute("UPDATE jobs SET reason=?,result=json_set(result,'$.rule_error',?) WHERE session_id=? AND capture_id=? AND status IN ('review','unmatched')",(str(exc),str(exc),sid,cid))
+                c.execute("UPDATE parse_jobs SET reason=?,result=json_set(result,'$.rule_error',?) WHERE session_id=? AND capture_id=? AND status='completed'",(str(exc),str(exc),sid,cid))
+            raise

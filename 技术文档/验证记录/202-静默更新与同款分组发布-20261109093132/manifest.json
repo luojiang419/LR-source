@@ -1,0 +1,4709 @@
+{
+  "protocol": 1,
+  "product": "framekeep",
+  "displayName": "SHIYING 数字资产",
+  "platform": "win32-x64",
+  "version": "1.0.0",
+  "releaseId": "20261109093132",
+  "minVersion": "1.0.0",
+  "publishedAt": "2026-11-09T09:36:20.240424+00:00",
+  "notes": "修复检查更新旁页面刷新状态频繁闪烁；启动后自动静默下载更新，完整校验后才提示立即更新。多个二星标签识别为同一SKU时，后续组使用-A、-B等稳定后缀，清单、图片和导出保持独立，便于手动调整色号。",
+  "package": {
+    "name": "SHIYING-Windows-x64.zip",
+    "size": 327401510,
+    "sha256": "b16679f7ed6c4677b7397a9656a6fa57aed217d6dff855d9728589a4a5f02804",
+    "url": "https://modelscope.cn/api/v1/models/jiangjiang419/framekeep-updates/repo?Revision=master&FilePath=releases%2F1.0.0%2F20261109093132%2FSHIYING-Windows-x64.zip"
+  },
+  "files": [
+    {
+      "path": "engine/_internal/81d243bd2c585b0f4821__mypyc.cp312-win_amd64.pyd",
+      "size": 219136,
+      "sha256": "52056f4b964f1bc0419064a374a32e56ef85ccb161166971d26f46a7490bd238"
+    },
+    {
+      "path": "engine/_internal/_asyncio.pyd",
+      "size": 71448,
+      "sha256": "184fc13677c7856e7a8b31dfe79ce68dcea10cdf83a205de2b0d5497fb0ffdf3"
+    },
+    {
+      "path": "engine/_internal/_brotli.cp312-win_amd64.pyd",
+      "size": 856576,
+      "sha256": "1e4cf067342ee168410560db9bbba370a1b609abc028bff61a3dcc1274dfcd16"
+    },
+    {
+      "path": "engine/_internal/_bz2.pyd",
+      "size": 84760,
+      "sha256": "160b5218c2035cccbaab9dc4ca26d099f433dcb86dbbd96425c933dc796090df"
+    },
+    {
+      "path": "engine/_internal/_cffi_backend.cp312-win_amd64.pyd",
+      "size": 181248,
+      "sha256": "53de34afc3939d81bf2498b77425c52e2c3f3164f8cfe2543d3acc8f24134488"
+    },
+    {
+      "path": "engine/_internal/_ctypes.pyd",
+      "size": 125208,
+      "sha256": "8250b4c102abd1dba49fc5b52030caa93ca34e00b86cee6547cc0a7f22326807"
+    },
+    {
+      "path": "engine/_internal/_decimal.pyd",
+      "size": 256792,
+      "sha256": "b7f9603f98ef232a2c5bce7001d842c01d76ed35171afbd898e6d17facf38b56"
+    },
+    {
+      "path": "engine/_internal/_elementtree.pyd",
+      "size": 133400,
+      "sha256": "c07f2827542a392fde5fa9fe4d079c41d108c2b36c53c4035d1209f67c73e8d2"
+    },
+    {
+      "path": "engine/_internal/_hashlib.pyd",
+      "size": 66328,
+      "sha256": "b4cec162b985d34ab768f66e8fa41ed28dc2f273fde6670eeace1d695789b137"
+    },
+    {
+      "path": "engine/_internal/_lzma.pyd",
+      "size": 158488,
+      "sha256": "b095fa2eac97496b515031fbea5737988b18deee86a11f2784f5a551732ddc0c"
+    },
+    {
+      "path": "engine/_internal/_multiprocessing.pyd",
+      "size": 35608,
+      "sha256": "a197f3485bbe30b3a1612ea2198cef121af440ba799fd6cbf0ad3493150df3ca"
+    },
+    {
+      "path": "engine/_internal/_overlapped.pyd",
+      "size": 56088,
+      "sha256": "2af91c5ab6f05c4be357b93673920eccf3ebcad5e5ec6b0a7b53ef94a5feaad7"
+    },
+    {
+      "path": "engine/_internal/_queue.pyd",
+      "size": 32536,
+      "sha256": "bbe7736caed8c17c97e2b156f686521a788c25f2004aae34ab0c282c24d57da7"
+    },
+    {
+      "path": "engine/_internal/_socket.pyd",
+      "size": 83736,
+      "sha256": "ce3090fff8575b21287df5fc69ae98806646fc302eefadf85e369ad3debad92b"
+    },
+    {
+      "path": "engine/_internal/_sqlite3.pyd",
+      "size": 125208,
+      "sha256": "fef8e9f427b47e7758658a876ff1f2d718119af54dbb0498e14c8234571942df"
+    },
+    {
+      "path": "engine/_internal/_ssl.pyd",
+      "size": 177944,
+      "sha256": "61f00b0543464bba61e0bd1128118326c9bd0cdc592854dd1a31c3d6d8df2b83"
+    },
+    {
+      "path": "engine/_internal/_uuid.pyd",
+      "size": 25880,
+      "sha256": "869361adf2be930e5c8b492fa2116dc0d0edccbf2c231d39c859ce320be27b31"
+    },
+    {
+      "path": "engine/_internal/_wmi.pyd",
+      "size": 38168,
+      "sha256": "b0ed1c62b73b291a1b57e3d8882cc269b2fcbb1253f2947da18d9036e0c985d9"
+    },
+    {
+      "path": "engine/_internal/api-ms-win-core-console-l1-1-0.dll",
+      "size": 22872,
+      "sha256": "015bd08815c7b934a8952c3a7578e9ce59f21136e8a880d42bbd414bec2c6058"
+    },
+    {
+      "path": "engine/_internal/api-ms-win-core-datetime-l1-1-0.dll",
+      "size": 22896,
+      "sha256": "5534812cdbdae94ba45cb216e5eb9af686b853948df54365103555abbbaf9d9a"
+    },
+    {
+      "path": "engine/_internal/api-ms-win-core-debug-l1-1-0.dll",
+      "size": 22872,
+      "sha256": "837d2b1b2cd03e03fc6ccb050698b6b5763af17c201304872342a5eae9e0a2d2"
+    },
+    {
+      "path": "engine/_internal/api-ms-win-core-errorhandling-l1-1-0.dll",
+      "size": 22872,
+      "sha256": "de43b165f568c276c00e95acd454e3092f352a18e95874595f4f4658c06d2ec7"
+    },
+    {
+      "path": "engine/_internal/api-ms-win-core-fibers-l1-1-0.dll",
+      "size": 22872,
+      "sha256": "3cebc45bf479ad74cfabf2c6bfd4994d7ad639ed1221025981d19cedf9ce0416"
+    },
+    {
+      "path": "engine/_internal/api-ms-win-core-fibers-l1-1-1.dll",
+      "size": 22872,
+      "sha256": "5ef70308bcca628ce6b0e2856b15b1c7ae340c3f9bbbc4c1071d8c191a34a5c3"
+    },
+    {
+      "path": "engine/_internal/api-ms-win-core-file-l1-1-0.dll",
+      "size": 27008,
+      "sha256": "250ac829f2617bcac1c6e5b8c4f630462e20765863ba573526a3e11bbfb94a9a"
+    },
+    {
+      "path": "engine/_internal/api-ms-win-core-file-l1-2-0.dll",
+      "size": 22888,
+      "sha256": "ae14079a114733f60ce87b92cba42acd8083c2cd67594e53bc37dc0b97a4b465"
+    },
+    {
+      "path": "engine/_internal/api-ms-win-core-file-l2-1-0.dll",
+      "size": 22912,
+      "sha256": "914bf26a298713119477ea0a8e7bd43171b91344ebe24fb47ad77c49686e3d87"
+    },
+    {
+      "path": "engine/_internal/api-ms-win-core-handle-l1-1-0.dll",
+      "size": 22896,
+      "sha256": "ab5489955e371b15f77906c08ec3c7affe2c7a46a08c514ca628768b4478974b"
+    },
+    {
+      "path": "engine/_internal/api-ms-win-core-heap-l1-1-0.dll",
+      "size": 22872,
+      "sha256": "c70f9644d8377fa39c5b71f2e9734c1400d7598904fdeb772e8502099982dcb7"
+    },
+    {
+      "path": "engine/_internal/api-ms-win-core-interlocked-l1-1-0.dll",
+      "size": 22888,
+      "sha256": "f8129710188e407bb0e6f46d30aeba277d67b947ece5fe09e883fde2323f3ae6"
+    },
+    {
+      "path": "engine/_internal/api-ms-win-core-kernel32-legacy-l1-1-1.dll",
+      "size": 22888,
+      "sha256": "5200b16cb2ddc61cfc07373a9a84aa85a3ab50806ca96c879c883275832944c1"
+    },
+    {
+      "path": "engine/_internal/api-ms-win-core-libraryloader-l1-1-0.dll",
+      "size": 22872,
+      "sha256": "48786fb88b001dcd1f63acea903d3ca9cc0b3060d5a325e3f2f3cbc3bfd53166"
+    },
+    {
+      "path": "engine/_internal/api-ms-win-core-localization-l1-2-0.dll",
+      "size": 22872,
+      "sha256": "9ec3898f7eba91faa28b51616c211a2689e3a13aeef8de6e13cb674e49d689eb"
+    },
+    {
+      "path": "engine/_internal/api-ms-win-core-memory-l1-1-0.dll",
+      "size": 22896,
+      "sha256": "3a6cbc524c99e1cd80d5368f5601402a37ad602528b1ab628093573ef638eb3b"
+    },
+    {
+      "path": "engine/_internal/api-ms-win-core-namedpipe-l1-1-0.dll",
+      "size": 22888,
+      "sha256": "97145ef89c44949fcf0f04ac834a8bc7d687ef49ee73ae9fc32f3c11136b7201"
+    },
+    {
+      "path": "engine/_internal/api-ms-win-core-processenvironment-l1-1-0.dll",
+      "size": 22872,
+      "sha256": "8bc7c10b1851aea644e9c9f381cdb935e091fee6b0be3d3aedc6fffaac96adb7"
+    },
+    {
+      "path": "engine/_internal/api-ms-win-core-processthreads-l1-1-0.dll",
+      "size": 22912,
+      "sha256": "d8030b777617c71f0f94564607699dbf7561487d779db9756aed378c5675213f"
+    },
+    {
+      "path": "engine/_internal/api-ms-win-core-processthreads-l1-1-1.dll",
+      "size": 22872,
+      "sha256": "f5e676713340f73a03a3d41a6ec9883b431da7d16c7f07bd0a920fb80e6c0753"
+    },
+    {
+      "path": "engine/_internal/api-ms-win-core-profile-l1-1-0.dll",
+      "size": 22872,
+      "sha256": "f023d47e44d3eea6b0743580f57e8c6ba81e79d5ebfa7da26250076c647b980e"
+    },
+    {
+      "path": "engine/_internal/api-ms-win-core-rtlsupport-l1-1-0.dll",
+      "size": 22888,
+      "sha256": "9746d8930704153578a628c010638a5f818ffe5a927e25591b108e256dc6afca"
+    },
+    {
+      "path": "engine/_internal/api-ms-win-core-string-l1-1-0.dll",
+      "size": 22896,
+      "sha256": "7c53ae24c982d16ffd1bf7f918d115b11b7f30e57bc7feaa18cb9781e4abb926"
+    },
+    {
+      "path": "engine/_internal/api-ms-win-core-synch-l1-1-0.dll",
+      "size": 22896,
+      "sha256": "56d9d62ca5dba79a6581b8d574a7d8b2a64a5ecb71e47dcf06ed0285708b1859"
+    },
+    {
+      "path": "engine/_internal/api-ms-win-core-synch-l1-2-0.dll",
+      "size": 22888,
+      "sha256": "f6482bbec5612c39ecb4822787a333f2b7570f7a5f922a4059be41ba957bb372"
+    },
+    {
+      "path": "engine/_internal/api-ms-win-core-sysinfo-l1-1-0.dll",
+      "size": 22896,
+      "sha256": "272d02765fdd3582618236c2d309abba069642f9bc1062ede069d0c144e17007"
+    },
+    {
+      "path": "engine/_internal/api-ms-win-core-sysinfo-l1-2-0.dll",
+      "size": 22912,
+      "sha256": "8a0900788859d0eb51c2f48f50cc6ed376a120b518100fa20e11d7702ccde260"
+    },
+    {
+      "path": "engine/_internal/api-ms-win-core-timezone-l1-1-0.dll",
+      "size": 22896,
+      "sha256": "ff35de6c03812b332e140f17dade25c5dd4775156da9eeb1eaae3fddd27236ec"
+    },
+    {
+      "path": "engine/_internal/api-ms-win-core-util-l1-1-0.dll",
+      "size": 22896,
+      "sha256": "191ef3e98641a57296f19d572d8eb62489470ff1ef6030d136af170c2f835173"
+    },
+    {
+      "path": "engine/_internal/api-ms-win-crt-conio-l1-1-0.dll",
+      "size": 22872,
+      "sha256": "54ee5ec719a051496ff60aa00dbeaa94b9a7d2cdac27fe9b7317f1a666b6a2aa"
+    },
+    {
+      "path": "engine/_internal/api-ms-win-crt-convert-l1-1-0.dll",
+      "size": 26992,
+      "sha256": "8b94662429171019fcd63c70bbf2095a075170599704a5e7dcdbe3da13f3a429"
+    },
+    {
+      "path": "engine/_internal/api-ms-win-crt-environment-l1-1-0.dll",
+      "size": 22912,
+      "sha256": "39e5929593709e8af3bc9e0a75ec1155778d6f4a247f4cdfc58928ad6db88434"
+    },
+    {
+      "path": "engine/_internal/api-ms-win-crt-filesystem-l1-1-0.dll",
+      "size": 22872,
+      "sha256": "5a8ecebac32edf4e1f3c5c6c1c8ea1a1add6cda4f9c9cb26f752fb295bea6865"
+    },
+    {
+      "path": "engine/_internal/api-ms-win-crt-heap-l1-1-0.dll",
+      "size": 22872,
+      "sha256": "c71080cbcb43bf1f8f3e391deb12a582eb0abefc80946f340675a2c616e4feb4"
+    },
+    {
+      "path": "engine/_internal/api-ms-win-crt-locale-l1-1-0.dll",
+      "size": 22896,
+      "sha256": "6c68648e524187e03c4ad9aaa4a99113c6ee9f29fb39cc0ed93f951975138e63"
+    },
+    {
+      "path": "engine/_internal/api-ms-win-crt-math-l1-1-0.dll",
+      "size": 31064,
+      "sha256": "d4fbcccbe29371cbce431e43b2eb4f7ba9a6f04a3d740a071f02457a505e9dc8"
+    },
+    {
+      "path": "engine/_internal/api-ms-win-crt-multibyte-l1-1-0.dll",
+      "size": 31064,
+      "sha256": "41b98a59bea1c86ab3b2357acb77de4eae7ff1132f130b1d9669ab9c2b456a2a"
+    },
+    {
+      "path": "engine/_internal/api-ms-win-crt-private-l1-1-0.dll",
+      "size": 76120,
+      "sha256": "29bf3d90617d3781d19b332d6ceb9f20ba5ce082ec74bf6c34d5d4aee56e48a1"
+    },
+    {
+      "path": "engine/_internal/api-ms-win-crt-process-l1-1-0.dll",
+      "size": 22896,
+      "sha256": "47c1935942e3ac0812e4dcf18c0e265e565f0194a3349111c299712f5565f7ac"
+    },
+    {
+      "path": "engine/_internal/api-ms-win-crt-runtime-l1-1-0.dll",
+      "size": 26968,
+      "sha256": "72adc1b3677e0814d9c4ebf0964000e84bb2acf67336c8963061665e44f78029"
+    },
+    {
+      "path": "engine/_internal/api-ms-win-crt-stdio-l1-1-0.dll",
+      "size": 26968,
+      "sha256": "900afc3989673c9bb1a687ed38c192f46db9e6ba6d11a668898a539e7fc23798"
+    },
+    {
+      "path": "engine/_internal/api-ms-win-crt-string-l1-1-0.dll",
+      "size": 26968,
+      "sha256": "fcf12466cc12fd3b73611fc0763a5a1f9d44e90349513c34a0c83b0f36421793"
+    },
+    {
+      "path": "engine/_internal/api-ms-win-crt-time-l1-1-0.dll",
+      "size": 22912,
+      "sha256": "886e57c4a6adb299b38f02945369f590a67da4e79a798359fc60aaa067212d7c"
+    },
+    {
+      "path": "engine/_internal/api-ms-win-crt-utility-l1-1-0.dll",
+      "size": 22912,
+      "sha256": "5f8f26b216ade615b67a41f6fbbb910972fc6153315a65bb8f09912be50215b1"
+    },
+    {
+      "path": "engine/_internal/attrs-26.1.0.dist-info/INSTALLER",
+      "size": 4,
+      "sha256": "ceebae7b8927a3227e5303cf5e0f1f7b34bb542ad7250ac03fbcde36ec2f1508"
+    },
+    {
+      "path": "engine/_internal/attrs-26.1.0.dist-info/licenses/LICENSE",
+      "size": 1109,
+      "sha256": "882115c95dfc2af1eeb6714f8ec6d5cbcabf667caff8729f42420da63f714e9f"
+    },
+    {
+      "path": "engine/_internal/attrs-26.1.0.dist-info/METADATA",
+      "size": 8754,
+      "sha256": "4cd40e690f23bf37cbcad34efd6758e062df1df07c86833f7e3ce95bf1fa38cc"
+    },
+    {
+      "path": "engine/_internal/attrs-26.1.0.dist-info/RECORD",
+      "size": 3556,
+      "sha256": "a5151f0461f45abf44fdc57c2ccdb73151bb54a0abfd22133f7ea7ad48f8dc23"
+    },
+    {
+      "path": "engine/_internal/attrs-26.1.0.dist-info/WHEEL",
+      "size": 87,
+      "sha256": "41c708c5adba6e097513ab8ccb9f1d7865a2fb469e22491a9e01dcc64da459fc"
+    },
+    {
+      "path": "engine/_internal/backports/zstd/_zstd.cp312-win_amd64.pyd",
+      "size": 582656,
+      "sha256": "37251059b63fa4ee7a5f6491d0dc7e5181318674e2a10b7eb05f73679873f7ac"
+    },
+    {
+      "path": "engine/_internal/base_library.zip",
+      "size": 1332793,
+      "sha256": "c7a26efa6dfeed4bd5bb28f077f6c5655c6fa1b7db9de2dd6ecf12cc063b28f5"
+    },
+    {
+      "path": "engine/_internal/bcrypt/_bcrypt.pyd",
+      "size": 308224,
+      "sha256": "11dfd8cedb11b5342eb9c523133a96f55df1049a89b0e036a4f5d9f37eea49d8"
+    },
+    {
+      "path": "engine/_internal/canon_probe.ps1",
+      "size": 2045,
+      "sha256": "9ef9c911b77939f5a8ab4c7576ca54c83d152fe7c4e379e2a146f80f66fb3588"
+    },
+    {
+      "path": "engine/_internal/certifi/cacert.pem",
+      "size": 272441,
+      "sha256": "fc9165a12403263e7ebfbdad7be7a3eac0fa5d325d3c70465f28d3690072ca28"
+    },
+    {
+      "path": "engine/_internal/certifi/py.typed",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "engine/_internal/charset_normalizer/cd.cp312-win_amd64.pyd",
+      "size": 10752,
+      "sha256": "aec205186ce86077a5f8fb469e924cd5f7e183daed53f9de9362e77f3bf3637f"
+    },
+    {
+      "path": "engine/_internal/charset_normalizer/md.cp312-win_amd64.pyd",
+      "size": 10752,
+      "sha256": "68430911cc4fc8538328528c15b18119b59fba6def2d84ab221d223e6677ba66"
+    },
+    {
+      "path": "engine/_internal/clip_worker.py",
+      "size": 2565,
+      "sha256": "b95ccbb63360f162abe9898cbc747e02d1615ff75281acb08ae425014f48d0b0"
+    },
+    {
+      "path": "engine/_internal/component-manifest.json",
+      "size": 16052,
+      "sha256": "bdc011cf8650c95cc01be14da5fe26b05557e881f145468b2ae12a996a8083f8"
+    },
+    {
+      "path": "engine/_internal/component-seed/driver/install-interception.exe",
+      "size": 470528,
+      "sha256": "e137863a79da797f08e7a137280ff2a123809044a888fd75ce9c973198915abe"
+    },
+    {
+      "path": "engine/_internal/component-seed/driver/licenses/commercial-usage/Interception API.pdf",
+      "size": 22419,
+      "sha256": "b6fbff2a6b20ba644632d13128589eac2a8886729f4aecf7724be4ccae17c2f9"
+    },
+    {
+      "path": "engine/_internal/component-seed/driver/licenses/commercial-usage/Interception.pdf",
+      "size": 78798,
+      "sha256": "f54331742d5d9bfed03822cb8a905b46960502048a1ac11e8060cc7fda7a7de9"
+    },
+    {
+      "path": "engine/_internal/component-seed/driver/licenses/non-commercial-usage/LGPL 3.0.txt",
+      "size": 7651,
+      "sha256": "da7eabb7bafdf7d3ae5e9f223aa5bdc1eece45ac569dc21b3b037520b4464768"
+    },
+    {
+      "path": "engine/_internal/component-seed/runtime/concrt140.dll",
+      "size": 374200,
+      "sha256": "54716f0738af891f283d213b5c8d11b25896bb8ee3097d301eae718560cf974e"
+    },
+    {
+      "path": "engine/_internal/component-seed/runtime/msvcp140.dll",
+      "size": 643512,
+      "sha256": "7c26614e1d733892c2deac7e245ce115504b1d80592dd0a01b08e3e5a55f89ca"
+    },
+    {
+      "path": "engine/_internal/component-seed/runtime/vcruntime140.dll",
+      "size": 178616,
+      "sha256": "d1f4225df2cd877dbf130d5668a021dce3f94118455ff5ec952061c30afc9ce7"
+    },
+    {
+      "path": "engine/_internal/component-seed/runtime/vcruntime140_1.dll",
+      "size": 50112,
+      "sha256": "a7146c08f89fe5b04541ab507cdb59ff7b44534d4ba3c668a426c6450a03434e"
+    },
+    {
+      "path": "engine/_internal/cryptography/hazmat/bindings/_rust.pyd",
+      "size": 9121280,
+      "sha256": "fe5c4cdb5512f792fb0f5b3ce0cd8c1484614851d56ff5d1e7215213eb9e0bca"
+    },
+    {
+      "path": "engine/_internal/cryptography-46.0.7.dist-info/INSTALLER",
+      "size": 4,
+      "sha256": "ceebae7b8927a3227e5303cf5e0f1f7b34bb542ad7250ac03fbcde36ec2f1508"
+    },
+    {
+      "path": "engine/_internal/cryptography-46.0.7.dist-info/licenses/LICENSE",
+      "size": 197,
+      "sha256": "3e0c7c091a948b82533ba98fd7cbb40432d6f1a9acbf85f5922d2f99a93ae6bb"
+    },
+    {
+      "path": "engine/_internal/cryptography-46.0.7.dist-info/licenses/LICENSE.APACHE",
+      "size": 11360,
+      "sha256": "aac73b3148f6d1d7111dbca32099f68d26c644c6813ae1e4f05f6579aa2663fe"
+    },
+    {
+      "path": "engine/_internal/cryptography-46.0.7.dist-info/licenses/LICENSE.BSD",
+      "size": 1532,
+      "sha256": "602c4c7482de6479dd2e9793cda275e5e63d773dacd1eca689232ab7008fb4fb"
+    },
+    {
+      "path": "engine/_internal/cryptography-46.0.7.dist-info/METADATA",
+      "size": 5748,
+      "sha256": "cd6e7fad3b9e42368313d459aa4914bd59f39893828145a00219fbc61c75cff1"
+    },
+    {
+      "path": "engine/_internal/cryptography-46.0.7.dist-info/RECORD",
+      "size": 16067,
+      "sha256": "8f61221bb33a6d1618c6b81f253513658177e424e1de2ba45111f3f5f0f4ec4a"
+    },
+    {
+      "path": "engine/_internal/cryptography-46.0.7.dist-info/WHEEL",
+      "size": 95,
+      "sha256": "f2111ff0dcccd459e633bec08d5b7987c9c3b9890ddd4a99efd2e82001d77911"
+    },
+    {
+      "path": "engine/_internal/cv2/__init__.py",
+      "size": 6793,
+      "sha256": "957a91bfd98ffb07a10cd789b7c5c46806568476b61e34c7ad56a00092b981a5"
+    },
+    {
+      "path": "engine/_internal/cv2/config-3.py",
+      "size": 748,
+      "sha256": "de28c7b5213cca148f09469916584611b3d66c1c8c432880259d6a3a92380213"
+    },
+    {
+      "path": "engine/_internal/cv2/config.py",
+      "size": 123,
+      "sha256": "6c6367abce55995ae4a8d3c199420ec53afab287cb17dfc2f430378af75dd301"
+    },
+    {
+      "path": "engine/_internal/cv2/cv2.pyd",
+      "size": 74492416,
+      "sha256": "90034927004e4a4ebf29360480d609c8a8d2ca07c93f8b89dff86399e8534b2a"
+    },
+    {
+      "path": "engine/_internal/cv2/data/__init__.py",
+      "size": 73,
+      "sha256": "f4ce16721ed7f623a4dcc443ba600d1856db610cb2c3d53c13a8ca028cc68f6d"
+    },
+    {
+      "path": "engine/_internal/cv2/gapi/__init__.py",
+      "size": 10621,
+      "sha256": "74f5fd2a142a31b0a4707b70c0be3637f0fbf8a940eec4372e7ba87e5a5cedb8"
+    },
+    {
+      "path": "engine/_internal/cv2/load_config_py3.py",
+      "size": 253,
+      "sha256": "074dfaf20ac94f2ca3815393de3a394944470334c51a85b9521f452e0e17bb85"
+    },
+    {
+      "path": "engine/_internal/cv2/mat_wrapper/__init__.py",
+      "size": 1164,
+      "sha256": "c44707ea1c76f35518ae572b6c1989d76c2ada7e850432e41805dfe112d4e306"
+    },
+    {
+      "path": "engine/_internal/cv2/misc/__init__.py",
+      "size": 38,
+      "sha256": "495bd79594cce174673e372c85c4dd8f4ffdf2b3a73fd4623955b0d55de0d462"
+    },
+    {
+      "path": "engine/_internal/cv2/misc/version.py",
+      "size": 95,
+      "sha256": "c93a418793fcb15b9b4316c0741b8336740e490e94f3b7d1ebe8cd5f6f23815c"
+    },
+    {
+      "path": "engine/_internal/cv2/opencv_videoio_ffmpeg4130_64.dll",
+      "size": 28578304,
+      "sha256": "fcc614672159094a35815b7ea2819a648cbf86c30d90c57e8c6ba1432f594548"
+    },
+    {
+      "path": "engine/_internal/cv2/typing/__init__.py",
+      "size": 5545,
+      "sha256": "93e85c151a97226003ff9df8bb92801b0d07cda86e3c048a5df4e6b09b77ba94"
+    },
+    {
+      "path": "engine/_internal/cv2/utils/__init__.py",
+      "size": 344,
+      "sha256": "2b16990b35b569af1ca7239dc10f7b24ec62f27a46626b1e2f1271d2e1aa3554"
+    },
+    {
+      "path": "engine/_internal/cv2/version.py",
+      "size": 96,
+      "sha256": "29dba880ba5dd0586f885cfa8d74da71dc8b808d95282c37367a2b1380b63dac"
+    },
+    {
+      "path": "engine/_internal/jsonschema/benchmarks/issue232/issue.json",
+      "size": 117105,
+      "sha256": "79a3ce663311bb9bbc4692abb00f6e93bb9c3d94b9b64286e03fe190e4d0dc79"
+    },
+    {
+      "path": "engine/_internal/jsonschema-4.25.1.dist-info/entry_points.txt",
+      "size": 51,
+      "sha256": "bceeeb5f816cff1215272da99c0b4a8134b17e99e8cc0550d038c29a93319d61"
+    },
+    {
+      "path": "engine/_internal/jsonschema-4.25.1.dist-info/INSTALLER",
+      "size": 4,
+      "sha256": "ceebae7b8927a3227e5303cf5e0f1f7b34bb542ad7250ac03fbcde36ec2f1508"
+    },
+    {
+      "path": "engine/_internal/jsonschema-4.25.1.dist-info/licenses/COPYING",
+      "size": 1057,
+      "sha256": "4f92a015a13c4d1a040bef018aa13430b4f1bc73b41b16bb846c346766de7439"
+    },
+    {
+      "path": "engine/_internal/jsonschema-4.25.1.dist-info/METADATA",
+      "size": 7608,
+      "sha256": "31f83c1579e46e1af62269cefa5d83534ef155f3ee21914f7881bbd544bc125c"
+    },
+    {
+      "path": "engine/_internal/jsonschema-4.25.1.dist-info/RECORD",
+      "size": 6255,
+      "sha256": "10bafcc9733c50a380072a6e93bde46567689a305e5c3335ed67e3e6ea307491"
+    },
+    {
+      "path": "engine/_internal/jsonschema-4.25.1.dist-info/REQUESTED",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "engine/_internal/jsonschema-4.25.1.dist-info/WHEEL",
+      "size": 87,
+      "sha256": "aad0b0a12256807936d52d4a6f88a1773236ae527564a688bab4e3fe780e8724"
+    },
+    {
+      "path": "engine/_internal/jsonschema_specifications/schemas/draft201909/metaschema.json",
+      "size": 1785,
+      "sha256": "7b761b3e121f0a0ca1ea2a0b8e2cc856bcf801604b8268d71bacaa202bc0c13b"
+    },
+    {
+      "path": "engine/_internal/jsonschema_specifications/schemas/draft201909/vocabularies/applicator",
+      "size": 1860,
+      "sha256": "6895100e99726fbb107058512bbec3ecfd4b24e8fd2facee3e505ee72b0d4c31"
+    },
+    {
+      "path": "engine/_internal/jsonschema_specifications/schemas/draft201909/vocabularies/content",
+      "size": 517,
+      "sha256": "9b7d4f55a4e2fdb02c430068fdffabc732addce238da3f1df2690249c3353274"
+    },
+    {
+      "path": "engine/_internal/jsonschema_specifications/schemas/draft201909/vocabularies/core",
+      "size": 1531,
+      "sha256": "b5a2c4957f6495d0a5081f0409ebe8a14e4139acb203fc748471f8ede2af5b2c"
+    },
+    {
+      "path": "engine/_internal/jsonschema_specifications/schemas/draft201909/vocabularies/format",
+      "size": 403,
+      "sha256": "50ebbfe790611a849b8cc400a09c1d0e0fb6ab5c0d43a0f22201fd3625056bf4"
+    },
+    {
+      "path": "engine/_internal/jsonschema_specifications/schemas/draft201909/vocabularies/meta-data",
+      "size": 892,
+      "sha256": "d47e2445dd6a82271a298d83cc6c6cb8d4ae1e15e0dc56becd37a163ecf01286"
+    },
+    {
+      "path": "engine/_internal/jsonschema_specifications/schemas/draft201909/vocabularies/validation",
+      "size": 2834,
+      "sha256": "1e526c1d335a734805fc82cf5798c12b960ad7da2517c66cda5a1b09359c3c1c"
+    },
+    {
+      "path": "engine/_internal/jsonschema_specifications/schemas/draft202012/metaschema.json",
+      "size": 2452,
+      "sha256": "41da76f5afb7ce062d248f762463a92f7ca47e4e0f905b224ba6afeef91ded0f"
+    },
+    {
+      "path": "engine/_internal/jsonschema_specifications/schemas/draft202012/vocabularies/applicator",
+      "size": 1659,
+      "sha256": "c4a6e4147b91fef7fea6dc058cb1bf93402f7414b76578a8b16aaf1dad6aacef"
+    },
+    {
+      "path": "engine/_internal/jsonschema_specifications/schemas/draft202012/vocabularies/content",
+      "size": 519,
+      "sha256": "08343747764e4a5814262793cf4d652057a7913863c5950d43297e8e1fdac5b6"
+    },
+    {
+      "path": "engine/_internal/jsonschema_specifications/schemas/draft202012/vocabularies/core",
+      "size": 1564,
+      "sha256": "c2d12a8e4dd11d336dfc83a3f663aa4c69f0b49b3beb094ffeb25b5316f4803d"
+    },
+    {
+      "path": "engine/_internal/jsonschema_specifications/schemas/draft202012/vocabularies/format-annotation",
+      "size": 448,
+      "sha256": "abc775adfefd89d22358170d9bf93f4ebd2349563bbbedd60f02bef7c812bcc0"
+    },
+    {
+      "path": "engine/_internal/jsonschema_specifications/schemas/draft202012/vocabularies/format-assertion",
+      "size": 445,
+      "sha256": "c52242b9a1bb786b26c3e82c7add428c31f9c96e575dce99e56ea5feaa6da20c"
+    },
+    {
+      "path": "engine/_internal/jsonschema_specifications/schemas/draft202012/vocabularies/meta-data",
+      "size": 892,
+      "sha256": "8f76d6e14f41b9b92ef933b708cdc5144c8b5268651ad11918485fb1754f1c76"
+    },
+    {
+      "path": "engine/_internal/jsonschema_specifications/schemas/draft202012/vocabularies/unevaluated",
+      "size": 506,
+      "sha256": "2dbfbcb73994b670b0976492adee1fffb46c21682784d2f5a4ca561f9e2d0cb4"
+    },
+    {
+      "path": "engine/_internal/jsonschema_specifications/schemas/draft202012/vocabularies/validation",
+      "size": 2834,
+      "sha256": "7010a31e541f32d2be721e2de348df75c9b36876a3ed304877fc0abda1d37a58"
+    },
+    {
+      "path": "engine/_internal/jsonschema_specifications/schemas/draft3/metaschema.json",
+      "size": 2600,
+      "sha256": "2cf75f64436fb5be374a2eaa27ab8b7e1fd651c9b46daea6c67b02fd64e2458b"
+    },
+    {
+      "path": "engine/_internal/jsonschema_specifications/schemas/draft4/metaschema.json",
+      "size": 4357,
+      "sha256": "e1489d0b4755f02793302591d3fcb8f07b6893a82a94f24895f8e4edf11b82e2"
+    },
+    {
+      "path": "engine/_internal/jsonschema_specifications/schemas/draft6/metaschema.json",
+      "size": 4437,
+      "sha256": "c29dfce9f54835c3a06c03b3c5d5ec0eda77706568f9c4df7cfbc7566a51006d"
+    },
+    {
+      "path": "engine/_internal/jsonschema_specifications/schemas/draft7/metaschema.json",
+      "size": 4819,
+      "sha256": "3d5392088261606c559b603f385329c9f1ab45b5d667eb990687453b055d405e"
+    },
+    {
+      "path": "engine/_internal/libcrypto-3.dll",
+      "size": 5232408,
+      "sha256": "4e5d5d20d6d31e72ab341c81e97b89e514326c4c861b48638243bdf0918cfa43"
+    },
+    {
+      "path": "engine/_internal/libffi-8.dll",
+      "size": 39696,
+      "sha256": "eff52743773eb550fcc6ce3efc37c85724502233b6b002a35496d828bd7b280a"
+    },
+    {
+      "path": "engine/_internal/libssl-3.dll",
+      "size": 792856,
+      "sha256": "2e4d35b681a172d3298caf7dc670451be7a8ba27c26446efc67470742497a950"
+    },
+    {
+      "path": "engine/_internal/metadata_memory_worker.pl",
+      "size": 3830,
+      "sha256": "7bf67ec785cafc379b8413cba370fbda3f33c9e4c6436b953d16e5e4bd2005e4"
+    },
+    {
+      "path": "engine/_internal/msvcp140.dll",
+      "size": 643512,
+      "sha256": "7c26614e1d733892c2deac7e245ce115504b1d80592dd0a01b08e3e5a55f89ca"
+    },
+    {
+      "path": "engine/_internal/MSVCP140_1.dll",
+      "size": 35768,
+      "sha256": "206c931bf90fdad8816de3b5e2ef80b2bcaa9406c89ecc05fe6fddffe251e982"
+    },
+    {
+      "path": "engine/_internal/numpy/_core/_multiarray_tests.cp312-win_amd64.pyd",
+      "size": 65536,
+      "sha256": "a37712b7a0e12fbb28b5c77873886140f7a36dc7c11d0ffb1739fb07f879ad4b"
+    },
+    {
+      "path": "engine/_internal/numpy/_core/_multiarray_umath.cp312-win_amd64.pyd",
+      "size": 3714560,
+      "sha256": "f4523c2dfe641a904605029ce4a5046388bd61b18afc0594d34018b5e6d848f8"
+    },
+    {
+      "path": "engine/_internal/numpy/fft/_pocketfft_umath.cp312-win_amd64.pyd",
+      "size": 276480,
+      "sha256": "7c009372f4f448c2d7419726b671f7122693705c905d5239df1ef2b49c30eadc"
+    },
+    {
+      "path": "engine/_internal/numpy/linalg/_umath_linalg.cp312-win_amd64.pyd",
+      "size": 112128,
+      "sha256": "8732faea57c1e9750297bc5df2ed090954159e28024c66f1cdbf1d4eb798ccb8"
+    },
+    {
+      "path": "engine/_internal/numpy/random/_bounded_integers.cp312-win_amd64.pyd",
+      "size": 207360,
+      "sha256": "dd98c61f9c78c6dfbf16b7ef5060647aba412a6ea74ab6cd80d93c34dd485d57"
+    },
+    {
+      "path": "engine/_internal/numpy/random/_common.cp312-win_amd64.pyd",
+      "size": 167424,
+      "sha256": "95b8170a18ec959a6e7d5eb3c5ec62945e25ef000e7d3e079634f6a6f1025599"
+    },
+    {
+      "path": "engine/_internal/numpy/random/_generator.cp312-win_amd64.pyd",
+      "size": 585216,
+      "sha256": "dd21763b7cbd0934d11e18a205b43a2f94281749cdc3ae29a8b0551d89bec069"
+    },
+    {
+      "path": "engine/_internal/numpy/random/_mt19937.cp312-win_amd64.pyd",
+      "size": 83968,
+      "sha256": "dfb5422af41c2481f7284cfb24d6c22d20f7335a3b782381b965f1ae5dbbb58b"
+    },
+    {
+      "path": "engine/_internal/numpy/random/_pcg64.cp312-win_amd64.pyd",
+      "size": 94720,
+      "sha256": "7233f96d62e6e908a5b8c05d944bab62484e1e8094ed7ceb67c4d039da9b03e3"
+    },
+    {
+      "path": "engine/_internal/numpy/random/_philox.cp312-win_amd64.pyd",
+      "size": 78336,
+      "sha256": "a42e903341f5ab570a508c4347e838955b9d01dfb42fbe2a92716cd17c8263bf"
+    },
+    {
+      "path": "engine/_internal/numpy/random/_sfc64.cp312-win_amd64.pyd",
+      "size": 59904,
+      "sha256": "a84fd4bed2bbfe54d6e0b21990e9260cf82770e80c22f58ce767917ad2d72a9b"
+    },
+    {
+      "path": "engine/_internal/numpy/random/bit_generator.cp312-win_amd64.pyd",
+      "size": 157696,
+      "sha256": "13c855266daae91046fdeced52acd6ad1a39680381f11e2c9959b173f5f8b6fb"
+    },
+    {
+      "path": "engine/_internal/numpy/random/mtrand.cp312-win_amd64.pyd",
+      "size": 488960,
+      "sha256": "a100e03d295811221bc317d9ba7e0ff0dbcd58a8deda7d2f734703fc7e223e6a"
+    },
+    {
+      "path": "engine/_internal/numpy-2.4.4.dist-info/DELVEWHEEL",
+      "size": 462,
+      "sha256": "28ee7357c468183fac26f14b2b0c8704f1080251f6d58e44189704a3a6d4f857"
+    },
+    {
+      "path": "engine/_internal/numpy-2.4.4.dist-info/entry_points.txt",
+      "size": 220,
+      "sha256": "ec26fade0c8bdac211a6c1dd003a65eb16885b925395423e93fcaa115af4052c"
+    },
+    {
+      "path": "engine/_internal/numpy-2.4.4.dist-info/INSTALLER",
+      "size": 4,
+      "sha256": "ceebae7b8927a3227e5303cf5e0f1f7b34bb542ad7250ac03fbcde36ec2f1508"
+    },
+    {
+      "path": "engine/_internal/numpy-2.4.4.dist-info/licenses/LICENSE.txt",
+      "size": 45831,
+      "sha256": "a804dff0ead9fadc5293456410bcbfc32bf024be9c4513459663fb7b442d2341"
+    },
+    {
+      "path": "engine/_internal/numpy-2.4.4.dist-info/licenses/numpy/_core/include/numpy/libdivide/LICENSE.txt",
+      "size": 1039,
+      "sha256": "d544761558b510866c21f7e8a2d5716fca76e0b98117e3b6b86314db7244d150"
+    },
+    {
+      "path": "engine/_internal/numpy-2.4.4.dist-info/licenses/numpy/_core/src/common/pythoncapi-compat/COPYING",
+      "size": 704,
+      "sha256": "aea41976c720f91bd19725c16916a1ace40eb1ea42620d340e587a5de4bbcea0"
+    },
+    {
+      "path": "engine/_internal/numpy-2.4.4.dist-info/licenses/numpy/_core/src/highway/LICENSE",
+      "size": 21155,
+      "sha256": "d208152e2777ffd0126eacc1bd21c0320d69e4e6b622d21a2a12a47e8ef73763"
+    },
+    {
+      "path": "engine/_internal/numpy-2.4.4.dist-info/licenses/numpy/_core/src/multiarray/dragon4_LICENSE.txt",
+      "size": 1441,
+      "sha256": "b0fd592d4ead563148e3977e7b589169d46a5ef2ff133c755a81af880a3fc919"
+    },
+    {
+      "path": "engine/_internal/numpy-2.4.4.dist-info/licenses/numpy/_core/src/npysort/x86-simd-sort/LICENSE.md",
+      "size": 1542,
+      "sha256": "a732977853530066790c42817087f4829b518dd98d340c916acbfd227e39d3cb"
+    },
+    {
+      "path": "engine/_internal/numpy-2.4.4.dist-info/licenses/numpy/_core/src/umath/svml/LICENSE",
+      "size": 1573,
+      "sha256": "585483905b13d4b42f800c55ba99e89d6e2e33ccd5f503e201c07531d148ff41"
+    },
+    {
+      "path": "engine/_internal/numpy-2.4.4.dist-info/licenses/numpy/fft/pocketfft/LICENSE.md",
+      "size": 1523,
+      "sha256": "8db000e158c162e7249787852d8c69764706502ccee725c06641b31c1e95c8af"
+    },
+    {
+      "path": "engine/_internal/numpy-2.4.4.dist-info/licenses/numpy/linalg/lapack_lite/LICENSE.txt",
+      "size": 2314,
+      "sha256": "19060ef465e1797d682ee0fc3081bd25ab1395e995e43d25c9d13c95d9a3cd6b"
+    },
+    {
+      "path": "engine/_internal/numpy-2.4.4.dist-info/licenses/numpy/ma/LICENSE",
+      "size": 1616,
+      "sha256": "d78dbb208b80d92b4d333e41a4baae50d12444f46e53199fa7726a91de6e2da7"
+    },
+    {
+      "path": "engine/_internal/numpy-2.4.4.dist-info/licenses/numpy/random/LICENSE.md",
+      "size": 3582,
+      "sha256": "b4bc2f4fa1c95778f1ed3dd8f14706bece399475b978f9f34b5d3cd72521b48a"
+    },
+    {
+      "path": "engine/_internal/numpy-2.4.4.dist-info/licenses/numpy/random/src/distributions/LICENSE.md",
+      "size": 2805,
+      "sha256": "cf5619f25b112d5ce7c896efffc8e610bcb345dfadcc19f2c1460aa48fff2c9e"
+    },
+    {
+      "path": "engine/_internal/numpy-2.4.4.dist-info/licenses/numpy/random/src/mt19937/LICENSE.md",
+      "size": 2986,
+      "sha256": "92c10699884321f1c2947fe2a70ab23b0fbf1507f756d89dd08f38c61fc3d4fa"
+    },
+    {
+      "path": "engine/_internal/numpy-2.4.4.dist-info/licenses/numpy/random/src/pcg64/LICENSE.md",
+      "size": 1176,
+      "sha256": "41190663b77bee5302386495a07b7eabfbfa571aa0ae2f11da6764162062fc4f"
+    },
+    {
+      "path": "engine/_internal/numpy-2.4.4.dist-info/licenses/numpy/random/src/philox/LICENSE.md",
+      "size": 1540,
+      "sha256": "322ac46d870c8aeead6c53adcccc839296fb3c8e456eae155081297daf7f8013"
+    },
+    {
+      "path": "engine/_internal/numpy-2.4.4.dist-info/licenses/numpy/random/src/sfc64/LICENSE.md",
+      "size": 1253,
+      "sha256": "28cad82ce1379dc529df30da78ec012d7d0d1d576b03ddcb93388aee53659f59"
+    },
+    {
+      "path": "engine/_internal/numpy-2.4.4.dist-info/licenses/numpy/random/src/splitmix64/LICENSE.md",
+      "size": 340,
+      "sha256": "454ec7350e478e037061850b67395753b425b1cb0a34bbc26290b020bf89d763"
+    },
+    {
+      "path": "engine/_internal/numpy-2.4.4.dist-info/METADATA",
+      "size": 6608,
+      "sha256": "8f9e04338ffa930868a2d157ce44f6e4cb7ac524b968fb13d04187a6ac575282"
+    },
+    {
+      "path": "engine/_internal/numpy-2.4.4.dist-info/RECORD",
+      "size": 112208,
+      "sha256": "6706a719dc50a5daddabfc6f98e108e58ec525b8ba8acd55d140c4031bcea45d"
+    },
+    {
+      "path": "engine/_internal/numpy-2.4.4.dist-info/REQUESTED",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "engine/_internal/numpy-2.4.4.dist-info/WHEEL",
+      "size": 85,
+      "sha256": "e743de01ba6503a3e4234858398a1e69c07d512d51e8482ec9f3a7b1c707d165"
+    },
+    {
+      "path": "engine/_internal/numpy.libs/libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+      "size": 20415488,
+      "sha256": "63c857e738469261263c764a36be9436ebdeaa272e340a828f42047a97131080"
+    },
+    {
+      "path": "engine/_internal/numpy.libs/msvcp140-a4c2229bdc2a2a630acdc095b4d86008.dll",
+      "size": 575056,
+      "sha256": "a4c2229bdc2a2a630acdc095b4d86008e5c3e3bc7773174354f3da4f5beb9cde"
+    },
+    {
+      "path": "engine/_internal/onnxruntime/capi/onnxruntime.dll",
+      "size": 17320800,
+      "sha256": "bbb4ff18db820c24ad6d9196ecdc7a62d6099268eaadf264813a23591d4d15cc"
+    },
+    {
+      "path": "engine/_internal/onnxruntime/capi/onnxruntime_providers_shared.dll",
+      "size": 21816,
+      "sha256": "844479db095b130f877d5b3da4b397b9752610b224f84c186487b7d0fbd90512"
+    },
+    {
+      "path": "engine/_internal/onnxruntime/capi/onnxruntime_pybind11_state.pyd",
+      "size": 17976632,
+      "sha256": "d1207006fd0a0c70902f8dad6b099c26db02890383d8b30d6fa5a6ffea6c8141"
+    },
+    {
+      "path": "engine/_internal/PIL/_avif.cp312-win_amd64.pyd",
+      "size": 7892480,
+      "sha256": "38b5ca8582752f4f25b4a68dede6653573c37697d9c8100a82e52ecde282e573"
+    },
+    {
+      "path": "engine/_internal/PIL/_imaging.cp312-win_amd64.pyd",
+      "size": 2589696,
+      "sha256": "6dfd10a98bc81a1999e2b5ddb8be8c1cfb9a2c8e10258c56a52ee0d8930d3d7f"
+    },
+    {
+      "path": "engine/_internal/PIL/_imagingcms.cp312-win_amd64.pyd",
+      "size": 269824,
+      "sha256": "46c59cf197b74954dfa01036d97938291573fa9ec339cd34f90fc7c870001cac"
+    },
+    {
+      "path": "engine/_internal/PIL/_imagingft.cp312-win_amd64.pyd",
+      "size": 2166272,
+      "sha256": "fe615fedf586c7206a74bedecddbf58623ffdf57e90ca2f8bca062aebae138c0"
+    },
+    {
+      "path": "engine/_internal/PIL/_imagingmath.cp312-win_amd64.pyd",
+      "size": 25600,
+      "sha256": "e1b3e6bc361fd8735df2c920c9878238dabaf797fbc13041ffaa26f635888d3a"
+    },
+    {
+      "path": "engine/_internal/PIL/_imagingtk.cp312-win_amd64.pyd",
+      "size": 14848,
+      "sha256": "b7de0c367e22ada46a61a156023cc0d30187b45946f4154e077d630f161e2f0e"
+    },
+    {
+      "path": "engine/_internal/PIL/_webp.cp312-win_amd64.pyd",
+      "size": 409600,
+      "sha256": "6af926fd1a58f3912b6f5e290ef37768c26017988bdd2217c0daa8e1107d4f71"
+    },
+    {
+      "path": "engine/_internal/pillow-12.2.0.dist-info/INSTALLER",
+      "size": 4,
+      "sha256": "ceebae7b8927a3227e5303cf5e0f1f7b34bb542ad7250ac03fbcde36ec2f1508"
+    },
+    {
+      "path": "engine/_internal/pillow-12.2.0.dist-info/licenses/LICENSE",
+      "size": 78014,
+      "sha256": "75bb81b58f9b39786eeb2e56a1eb829aae501042d49e1dc766ca187b6ce9656f"
+    },
+    {
+      "path": "engine/_internal/pillow-12.2.0.dist-info/METADATA",
+      "size": 8989,
+      "sha256": "500a4dcf2154f5291661ea4a9025898081d536c3026d506c648c31b68a7a66cc"
+    },
+    {
+      "path": "engine/_internal/pillow-12.2.0.dist-info/RECORD",
+      "size": 14223,
+      "sha256": "5ca67c7658addf6d693f38f146f0a72b6b7bbed52647f0c791a75fc9f53f9f9f"
+    },
+    {
+      "path": "engine/_internal/pillow-12.2.0.dist-info/REQUESTED",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "engine/_internal/pillow-12.2.0.dist-info/top_level.txt",
+      "size": 4,
+      "sha256": "ae266aae4fa1c99aa1e5fd59d19c228b774a7f112c07286ef5c53d20e0c5f8d6"
+    },
+    {
+      "path": "engine/_internal/pillow-12.2.0.dist-info/WHEEL",
+      "size": 101,
+      "sha256": "ad1e507ec59c665de6adae409920fb15dd1dcd0c59de51c2a43a3bd0891f0cae"
+    },
+    {
+      "path": "engine/_internal/pillow-12.2.0.dist-info/zip-safe",
+      "size": 2,
+      "sha256": "7eb70257593da06f682a3ddda54a9d260d4fc514f645237f5ca74b08f8da61a6"
+    },
+    {
+      "path": "engine/_internal/psutil/_psutil_windows.pyd",
+      "size": 67072,
+      "sha256": "e10b73d6e13a5ae2624630f3d8535c5091ef403db6a00a2798f30874938ee996"
+    },
+    {
+      "path": "engine/_internal/pyexpat.pyd",
+      "size": 201496,
+      "sha256": "b6670d91a76e9f00609752ab19aae0b1ebe00d24d9d8d22068989bbb24d0aa44"
+    },
+    {
+      "path": "engine/_internal/python3.dll",
+      "size": 68376,
+      "sha256": "d52baca085f88b40f30c855e6c55791e5375c80f60f94057061e77e33f4cad7a"
+    },
+    {
+      "path": "engine/_internal/python312.dll",
+      "size": 6916376,
+      "sha256": "93488fa7e631cc0a2bd808b9eee8617280ee9b6ff499ab424a1a1cbf24d77dc7"
+    },
+    {
+      "path": "engine/_internal/pywin32_system32/pywintypes312.dll",
+      "size": 136192,
+      "sha256": "b29e4098f9f53f05e3281636d079de58b05a26c03669cea4ec1673e51750fa31"
+    },
+    {
+      "path": "engine/_internal/rawpy/_rawpy.cp312-win_amd64.pyd",
+      "size": 218112,
+      "sha256": "8e19473e0987ef0e5d72e4f3c09d406f55d3cfdb6e76faa419f0401cc141c0dd"
+    },
+    {
+      "path": "engine/_internal/rawpy/raw_r.dll",
+      "size": 1933312,
+      "sha256": "135e783d3f13a457ffaef2b31ac659e7386082a587718090f8f5cf416f029645"
+    },
+    {
+      "path": "engine/_internal/rawpy/vcomp140.dll",
+      "size": 193152,
+      "sha256": "55aba23cdcd6484fbb06f4155b8ca75adfce7a881f10afd0c49457165e677164"
+    },
+    {
+      "path": "engine/_internal/rawpy-0.27.1.dist-info/INSTALLER",
+      "size": 4,
+      "sha256": "ceebae7b8927a3227e5303cf5e0f1f7b34bb542ad7250ac03fbcde36ec2f1508"
+    },
+    {
+      "path": "engine/_internal/rawpy-0.27.1.dist-info/licenses/LICENSE",
+      "size": 1101,
+      "sha256": "d8bca797bbaab143cf2986c0285118db81aff769f500e9af0c2a5bb74407e9f3"
+    },
+    {
+      "path": "engine/_internal/rawpy-0.27.1.dist-info/licenses/LICENSE.LibRaw",
+      "size": 24847,
+      "sha256": "90629b9cbfd2b66ce27a78bbc8c9a302e66f57c0067e1205a4943ae9c2ab0311"
+    },
+    {
+      "path": "engine/_internal/rawpy-0.27.1.dist-info/METADATA",
+      "size": 10000,
+      "sha256": "1d7f3fe2f9a9ea44847be5d2370650420a69864b098fb7ae62077ccea4d1ca1f"
+    },
+    {
+      "path": "engine/_internal/rawpy-0.27.1.dist-info/RECORD",
+      "size": 1653,
+      "sha256": "aab032345dc38d1a626d2f10a5015cd8b87c21ce2d32bf6d87d8b2cd64ba29f3"
+    },
+    {
+      "path": "engine/_internal/rawpy-0.27.1.dist-info/REQUESTED",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "engine/_internal/rawpy-0.27.1.dist-info/top_level.txt",
+      "size": 6,
+      "sha256": "ee3b106a3bea59cbdb173d66c7dcf23c2fcc8c23d9bd7009fc7e1c1983819fa9"
+    },
+    {
+      "path": "engine/_internal/rawpy-0.27.1.dist-info/WHEEL",
+      "size": 101,
+      "sha256": "547199cfb31450578b25778938b82f94e190e69e750e6c850e3b6d657fa1a30f"
+    },
+    {
+      "path": "engine/_internal/rpds/rpds.cp312-win_amd64.pyd",
+      "size": 552960,
+      "sha256": "8b4b68653e93ffc61124c96fa85fcb3c4f9c8e3059a3706dcfc671af1f0caa1c"
+    },
+    {
+      "path": "engine/_internal/runtime/ffmpeg/ffmpeg.exe",
+      "size": 105423872,
+      "sha256": "3256173f3f8bffd7df12227c68adf68025edb1832273a9530688a7bb1ed8edec"
+    },
+    {
+      "path": "engine/_internal/runtime/ffmpeg/ffprobe.exe",
+      "size": 105221120,
+      "sha256": "f0d36ecbbdd3bcfac3efa078c96c7271c2e68b3810595552ac3b7f17e9a65c52"
+    },
+    {
+      "path": "engine/_internal/runtime/ffmpeg/LICENSE",
+      "size": 35147,
+      "sha256": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903"
+    },
+    {
+      "path": "engine/_internal/runtime/ffmpeg/source.json",
+      "size": 484,
+      "sha256": "6e0c8806d43919d755ea25c7dff06379e55f7b3fc855ea8e8219d8e7aadcbf33"
+    },
+    {
+      "path": "engine/_internal/runtime/ffmpeg-compat/ffmpeg.exe",
+      "size": 101457920,
+      "sha256": "228d7a8556258de907fdb55f36850078ebc7680b84ec30d84ea02e99bec1d1eb"
+    },
+    {
+      "path": "engine/_internal/runtime/ffmpeg-compat/ffprobe.exe",
+      "size": 101251072,
+      "sha256": "0fde260f5abd35c9cafd96f594cc76365a780c1b73a90e35b6a3409ea1db1bf0"
+    },
+    {
+      "path": "engine/_internal/runtime/ffmpeg-compat/LICENSE",
+      "size": 35147,
+      "sha256": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903"
+    },
+    {
+      "path": "engine/_internal/runtime/ffmpeg-compat/README.txt",
+      "size": 41429,
+      "sha256": "af90ccd9d705c74cadb9c36918664353de0533eade19f7ccd5cbe6081c262001"
+    },
+    {
+      "path": "engine/_internal/runtime/ffmpeg-compat/source.json",
+      "size": 698,
+      "sha256": "1e9b54e09a5c809a7d11f5117ee75232e43b505e0956e19ec69221ce84899e7e"
+    },
+    {
+      "path": "engine/_internal/runtime/gpu/cudart64_12.dll",
+      "size": 583680,
+      "sha256": "760c38928bbe5759f7b31ed6692599eb7ec83cedd5702e84c2b72028a89837e1"
+    },
+    {
+      "path": "engine/_internal/runtime/gpu/licenses/nvidia_cuda_nvrtc_cu12-License.txt",
+      "size": 59262,
+      "sha256": "ad6f5853fba0ca0d159d0f58d49ae49830c2f8c93f7a92648b9ce90adb4c6ccd"
+    },
+    {
+      "path": "engine/_internal/runtime/gpu/licenses/nvidia_cuda_runtime_cu12-License.txt",
+      "size": 59262,
+      "sha256": "ad6f5853fba0ca0d159d0f58d49ae49830c2f8c93f7a92648b9ce90adb4c6ccd"
+    },
+    {
+      "path": "engine/_internal/runtime/gpu/licenses/nvidia_nvjpeg_cu12-License.txt",
+      "size": 59262,
+      "sha256": "ad6f5853fba0ca0d159d0f58d49ae49830c2f8c93f7a92648b9ce90adb4c6ccd"
+    },
+    {
+      "path": "engine/_internal/runtime/gpu/nvjpeg64_12.dll",
+      "size": 7664128,
+      "sha256": "26559f5319f6b947912daded08680ab248d5af7867529402af050b38b53193ff"
+    },
+    {
+      "path": "engine/_internal/runtime/gpu/nvrtc-builtins64_129.dll",
+      "size": 7217664,
+      "sha256": "c405226b0b394ed8bdc593bb1419b94a989f93248ed2873e8f2e0e27c1688ca1"
+    },
+    {
+      "path": "engine/_internal/runtime/gpu/nvrtc64_120_0.dll",
+      "size": 89832960,
+      "sha256": "0cc63349fedffeec1660b30955e8028b6e4e4c26cf1e41c56dc4569fd5eca82c"
+    },
+    {
+      "path": "engine/_internal/runtime/gpu/source.json",
+      "size": 1294,
+      "sha256": "33fbf5bed8a1b822c7647c1ca80b7b44b4963dd4b02b86ded33f5de74fe81217"
+    },
+    {
+      "path": "engine/_internal/select.pyd",
+      "size": 31000,
+      "sha256": "dca5e6d39c5094ce599143cb82f6d8470f0c2a4ce4443499e73f32ed13333fd0"
+    },
+    {
+      "path": "engine/_internal/simplejson/_speedups.cp312-win_amd64.pyd",
+      "size": 46592,
+      "sha256": "c5c62beed9452692e0062e98e07d3537c1ab17ca252cff5f53f22d1990681192"
+    },
+    {
+      "path": "engine/_internal/sqlite3.dll",
+      "size": 1540376,
+      "sha256": "2f9c9940e87840ff1b5c4922d8b73c7302d1b12badc860990dfebdf77b4140ee"
+    },
+    {
+      "path": "engine/_internal/third-party/PaddleOCR-LICENSE.txt",
+      "size": 11577,
+      "sha256": "8ae60061cdd89d5b70a5d71b2816ecc0da0bee21947688bff4b39928512a45af"
+    },
+    {
+      "path": "engine/_internal/ucrtbase.dll",
+      "size": 1362264,
+      "sha256": "3239227d27667ba20d10a880751924e5719de0078f9fce232d149d383f7681f6"
+    },
+    {
+      "path": "engine/_internal/unicodedata.pyd",
+      "size": 1138456,
+      "sha256": "64a162d6b11ba10cb11509f3cc445f17beb7acfd064f030b4d59faa1c9894b29"
+    },
+    {
+      "path": "engine/_internal/vcruntime140.dll",
+      "size": 178616,
+      "sha256": "d1f4225df2cd877dbf130d5668a021dce3f94118455ff5ec952061c30afc9ce7"
+    },
+    {
+      "path": "engine/_internal/vcruntime140_1.dll",
+      "size": 50112,
+      "sha256": "a7146c08f89fe5b04541ab507cdb59ff7b44534d4ba3c668a426c6450a03434e"
+    },
+    {
+      "path": "engine/_internal/win32/win32pdh.pyd",
+      "size": 34816,
+      "sha256": "1ef0fe127ad3f8ae505208acc262286ca07d243da9aaa09ed0714add5bbe48b2"
+    },
+    {
+      "path": "engine/_internal/yaml/_yaml.cp312-win_amd64.pyd",
+      "size": 253952,
+      "sha256": "4fd0e84f50261ed0886cffcdd8008b055af3352546e649c3d741b50eae1f9b5f"
+    },
+    {
+      "path": "engine/_internal/更新系统/update-config.json",
+      "size": 403,
+      "sha256": "7a86a9ad7861dfd52237da5d37ee98bf9780eb6446ea42ed3bf21154519e5997"
+    },
+    {
+      "path": "engine/_internal/演示方案/app.js",
+      "size": 51119,
+      "sha256": "60fd2d310e0edb0004499d93ff82e43dbd0f84e6041528ef523b8e95579e9336"
+    },
+    {
+      "path": "engine/_internal/演示方案/archive-analysis.css",
+      "size": 4448,
+      "sha256": "8921cae02ef43d708db3c422bc9e833d138a69172c0d9d3246b58b2dd9ee2af8"
+    },
+    {
+      "path": "engine/_internal/演示方案/archive-analysis.js",
+      "size": 13750,
+      "sha256": "8a85e7845d8d8e39d7cdd22f2f05a2f8e237c1c130bc2d3b489bfa09bcefb334"
+    },
+    {
+      "path": "engine/_internal/演示方案/asset-analysis.js",
+      "size": 33819,
+      "sha256": "3d18e2b9193334a8b719fdfe7c9f1a45d791347ea808a2b19665a64e55298201"
+    },
+    {
+      "path": "engine/_internal/演示方案/asset-library.js",
+      "size": 75137,
+      "sha256": "f52680b3bebf694405c54d707ec9c5171573b37b6241113f1c6fcfd25db7185f"
+    },
+    {
+      "path": "engine/_internal/演示方案/asset-loading.js",
+      "size": 4882,
+      "sha256": "f1c70a12d24e107a4f7f736e0d3bfebe754c11535062bdcec5b65767c08786d5"
+    },
+    {
+      "path": "engine/_internal/演示方案/asset-metadata.js",
+      "size": 92800,
+      "sha256": "bfea81acb8060916bf86032a488651c7763502fe4a11245eaeb00791a3306f28"
+    },
+    {
+      "path": "engine/_internal/演示方案/asset-retrieval.css",
+      "size": 42472,
+      "sha256": "840e0581bbb83ab08e8ee2080c060248460fccb335b3d97d60e05e611df44769"
+    },
+    {
+      "path": "engine/_internal/演示方案/asset-retrieval.js",
+      "size": 52723,
+      "sha256": "c538d7f78238616670d60c7aeea0769bdb603d60e305c625b09a4da34edb4cbc"
+    },
+    {
+      "path": "engine/_internal/演示方案/asset-viewer.js",
+      "size": 42037,
+      "sha256": "828ec443884419d57ef1194a9e5f6a5a8d3b3f8e02b7bead742457344dfcab70"
+    },
+    {
+      "path": "engine/_internal/演示方案/asset-workspace.css",
+      "size": 67270,
+      "sha256": "b0a87129ec9db8d7082361c6847a103c37f51baac59f9a51dc172bb007a12dfa"
+    },
+    {
+      "path": "engine/_internal/演示方案/assets/camera-framing.svg",
+      "size": 1827,
+      "sha256": "46d990e00ec23bc48165f98bbe8b24f969ea37c9513dae87ed7cfdc25db28256"
+    },
+    {
+      "path": "engine/_internal/演示方案/assets/camera-iris-still.svg",
+      "size": 1501,
+      "sha256": "a41dc6c249a94cb485ee261bdf0b67841d22dc260fb89946b112cb6192019738"
+    },
+    {
+      "path": "engine/_internal/演示方案/assets/camera-iris.svg",
+      "size": 2269,
+      "sha256": "8d879c4f77c3b3a0ef3b9206cd1763254620157db6f06751c4a6ce2007d7a2ce"
+    },
+    {
+      "path": "engine/_internal/演示方案/assets/camera-transfer-still.svg",
+      "size": 1618,
+      "sha256": "2f242e6b542aed1ab5952fdafb24eb57c14c15361ab786b1cf7a073f99e65dae"
+    },
+    {
+      "path": "engine/_internal/演示方案/assets/camera-transfer.svg",
+      "size": 2263,
+      "sha256": "9a3fca1c958a6a609c6023674c5afa357ca1e7a97159402f48ca7a7bb50793a4"
+    },
+    {
+      "path": "engine/_internal/演示方案/assets/demo-data.js",
+      "size": 22,
+      "sha256": "abb7da8bf12cb417a5ca3acd956cd3f56d8852010273adff9a734c9013c12d3c"
+    },
+    {
+      "path": "engine/_internal/演示方案/assistant-settings.js",
+      "size": 18812,
+      "sha256": "c7bea2c1e1337501c761ab4086c8a59ca1a45afc3dd4847d9daa3a5965460911"
+    },
+    {
+      "path": "engine/_internal/演示方案/boot.js",
+      "size": 3873,
+      "sha256": "aa76fee53e17c59ad200a48890db9774c960754bbe062b81f2bc07453fd27fb5"
+    },
+    {
+      "path": "engine/_internal/演示方案/brand.svg",
+      "size": 759,
+      "sha256": "246b3f1766391f245e6df4e1e912bd435bdd82c81f6bd3b7692d59f506ceaf43"
+    },
+    {
+      "path": "engine/_internal/演示方案/classic-themes.css",
+      "size": 17883,
+      "sha256": "6e06e4d4fb0f901a98bc9b365dc18aebd4f4279aa68ddca396a49fad1026b436"
+    },
+    {
+      "path": "engine/_internal/演示方案/component-ui.js",
+      "size": 4534,
+      "sha256": "82a17d789ce37111c32557dda03d84d4fb09b84b511eaed6806f0ce99b4f4b30"
+    },
+    {
+      "path": "engine/_internal/演示方案/desktop-lifecycle.css",
+      "size": 2812,
+      "sha256": "9efb609c1c27e89f4d82838734373ecd5034790fcc7a715aa338809bcb606fa9"
+    },
+    {
+      "path": "engine/_internal/演示方案/desktop.js",
+      "size": 7228,
+      "sha256": "663213fec8f8bdd39e6d5a6fbca38bd85a217043631355e94b0927191f1a9d79"
+    },
+    {
+      "path": "engine/_internal/演示方案/folder-archive.css",
+      "size": 8792,
+      "sha256": "9689c8c5830cb098788b2ec1f8e79ada463165c2ad011ad09130d0b11b02e4f1"
+    },
+    {
+      "path": "engine/_internal/演示方案/folder-archive.js",
+      "size": 21263,
+      "sha256": "b94ac40b573bbf208333374ccb5d8e95a1583f3c65c53d821c4504120ede6349"
+    },
+    {
+      "path": "engine/_internal/演示方案/folder-watch.js",
+      "size": 21602,
+      "sha256": "67cd2c5297cb6dfd0c7060c5ffe8813eea12da043a26afff74dcc45ccff33cfd"
+    },
+    {
+      "path": "engine/_internal/演示方案/formal.js",
+      "size": 26883,
+      "sha256": "526a2f418078f093d4f523c129eab7ab3d8e5de2dc0888715a783fcc4c207ab1"
+    },
+    {
+      "path": "engine/_internal/演示方案/image-viewer.js",
+      "size": 6003,
+      "sha256": "ab77a4bd9c2d9866d44543942d9bbbc195799eb3d1b04435cf627ae83f72fcc1"
+    },
+    {
+      "path": "engine/_internal/演示方案/index.html",
+      "size": 14251,
+      "sha256": "0f917976bf632bff3d8c289ba476a627537c98df2872f52e0d27e79192ce8ace"
+    },
+    {
+      "path": "engine/_internal/演示方案/inventory.css",
+      "size": 7640,
+      "sha256": "fbdface25ff0492d9879f2d56c11125b5458ef50f7ff8a1738505cc930e02bd4"
+    },
+    {
+      "path": "engine/_internal/演示方案/inventory.js",
+      "size": 10768,
+      "sha256": "998ec7efce818736f393688c5ddf695b23e8501e846a5d321d1eeda7b37e00b4"
+    },
+    {
+      "path": "engine/_internal/演示方案/lan-capture-sync.css",
+      "size": 4071,
+      "sha256": "069c8d652160f9e1a638736dc25e4876a242ba132cba3f83c798331af64ca0e6"
+    },
+    {
+      "path": "engine/_internal/演示方案/lan-capture-sync.js",
+      "size": 11729,
+      "sha256": "9b010cf15c2829504fcbce7ec0bbd5e01b3b08f3f9b02109fae815674892276c"
+    },
+    {
+      "path": "engine/_internal/演示方案/lan-quick-search.css",
+      "size": 7828,
+      "sha256": "2395a01b26c0e8ff4982676a8f340ac991236492e7373f6c5a8efdaf74eea1b6"
+    },
+    {
+      "path": "engine/_internal/演示方案/lan-quick-search.js",
+      "size": 10030,
+      "sha256": "b5f5bcf0620f40b15f62de860d79e9a43580c95f65fcee07e4cb4f3a8b17fdd4"
+    },
+    {
+      "path": "engine/_internal/演示方案/lan-sharing.js",
+      "size": 3411,
+      "sha256": "4adfd6c52da5cbd6d0be85f971bafc27fc1359852579fec87c02b943157dc434"
+    },
+    {
+      "path": "engine/_internal/演示方案/lan-workspace.css",
+      "size": 23026,
+      "sha256": "7a082dd0d95bafc9cc0ce4534f54c6f8b919cae3d502efef9d3672f8693e87b5"
+    },
+    {
+      "path": "engine/_internal/演示方案/lan-workspace.html",
+      "size": 8542,
+      "sha256": "2ab0a2e7e92b8f81b56a62e56304c699a8c2e88176e0871b99f80074121fcef0"
+    },
+    {
+      "path": "engine/_internal/演示方案/lan-workspace.js",
+      "size": 28927,
+      "sha256": "bdffe0ae3afc19ad099c6370f38488b065964cdbdbf3656900fa8bf7782c5ad8"
+    },
+    {
+      "path": "engine/_internal/演示方案/motion.css",
+      "size": 4802,
+      "sha256": "70d53f73ee8665fa11f7ded90e95217112e4c9622f5a42ff0304c3ec3e754477"
+    },
+    {
+      "path": "engine/_internal/演示方案/mouse-remote.js",
+      "size": 15048,
+      "sha256": "0a9fdc6bc4b45df1fcbe2888d000f073c731a58eb8fa73765a702163363e735f"
+    },
+    {
+      "path": "engine/_internal/演示方案/multidimensional-workflow.js",
+      "size": 10182,
+      "sha256": "60ff119b9a4f1a492563945cc37896a90821bcc2a33fcfc169dc64eba31b5a4d"
+    },
+    {
+      "path": "engine/_internal/演示方案/ocr-feedback.css",
+      "size": 5450,
+      "sha256": "f4bb269b4f1aeab5c0e17b6d7ef85e852aff02d46da05f468768eff8791809ae"
+    },
+    {
+      "path": "engine/_internal/演示方案/ocr-feedback.js",
+      "size": 14310,
+      "sha256": "1b1a7e73df28a425ba3abf6115942b6beabd62f1d04d4cb044b617fb54701972"
+    },
+    {
+      "path": "engine/_internal/演示方案/preview-empty.css",
+      "size": 1773,
+      "sha256": "45b09d5510aa2695f8057f9ecb13878b858e8827069e5a28888ce7a657b91bf2"
+    },
+    {
+      "path": "engine/_internal/演示方案/preview-empty.js",
+      "size": 1384,
+      "sha256": "8f7a43dc4866dfe0bd5a123836c74a5467e0d64dcd74ab11338ef815d5f4027d"
+    },
+    {
+      "path": "engine/_internal/演示方案/preview-histogram.css",
+      "size": 2874,
+      "sha256": "e416174e3f78df56ee1a916273f3aa1a04a908dde1d37a3d874585f26da4fc61"
+    },
+    {
+      "path": "engine/_internal/演示方案/preview-histogram.js",
+      "size": 10880,
+      "sha256": "ff2a6ae18983d111d9b6b4d80069a1b504aaf3ae6fbd611e9ac7e62162688710"
+    },
+    {
+      "path": "engine/_internal/演示方案/quick-search-appearance.js",
+      "size": 1844,
+      "sha256": "cf8f52b6a7d35574cce9eab4a68d4fe8c25e37990cb6ddb1e845c2c39404dff9"
+    },
+    {
+      "path": "engine/_internal/演示方案/quick-search.html",
+      "size": 920,
+      "sha256": "3594b09803597eaacba9ec46ab95efc5c39911a37f1826ea8f3f76621af8183b"
+    },
+    {
+      "path": "engine/_internal/演示方案/raw-reconcile.js",
+      "size": 8299,
+      "sha256": "c8e1c240207b9607c47d6c5e7b4b4425023ff1dbfeb365ffbb85b3bfd7a49a33"
+    },
+    {
+      "path": "engine/_internal/演示方案/receiving-preview.js",
+      "size": 10179,
+      "sha256": "f0a4248e3504ed157a0830c59b80ce13c0259c6ea0bf1a0b1eff78f8847e6dc8"
+    },
+    {
+      "path": "engine/_internal/演示方案/reference-search.css",
+      "size": 2836,
+      "sha256": "c027e4f1c733005b79b598abf486a437e4b98edd6a792badd59da9bf0ffa4bfb"
+    },
+    {
+      "path": "engine/_internal/演示方案/reference-search.js",
+      "size": 6780,
+      "sha256": "801d7e68a5d0b80d2b49c413ddca2d7a4cf81518294862e898d64abe87f8511d"
+    },
+    {
+      "path": "engine/_internal/演示方案/selection-folders.css",
+      "size": 1484,
+      "sha256": "f3bfb3a138024177f6ac37208f5e59d5120608a24c1fe09fd30ae23a69a0ca33"
+    },
+    {
+      "path": "engine/_internal/演示方案/selection-folders.js",
+      "size": 7896,
+      "sha256": "9c80578142943b28e0fd79cb9914f415e4929fbbc0a9031d76d7730c47478ca9"
+    },
+    {
+      "path": "engine/_internal/演示方案/session-paging.js",
+      "size": 5798,
+      "sha256": "507ac03fb4514640524e5fcaf3da47e9bb974f938e93d7a3a0d20c596cd89eaf"
+    },
+    {
+      "path": "engine/_internal/演示方案/shooting-export.css",
+      "size": 4787,
+      "sha256": "d3f02e60b443f76460a8a92cd7380bb0dac26e4577f95732f11f5fc72d69b434"
+    },
+    {
+      "path": "engine/_internal/演示方案/shooting-export.js",
+      "size": 11038,
+      "sha256": "e1450e051ab27035f8f7f22fad9664e0aa76c3d7161b65f3da770da6103fc6c7"
+    },
+    {
+      "path": "engine/_internal/演示方案/sidebar-resize.js",
+      "size": 6453,
+      "sha256": "22d82d040ae0594587e7e154638c3f54272dbabc637ce8440c35e762778030a2"
+    },
+    {
+      "path": "engine/_internal/演示方案/sku-media-pool.css",
+      "size": 12691,
+      "sha256": "9243fbc137750c4da75da689a50357fa9528cba78e5ee078839aa63b12903252"
+    },
+    {
+      "path": "engine/_internal/演示方案/sku-media-pool.js",
+      "size": 28780,
+      "sha256": "2e60b966d68c0800a5f1d7a0fada8eed2dfc54a17729d6f4e7de398a6e08d46a"
+    },
+    {
+      "path": "engine/_internal/演示方案/sku-reconciliation.js",
+      "size": 82294,
+      "sha256": "5a56b11f48dd8277cc9efbac833d819e315048dedbd9154861fdf1df8263595d"
+    },
+    {
+      "path": "engine/_internal/演示方案/split-capture.css",
+      "size": 33379,
+      "sha256": "9517e3e9fde405ea9bafe08ea39ab1c9233e9a73ec3885f45b80079a3752877a"
+    },
+    {
+      "path": "engine/_internal/演示方案/split-capture.js",
+      "size": 85056,
+      "sha256": "328a1bdab3405c880040934b3f6fe4863f425eaa9239ba42152dede5cb80c9a1"
+    },
+    {
+      "path": "engine/_internal/演示方案/startup-visual.js",
+      "size": 619,
+      "sha256": "ab9f3d3d8dec959b2c5576ca2a2aedfcba0472ec37327b101bd58d5c94933960"
+    },
+    {
+      "path": "engine/_internal/演示方案/startup.css",
+      "size": 3367,
+      "sha256": "f8455d55c4fd8c2a010d177bd739b28ee543c21f8f9987e82c4538c2b5d8e4e8"
+    },
+    {
+      "path": "engine/_internal/演示方案/startup.svg",
+      "size": 6788,
+      "sha256": "a5d00db9d083d831e3778027edfaa35132adf35e5ce4f8c02d9a4406ab28fc26"
+    },
+    {
+      "path": "engine/_internal/演示方案/style.css",
+      "size": 63115,
+      "sha256": "f90a8b3903c1fb70cbecc1be3e61726d503b18a1dea87d0be6c34fc11361892e"
+    },
+    {
+      "path": "engine/_internal/演示方案/task-status.js",
+      "size": 4805,
+      "sha256": "3ca04e61241d586a84a94eb72e6edd964254f98eb9fc09d6ef06d77165767556"
+    },
+    {
+      "path": "engine/_internal/演示方案/theme.css",
+      "size": 7012,
+      "sha256": "f70a0ace9a61f8c9a49b1374224c0e53654b714bd0cf5fe80a2cfa00fa49c998"
+    },
+    {
+      "path": "engine/_internal/演示方案/theme.js",
+      "size": 4317,
+      "sha256": "9c5773a8ae62c9051bbdaf4d60e5e8e457712512d198df1f266d075ab587c5e1"
+    },
+    {
+      "path": "engine/_internal/演示方案/toolbar-layout.css",
+      "size": 19330,
+      "sha256": "b62c86c9e43f15b4fe69292c8b1e1d52e4faa65ccd3a126cb5489542fdffb4c1"
+    },
+    {
+      "path": "engine/_internal/演示方案/update.js",
+      "size": 3873,
+      "sha256": "f58b1f3034c056950a3fae9353ae59d8334e8234b32a11d4d7554cb1862abca7"
+    },
+    {
+      "path": "engine/_internal/演示方案/view-cache.js",
+      "size": 10376,
+      "sha256": "9c4ca4989626b03d598096a20aab32c904a9f845d477275ac9a44c44f7ed59de"
+    },
+    {
+      "path": "engine/_internal/演示方案/view-menu.css",
+      "size": 2500,
+      "sha256": "3089ddcc2525e9f4222619aa35dbad8b551faf6ec41a699797fca8a59bb05397"
+    },
+    {
+      "path": "engine/_internal/演示方案/workbench-layout.js",
+      "size": 35453,
+      "sha256": "c47f9ed680b64d83aa9ae9df244c5723d10b5554a92bb4db5b6d0af9fd6add8c"
+    },
+    {
+      "path": "engine/_internal/演示方案/workbench-ui.js",
+      "size": 15324,
+      "sha256": "6c14746df54c9081f31d92d60852468c5c58455cb1380ae368022db3634247b2"
+    },
+    {
+      "path": "engine/_internal/演示方案/workbench.css",
+      "size": 17589,
+      "sha256": "69cc4357abb82dbcd48da870395cf61d44d888fc4f808f35a4b3898100b4b714"
+    },
+    {
+      "path": "engine/framekeep-engine.exe",
+      "size": 8123283,
+      "sha256": "b082c094902de5143b1a7a7d58fa1fdfa4a02905fbb0f56306dd78f9b01daabc"
+    },
+    {
+      "path": "FramekeepBridge.lrplugin/BridgeCore.lua",
+      "size": 13620,
+      "sha256": "0d1146efce506d88c57f057bef50ffaca315e82f8dd59380eec0db6ccea2b489"
+    },
+    {
+      "path": "FramekeepBridge.lrplugin/Connect.lua",
+      "size": 268,
+      "sha256": "06692ec7886df597873b39c9d470024e9619e72d2f2eb57e953dc501e6392afa"
+    },
+    {
+      "path": "FramekeepBridge.lrplugin/Disconnect.lua",
+      "size": 30,
+      "sha256": "9892f223909fa1f7d992b2b1b3b6041d1ffdf60924d5157d750d9434f721b84c"
+    },
+    {
+      "path": "FramekeepBridge.lrplugin/Import.lua",
+      "size": 265,
+      "sha256": "49660208433c05e9cb05ccfe12893687b5b12dd60b45c00633f613b38c65d771"
+    },
+    {
+      "path": "FramekeepBridge.lrplugin/Info.lua",
+      "size": 665,
+      "sha256": "6df2c312be2b578e699079fdc64f685676056f1bbf4a00775995a25f63f14f7d"
+    },
+    {
+      "path": "FramekeepBridge.lrplugin/Init.lua",
+      "size": 135,
+      "sha256": "cd8253244dda6ab6ffc56ee547b4a3ab75d4ecb28fb56c2ad44aae2b8eeec42c"
+    },
+    {
+      "path": "FramekeepBridge.lrplugin/Json.lua",
+      "size": 4869,
+      "sha256": "9b5b55684d3cda63c2cdc129d1a7b07a3108a52a4ceb677c231f559bad0f2ff5"
+    },
+    {
+      "path": "FramekeepBridge.lrplugin/README.md",
+      "size": 1515,
+      "sha256": "b494333ae52cc8ba1173a3e3ae5ed1351c87af12561a7eb523ec6b8f83602c21"
+    },
+    {
+      "path": "FramekeepBridge.lrplugin/Shutdown.lua",
+      "size": 30,
+      "sha256": "9892f223909fa1f7d992b2b1b3b6041d1ffdf60924d5157d750d9434f721b84c"
+    },
+    {
+      "path": "FramekeepBridge.lrplugin/Undo.lua",
+      "size": 253,
+      "sha256": "f3a837aace70eb080f763ba67c44dab56594aff17d5495c83fcdf23b35d550a2"
+    },
+    {
+      "path": "runtime/everything/Everything32.dll",
+      "size": 88232,
+      "sha256": "1ffe69d856a8a071a7531d54d7b05ae04a87814b812e649521a67a606c7f93e0"
+    },
+    {
+      "path": "runtime/everything/Everything64.dll",
+      "size": 91304,
+      "sha256": "81b5be18126acd2c2b913f8f4a821e476b18393cdd3debd03387c50afd8db88f"
+    },
+    {
+      "path": "runtime/everything/LICENSE-SDK.txt",
+      "size": 1227,
+      "sha256": "fb488b46330337ec6c88827685e6a1b695c3fb05b2396e8c44d91b715ff4acc8"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool.exe",
+      "size": 58368,
+      "sha256": "68c079c32fdae0d6c7130e9a5fb73f8ac9dabdf9ab8da312da4f6c549d6d3385"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/exiftool.pl",
+      "size": 205638,
+      "sha256": "702672cfad902cb9a4ffedcbe982c17f951822695a35c93fb40c5adba383da09"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Archive/Zip/Archive.pm",
+      "size": 44937,
+      "sha256": "77b1f447970ea0aed5152a20309e3c8c30d8fe50ad4c5a1148d44bce94d6eb27"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Archive/Zip/DirectoryMember.pm",
+      "size": 1982,
+      "sha256": "f459d4f366519ec6542aaaeeefba6d269f02296e9ad3f55d489b6f68650d06c7"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Archive/Zip/FileMember.pm",
+      "size": 1338,
+      "sha256": "33e67636caa38c1dc32e6b6d1828027f759a620ea105d867419ac1c848c098de"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Archive/Zip/Member.pm",
+      "size": 49269,
+      "sha256": "9f903935348393eeaf47be3e95d5a039943a4cdba0ef8676de6667f6d1276e7a"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Archive/Zip/NewFileMember.pm",
+      "size": 2186,
+      "sha256": "ddb18a6f26e62072f466fedd894db02e2ad5efbe65f176e7ed0b277ab8b54f2b"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Archive/Zip/StringMember.pm",
+      "size": 1759,
+      "sha256": "61da4281d833a1620b88ddc34a21ecf4a4e36892c6c649613abd0dfad031a982"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Archive/Zip/ZipFileMember.pm",
+      "size": 16212,
+      "sha256": "3c030c75d318925265aa04720d947f80701bdd2dd5b07122d702d05c9fd6eaf9"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Archive/Zip.pm",
+      "size": 72417,
+      "sha256": "2025ab80c717e8b4cbdc393ee36aaf3c18edf53e4105f6626ef08c8e563a3db9"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/auto/B/B.xs.dll",
+      "size": 80384,
+      "sha256": "29acb321d887ae5c2251c8d4d69f2aec7bc8d5ddd51279f738da0d49974883ea"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/auto/Compress/Raw/Bzip2/Bzip2.xs.dll",
+      "size": 107008,
+      "sha256": "61895e2854c95814aa62491f9aa84af968bcb78cf1c695f943ba85aa20a9949c"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/auto/Compress/Raw/Lzma/autosplit.ix",
+      "size": 96,
+      "sha256": "60952f5005bc10f42683da0530fe6ec7a3eef461c1c66fb06add42f0f0a60bc5"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/auto/Compress/Raw/Lzma/Lzma.xs.dll",
+      "size": 51712,
+      "sha256": "1abc3aae3a51618b1fdb91c4201f478368a1173a5930ace283ee7debe7c6dfc2"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/auto/Compress/Raw/Zlib/Zlib.xs.dll",
+      "size": 139776,
+      "sha256": "14989f765eabe2b0eac205fdcba675d83853bb20e85b0a7efb1574bc5fce31d9"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/auto/CryptX/CryptX.xs.dll",
+      "size": 912384,
+      "sha256": "b1906a0514a2e970464fb07fe54762e0495e90c1f1dfaaae7e7f59c642e8e626"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/auto/Cwd/Cwd.xs.dll",
+      "size": 23040,
+      "sha256": "7d26a2568eff0769e37acc3e5d1746878dd6be40bf82fe921c693508267cf184"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/auto/Data/Dumper/Dumper.xs.dll",
+      "size": 65536,
+      "sha256": "f9006622a076acc6cb2d7abf1a6887546cd83824dbb6ba0cd56c946f3446a3ee"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/auto/Digest/MD5/MD5.xs.dll",
+      "size": 25088,
+      "sha256": "cc22eba3612c5f39694769637777bcf50188ba8b1b070a368b202841f40d6526"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/auto/Digest/SHA/SHA.xs.dll",
+      "size": 47616,
+      "sha256": "4f92b834957dac8f553f53dd32fe20de198337a4ebfcf412b378e2ac20e37a57"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/auto/Encode/Encode.xs.dll",
+      "size": 67072,
+      "sha256": "92c0c5714bca1c56a7e1db68aec152b7dbd31e94d5134e7d0564d005a0c9718d"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/auto/Fcntl/Fcntl.xs.dll",
+      "size": 23552,
+      "sha256": "77a850b7c59f732a92fa67f4b340fba6a23d51a83b01f4586d71e3484937efd7"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/auto/File/Glob/Glob.xs.dll",
+      "size": 30208,
+      "sha256": "aa6e4119bb1e4e617387ca98a918d6e2562565f8662790edd29cdd9c04b8a771"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/auto/IO/Compress/Brotli/Brotli.xs.dll",
+      "size": 714752,
+      "sha256": "7a2d367a0ddea0c422647b85f51a43482679826d64b7616212d06bf3d3ef2b1e"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/auto/IO/IO.xs.dll",
+      "size": 25088,
+      "sha256": "cf531c8e8a3bf8ae8cc8330603126e289b7957f20e78e5f9b1f3bb47e4355eb1"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/auto/List/Util/Util.xs.dll",
+      "size": 56320,
+      "sha256": "55be0a3d736c696614ad6455b1645b9d6701a7c7ef7867f0d49714f5f3887bba"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/auto/Math/BigInt/FastCalc/FastCalc.xs.dll",
+      "size": 22016,
+      "sha256": "5e5420cf0127859738e15f54b9497455ff492a4bb546bbcf3dcf1189fceb463a"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/auto/Math/BigInt/GMP/GMP.xs.dll",
+      "size": 251392,
+      "sha256": "9b933a611c03049291baa282a72299fea6cc4d45895d17077a522bb0a2816de2"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/auto/MIME/Base64/Base64.xs.dll",
+      "size": 22016,
+      "sha256": "52608122dbf4eaf6ea2c229472fa7287ea518306409c6b7f7e2522d5e9406fd7"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/auto/mro/mro.xs.dll",
+      "size": 26112,
+      "sha256": "8d930ee319cefe5453927b85af3dac915a431096b6d6bbe009ed9ec415761109"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/auto/PerlIO/scalar/scalar.xs.dll",
+      "size": 20992,
+      "sha256": "4b862b819a1c1277f7641d3974b2b524dd97d0feff82452426e8641597e18cb3"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/auto/POSIX/POSIX.xs.dll",
+      "size": 132096,
+      "sha256": "7d7527795436c4b407ce2fdcaf79c8fd0cd2de66a04d872ab95ee3d08b25dade"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/auto/re/re.xs.dll",
+      "size": 768512,
+      "sha256": "42ca12eaaaae8763b58865a0d91e51983fddbafec726aac9467ff44c073b25ac"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/auto/Socket/Socket.xs.dll",
+      "size": 42496,
+      "sha256": "8d40a3a5ee3e4bc4007c26c6cef240bc087e4ab3c271d4fcef7c98e233218b2d"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/auto/Storable/Storable.xs.dll",
+      "size": 125952,
+      "sha256": "2f533b64eb84c360466dde89b7c795b05c487e3cb1a706778f1dc1ccdbc47214"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/auto/Time/HiRes/HiRes.xs.dll",
+      "size": 28672,
+      "sha256": "ac430a48020982e15d65b7bf7b0cd42600046a33386284c248b18eb0a25d54bc"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/auto/Time/Piece/Piece.xs.dll",
+      "size": 50176,
+      "sha256": "f2ad5834793f4962b3215c52f030a14b187a99db17ade36d13dcaf8e55676ac5"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/auto/Unicode/LineBreak/LineBreak.xs.dll",
+      "size": 192512,
+      "sha256": "f7f366274b3ac891a5dbc609a75edb85eb68d40dfa85bdc83de347dd3c1d3bd0"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/auto/Win32/API/API.xs.dll",
+      "size": 30720,
+      "sha256": "e224356a2318a636fb61eaedb8f5ccba9b3db78e5f743391dc88a02c4eeb7aa5"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/auto/Win32/FindFile/FindFile.xs.dll",
+      "size": 48640,
+      "sha256": "570366ff7c5c120d28d8d2719b76b91a08925ec77d18cf91986e832ad5b08d79"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/auto/Win32/Win32.xs.dll",
+      "size": 73216,
+      "sha256": "aeb506447fb43806403c7817febf15d33a97a75caf88208bdd0ccf6186941cb9"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/auto/Win32API/File/File.xs.dll",
+      "size": 75776,
+      "sha256": "b6423fa9e675642402c1311cf79c40d81793630d6e750a20fc74da13c103418b"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/AutoLoader.pm",
+      "size": 15797,
+      "sha256": "9a3bd486186b8a4a910b88bd8a503ee4f077b3c36fdc8e450fda74f899bacbc8"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/autouse.pm",
+      "size": 4238,
+      "sha256": "338a7e39931d89ed0c77ee2240b158badc06fd47e6506da2edb72625c3ba62f2"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/B/Deparse.pm",
+      "size": 210212,
+      "sha256": "099ab82c3cbec8d2c60e755c4bb72b75482c7c64ba13918111f86ceaab08c21f"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/B.pm",
+      "size": 29474,
+      "sha256": "d9d2008a1e0bb35a353c8740a745e555d86b8e5c1d01bc9f6c4d2b9d05c1e52a"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/base.pm",
+      "size": 10961,
+      "sha256": "4f8b2f1898bbcc9c481481798d113617d46a9f73d87bcdcbef5fe26044b2fa6c"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Benchmark.pm",
+      "size": 31026,
+      "sha256": "4d0a4cb8fe54efa4f5e4d842e73ed6fe7a31e5a0d5d0f995c720144e60941b9a"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/bytes.pm",
+      "size": 3740,
+      "sha256": "808eaaa305c6a0c64026b1ae824f39c5ad75a451e8c178a934bd86d1360fdbf8"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/bytes_heavy.pl",
+      "size": 758,
+      "sha256": "c7def62cbf7d031c4fe319e414117043f2a273885bff93bd18e11935d00a6677"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Carp.pm",
+      "size": 35959,
+      "sha256": "89ce58db6934387bcbab17a4972b75c0d0153335291cd8a762f8341af0bef5ae"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Class/Struct.pm",
+      "size": 20319,
+      "sha256": "1a7d8e92492d3fb7efbe4eadcb275691bdee70d74ed8c89b3b49b9c710a1ed12"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Compress/Raw/Bzip2.pm",
+      "size": 10996,
+      "sha256": "fe96044cd77d60b2400ba5112e11384ab5f80a47304340219d1c3578db4fba02"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Compress/Raw/Lzma.pm",
+      "size": 24792,
+      "sha256": "9cdffb9e4ab5b5f8df1f75312628bc82125186222df7d0f54d1520e773f76836"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Compress/Raw/Zlib.pm",
+      "size": 47387,
+      "sha256": "90d1885cd4f0e91017e1392f0b164e88c4c254c89168bfcec3debf1c7380366e"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Compress/Zlib.pm",
+      "size": 43956,
+      "sha256": "423cef2b8e47b60426c51c6d2e49ab2762f62725cacded7eb39f8dc5395ecd5e"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Config.pm",
+      "size": 3301,
+      "sha256": "a86a26c0ae6f81d8a12bf8b3e21696abc5726adabdc3c46439fd5f4e0f469d2e"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Config_git.pl",
+      "size": 409,
+      "sha256": "09c5e2ee35ee18d9043d95273f1cd37bc82e80567fd1372a1eb134c809c39504"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Config_heavy.pl",
+      "size": 38559,
+      "sha256": "cc5e8ceae5e65835e72083776ca4103626d4cf0df4d92a7207b3575a70356ff4"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/constant.pm",
+      "size": 14724,
+      "sha256": "e67cdfa533d42cbe5265bcf3c270f055620cba38a9295b5d584b7efc37a0c156"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/CPAN/Config.pm",
+      "size": 4154,
+      "sha256": "9114c594272df6df3e1a7e52214ffe650d9b23eb009d985eb065ab7005a027b7"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/CryptX.pm",
+      "size": 1317,
+      "sha256": "05ccd28143ab9ac6f7b91d7a5eaabc72d67ebc2c7cbcd332f50b7fccb2bd04a0"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Cwd.pm",
+      "size": 21942,
+      "sha256": "692c30595c2e11e9276d816133972a08a2b4cf50a772b6f5b8f646147aeeff00"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Data/Dumper.pm",
+      "size": 45838,
+      "sha256": "fa21074814598d34519ee83d4bbd66bca64b9b7291ff4d36a7453122bc21333f"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Digest/base.pm",
+      "size": 1984,
+      "sha256": "06367faa5fb46a5794d3d7603d52075ab1533ad848184a5309a1cfac1058281a"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Digest/MD5.pm",
+      "size": 10946,
+      "sha256": "368b6f3003ef61705e7b7d462db1fec5ab7d2c4e30f39937819a53a40af0caad"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Digest/Perl/MD5.pm",
+      "size": 7925,
+      "sha256": "8e93e40931074921ec03116afe69e5895e39b9e0d0bb93ff5dc1a7e7a3b0401c"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Digest/SHA.pm",
+      "size": 22174,
+      "sha256": "15efed6020da9028a7a5b2d41d7e6d8e6b1719aeae365bc592ffb4025f76d33d"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/DynaLoader.pm",
+      "size": 25253,
+      "sha256": "7eb4a27603c1dc3b0ab458d360fbe3d715cc10e4e791795c6be00cce4fbf88fe"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Encode/Alias.pm",
+      "size": 12545,
+      "sha256": "9ec57c436578d4c67b269c53dcb70db64bf845b7ba294da2b8fb998bc00a45ea"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Encode/Config.pm",
+      "size": 6065,
+      "sha256": "a15072cf84ac4a431b91b1a893a7c8d4c4dd48adefa077cd3a9b271cf0aba3bf"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Encode/Encoding.pm",
+      "size": 9063,
+      "sha256": "1daaf4400c4462c24d785b7eb91fbebc6eb868192aad410df48019fe7af6e39d"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Encode/MIME/Name.pm",
+      "size": 3821,
+      "sha256": "1cabed37ee26cfd763999649f9ac9a5f1e5a81cbc5125b8d85ff19d60b72f906"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Encode.pm",
+      "size": 32083,
+      "sha256": "1a4417338fb360ea847148571ee90e7eb7b115e431d3596bd1b7109dffae46b1"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Errno.pm",
+      "size": 92270,
+      "sha256": "78cf8a780116b688c0f6a7f80c8c5e3ed3fd4bd81a995e06d81712c3ae50fe24"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Exporter/Heavy.pm",
+      "size": 6561,
+      "sha256": "3f85172a45788d079fd08451fb47f71bf0648c94a7eebc198661d83d1f9b59b8"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Exporter.pm",
+      "size": 18805,
+      "sha256": "f089e9898900df4d0f4901d8c1a2e5ae6fed990ecdf724f7ea5654791ef891f3"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/ExtUtils/Command/MM.pm",
+      "size": 7704,
+      "sha256": "bbf2a19234dd24193315abedcde99f303f0ae161c5ac703dc050f7976d9b23fc"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/ExtUtils/Command.pm",
+      "size": 7811,
+      "sha256": "414f1dd3c493783b94112a26d9ddd0cdc62702c5d96eefaf1dc00c988e35c290"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Fcntl.pm",
+      "size": 4044,
+      "sha256": "02cce578326ffb0393234fd16f4d4d2ce62deec827a6e62454df27e5a2d3d22a"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/feature.pm",
+      "size": 19003,
+      "sha256": "00327dd2e86d6d38e3fab84f2cb6e00538de061d759bb0b26829e86fa2deed47"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/File/Basename.pm",
+      "size": 11194,
+      "sha256": "43b664feca2c9d14cfc90d3527fc0bf6931c75000cf941d1f8c914e83dfb21ba"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/File/Copy.pm",
+      "size": 16254,
+      "sha256": "ce385b06148312ae21687857667c828367f5291580e41793826655c35564cb95"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/File/Find.pm",
+      "size": 33091,
+      "sha256": "ab0f497bb24790ec6e667831ffc8bde9ba1ef4f01ffd16338390fe34929b69d2"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/File/Glob.pm",
+      "size": 12712,
+      "sha256": "ff854e2cccfcd78e6c22278c843ea61fda1d0164704b1aa8941fe05ff9dbbfe8"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/File/GlobMapper.pm",
+      "size": 15683,
+      "sha256": "1fc0b84c8fa4fc5b3cad7ae0a638a8fd3736efd5416c31afcc8ae58a03d525b3"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/File/HomeDir/Darwin/Carbon.pm",
+      "size": 3599,
+      "sha256": "c6acf27183e2dbf94f1f8ba10d2f9ca8632e888524b0b326f1d2d9f50fbee97a"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/File/HomeDir/Darwin/Cocoa.pm",
+      "size": 2638,
+      "sha256": "b945353fb15203a7c96c81d7d9daa4c3547621fc07d9289516e058df8111d449"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/File/HomeDir/Darwin.pm",
+      "size": 2285,
+      "sha256": "b81507f638a70f7154573254d39113022d3626130e75c47e1899fae1324ea601"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/File/HomeDir/Driver.pm",
+      "size": 357,
+      "sha256": "e91a5dd043e80864f3f41232f19a60d71086d34042954bb86de210bfbeed1e1d"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/File/HomeDir/FreeDesktop.pm",
+      "size": 2504,
+      "sha256": "9762b2c871f37f65f9fb9e4ad9cb5d5e18ab33bc77c4e3dbaf4110c9484384f6"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/File/HomeDir/MacOS9.pm",
+      "size": 2249,
+      "sha256": "1a103b83327bd8d2421fb98efec418e9b6fbed3207cfdf63b2f30b64bde804aa"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/File/HomeDir/Test.pm",
+      "size": 2025,
+      "sha256": "f1d8918e69e751acc180265ef9c890a318a1eb0f60234f85f1037dbb29633512"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/File/HomeDir/Unix.pm",
+      "size": 2544,
+      "sha256": "1d2041b3827132359810ebd3962c97e411f61ef2fd944aef8c66657d0b30175d"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/File/HomeDir/Windows.pm",
+      "size": 4342,
+      "sha256": "2d27608f5468541e1dfa072832557f09de62ebcf539ca07308ab140127973a09"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/File/HomeDir.pm",
+      "size": 7653,
+      "sha256": "018a077229896f18f6e4c2a0a69d1882a2a5c1a84199c553bc90eb3537bb16bf"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/File/Path.pm",
+      "size": 43254,
+      "sha256": "a1aa35a2f08a57e1b2684733c32e435cadbcac7be6652b0a5a528a6a122211aa"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/File/RandomAccess.pm",
+      "size": 15595,
+      "sha256": "f3756e1ce25f20cabd776c4b8f05d79ccba04e664ec79de55a66fbe5e6ae8de6"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/File/RandomAccess.pod",
+      "size": 4255,
+      "sha256": "77ff6d1afe4a8d4c9789379a47262eb0668c0c1a3f07bda224bdfc6658bb57a6"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/File/Spec/Unix.pm",
+      "size": 15889,
+      "sha256": "a8450ef045de09ea86053f6940d100655109493ce1eb55eeccceb760f6d5ab9a"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/File/Spec/Win32.pm",
+      "size": 10766,
+      "sha256": "d9185351ff4e0d1259c4573db77ad46f5d2fe3be094af5236fd16f9975421ff4"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/File/Spec.pm",
+      "size": 10571,
+      "sha256": "b5d318dd22fee9c82313bb5ed5e183c1ee07422bc4839cea6726c4e083765b90"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/File/stat.pm",
+      "size": 10302,
+      "sha256": "f948a9536c09e2bed3472c23b940cdec1907c9e695d041bc53320e1144562c8e"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/File/Temp.pm",
+      "size": 118877,
+      "sha256": "6d8149ddd738ccf19b694f5d8efb6ba5d85a943b6ee4de7a96c1991f3ac089c1"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/File/Which.pm",
+      "size": 3672,
+      "sha256": "e85169a84a82918a5eca355a5ca7b662468bd460df54642f9d189fbbe4f7e80f"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/FileHandle.pm",
+      "size": 6784,
+      "sha256": "7a3643abdef1bba6bd7f41d47dec02402b5a0136b84f7c782de93ad9fc1fc063"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/7Z.pm",
+      "size": 22502,
+      "sha256": "241e0bae7f6f4122d1c4c5b5c47a8b698957834d50815a88308a9b0807bcf9c2"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/AAC.pm",
+      "size": 5204,
+      "sha256": "60f57e2183007936b709de6db1fbf7b77e0364988a3998b420299ca39a497150"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/AES.pm",
+      "size": 19103,
+      "sha256": "c97dc2d7fccd8ae4049acb9248ad24ca9255687767bbee561a6bff4903dc3aa0"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/AFCP.pm",
+      "size": 10646,
+      "sha256": "382ebbcb9d0de58c73e651e6c96c06fb49b1025f49a7725102f4674eb6803061"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/AIFF.pm",
+      "size": 10035,
+      "sha256": "45f52c43e4a6c4dc353604ad11091bf401e5d03b21ab6c55c42274be441bc7ab"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/APE.pm",
+      "size": 9268,
+      "sha256": "df6e5f04e5ec3e0b48384b29aec3ca69816be9681e8480824327b28abecdb417"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/APP12.pm",
+      "size": 10774,
+      "sha256": "8cf439b5db9d494b7f68f69b8d5ae98048cc681f462c96c27faa3952904318e3"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Apple.pm",
+      "size": 14555,
+      "sha256": "c4fc860e3216907e3fb2a063fcd64093410a70d18ecb1d30beeeccbfab15b0b7"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/ASF.pm",
+      "size": 31111,
+      "sha256": "7a1591338c13a8e03c40dfc78064711c5ef53ff152e3fa0ff11d462d5e2bbf1c"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Audible.pm",
+      "size": 11801,
+      "sha256": "c1a45afc5e02e8af8487099e8b98405b9bb9b152b297a85ba37eb4aeb06a0969"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/BigTIFF.pm",
+      "size": 11819,
+      "sha256": "290b1cbd50238f83161ca3ee0c9a193516d810500574467c52e606d90024fe06"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/BMP.pm",
+      "size": 10699,
+      "sha256": "503698454e2edec457083e712b577108790e97b6c6e1a08a037faac9155c5e41"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/BPG.pm",
+      "size": 7715,
+      "sha256": "d600627e4c90dd5079d82ab09915a68a29ac640d0aea5f6991635948a7739ec3"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/BuildTagLookup.pm",
+      "size": 130091,
+      "sha256": "f831b4cc269152dcbfaf9019b0dde4c860b3ea64500dd84df5d700463be21163"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/BZZ.pm",
+      "size": 17877,
+      "sha256": "02482621ff7e37bb53a4a5cf98950dd9767e4daed0b4e861f23a86549113b073"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Canon.pm",
+      "size": 416453,
+      "sha256": "d22b110e7b2e1af2d6e59bb97db97a04ffc2bfd1ba7d078d380ae60fbc70bbba"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/CanonCustom.pm",
+      "size": 86339,
+      "sha256": "e461b9b1e0d8f24565b36feb2032412814754c8f46094a44d3beef800d9ccbf9"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/CanonRaw.pm",
+      "size": 31017,
+      "sha256": "30a326b19ce5ea502abe1632a9a999969b73dc33e7d8937fddee332d312a5440"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/CanonVRD.pm",
+      "size": 78184,
+      "sha256": "307ca4500b39ac35a78a3463610b49ba49b862cc73d26e4e05314c3c3d6630e6"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/CaptureOne.pm",
+      "size": 8058,
+      "sha256": "ffed00eab470b7e102ad28910744918b103081eb6a8686f3e82272c4643fbd59"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Casio.pm",
+      "size": 63705,
+      "sha256": "3bfa03d6bef4f8e865a13a29154bf8c2a0c7b4eb7a76ce1a4d4b6bea05269eda"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/CBOR.pm",
+      "size": 13110,
+      "sha256": "4651c9d684e2b2b98ca4b691a941166a79dace75ebd8ea895f4614dfc4f25505"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Charset/Arabic.pm",
+      "size": 1913,
+      "sha256": "90625d5c7ff09c976f9768ae36dd19d99f66faf742a6d9cef35b1c1af16348bf"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Charset/Baltic.pm",
+      "size": 1731,
+      "sha256": "c02c01046099116a116780de5ca822c69cdf986a83d75eaf3603911241ce21a3"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Charset/Cyrillic.pm",
+      "size": 2361,
+      "sha256": "39bf8e08e3ba0f6e63fe42eb07a4df28cddbaf8559c6b16f38252fd6d3f00f13"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Charset/DOSCyrillic.pm",
+      "size": 2629,
+      "sha256": "09a00893c948759aa2807e9b23503f535aa3b7e7e2de68cade5557630b98bc11"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Charset/DOSLatin1.pm",
+      "size": 2619,
+      "sha256": "ce2bca149aeb40d376a5d3e596ad3acc7fa5ce1244736a827de6521a05dcc089"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Charset/DOSLatinUS.pm",
+      "size": 2621,
+      "sha256": "55d28e289e3b10bbd60dde97e72d8baa54cfbdae55f21c80722a9b3842b3e55d"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Charset/Greek.pm",
+      "size": 1993,
+      "sha256": "5200b436582e79eab7a6424124e4481ec619c1784ae48265f90d8421cc9a6b9b"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Charset/Hebrew.pm",
+      "size": 1759,
+      "sha256": "b43457e1b50a7180592fc627eb5dd84e415d3e5c28e7e4ce74ea2fee4c210bcd"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Charset/JIS.pm",
+      "size": 127692,
+      "sha256": "1094fb6d5bc9ea792f9d68ddab277e6aa80b3f5335d2c1c6bfd8c1c5babe5411"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Charset/Latin.pm",
+      "size": 953,
+      "sha256": "2112fc60915466d29e54afba64bf3ffb586158a5cda6339b5e2f89f5216e9d7e"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Charset/Latin2.pm",
+      "size": 1731,
+      "sha256": "52f17a32169da0141f9a653d6b81e08eb697d238fd026a5b390be70d44e8ef1d"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Charset/MacArabic.pm",
+      "size": 2559,
+      "sha256": "15aedb3d69b0770bfd8b0322b31985adb0488506cccd24e060a17ed3f52ae951"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Charset/MacChineseCN.pm",
+      "size": 129364,
+      "sha256": "42af87d918a3eece920344be0b2f4bb97cd236860e2debd3224f664a8e089075"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Charset/MacChineseTW.pm",
+      "size": 231400,
+      "sha256": "d1b6d89e0f6c102132fc5b5183506c777b3b3500f9b2d3e28a0f674125b7ba15"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Charset/MacCroatian.pm",
+      "size": 2406,
+      "sha256": "2a573cf416ce3282a6dc1960103f9d4600726cf3db02e56ed603335c69c37381"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Charset/MacCyrillic.pm",
+      "size": 2544,
+      "sha256": "ec49c4e79bf7fc5a18f5a4eb77d48fad40209f92c4e5f3d167c61d3f9587bbde"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Charset/MacGreek.pm",
+      "size": 2502,
+      "sha256": "d0833ab250f51f99d2c7d172a7628c98537117a3dca22a4fe980c85ed824bdd0"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Charset/MacHebrew.pm",
+      "size": 2569,
+      "sha256": "bb3229736d486a4614ccd3be57afa29728dca939b51073eac85773fa8c253a85"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Charset/MacIceland.pm",
+      "size": 2358,
+      "sha256": "28f0ac1102478079afb329096ac317954febdb120c924147b033ad28d2db98ba"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Charset/MacJapanese.pm",
+      "size": 125371,
+      "sha256": "36b9819d02c5aafd1fc4ab5616dadf7a6e3d5de8d026bdbdf3d46cd1189fa4e1"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Charset/MacKorean.pm",
+      "size": 171931,
+      "sha256": "f90c20ebacae587e8e9c8b57b95f64c10053da5afd2d83e0a3527232c412c676"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Charset/MacLatin2.pm",
+      "size": 2526,
+      "sha256": "1e216c769557eb927cd6eee2ac4121f5df5caf052fdc058c08719b4a16484d3d"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Charset/MacRoman.pm",
+      "size": 2374,
+      "sha256": "243a84e50839abbcee96ce4b72c115fbf8d6f0fd755d2e7ff796da6dcf42c1be"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Charset/MacRomanian.pm",
+      "size": 2394,
+      "sha256": "14d9d15c357acc6388bb95bcb08d00d9cc12895c73378d2351a50200074466f5"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Charset/MacRSymbol.pm",
+      "size": 129227,
+      "sha256": "9d8bd0c20775120c71c5e3b5996c6a076e0b62b96f84038964fb407c73eca58d"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Charset/MacThai.pm",
+      "size": 2692,
+      "sha256": "6f11db69e246cfc46df92af3f5f4280da07e2b8831a7b311c8f00894c42e194b"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Charset/MacTurkish.pm",
+      "size": 2382,
+      "sha256": "9bfc65e53ed2666feecfe0cb27b1e940f836b64fd79e02ebd752ebd78a5ee6a3"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Charset/PDFDoc.pm",
+      "size": 1264,
+      "sha256": "5571e74cd68b89afbf47dda2fd59da90d86fd026477383d41b5db51aacf0d4a6"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Charset/ShiftJIS.pm",
+      "size": 119258,
+      "sha256": "757bc7e41b0b9f8db6ac31c4e9cb99964dda73a84ec9e10c9f63ac5990502001"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Charset/Symbol.pm",
+      "size": 3000,
+      "sha256": "463b9e12e4736fee4fbe504111251b2c90f0ff77afb832f37f3996a22201c916"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Charset/Thai.pm",
+      "size": 2087,
+      "sha256": "71ac8d56facacd91d3a3ac0cba11ebc11944dd3e10a95373e4a22fd505a7b4c1"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Charset/Turkish.pm",
+      "size": 1023,
+      "sha256": "97a40026b0cfe77f8186470085d8e51c2cee956f3d1719ae8151c35ce021cba5"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Charset/Vietnam.pm",
+      "size": 1123,
+      "sha256": "8ed317390f76295db70067231020a176d9c85f29e9030662ef7ed3de4665a4cc"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Charset.pm",
+      "size": 16443,
+      "sha256": "2017febff0262d7e0d7ea2325482ed62f9c9461e2331a36ef8fda7c723865e0e"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/DarwinCore.pm",
+      "size": 17621,
+      "sha256": "b553eea2b25414cabd568bbb01b076940b99df582f62c91f06fbc97508c6d0a4"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/DICOM.pm",
+      "size": 539691,
+      "sha256": "b0fec72102220d05076a1d8557e1b1999d751e97e45bb87da66122131d64e9f4"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/DJI.pm",
+      "size": 42310,
+      "sha256": "2064e8df141f2ee20c6359a7581f9936b43535392dfeb10a827cc2ef8caa2520"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/DjVu.pm",
+      "size": 12758,
+      "sha256": "4cbf233e2fb0c13a54502802ddaa11340e5fd246f53f996a9d782024d5328598"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/DNG.pm",
+      "size": 33853,
+      "sha256": "b99cf06aa6706ccc18995a96b8730a1a8e1eefb37623d28cf4cdbf4627139e18"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/DPX.pm",
+      "size": 9742,
+      "sha256": "d857013002ccaa88dcd6d4d6df8fcd0db9c206e17817838b85670eea3dce8558"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/DSF.pm",
+      "size": 3969,
+      "sha256": "53c067df4be365dda84ff1f2689719b6211ff7e5b8e620ad56aaf70382f78156"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/DV.pm",
+      "size": 9991,
+      "sha256": "d0fe561b190b1be282f89b7c914987d52066995d687ac8cf0eb388114973b916"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/EXE.pm",
+      "size": 59243,
+      "sha256": "d4bf95f93c0f91b74e2c38c191eef0e4babdc69fc1c7bb90ff25f928eb845621"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Exif.pm",
+      "size": 273107,
+      "sha256": "8a0475c0ff67b2401db22df10c781f2f1e54276dd441affa1a8be3f42a5f7d22"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/FITS.pm",
+      "size": 5855,
+      "sha256": "b953d116015912d44607ffe64cdd3c48d130cae0c800a4b59c1b4a52a18833bf"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Fixup.pm",
+      "size": 12732,
+      "sha256": "05b45c0efa372cda6fd5f08919e54b3dec8929dec351d48d736775b4f67660a4"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/FLAC.pm",
+      "size": 10527,
+      "sha256": "8763a5bfc129bdaaf8453be7e191f50eac0ac3eee771180d74a741cd60bf0802"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Flash.pm",
+      "size": 27915,
+      "sha256": "67a3c20a7d873ab34a1bbe3c35a68317126aa4b5fcb5c939b797d749287dcb13"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/FlashPix.pm",
+      "size": 91223,
+      "sha256": "a76b43f308d37e9c9567fdb1190f4f23cd9a0d7a0509ea440070491afbf55cb1"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/FLIF.pm",
+      "size": 11924,
+      "sha256": "623029af045d994956a3238c9e2e08f249fc132d828a3871dd8b9d9c5cfe39d2"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/FLIR.pm",
+      "size": 61162,
+      "sha256": "2e6a323dc97dc77525fc16c08c8a533eb987f7dda7c746f424c1391723905e1c"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Font.pm",
+      "size": 38182,
+      "sha256": "445331268b67afc3c3900917f9fd678c3cf7ecc515892128783543cd2d7c9f46"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/FotoStation.pm",
+      "size": 8162,
+      "sha256": "fed735cad126f0f788b783715a8c4c15db55a2ebd66d1d6efe7ec2a8c3694430"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/FujiFilm.pm",
+      "size": 69673,
+      "sha256": "7734dbf033adb8969f737c03eefe02d7011be25f431fc4bf6aa84c698d86e16b"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Garmin.pm",
+      "size": 244974,
+      "sha256": "0550d3dd603bf9430879a0d880e61e37d78eeffeea0764b69f74e6563f9ce6e3"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/GE.pm",
+      "size": 2056,
+      "sha256": "e11aab00a264e1ba421efb5c70b2667d442d81e6a1fbeea274ee8381915cab7a"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Geolocation.dat",
+      "size": 3303087,
+      "sha256": "0126e8de2b4f5cab4ebc42a46dbeeeb171830f168ade7e433d4c3a18c4ca900f"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Geolocation.pm",
+      "size": 38628,
+      "sha256": "c3a5c462fdf672342649b9febc3a497dd3c855aa4163a709f13d786630346eb6"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Geotag.pm",
+      "size": 78839,
+      "sha256": "e405d4bac1824001709d80270cc1feab96f034f0c89af85362ae4542a09d00e2"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/GeoTiff.pm",
+      "size": 89614,
+      "sha256": "064b737a93d0df4721ca3ea077a2e11df7ac6283bdb996f45de1dc19c8c43047"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/GIF.pm",
+      "size": 25071,
+      "sha256": "b885564bbb0c7e9770a811b45ea12b1f5eea2f7160eec6b3f3e79e7894a4f24d"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/GIMP.pm",
+      "size": 8576,
+      "sha256": "53b7c54241db8ae73818c82973ebdbe7e5bd54242acce5a5dcb2c6307f10db1a"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/GM.pm",
+      "size": 21027,
+      "sha256": "1599e5530a3d0f90088049ccdcf1cc2def5e952607c0e8d9c3e5ac3d353cf777"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Google.pm",
+      "size": 33292,
+      "sha256": "912f129d2f1db85cf114fc336f1a68a87c48bff8b90991add2f30b797b0ca8a7"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/GoPro.pm",
+      "size": 35523,
+      "sha256": "dbac3cf5e96bc768adae595ef43821216fe65fb4330ff8548a4c2a3dc81920d5"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/GPS.pm",
+      "size": 21480,
+      "sha256": "f62c9576a405a636585340b9358202cdb0b2a926368609716764b2e05a337443"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/H264.pm",
+      "size": 40241,
+      "sha256": "4b014b83c67f3ae04a081cdc79ae0b1fc361084e971489559c8432756e8b47be"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/HashProgress.pm",
+      "size": 1548,
+      "sha256": "c7f336ee13e1960b0a5c6c369e60c14e1ed1dd06c41ae96efebb78d28940afd1"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/HP.pm",
+      "size": 8197,
+      "sha256": "d51558abafdca4114aead896e889487fc0b5d494852dd41d72701ffbd2399d5c"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/HTML.pm",
+      "size": 22634,
+      "sha256": "8e1c4f875f14f37b899fd082efe7f5c77c0ec38f47be1761190d1e748dbb539d"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/HtmlDump.pm",
+      "size": 33758,
+      "sha256": "a02dd96f159a4a96ee649efdb6a1a43bd289cd5912f7da150b08e488ff5a249a"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/ICC_Profile.pm",
+      "size": 49814,
+      "sha256": "d336975767bc1a64919b31a09ceaea40b0d424c5206277c52491dd2194ffcaed"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/ICO.pm",
+      "size": 3730,
+      "sha256": "3fadc07ebf61f8be31aa9ce568de785f0350e931ad8e5a4cb0c39977744c8986"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/ID3.pm",
+      "size": 61700,
+      "sha256": "92a3c9fa73094191c2000923bd07527504c1d8573a094556628d8de8e57ca43b"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Import.pm",
+      "size": 13970,
+      "sha256": "27eb74b4e3980afefa41025929fae1d96f63b42ecbb56804e8efb4769540bb78"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/InDesign.pm",
+      "size": 11455,
+      "sha256": "5b6a2bcee1e325c0f3507d1eca9d53cc44f498c30066de720d4816c9ddc9eb42"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/InfiRay.pm",
+      "size": 10384,
+      "sha256": "086a19bb4439180500f5bd10aa2a45a078f197060cfc05126cd0762ed184ef4c"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/IPTC.pm",
+      "size": 41081,
+      "sha256": "07508467219121f9552215f715439716fca94825c3e96eafe1363d8009072ffa"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/ISO.pm",
+      "size": 6970,
+      "sha256": "521fcdcb9e9577909905f541b4037342f846651453a80df0396ed9d8a95960f2"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/ITC.pm",
+      "size": 6792,
+      "sha256": "250205b73a64d599244f87f6f5b00daea99c175c2c3249d8550d772d6859403a"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/iWork.pm",
+      "size": 7982,
+      "sha256": "4d07ff283e4e9f98bf50ef09e66bf3e37dd384c3ebb54aa5b2b3641adb156ee1"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/JPEG.pm",
+      "size": 29032,
+      "sha256": "68e0c147af20bbb29be1a8816f415a8a013b961ec79feba7127627a1906272fa"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Jpeg2000.pm",
+      "size": 65552,
+      "sha256": "6d5647c841f5cb4c088d88ae9b0904bc62ab34d31f3f2b74819f5f846fb7b088"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/JPEGDigest.pm",
+      "size": 217476,
+      "sha256": "6e8b756ff10154212d96bf6a9b19fd53c39309c02d096a8fe3d221d2f9496777"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/JSON.pm",
+      "size": 6945,
+      "sha256": "4e547461a178259822a6709b4ee33b897499a8e959a67cd95701192ae0349b26"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/JVC.pm",
+      "size": 3638,
+      "sha256": "1dce83261222d96b402e310c3854738972804fda8541063b6a5199ad61ec10b5"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Kandao.pm",
+      "size": 13756,
+      "sha256": "955b55680e6a45ee2cd7a99dc50c573df2c99ca219dd25c9290c500371251ad6"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Kodak.pm",
+      "size": 123475,
+      "sha256": "eb598c404be1f7d718e98cddeee2d45173d0caeaaf7f97a97a995e986ed47610"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/KyoceraRaw.pm",
+      "size": 4411,
+      "sha256": "78ca03a23b477924c3ae5017bd70ca010e0206c9022325de6472067a3ca3f600"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Lang/cs.pm",
+      "size": 46699,
+      "sha256": "8dab229992546a9b2abcd5cba7fb0897f4c6a6ce5666d8e35f11a5e65c55bc53"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Lang/de.pm",
+      "size": 299939,
+      "sha256": "636ff2fbd53d7c1cfad458f30661f535993c4a8a173619dbc2c5425caafd5dfe"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Lang/en_ca.pm",
+      "size": 38532,
+      "sha256": "602e320bcf6ea795fa4dcc3d5230a768c809ca134ab86d8f296b04e55d620fff"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Lang/en_gb.pm",
+      "size": 40449,
+      "sha256": "97d4a0da172331a2e8be053d0c2ddde8ab94ad62d23c04cce394b343096257c4"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Lang/es.pm",
+      "size": 123030,
+      "sha256": "234851d45a50bf9993368da5881ac1ac78205ba6431022316068884820503319"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Lang/fi.pm",
+      "size": 112353,
+      "sha256": "59876d0dc06a51ba79fe7b2ec955035a6e0580bc4a1e73df73f0d421227047fa"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Lang/fr.pm",
+      "size": 435759,
+      "sha256": "b5b5b1f44ce6dc896c3bd51cb689ff4c6d6307b8de972931b28fa4e404bbe3a5"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Lang/it.pm",
+      "size": 250790,
+      "sha256": "c157144cc2a11bdf6478880dfd53c5941e2d423a6590aecb4f5419ea5801af8c"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Lang/ja.pm",
+      "size": 209798,
+      "sha256": "4452fb4a68eb86c0dac5cd8599e41a525c5c738e16cd81a9bbc9339a447276b4"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Lang/ko.pm",
+      "size": 68220,
+      "sha256": "bd9129b298b483224e72c731536da47105e62c87c3df29e9991447e4aeba1c5d"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Lang/nl.pm",
+      "size": 91681,
+      "sha256": "ed66a369df62c16a81293db4b17de658b33778fde999ada34b4dcdfa25472620"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Lang/pl.pm",
+      "size": 46517,
+      "sha256": "502683f64ce9c6f9a922c9c0c35ff699c67007dee097f5df40b06788229d5fba"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Lang/ru.pm",
+      "size": 321153,
+      "sha256": "081cefe50e8bef0be9efdccb8c465e2df066c2ea85c8ce47094e876ade970715"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Lang/sk.pm",
+      "size": 78976,
+      "sha256": "751137ca19ee54b0bd4a4b9f4ef12039be8d58f27dfaac7255455191230760bf"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Lang/sv.pm",
+      "size": 21686,
+      "sha256": "b901e34c5cf6b73c8cba271c653b5b8409b55008759424437f94953fc7c2072d"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Lang/tr.pm",
+      "size": 19207,
+      "sha256": "5540f0aab93152dbe0b46b90272e5ca686f50969997b3fce7fdba9e5e8ef7d73"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Lang/zh_cn.pm",
+      "size": 37627,
+      "sha256": "897586aaaf0722948f9ac870c9b8a256e7c17020677a741ffb0cd2d46be5de8c"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Lang/zh_tw.pm",
+      "size": 27478,
+      "sha256": "47048bf7575ccff4293a0a325de7b32721162c0fce96aeb4c88ce40393770658"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Leaf.pm",
+      "size": 16715,
+      "sha256": "e8893668613666ba22c289a9822ac44cdb616a1f884b1a9cc0657374b64971b9"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/LIF.pm",
+      "size": 5110,
+      "sha256": "55a2c47ebd196f95c3c8d9c54c0e9fa482454dda29680c68298eb00d7e369439"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/LigoGPS.pm",
+      "size": 18849,
+      "sha256": "8a4c46c580d2e1abc94894308a443c236a993f1c87f3a50caeea57a0c2f88ce2"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/LNK.pm",
+      "size": 70218,
+      "sha256": "effa4cc69018fdd8ea7541af1b5fa6156c51155c9a3af3925fe0fcc16412790c"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Lytro.pm",
+      "size": 7766,
+      "sha256": "950cf7528fd63f8b9ac9e599c34d78877e9aceb32e897b8fdb616ab9aebc3af8"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/M2TS.pm",
+      "size": 50623,
+      "sha256": "0c1b8fc327bb09f83ad1ee65b5ee898af2152adb81527ccf0e3b3c9b3111cdda"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/MacOS.pm",
+      "size": 32223,
+      "sha256": "5acee1a0a387d2e3ac9f6304d5e6ac1c59b3155c54676f06af026a60373275c4"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/MakerNotes.pm",
+      "size": 72174,
+      "sha256": "5c78d72ce8f07142ce4e9e400616725480495c3c85514b2861cadd18077c119c"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Matroska.pm",
+      "size": 49158,
+      "sha256": "279750340c26cf50ab9eed709863707770a900c3c7cc6111674d48a7077ef33e"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Microsoft.pm",
+      "size": 59585,
+      "sha256": "53835d4afcd5292e21f04986fe57445ff825de72d855e548bfff90a87815f40b"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/MIE.pm",
+      "size": 105282,
+      "sha256": "14686ad47aca97b23cf9f10c9ac78a5b9f7e5ed52081a01a046511e18cb3b207"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/MIEUnits.pod",
+      "size": 14005,
+      "sha256": "f5ebcbcde33166114002378a62ba1acc2991fdb334b202310b9cbb4482c31d22"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/MIFF.pm",
+      "size": 9263,
+      "sha256": "1556ef8924bd0ed1fd61e71905fb1a80347ca61f8665b800b11bb0eecc3f13c8"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Minolta.pm",
+      "size": 102220,
+      "sha256": "e4f77a975e9465ea23c430125d12e53c54d68a4f042e10b23d6cae97758b0f4b"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/MinoltaRaw.pm",
+      "size": 16946,
+      "sha256": "6033123d2c22995ff7dc27613b948ecb59c7a8356416d899444634ca07ef32ad"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/MISB.pm",
+      "size": 23383,
+      "sha256": "075955833bc239b75d716fd3e798d30cbe3757e3bcb56a494695f5675633fd7f"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/MNG.pm",
+      "size": 16606,
+      "sha256": "14c62cf5c2223743ec6b07f9983c0e6bd239ebc599e59b53824ff3a35fe90475"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/MOI.pm",
+      "size": 4241,
+      "sha256": "20308d81671e6abbe09832ba44d40dd0c9f81fbd037e1d5e1a336c957ab53b4a"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Motorola.pm",
+      "size": 5672,
+      "sha256": "8bc6272ec47e64ed2784903d9524a8c3e618ab07f324c3f454b9230dadfc4974"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/MPC.pm",
+      "size": 4152,
+      "sha256": "a0c48140e931700f2e19441951f26d1d22a38e7e96e7bdfd55b79727df476a1f"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/MPEG.pm",
+      "size": 22859,
+      "sha256": "0ee4aaa6ba891e43cf264dcd6d1de11e47461bf64e017d5bc7f17612143e3b7a"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/MPF.pm",
+      "size": 9446,
+      "sha256": "b5f7038b52f4b6a2e2934eb356385fab443a9f4a328bd0c9c178ca23ae7ca68e"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/MRC.pm",
+      "size": 18831,
+      "sha256": "a0266d5cf0b3265c9c88559c9cd8b461bfdc5bd7f6802f843aa2730cbb70613f"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/MWG.pm",
+      "size": 31463,
+      "sha256": "f46d2a5afb7d6cfa174ac28ef855809499630f7d32107e3babee3711f68be96c"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/MXF.pm",
+      "size": 258672,
+      "sha256": "ba1e605ec93a14cc60e4b519a072215ae639b11904ca3646c82a86a2271b6982"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Nikon.pm",
+      "size": 561163,
+      "sha256": "9410b783cc5e591ec28d6bff66880adc8d9b056a545244bfd244d995a4422298"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/NikonCapture.pm",
+      "size": 28807,
+      "sha256": "fdd137023f6eba06fdfce881331cd478abced2beab3b008802b7e142d45b52b5"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/NikonCustom.pm",
+      "size": 360314,
+      "sha256": "d04722583fe379dd406880391a195f5e9c3ca04326d819924445755126f81ab3"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/NikonSettings.pm",
+      "size": 75338,
+      "sha256": "1470761764101e233247064ab15897d2fd5d8f4d14719d227b37691c2ec2de11"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Nintendo.pm",
+      "size": 3322,
+      "sha256": "6b424ebe1e2ea8bad888ff9c24800b0f115f8d2b6266c241a2e8759ce04d6982"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Ogg.pm",
+      "size": 9063,
+      "sha256": "365e93cc445f0011ec8ac7a190a737d399feeaa8c21547fb3eb4b0b065065e91"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Olympus.pm",
+      "size": 157893,
+      "sha256": "f974dc7c82b5e187148e0defc8d733734445df2121175097f001fe551ae08651"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/OOXML.pm",
+      "size": 14066,
+      "sha256": "444bd30f969adb4718e9c20a10785c6764b7ebd9977a1e3ff9a5c3e669bc594f"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/OpenEXR.pm",
+      "size": 12156,
+      "sha256": "7f17acad20a1d253647bd6f26716f439cabc1cab1606aa4e1dea6c3e57fca759"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Opus.pm",
+      "size": 2270,
+      "sha256": "757d33def564acab6203501919a1e87f95df960c76506b0b4886cb4b040dab9e"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Other.pm",
+      "size": 2700,
+      "sha256": "f6b7c2ed3d99a0e4f79b0b953c46eff8b5f9c41d1bbcf7fd5a30fbeba31b579f"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Palm.pm",
+      "size": 12184,
+      "sha256": "bc158f6d2bbb887c49e7b4ea5dde36c377f28cb0306f5f85e11bd0a11044cef4"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Panasonic.pm",
+      "size": 103567,
+      "sha256": "b99cedc10429748d75330d85417b4993907204ab19da0f0b5f9110403e663be7"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/PanasonicRaw.pm",
+      "size": 34923,
+      "sha256": "bd204b732aa68f0b099d798699f149a4579a815748e9ddde6236ac585b5747d7"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Parrot.pm",
+      "size": 26245,
+      "sha256": "e133e94265a94540ac893a8d3f9c4c9cf99343a21275761b0d0a01bfcdd15eff"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/PCAP.pm",
+      "size": 15840,
+      "sha256": "3cee781be73f99513280fe2b68341347bfb91a9b76dd567de9d62f2a0939e416"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/PCX.pm",
+      "size": 3810,
+      "sha256": "3d911e4f3412546ec25230156bde2f45a89dcb9e9fd96b099cb2e6825432d12c"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/PDF.pm",
+      "size": 97656,
+      "sha256": "6e7eb122e329227abcc931c7590563c760e3435251fec803eb8e21bdec6a9eb6"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Pentax.pm",
+      "size": 254015,
+      "sha256": "fa766226626260a02d483fa1bf16c56200eac102b174d05f1d143abb45d04230"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/PGF.pm",
+      "size": 4135,
+      "sha256": "72c4cd5d4fd80ac0f45b88973eb2ef62123d5c51d6005828c8e85c9a3596f97d"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/PhaseOne.pm",
+      "size": 27906,
+      "sha256": "930c3c36b053937ad6db15c4f011532858377d78026d164d0fe1f481386874b2"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/PhotoCD.pm",
+      "size": 18688,
+      "sha256": "960e187f7ccedca07f85cb5d33c59dc86a146437127c1a36a8da57cc6166e5ed"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/PhotoMechanic.pm",
+      "size": 8325,
+      "sha256": "d1d12610e7cbfdf3a5839b5727a091e5fe6901bd9121901a0cc4ade45c01330c"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Photoshop.pm",
+      "size": 48004,
+      "sha256": "637a47fce42b53c7177518cba25e9081848f21c95db529506f0dd1a149910786"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/PICT.pm",
+      "size": 33998,
+      "sha256": "71618f76baef30dd2e2b8b97e2db0a6e6a9135838c59ade01905918fbb0da382"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/PLIST.pm",
+      "size": 21422,
+      "sha256": "10320b671694cba444c6d48911fc75ca37f19810ef7a2f49bd9c68e1e02875fa"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Plot.pm",
+      "size": 29320,
+      "sha256": "96c85956b600156fdc2bd16caea992bec8d1c1c4a6c569123876fbbff439854c"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/PLUS.pm",
+      "size": 152122,
+      "sha256": "674eb09aff7c187b15e8e43939473fbeb9212a29b5a2e50eb17d0268baaa7ad4"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/PNG.pm",
+      "size": 67518,
+      "sha256": "69a54cfc08cb67e210158c148ab439fbdd3f9a021e362b1379a1e080c2c7a0f5"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/PostScript.pm",
+      "size": 29588,
+      "sha256": "f2c8104025c03f859723ff068dc55f3f5c73c0f8013c5f8d5f04f8c7190d5e27"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/PPM.pm",
+      "size": 5480,
+      "sha256": "873d7a83d8f9f0eeab831b203eb11ff6f856e701cab5626c2b8778489e96e571"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/PrintIM.pm",
+      "size": 3521,
+      "sha256": "c65e29ccb3bbabbcf8eda485bf7997853e610bc3296885b1b682d431695bfb0f"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Protobuf.pm",
+      "size": 12155,
+      "sha256": "d7eeb82d764a3d728635cdfc9bfe4c83baba12530922d860b21857035f869aa9"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/PSP.pm",
+      "size": 9235,
+      "sha256": "c406c4336ac400e4cadea41f2002490581a358d7e3ec3cc9e9822bcc3285f42a"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Qualcomm.pm",
+      "size": 47818,
+      "sha256": "9c92dc2ca6de9fd8943c2fd59300a813e13b6fac62fb74b5ec661a95db7fe320"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/QuickTime.pm",
+      "size": 464899,
+      "sha256": "329172a5558d8b75b535d5120d01ed5ce8aaa865b5d5de9ce1b81f3b09cdec5e"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/QuickTimeStream.pl",
+      "size": 178032,
+      "sha256": "1f940a7fe3b11f53d729bc405370812e13129e4d533cafea4d3bdb57c72806ec"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Radiance.pm",
+      "size": 4665,
+      "sha256": "b2d49162144a1da988416dcdbe0c2aa3f64ac145d7073f23c6e9919e92e8506f"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Rawzor.pm",
+      "size": 6322,
+      "sha256": "4e7892702e52f0e4ab00c2f43a43da00a9d1c59291b6fc56bb8d7a7884988ef9"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/README",
+      "size": 71173,
+      "sha256": "8db4cfe8234464da5bc9c7878825a3b6b47dab95cda833a212c166e1ed09707a"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Real.pm",
+      "size": 27549,
+      "sha256": "a53c3014d5eaa0d5744aa4843f25658053d6dc47c1f5423980222bfbb9591780"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Reconyx.pm",
+      "size": 25109,
+      "sha256": "e14afdcaaecfb4acad77aa970d533cc069ddda28b5d7a2b87611886fd5325b2a"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Red.pm",
+      "size": 11545,
+      "sha256": "439744cf113593522245084dec4e159e2bc8a5b78078aa96938be454bc8c815f"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Ricoh.pm",
+      "size": 41991,
+      "sha256": "24d66890e5ac4ddaae0864f0386f524a19b54e9e289588a62345c686b3934049"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/RIFF.pm",
+      "size": 80925,
+      "sha256": "af3a9278fbf7078c61fe53113cc236c7edc43e4bbdd5da86c5d9a6aa2522214d"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/RSRC.pm",
+      "size": 9814,
+      "sha256": "458fec455fb2345e8d3f815a3a1e73d48a3c2efdda9040d589865c4b1bd1c62f"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/RTF.pm",
+      "size": 13776,
+      "sha256": "36b2be702d896eb970a12c36de0d0740ab5d099aca465b609cb127bbd6c0fe7a"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Samsung.pm",
+      "size": 73576,
+      "sha256": "06112be5b4a34e9706a4c31a0c401cdf6ed41a5caa87da9290ab6b3a8b275b00"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Sanyo.pm",
+      "size": 12116,
+      "sha256": "1a335cda97fb0c414aa53bf8e44c1464650a8a330eb2fe16e09a5a746d870c58"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Scalado.pm",
+      "size": 4006,
+      "sha256": "87f61789be49ff02f901f16928790de5f8bd65c0df0d867952b100808c0d0786"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Shift.pl",
+      "size": 23773,
+      "sha256": "e83155e59d4a7e8d015f91211a8a590883467ce619d4c7198b4b10aaa39954db"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Shortcuts.pm",
+      "size": 10303,
+      "sha256": "ca795f420517162cd80b776795b50d5cf0317851530bda1cbca133a38ce8362d"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Sigma.pm",
+      "size": 35879,
+      "sha256": "e20ab05420ae05e87da7f61c5021412b1ea994bebf9e6666b731cc0189460ef6"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/SigmaRaw.pm",
+      "size": 25685,
+      "sha256": "3ad6c2fd920c9c82e785e43f651cb6dc5d42fde535539c58633f0984749c8d09"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Sony.pm",
+      "size": 478884,
+      "sha256": "1db1f1905ec2b6abf4bbd90fa6d8bfa92d84c5a2399cc333c2b392f27d8d330f"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/SonyIDC.pm",
+      "size": 12237,
+      "sha256": "3f6faf1b0273ca8456145a53ab80586033ae14e0741a2c9ec89a6de36f898bc4"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Stim.pm",
+      "size": 4640,
+      "sha256": "06de73a1e6a4f72db5e809285ddffcac9b911ca6489cc1d0bacffba2cc9aaa72"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/TagInfoXML.pm",
+      "size": 34653,
+      "sha256": "8ac0396ffc87e69433aae543c785fb1893763688f07b42ef3912519a6b83a7e6"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/TagLookup.pm",
+      "size": 756155,
+      "sha256": "da70c92c00f9db1e72641ed04700e6e17c9cccbd323c5ebf95fc3de7b4a95a8d"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/TagNames.pod",
+      "size": 2356602,
+      "sha256": "22d1857911183f2186e5084b102d8a294338e410695f604bec25793a188a10e9"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Text.pm",
+      "size": 8386,
+      "sha256": "b8eed4a87b452813c8e146812e48df5ee8a24f1d9713fa2e4137d7d929b7c57d"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Theora.pm",
+      "size": 3496,
+      "sha256": "f611c33a96dca1be5c96dd6456fadf7b747c6e75ba4117f8055864b9e55683a9"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/TNEF.pm",
+      "size": 18327,
+      "sha256": "4178a50bec9bebee20b62750ae18483d508c43a9185db71b6e03b7232d67c60e"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Torrent.pm",
+      "size": 11910,
+      "sha256": "0e4ca12e9ae1bc73f9d3e52d198af13703214321297aa9c426bf67b466b435ea"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Trailer.pm",
+      "size": 12585,
+      "sha256": "71dd33f64d2126a3e14e0354d5ca540ccb83d1b7ed833788fc92e54b6b4948e9"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Unknown.pm",
+      "size": 1731,
+      "sha256": "e28eca4bad26436e79201ea73a9cf7a24749648959a0c02e024cd9a20cb98aa8"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Validate.pm",
+      "size": 31667,
+      "sha256": "74d649b10597f153c4553e9e697a69adde151e75628188169e4e49ac57298a41"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/VCard.pm",
+      "size": 18242,
+      "sha256": "47f4c57a2dde6b2650a7e88751f5cf75392a7591ceae2752e44937e0196083c5"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Vorbis.pm",
+      "size": 8321,
+      "sha256": "39f27e7f564468da63f73e8e67af8c9568e18d39b804b6680f932dbd016c5e44"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/WavPack.pm",
+      "size": 3869,
+      "sha256": "26df649e5db7f0111ae7673c848f204bef6ca4993e9e48f322e5a4ab6bc2455e"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/WPG.pm",
+      "size": 10420,
+      "sha256": "717a7bb129eca8e1897a695cd0860f237726fea55843d9ac19ce05876a55d48b"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/WriteCanonRaw.pl",
+      "size": 25152,
+      "sha256": "38f9a795ceae9d19740b111aef86c96ee70a25bdfd63708c69dad4614f924478"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/WriteExif.pl",
+      "size": 143519,
+      "sha256": "7ea2e8af8f17ebfef5979146bdc6b793392f39da9fc3ea15c6ba0326e1321533"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/WriteIPTC.pl",
+      "size": 30224,
+      "sha256": "8e7cc493b07abf91ecdcab9270770e5eec18f9579f00b4ae223f6a2310cf5ea8"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/WritePDF.pl",
+      "size": 30776,
+      "sha256": "e22db8caf967f47dff9b2b79f36cf68bf79cc57398506e8e0b7e523b39c21d13"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/WritePhotoshop.pl",
+      "size": 11172,
+      "sha256": "7299edfab3923f664ed3f190fab3df9190dd17e44ec20e8cf96f13eb06ca1f56"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/WritePNG.pl",
+      "size": 16453,
+      "sha256": "21f83b39cfd05422ba219e911a88506bb17c7c8d733aa14377fad461d7093a31"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/WritePostScript.pl",
+      "size": 27353,
+      "sha256": "e0d822a9c49e9a3c2157198e3f4b1047e99411cfd21402051344d2c84e3dad64"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/WriteQuickTime.pl",
+      "size": 108900,
+      "sha256": "93213228286b13115f90a6441d96b8a37f2f939e4c7520a61be32c081c634bc0"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/Writer.pl",
+      "size": 328299,
+      "sha256": "cfe916df77f7b37a4fc62e22f0c03de93ca727f0fa22a155ad0eecf95c050d44"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/WriteRIFF.pl",
+      "size": 16549,
+      "sha256": "ea5b2c2cc18ceb4529059c6d7c827c3bffccbca27e134ca5bfbb8e890952154a"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/WriteXMP.pl",
+      "size": 74136,
+      "sha256": "9258f4622ae7a20fc239f8a945e0aefc00998709537f547064154a5678047c2b"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/WTV.pm",
+      "size": 13294,
+      "sha256": "269940ac9be0d8b4b570d7d2daa046911a7c609f4f8a03916f768c7c07a49cc0"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/XISF.pm",
+      "size": 5715,
+      "sha256": "bcfa3345a66482bf280e899fe4e060e820867d08aa25022cbdba4034143360eb"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/XMP.pm",
+      "size": 195643,
+      "sha256": "1e3612f54b7dd3a08cb326b22fdaa72e09f5a78b3d819cb093174e7567a2508b"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/XMP2.pl",
+      "size": 75233,
+      "sha256": "c499607ebedf902fb60610d0b7cbf901189067e109cc33b7fabb2dd035c0f92d"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/XMPStruct.pl",
+      "size": 40986,
+      "sha256": "74c2efa124a1fdf9e5ba19ec50ebe6bcc4795c974c416953375f251d2bea50af"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/ZIP.pm",
+      "size": 33447,
+      "sha256": "f59769721010311f055eefc91aa4deeb7adaf9ab13080254db0a1769afc2fe70"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool/ZISRAW.pm",
+      "size": 8043,
+      "sha256": "963c9cc07fa9e1daa066a07be318ea1fe435554e0d32536a762894d523161c9c"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool.pm",
+      "size": 451511,
+      "sha256": "a7afe65cba4a3bc04f0008a2f9e9ab3cae050e53b43a036ba5edcfb9128e1c61"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Image/ExifTool.pod",
+      "size": 120171,
+      "sha256": "b270d5af165ae91d3e807e4e4a3290b06dcc8526eaf06c045be526085d6d5a96"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/integer.pm",
+      "size": 3254,
+      "sha256": "eb62cc3ee22a592bc673e07158927d1a6536075d33258fc67ff91e3f720cf463"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/IO/Compress/Adapter/Bzip2.pm",
+      "size": 2564,
+      "sha256": "3ec38a0b2db5bc9d9e5ba9b227d08b716fa3465b9669bcec793ae269062cba4c"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/IO/Compress/Adapter/Deflate.pm",
+      "size": 3041,
+      "sha256": "99dfb2bd6e4ff9705d1570bed1c37776a3ede90f085b33ca37e9eecbd433fd55"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/IO/Compress/Base/Common.pm",
+      "size": 22774,
+      "sha256": "bd2b124b1d8f71be1b295421eee7d40b70dde9e7bf32ad2b5887b75956d37d24"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/IO/Compress/Base.pm",
+      "size": 24024,
+      "sha256": "729ebaa5527cca3ee9a234dce2aef0c7e2991bea83ed8d297ca65d75ad8b1b26"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/IO/Compress/Brotli.pm",
+      "size": 3445,
+      "sha256": "17e532d793cba0158af32dd3e1be132db42e67a79a910c2f82607dfc570548d7"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/IO/Compress/Bzip2.pm",
+      "size": 21305,
+      "sha256": "8bf20117fa4079ab1baa954a720ae10f8e081acedc6e114af0cccc6bfbcceaf5"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/IO/Compress/Gzip/Constants.pm",
+      "size": 3883,
+      "sha256": "6cb5febcf22a0d6ababd9db5bf562d605935c901b58e0f79ea8d7819819c1f99"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/IO/Compress/Gzip.pm",
+      "size": 35164,
+      "sha256": "14e2a1bb28068bec7c99cbe79c447b192b6b0b2d3b5bf3638805ad796adfab08"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/IO/Compress/RawDeflate.pm",
+      "size": 26901,
+      "sha256": "ef0d517f54ebae860e741438b0c2d422639100a5cf7c63ec6d379ec7936adf95"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/IO/Compress/Zlib/Extra.pm",
+      "size": 5647,
+      "sha256": "67587e1cef0793aa27b29c35d8b061a71279d8f4e366fecc8f943ad80a464cf3"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/IO/Dir.pm",
+      "size": 5326,
+      "sha256": "2b0617bc261954c37f54133afa694ba47063937114f20d83e4fec9835c64490b"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/IO/File.pm",
+      "size": 4872,
+      "sha256": "997417bcda6ba4fb23ec8038c3d844bf2417c1681c354e90b09242d4ddd2a8aa"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/IO/Handle.pm",
+      "size": 16641,
+      "sha256": "ba0cc59021f01c16c15225bea01603270b8b7dc318ac4c13751e499f2ab8a982"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/IO/Pipe.pm",
+      "size": 5461,
+      "sha256": "30c2a6cdaba7b560ee3d2589187c1908b8498f8a69c6067072639d179a8cc511"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/IO/Seekable.pm",
+      "size": 2891,
+      "sha256": "27d7071cd0daaef64ea3b7890719dec0301a6fe8de2bca2ad3bd247797b31230"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/IO/Select.pm",
+      "size": 9263,
+      "sha256": "be68d9d9a1694c26bb3f0e64a11fd1123f304afdb639b499e3fbf9e5b8986078"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/IO/Socket/INET.pm",
+      "size": 12759,
+      "sha256": "1a5c9fcc761b518aaf58b01edb337803e2062bece2342e15819cad5dc6e63966"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/IO/Socket/UNIX.pm",
+      "size": 3950,
+      "sha256": "7b6dc231293f108e86cc58a1a18c2addded3a34284be645a6a252b8e5e3b3406"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/IO/Socket.pm",
+      "size": 28361,
+      "sha256": "d8a2953fc9fadaf58d6c9c4e3288c6bceea2a96712c10c178b6815ee91ef6083"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/IO/String.pm",
+      "size": 7802,
+      "sha256": "01c8d19c6fe9b0819e34fad73df4670ca904a69a5c519c361e06c73074f83a71"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/IO/Uncompress/Adapter/Inflate.pm",
+      "size": 3259,
+      "sha256": "f2820ebcde81b35d34aa96e060ec72ce87cf1c24bfea83a2d7204c93f1e5322e"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/IO/Uncompress/Base.pm",
+      "size": 38337,
+      "sha256": "9f229d9467a12165ac6a0962ce2aa09969b0b9f43b809f6caf0a563a4338ebfd"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/IO/Uncompress/Brotli.pm",
+      "size": 2692,
+      "sha256": "e5236b28d5dee30e99fee9d4cdd4379ed34c91872ca388aef7b33704abc8c24a"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/IO/Uncompress/Gunzip.pm",
+      "size": 32152,
+      "sha256": "cab56049a7e88a4919189a82089f38e341892a3fc1ef09be11dc98e8884211b8"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/IO/Uncompress/RawInflate.pm",
+      "size": 31841,
+      "sha256": "bc37f9ccc51077a2c048d32f64631896bcc7cec6931c4190f39c647ecddc9775"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/IO.pm",
+      "size": 1456,
+      "sha256": "fcd37074a677be88768f400f04d6d66a7e9797d48cbf78a26a472df5896d5ae3"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/List/Util.pm",
+      "size": 24055,
+      "sha256": "0d3135c14b4d4156a0de8156f2d33f54c6f0b6233b2f6fe5d4b9122e9fef1a5a"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/locale.pm",
+      "size": 4855,
+      "sha256": "2b21c1ea5095b62d18db3278ce9f4d486ca8c9572f4485a9ae8012e161adaa2d"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Math/BigFloat/Trace.pm",
+      "size": 1269,
+      "sha256": "785045d2f3b1251d71b65021f04c5c013a99d2baf276c3606e3608064ef6f134"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Math/BigFloat.pm",
+      "size": 199342,
+      "sha256": "7ad595a24c18e5e83c8f98f24bf452611dd5b78829af56df1236fcbe4e7b849d"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Math/BigInt/Calc.pm",
+      "size": 73554,
+      "sha256": "d6833448f33582bcc736558b07e5a72541780cdc740e3e8a2e09e84a3b536e23"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Math/BigInt/FastCalc.pm",
+      "size": 4111,
+      "sha256": "ba4c6959b14456116641dd5f91c73f8aa6071a469f5cdce03a60b2c7c83c17d3"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Math/BigInt/GMP.pm",
+      "size": 1058,
+      "sha256": "27de490ad31eb995d59a7c0413c7baaced3127b63a4da321250a1fd379fc8669"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Math/BigInt/Lib.pm",
+      "size": 70864,
+      "sha256": "f97917769970f72ab0e72f96580ee9cee76a0a3ba1622cda1b033ff4ad1bfefe"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Math/BigInt/LTM.pm",
+      "size": 25685,
+      "sha256": "75d60d24d7828d918be73fc9542f03865c2111ed8ceeaedec08bd2035df6aa4c"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Math/BigInt/Trace.pm",
+      "size": 991,
+      "sha256": "aa299dac386f4b79d2c242361e4fde7490e1c7b8d33e7da63de09e8b0715b3da"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Math/BigInt.pm",
+      "size": 217779,
+      "sha256": "41ec57f420ae6a9da9cc9536585581d8163e790efade6bcd2339facc0a81e14a"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Math/Complex.pm",
+      "size": 50065,
+      "sha256": "eccc422301a14b62a75fbb63978e80fb57f693ea5d4ff5d2dea347f891f9ce82"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/MIME/Base64.pm",
+      "size": 5433,
+      "sha256": "dfb1e3876b3e7f3cf9a3f23123c37464617e551802e618e54cabd7890c986cc8"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/MIME/Charset/_Compat.pm",
+      "size": 3243,
+      "sha256": "a21d8963b81203ea0db0caf51f539590d8a59902063168c711e47ac321f7565e"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/MIME/Charset.pm",
+      "size": 36611,
+      "sha256": "906c39d7641644551bf995aeca673530c387c6854ca2d664a15f25eb87666175"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/mro.pm",
+      "size": 9892,
+      "sha256": "4a12e17a9e8e41d3edef2e79d158d0e4ef4a3d8e346bbf2e24ebbc851e03891d"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/overload/numbers.pm",
+      "size": 1951,
+      "sha256": "482f02bdf621f7e7656311666a4f1caa6b329d2ec3a197b3672ad92855794f1e"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/overload.pm",
+      "size": 53302,
+      "sha256": "36d4c0844259013579e3e41d1a3cb7002bcf135ea5f5bb9aa036287f7ed67ccd"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/overloading.pm",
+      "size": 1808,
+      "sha256": "5bba56c0acdcc449ca3b73500862a5750c907d97d652978038dbc7809c4fcd07"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/parent.pm",
+      "size": 2702,
+      "sha256": "046169e129cfb7d4b302567de268409f175652192914abd33245cb9939f16626"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/PerlIO/scalar.pm",
+      "size": 959,
+      "sha256": "d633e2e16110bd09fa6e261b5f5f653f3bdadb729691590de40b28b6d5317406"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/PerlIO.pm",
+      "size": 14441,
+      "sha256": "183d8cc5992cd8197bd0621f0ac1c2346104327ecc4e7ccb53c26145481822b6"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Portable/Config.pm",
+      "size": 2196,
+      "sha256": "56386d5b362aff25fa68554e8b33520d8fa2439c55a57ff954c476180e832b37"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Portable/CPAN.pm",
+      "size": 2084,
+      "sha256": "4a5bc2cf9cb536a880286b73b6d2b1fe49488aeebb8d1b4b11959890095da555"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Portable/FileSpec.pm",
+      "size": 4987,
+      "sha256": "e7297a7527f32605025d4d685d505bc3f0cc9f1842a619b97de001456d8428a3"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Portable/HomeDir.pm",
+      "size": 2004,
+      "sha256": "03d5be559e9727c4f983ef7998e59a4cd0280edff09cf9515ba8e0a1e92a6f71"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Portable/LoadYaml.pm",
+      "size": 13149,
+      "sha256": "af6638600e39df46dd6fa1455798fffbc18a73010e625763b3bfd90bbae12935"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Portable/minicpan.pm",
+      "size": 1369,
+      "sha256": "ff8960ba5017eab8e31bd5cf7dc6ff327f9524eb0b79a776b9a268931f68bfe3"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Portable.pm",
+      "size": 4897,
+      "sha256": "2b8fdfbc9a928b5b9f725ae259259db4a797aa7fa4b6921017a80a3806537c13"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/POSIX.pm",
+      "size": 20347,
+      "sha256": "c3ac3494b7f7e61396e4d500c93032dc00631a6d0cba6b36ab35af564740d83c"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/re.pm",
+      "size": 25394,
+      "sha256": "a19cba44e51203f71a22731d18d96e8bb7caf6c8f060ffe6d2b9118ff7b293eb"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Scalar/Util.pm",
+      "size": 10189,
+      "sha256": "9ba58fcbefc535a73d3fc0da949d0fb1e524411dea4e8bee97529700607a98a4"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/SelectSaver.pm",
+      "size": 1076,
+      "sha256": "b951b99c894f701eac08b79265ff2ccbede0954f97a537d03fb78801ed645861"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Socket.pm",
+      "size": 37027,
+      "sha256": "700800decc75e5ed003ec3832846bf4fd69416089109d74ed337e23d1d0099ed"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Storable.pm",
+      "size": 49924,
+      "sha256": "b1c10d3135bbbbb967a9594056cdd5e908b3577ca06e77c12d83603d3af81799"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/strict.pm",
+      "size": 4738,
+      "sha256": "89a96f0a1a1ed78e0e9c525434b5779b2e2baa8f976dfa2f78771282fa08d88d"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Symbol.pm",
+      "size": 4799,
+      "sha256": "219ec21cc059ecfeb3bc7c6e349734dd0344a06a724781a54c17811d69ed77da"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/TAP/Base.pm",
+      "size": 2301,
+      "sha256": "6c7a868589f2547c68e1542606729eb510b2a5091663ae3a2c00a486b062673a"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/TAP/Formatter/Base.pm",
+      "size": 11870,
+      "sha256": "2f3a2306725283f3fb3eb299565a8534b29d52fe9495870c0fc98ad3e2b1ad76"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/TAP/Formatter/Color.pm",
+      "size": 2321,
+      "sha256": "6528e3b11f157fb8803ab9499894e368224174ebbbf3abc02c3d5494e4479bcf"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/TAP/Formatter/Console/ParallelSession.pm",
+      "size": 4183,
+      "sha256": "2ad00543a66e4ba0eeb2cb8deb8cd0af5080c9a37e43d28f3a7df43fa56edc0c"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/TAP/Formatter/Console/Session.pm",
+      "size": 5527,
+      "sha256": "2fb36a942462f0d7e4e01f8dcd457e560a88f1c61b678d654c945cc7ff03733a"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/TAP/Formatter/Console.pm",
+      "size": 1995,
+      "sha256": "a4ae4ddf50298c9e00115f0ecbe7977c34171941226f8e28b35e5500d341ad30"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/TAP/Formatter/File/Session.pm",
+      "size": 2217,
+      "sha256": "64b6348dd3f5c24710694eb79d022cf1d95e599dd60e048a6157461661e6fec2"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/TAP/Formatter/File.pm",
+      "size": 850,
+      "sha256": "8624178af78141eb4c10dc465f4574188223dd0fcd70c2ada1e1fff2cb0754d1"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/TAP/Formatter/Session.pm",
+      "size": 4988,
+      "sha256": "af5a8b29350bddc35c187b0529804468a048bd3db6a478104e619a21a116d6ef"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/TAP/Harness/Beyond.pod",
+      "size": 15581,
+      "sha256": "da2dedd348b7747c5ca2cf106b0eb87390324ceab00df7948e98d7ff18bc17f0"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/TAP/Harness/Env.pm",
+      "size": 5416,
+      "sha256": "16c31b12a380ef5b83d85723f0795ca13142dd25bbb96eb2841de2722e9afe62"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/TAP/Harness.pm",
+      "size": 29006,
+      "sha256": "4097e5f4cfa71e7a7860ca830895a5d4963bcf92362fcb89ecc67a7f2dc56b88"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/TAP/Object.pm",
+      "size": 2696,
+      "sha256": "121dddea3c7df21a51303c793bd919d1f1a8706c281256ff8218d60a2a93546b"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/TAP/Parser/Aggregator.pm",
+      "size": 9243,
+      "sha256": "7af8c5bfe2b275bdb71e3d6706cf419ba06c1dfc14055422db2505c97867acdc"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/TAP/Parser/Grammar.pm",
+      "size": 15666,
+      "sha256": "a4cfb237b2ba5985ba350c069738989c4c4f8d0887dcde9bc401faa1e8f9b79a"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/TAP/Parser/Iterator/Array.pm",
+      "size": 1696,
+      "sha256": "193aaa5c0da3202614a6148919ba333b7262a4e00854752da9859acaca3b9098"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/TAP/Parser/Iterator/Process.pm",
+      "size": 9116,
+      "sha256": "898391be1b2c994d4980894f07476f03d414b9f4c39d38d3dda47aeb7375a00b"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/TAP/Parser/Iterator/Stream.pm",
+      "size": 1925,
+      "sha256": "32a3bdbd55340c2ba65d7a0caaa2b4a817209949cefe54955a91392699775fac"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/TAP/Parser/Iterator.pm",
+      "size": 2998,
+      "sha256": "ab47673c49170fce89e4a4527ada166a1c6041633da252afcb60cda75823e64c"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/TAP/Parser/IteratorFactory.pm",
+      "size": 8307,
+      "sha256": "1c5901a52e8bbe245e9992f5cf0be234c1f2ab618149e40d3bd5a34b9336e6af"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/TAP/Parser/Multiplexer.pm",
+      "size": 4265,
+      "sha256": "7bf4129bd7ba393e001ef9b4ef60563f30bfdf8256681ce819a16d98c89dd034"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/TAP/Parser/Result/Bailout.pm",
+      "size": 1148,
+      "sha256": "6d28cbe3a94fdff329567d89cce52a0e1b30ca3f59245903c20d64c910c20831"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/TAP/Parser/Result/Comment.pm",
+      "size": 986,
+      "sha256": "fe043357510e64550cc72b7a6618a43e4e74ee33d980dc332660105ec4ef91a2"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/TAP/Parser/Result/Plan.pm",
+      "size": 2048,
+      "sha256": "1fb1f58610b8d71b4735f95d9748936b0f52e85d014517d3a6425c84a25d9296"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/TAP/Parser/Result/Pragma.pm",
+      "size": 946,
+      "sha256": "14609bc970407dae154098439bf44e1d102b66afd4b8a5a0ced7f3199656699a"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/TAP/Parser/Result/Test.pm",
+      "size": 6078,
+      "sha256": "7f5629a4d514c2f52a901ad45d8c828d68689bda55e455e2091be51b1263c729"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/TAP/Parser/Result/Unknown.pm",
+      "size": 734,
+      "sha256": "a65b97e1499df488828b62547154b0eff53d8c6549b72b3df80145a3493e7f61"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/TAP/Parser/Result/Version.pm",
+      "size": 946,
+      "sha256": "21ec38f085d83a9a583672e46a0d9c74050dd6e7ac8ef0aaad25baa96d0cb54b"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/TAP/Parser/Result/YAML.pm",
+      "size": 880,
+      "sha256": "96e7dae598bf749642c1faf675e1009649bd3f5bd0d85d8f46797f44866f0ca1"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/TAP/Parser/Result.pm",
+      "size": 6145,
+      "sha256": "3d4739c3e504851cff6ee1fefb1db4aaca99ee9063d1bce20cb1fbbabe6bf613"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/TAP/Parser/ResultFactory.pm",
+      "size": 4065,
+      "sha256": "9ab0de32fec9429b0ad2bbc6181d1cd8bb9fec3ff851a8987843b98e53c8c880"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/TAP/Parser/Scheduler/Job.pm",
+      "size": 2201,
+      "sha256": "15fd7e093c58e199c602f45a3a82be7189094070c31ac298a8bfa8f916d6547b"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/TAP/Parser/Scheduler/Spinner.pm",
+      "size": 990,
+      "sha256": "fb072da532ebb5df2eadb188058f9f3aea7235609a674ae9c6093150127dc19f"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/TAP/Parser/Scheduler.pm",
+      "size": 11543,
+      "sha256": "6e9dce1b4aee701e6182117273f9b850d617483e32ae6f9ef5ed548ba646c612"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/TAP/Parser/Source.pm",
+      "size": 9551,
+      "sha256": "bb897086e55d3c5b7abc36660a0465fd7d3305dc086d4b771d7d8f1af8c65925"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/TAP/Parser/SourceHandler/Executable.pm",
+      "size": 4045,
+      "sha256": "4ddee089d5d9172fb43de35e4574eeae02d5818a4711a56caf8f3c9babb8e6a2"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/TAP/Parser/SourceHandler/File.pm",
+      "size": 2993,
+      "sha256": "6287b80e6e9263a744e0954f3bbde7498267723aa630d23a0d39082265813ff0"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/TAP/Parser/SourceHandler/Handle.pm",
+      "size": 2651,
+      "sha256": "30ec25cf2b5878dd8cbe44e1212a606e1d8b94ceabafbe4dfd58847870c1a353"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/TAP/Parser/SourceHandler/Perl.pm",
+      "size": 9447,
+      "sha256": "09e8afc6fc8e07cd1ff2c6242d5db495520dfdd1b35c49172156eb6ca3dc5df0"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/TAP/Parser/SourceHandler/RawTAP.pm",
+      "size": 2842,
+      "sha256": "019eee578f770da6b503247954390580e47ff4eee772ad9d933e703389ec91da"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/TAP/Parser/SourceHandler.pm",
+      "size": 5154,
+      "sha256": "5039d0b877ad31acd17fbce2afacd4e87315325738e2d39f2a5f5d4931b182ca"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/TAP/Parser/YAMLish/Reader.pm",
+      "size": 7603,
+      "sha256": "43f6fa1ee45644044d546bd8163b0be1353cedd3b84ba51475c7f1ff25285d44"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/TAP/Parser/YAMLish/Writer.pm",
+      "size": 5235,
+      "sha256": "c5ba1f0fa70212262c2ddbce739fcb22086cf055f6a7ea29b4e63e3c0f553a7f"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/TAP/Parser.pm",
+      "size": 52145,
+      "sha256": "bc5da1b719684d0aa54ab974b27a08465b9251038c544113095429c7d7aebbe6"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Term/Cap.pm",
+      "size": 19774,
+      "sha256": "7d12f7d11646fe7a6cf76aa6d090e90769752573222bc3a331df371657cdeb92"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Test/Builder/Formatter.pm",
+      "size": 2122,
+      "sha256": "6dff97cdd3f8b2634bf1cbd3fd27a58e7f537d0a51377f135362a42c680b00c0"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Test/Builder/IO/Scalar.pm",
+      "size": 13640,
+      "sha256": "256e5f5393ff2e1d74531878207f265421fcab42dff41fa187e4113c90c181af"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Test/Builder/Module.pm",
+      "size": 4079,
+      "sha256": "24f760abf8cc78be974300f51e1915a4b9c00251c01c49d7e003ba4ae5a1e2cd"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Test/Builder/Tester/Color.pm",
+      "size": 973,
+      "sha256": "1f95ed24054149d365fd5e1380fb8d2aa85ef6c5955656e83574d625f913b80d"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Test/Builder/Tester.pm",
+      "size": 18035,
+      "sha256": "b21b6213fe9489b32dd7373e7f6b38ea12abe9212f23c7ec07e7171e53cd5c61"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Test/Builder/TodoDiag.pm",
+      "size": 1081,
+      "sha256": "83855bd511d32db788f1b1604f3757dadea8fea9d2f83317b1cfcc7ae41cfe2d"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Test/Builder.pm",
+      "size": 65114,
+      "sha256": "18fecec89482d91104ddc27f61a30076ba00c95dac7fe670d25572541e9ea39b"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Test/Harness.pm",
+      "size": 16649,
+      "sha256": "a1e5aff43ff7571d06e00ae751fc0e8115a12d250fb08fcee64ced04f9bfc1bc"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Test/More.pm",
+      "size": 52697,
+      "sha256": "b34e7d0f41c1bfd186d745abf7d87b51b29c55d08a7cded88ea20779c7c0eaf3"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Test/Simple.pm",
+      "size": 6492,
+      "sha256": "1817f63c44acfce66ebb0438a632f8ee8d2de2863c7161a4006e77cf6bc3cb5e"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Test/Tester/Capture.pm",
+      "size": 4424,
+      "sha256": "599d83aab70329f77b5ed8dce479777df44e51bee3fcbe42af406dcb75c8dd4a"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Test/Tester/CaptureRunner.pm",
+      "size": 1302,
+      "sha256": "bdfe923b0b15d78ba583fff6560c9172697c236a65f80175bb326f5d50a878e1"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Test/Tester/Delegate.pm",
+      "size": 571,
+      "sha256": "e87f5bec156b53d30fcdd98e5458c1a11e5d80134abccd586a2f8d962533b51a"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Test/Tester.pm",
+      "size": 18333,
+      "sha256": "2539fcbe58f3a775cec9db594c798cd8107a1b4ba6d7d9304ee8e0cf4592b55b"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Test/Tutorial.pod",
+      "size": 19346,
+      "sha256": "c75ca5da3e428bc9ffd1a520d559cde2762dd275244be7924d2b819d30fe8c89"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Test/use/ok.pm",
+      "size": 1360,
+      "sha256": "94dc00825ce4f68d67b079c4d1dba0f036543793ffbbeb36b022c0d91e2b46fe"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Text/ParseWords.pm",
+      "size": 8144,
+      "sha256": "8a33df070a25ea3fe4e1decc3de808e6c186805fd068b02792ee01523bc9df57"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Tie/Handle.pm",
+      "size": 4202,
+      "sha256": "a15263f2fbaab6927932fbdf5dc7be936cc2e577120783a36a4992c15314f0aa"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Tie/Hash.pm",
+      "size": 7639,
+      "sha256": "12e565ea59a4a3a332d8fefa40a654f9482014c145f165bef3d065a59daee55a"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Tie/StdHandle.pm",
+      "size": 1389,
+      "sha256": "fdeb719785a2e0213af711681c21ba9f2c9067a531fece87386ea1ff3d3f8ec0"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Time/HiRes.pm",
+      "size": 25689,
+      "sha256": "e2a8fac68a3dd894c5876b1aebe4eacf5d7c58e5b1156ac627622a542d61db66"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Time/Local.pm",
+      "size": 16312,
+      "sha256": "277be62ed2520a35e94a5acb8f8e4cadd6fff682b8fbcefc34648884988d3a7c"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Time/Piece.pm",
+      "size": 32204,
+      "sha256": "fa366587ed15038e0717adb0a30584035fb906133d2f03281942b722975f29cc"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Time/Seconds.pm",
+      "size": 5351,
+      "sha256": "fe05c1e5e516859d6d32354db8afb9b9aaf1ca38d179ca1c51a355218439fe95"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Unicode/GCString.pm",
+      "size": 956,
+      "sha256": "2442c349e9808be07d007d7c1a7be98f9690d5726446d1eee9f60db94179c2fe"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Unicode/LineBreak/Constants.pm",
+      "size": 2411,
+      "sha256": "bb11b9d586bda231dfdfb17f1a5132c61078e9af7b354faa2ec1072dd7491daa"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Unicode/LineBreak.pm",
+      "size": 6432,
+      "sha256": "93c0f47c958521f9a2d634a9b4faac25fe0cb89a28b06dcd01a2e011dfa01032"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/UNIVERSAL.pm",
+      "size": 6594,
+      "sha256": "899d9399b809be16d0797decabe63cc647f7985a605ae60de860be1a439c3056"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/utf8.pm",
+      "size": 10423,
+      "sha256": "f29ceaa8053199d3f6ccdadd327a54c252e881507ee02701daa2b7ebd99fdc13"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/vars.pm",
+      "size": 2458,
+      "sha256": "84de23fb5d39572d2b0dc5d4e1cd6363017fae8f54eff90d4c8121eb1edeeb57"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/warnings/register.pm",
+      "size": 759,
+      "sha256": "ce25ec34358642703ff05b546b2ac42b4f2081ab7610d8373dd94c6b78040cf4"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/warnings.pm",
+      "size": 50537,
+      "sha256": "749cb1f346323d833651e8b5632e1454864583598a89e880e16868b6fc715538"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Win32/API/Struct.pm",
+      "size": 18231,
+      "sha256": "efe2ade6974af03deb228ba0799b90dedf3a436e075d861cf61d0ca926d49c59"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Win32/API/Type.pm",
+      "size": 12749,
+      "sha256": "8d182b4963ff05be524154f8541bd0053338393d6a5bf9802a11d13cd89a97fa"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Win32/API.pm",
+      "size": 21873,
+      "sha256": "55ad522673bf7604ba44b0ea4d13c8491f566cdc177296f6cad560684cb58bd8"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Win32/FindFile.pm",
+      "size": 1615,
+      "sha256": "86d87ed1496a3e95d8a8911393a0314fe551f0cec5917c7637a027ea3527a70a"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Win32.pm",
+      "size": 58652,
+      "sha256": "ce8ebdc60b1a2f74602101b9067122d0e960cb07e535b0fe039b17f6cc5b3eee"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Win32API/File/cFile.pc",
+      "size": 6104,
+      "sha256": "a6eeb11dd37af408d02961fcf6ede9664fca7cff08661ac01db1c36bb3347bba"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/Win32API/File.pm",
+      "size": 97834,
+      "sha256": "96366abaf7a7a666a2d96690700c919324c8eb2142f4e9edfde6a0496b139d43"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/lib/XSLoader.pm",
+      "size": 11275,
+      "sha256": "e7aefe1027715cceebeae94b212146ea67c1512dac457dec1ff927d6fda98f6a"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/libgcc_s_seh-1.dll",
+      "size": 76288,
+      "sha256": "5c67505c405f717d59ff2c583a11f54300dc9bf1577713b5dbbd00588c957325"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/liblzma-5__.dll",
+      "size": 154319,
+      "sha256": "f8863edc9c330456f1914ab054ef1ec839042ca3e5f172019c53760880d550e0"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/libstdc++-6.dll",
+      "size": 1424384,
+      "sha256": "03ad55828067fad4d24932ebb7a5b45e40c96255238775a6e02b1478e3b31d87"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/libwinpthread-1.dll",
+      "size": 52224,
+      "sha256": "0d9f9c09d4219d6c74930de38e35c454add54ba7117748f8b4f65f8eac624a96"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/LICENSE",
+      "size": 35149,
+      "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/Licenses_Strawberry_Perl.zip",
+      "size": 481025,
+      "sha256": "8bd5fc8dc0ef3b96881ddad0974b79e86f4043f76ab318a730b084adf0890bd0"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/perl.exe",
+      "size": 39936,
+      "sha256": "4d61ebe19311dbf7b9710ac2c6c402e3cba3e23b63e8b82be88e471343bed52d"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/perl532.dll",
+      "size": 3423232,
+      "sha256": "cfb80cfad6b868dab14f6a12083e4f3cb5714ac23b1b0e5a96f09144b116ab4c"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/readme_windows.txt",
+      "size": 773,
+      "sha256": "dc44bb2fc9a18d02af8b4ee82e1f90a1f7f3ac204858e60c3b9a5320c0355b1a"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/exiftool_files/windows_exiftool.txt",
+      "size": 160636,
+      "sha256": "03983231523622ea0a63a72ed3460da177ab700f4aefde21e727863459dc99d7"
+    },
+    {
+      "path": "runtime/exiftool/package/bin/README.txt",
+      "size": 493,
+      "sha256": "93081095fc3f8ed478a692dfde7f648d89b5f6c6c0d32a02ae062395e05a3d14"
+    },
+    {
+      "path": "runtime/exiftool/package/index.js",
+      "size": 93,
+      "sha256": "5d709192a6730595730e12f4998e379f28c226456f2ea5a21021930ba55eb4c0"
+    },
+    {
+      "path": "runtime/exiftool/package/LICENSE",
+      "size": 13524,
+      "sha256": "2c43d72c0069f76e79f04b403c83b4f55b21774c850e23b87a8aa2e78d90bd0e"
+    },
+    {
+      "path": "runtime/exiftool/package/package.json",
+      "size": 1719,
+      "sha256": "4dcc6aa25c4cf9aea465c7654ed57670fafe08a5015168598fa11748bed46e62"
+    },
+    {
+      "path": "runtime/exiftool/package/patches/2026-08-07-exiftool-stdin-eof.patch",
+      "size": 2003,
+      "sha256": "19aa0875d110b0c46db6e9a09b5ed2ce1e031b024ade60ef33cb885768aee24c"
+    },
+    {
+      "path": "runtime/exiftool/package/patches/2026-09-24-exiftool-imagehash-progress.patch",
+      "size": 2649,
+      "sha256": "68a1dab2f2e55a1cf0870ffae1dfa299c8a46b81cf5f188339cfe6054a47d3c9"
+    },
+    {
+      "path": "runtime/exiftool/package/README.md",
+      "size": 4244,
+      "sha256": "d136af851474d55d4404a53c8f1c6af265b37b1feb76fdac9c6749afac7a0216"
+    },
+    {
+      "path": "SHIYING 数字资产.exe",
+      "size": 6650880,
+      "sha256": "88d6c0617f1b91c2b90b8d9929578f56a45ca6cdd89eac20fad866adb9025802"
+    },
+    {
+      "path": "update/_internal/_bz2.pyd",
+      "size": 84760,
+      "sha256": "160b5218c2035cccbaab9dc4ca26d099f433dcb86dbbd96425c933dc796090df"
+    },
+    {
+      "path": "update/_internal/_cffi_backend.cp312-win_amd64.pyd",
+      "size": 181248,
+      "sha256": "53de34afc3939d81bf2498b77425c52e2c3f3164f8cfe2543d3acc8f24134488"
+    },
+    {
+      "path": "update/_internal/_ctypes.pyd",
+      "size": 125208,
+      "sha256": "8250b4c102abd1dba49fc5b52030caa93ca34e00b86cee6547cc0a7f22326807"
+    },
+    {
+      "path": "update/_internal/_decimal.pyd",
+      "size": 256792,
+      "sha256": "b7f9603f98ef232a2c5bce7001d842c01d76ed35171afbd898e6d17facf38b56"
+    },
+    {
+      "path": "update/_internal/_hashlib.pyd",
+      "size": 66328,
+      "sha256": "b4cec162b985d34ab768f66e8fa41ed28dc2f273fde6670eeace1d695789b137"
+    },
+    {
+      "path": "update/_internal/_lzma.pyd",
+      "size": 158488,
+      "sha256": "b095fa2eac97496b515031fbea5737988b18deee86a11f2784f5a551732ddc0c"
+    },
+    {
+      "path": "update/_internal/_socket.pyd",
+      "size": 83736,
+      "sha256": "ce3090fff8575b21287df5fc69ae98806646fc302eefadf85e369ad3debad92b"
+    },
+    {
+      "path": "update/_internal/_sqlite3.pyd",
+      "size": 125208,
+      "sha256": "fef8e9f427b47e7758658a876ff1f2d718119af54dbb0498e14c8234571942df"
+    },
+    {
+      "path": "update/_internal/_ssl.pyd",
+      "size": 177944,
+      "sha256": "61f00b0543464bba61e0bd1128118326c9bd0cdc592854dd1a31c3d6d8df2b83"
+    },
+    {
+      "path": "update/_internal/_uuid.pyd",
+      "size": 25880,
+      "sha256": "869361adf2be930e5c8b492fa2116dc0d0edccbf2c231d39c859ce320be27b31"
+    },
+    {
+      "path": "update/_internal/_wmi.pyd",
+      "size": 38168,
+      "sha256": "b0ed1c62b73b291a1b57e3d8882cc269b2fcbb1253f2947da18d9036e0c985d9"
+    },
+    {
+      "path": "update/_internal/api-ms-win-core-console-l1-1-0.dll",
+      "size": 22872,
+      "sha256": "015bd08815c7b934a8952c3a7578e9ce59f21136e8a880d42bbd414bec2c6058"
+    },
+    {
+      "path": "update/_internal/api-ms-win-core-datetime-l1-1-0.dll",
+      "size": 22896,
+      "sha256": "5534812cdbdae94ba45cb216e5eb9af686b853948df54365103555abbbaf9d9a"
+    },
+    {
+      "path": "update/_internal/api-ms-win-core-debug-l1-1-0.dll",
+      "size": 22872,
+      "sha256": "837d2b1b2cd03e03fc6ccb050698b6b5763af17c201304872342a5eae9e0a2d2"
+    },
+    {
+      "path": "update/_internal/api-ms-win-core-errorhandling-l1-1-0.dll",
+      "size": 22872,
+      "sha256": "de43b165f568c276c00e95acd454e3092f352a18e95874595f4f4658c06d2ec7"
+    },
+    {
+      "path": "update/_internal/api-ms-win-core-fibers-l1-1-0.dll",
+      "size": 22872,
+      "sha256": "3cebc45bf479ad74cfabf2c6bfd4994d7ad639ed1221025981d19cedf9ce0416"
+    },
+    {
+      "path": "update/_internal/api-ms-win-core-fibers-l1-1-1.dll",
+      "size": 22872,
+      "sha256": "5ef70308bcca628ce6b0e2856b15b1c7ae340c3f9bbbc4c1071d8c191a34a5c3"
+    },
+    {
+      "path": "update/_internal/api-ms-win-core-file-l1-1-0.dll",
+      "size": 27008,
+      "sha256": "250ac829f2617bcac1c6e5b8c4f630462e20765863ba573526a3e11bbfb94a9a"
+    },
+    {
+      "path": "update/_internal/api-ms-win-core-file-l1-2-0.dll",
+      "size": 22888,
+      "sha256": "ae14079a114733f60ce87b92cba42acd8083c2cd67594e53bc37dc0b97a4b465"
+    },
+    {
+      "path": "update/_internal/api-ms-win-core-file-l2-1-0.dll",
+      "size": 22912,
+      "sha256": "914bf26a298713119477ea0a8e7bd43171b91344ebe24fb47ad77c49686e3d87"
+    },
+    {
+      "path": "update/_internal/api-ms-win-core-handle-l1-1-0.dll",
+      "size": 22896,
+      "sha256": "ab5489955e371b15f77906c08ec3c7affe2c7a46a08c514ca628768b4478974b"
+    },
+    {
+      "path": "update/_internal/api-ms-win-core-heap-l1-1-0.dll",
+      "size": 22872,
+      "sha256": "c70f9644d8377fa39c5b71f2e9734c1400d7598904fdeb772e8502099982dcb7"
+    },
+    {
+      "path": "update/_internal/api-ms-win-core-interlocked-l1-1-0.dll",
+      "size": 22888,
+      "sha256": "f8129710188e407bb0e6f46d30aeba277d67b947ece5fe09e883fde2323f3ae6"
+    },
+    {
+      "path": "update/_internal/api-ms-win-core-kernel32-legacy-l1-1-1.dll",
+      "size": 22888,
+      "sha256": "5200b16cb2ddc61cfc07373a9a84aa85a3ab50806ca96c879c883275832944c1"
+    },
+    {
+      "path": "update/_internal/api-ms-win-core-libraryloader-l1-1-0.dll",
+      "size": 22872,
+      "sha256": "48786fb88b001dcd1f63acea903d3ca9cc0b3060d5a325e3f2f3cbc3bfd53166"
+    },
+    {
+      "path": "update/_internal/api-ms-win-core-localization-l1-2-0.dll",
+      "size": 22872,
+      "sha256": "9ec3898f7eba91faa28b51616c211a2689e3a13aeef8de6e13cb674e49d689eb"
+    },
+    {
+      "path": "update/_internal/api-ms-win-core-memory-l1-1-0.dll",
+      "size": 22896,
+      "sha256": "3a6cbc524c99e1cd80d5368f5601402a37ad602528b1ab628093573ef638eb3b"
+    },
+    {
+      "path": "update/_internal/api-ms-win-core-namedpipe-l1-1-0.dll",
+      "size": 22888,
+      "sha256": "97145ef89c44949fcf0f04ac834a8bc7d687ef49ee73ae9fc32f3c11136b7201"
+    },
+    {
+      "path": "update/_internal/api-ms-win-core-processenvironment-l1-1-0.dll",
+      "size": 22872,
+      "sha256": "8bc7c10b1851aea644e9c9f381cdb935e091fee6b0be3d3aedc6fffaac96adb7"
+    },
+    {
+      "path": "update/_internal/api-ms-win-core-processthreads-l1-1-0.dll",
+      "size": 22912,
+      "sha256": "d8030b777617c71f0f94564607699dbf7561487d779db9756aed378c5675213f"
+    },
+    {
+      "path": "update/_internal/api-ms-win-core-processthreads-l1-1-1.dll",
+      "size": 22872,
+      "sha256": "f5e676713340f73a03a3d41a6ec9883b431da7d16c7f07bd0a920fb80e6c0753"
+    },
+    {
+      "path": "update/_internal/api-ms-win-core-profile-l1-1-0.dll",
+      "size": 22872,
+      "sha256": "f023d47e44d3eea6b0743580f57e8c6ba81e79d5ebfa7da26250076c647b980e"
+    },
+    {
+      "path": "update/_internal/api-ms-win-core-rtlsupport-l1-1-0.dll",
+      "size": 22888,
+      "sha256": "9746d8930704153578a628c010638a5f818ffe5a927e25591b108e256dc6afca"
+    },
+    {
+      "path": "update/_internal/api-ms-win-core-string-l1-1-0.dll",
+      "size": 22896,
+      "sha256": "7c53ae24c982d16ffd1bf7f918d115b11b7f30e57bc7feaa18cb9781e4abb926"
+    },
+    {
+      "path": "update/_internal/api-ms-win-core-synch-l1-1-0.dll",
+      "size": 22896,
+      "sha256": "56d9d62ca5dba79a6581b8d574a7d8b2a64a5ecb71e47dcf06ed0285708b1859"
+    },
+    {
+      "path": "update/_internal/api-ms-win-core-synch-l1-2-0.dll",
+      "size": 22888,
+      "sha256": "f6482bbec5612c39ecb4822787a333f2b7570f7a5f922a4059be41ba957bb372"
+    },
+    {
+      "path": "update/_internal/api-ms-win-core-sysinfo-l1-1-0.dll",
+      "size": 22896,
+      "sha256": "272d02765fdd3582618236c2d309abba069642f9bc1062ede069d0c144e17007"
+    },
+    {
+      "path": "update/_internal/api-ms-win-core-sysinfo-l1-2-0.dll",
+      "size": 22912,
+      "sha256": "8a0900788859d0eb51c2f48f50cc6ed376a120b518100fa20e11d7702ccde260"
+    },
+    {
+      "path": "update/_internal/api-ms-win-core-timezone-l1-1-0.dll",
+      "size": 22896,
+      "sha256": "ff35de6c03812b332e140f17dade25c5dd4775156da9eeb1eaae3fddd27236ec"
+    },
+    {
+      "path": "update/_internal/api-ms-win-core-util-l1-1-0.dll",
+      "size": 22896,
+      "sha256": "191ef3e98641a57296f19d572d8eb62489470ff1ef6030d136af170c2f835173"
+    },
+    {
+      "path": "update/_internal/api-ms-win-crt-conio-l1-1-0.dll",
+      "size": 22872,
+      "sha256": "54ee5ec719a051496ff60aa00dbeaa94b9a7d2cdac27fe9b7317f1a666b6a2aa"
+    },
+    {
+      "path": "update/_internal/api-ms-win-crt-convert-l1-1-0.dll",
+      "size": 26992,
+      "sha256": "8b94662429171019fcd63c70bbf2095a075170599704a5e7dcdbe3da13f3a429"
+    },
+    {
+      "path": "update/_internal/api-ms-win-crt-environment-l1-1-0.dll",
+      "size": 22912,
+      "sha256": "39e5929593709e8af3bc9e0a75ec1155778d6f4a247f4cdfc58928ad6db88434"
+    },
+    {
+      "path": "update/_internal/api-ms-win-crt-filesystem-l1-1-0.dll",
+      "size": 22872,
+      "sha256": "5a8ecebac32edf4e1f3c5c6c1c8ea1a1add6cda4f9c9cb26f752fb295bea6865"
+    },
+    {
+      "path": "update/_internal/api-ms-win-crt-heap-l1-1-0.dll",
+      "size": 22872,
+      "sha256": "c71080cbcb43bf1f8f3e391deb12a582eb0abefc80946f340675a2c616e4feb4"
+    },
+    {
+      "path": "update/_internal/api-ms-win-crt-locale-l1-1-0.dll",
+      "size": 22896,
+      "sha256": "6c68648e524187e03c4ad9aaa4a99113c6ee9f29fb39cc0ed93f951975138e63"
+    },
+    {
+      "path": "update/_internal/api-ms-win-crt-math-l1-1-0.dll",
+      "size": 31064,
+      "sha256": "d4fbcccbe29371cbce431e43b2eb4f7ba9a6f04a3d740a071f02457a505e9dc8"
+    },
+    {
+      "path": "update/_internal/api-ms-win-crt-process-l1-1-0.dll",
+      "size": 22896,
+      "sha256": "47c1935942e3ac0812e4dcf18c0e265e565f0194a3349111c299712f5565f7ac"
+    },
+    {
+      "path": "update/_internal/api-ms-win-crt-runtime-l1-1-0.dll",
+      "size": 26968,
+      "sha256": "72adc1b3677e0814d9c4ebf0964000e84bb2acf67336c8963061665e44f78029"
+    },
+    {
+      "path": "update/_internal/api-ms-win-crt-stdio-l1-1-0.dll",
+      "size": 26968,
+      "sha256": "900afc3989673c9bb1a687ed38c192f46db9e6ba6d11a668898a539e7fc23798"
+    },
+    {
+      "path": "update/_internal/api-ms-win-crt-string-l1-1-0.dll",
+      "size": 26968,
+      "sha256": "fcf12466cc12fd3b73611fc0763a5a1f9d44e90349513c34a0c83b0f36421793"
+    },
+    {
+      "path": "update/_internal/api-ms-win-crt-time-l1-1-0.dll",
+      "size": 22912,
+      "sha256": "886e57c4a6adb299b38f02945369f590a67da4e79a798359fc60aaa067212d7c"
+    },
+    {
+      "path": "update/_internal/api-ms-win-crt-utility-l1-1-0.dll",
+      "size": 22912,
+      "sha256": "5f8f26b216ade615b67a41f6fbbb910972fc6153315a65bb8f09912be50215b1"
+    },
+    {
+      "path": "update/_internal/base_library.zip",
+      "size": 1332793,
+      "sha256": "9e1b313b0f16b918ba863a4e82b65cd18e3ef24e0b1f79933abe524b6e3e8112"
+    },
+    {
+      "path": "update/_internal/cryptography/hazmat/bindings/_rust.pyd",
+      "size": 9121280,
+      "sha256": "fe5c4cdb5512f792fb0f5b3ce0cd8c1484614851d56ff5d1e7215213eb9e0bca"
+    },
+    {
+      "path": "update/_internal/cryptography-46.0.7.dist-info/INSTALLER",
+      "size": 4,
+      "sha256": "ceebae7b8927a3227e5303cf5e0f1f7b34bb542ad7250ac03fbcde36ec2f1508"
+    },
+    {
+      "path": "update/_internal/cryptography-46.0.7.dist-info/licenses/LICENSE",
+      "size": 197,
+      "sha256": "3e0c7c091a948b82533ba98fd7cbb40432d6f1a9acbf85f5922d2f99a93ae6bb"
+    },
+    {
+      "path": "update/_internal/cryptography-46.0.7.dist-info/licenses/LICENSE.APACHE",
+      "size": 11360,
+      "sha256": "aac73b3148f6d1d7111dbca32099f68d26c644c6813ae1e4f05f6579aa2663fe"
+    },
+    {
+      "path": "update/_internal/cryptography-46.0.7.dist-info/licenses/LICENSE.BSD",
+      "size": 1532,
+      "sha256": "602c4c7482de6479dd2e9793cda275e5e63d773dacd1eca689232ab7008fb4fb"
+    },
+    {
+      "path": "update/_internal/cryptography-46.0.7.dist-info/METADATA",
+      "size": 5748,
+      "sha256": "cd6e7fad3b9e42368313d459aa4914bd59f39893828145a00219fbc61c75cff1"
+    },
+    {
+      "path": "update/_internal/cryptography-46.0.7.dist-info/RECORD",
+      "size": 16067,
+      "sha256": "8f61221bb33a6d1618c6b81f253513658177e424e1de2ba45111f3f5f0f4ec4a"
+    },
+    {
+      "path": "update/_internal/cryptography-46.0.7.dist-info/WHEEL",
+      "size": 95,
+      "sha256": "f2111ff0dcccd459e633bec08d5b7987c9c3b9890ddd4a99efd2e82001d77911"
+    },
+    {
+      "path": "update/_internal/libcrypto-3.dll",
+      "size": 5232408,
+      "sha256": "4e5d5d20d6d31e72ab341c81e97b89e514326c4c861b48638243bdf0918cfa43"
+    },
+    {
+      "path": "update/_internal/libffi-8.dll",
+      "size": 39696,
+      "sha256": "eff52743773eb550fcc6ce3efc37c85724502233b6b002a35496d828bd7b280a"
+    },
+    {
+      "path": "update/_internal/libssl-3.dll",
+      "size": 792856,
+      "sha256": "2e4d35b681a172d3298caf7dc670451be7a8ba27c26446efc67470742497a950"
+    },
+    {
+      "path": "update/_internal/python3.dll",
+      "size": 68376,
+      "sha256": "d52baca085f88b40f30c855e6c55791e5375c80f60f94057061e77e33f4cad7a"
+    },
+    {
+      "path": "update/_internal/python312.dll",
+      "size": 6916376,
+      "sha256": "93488fa7e631cc0a2bd808b9eee8617280ee9b6ff499ab424a1a1cbf24d77dc7"
+    },
+    {
+      "path": "update/_internal/select.pyd",
+      "size": 31000,
+      "sha256": "dca5e6d39c5094ce599143cb82f6d8470f0c2a4ce4443499e73f32ed13333fd0"
+    },
+    {
+      "path": "update/_internal/sqlite3.dll",
+      "size": 1540376,
+      "sha256": "2f9c9940e87840ff1b5c4922d8b73c7302d1b12badc860990dfebdf77b4140ee"
+    },
+    {
+      "path": "update/_internal/ucrtbase.dll",
+      "size": 1362264,
+      "sha256": "3239227d27667ba20d10a880751924e5719de0078f9fce232d149d383f7681f6"
+    },
+    {
+      "path": "update/_internal/unicodedata.pyd",
+      "size": 1138456,
+      "sha256": "64a162d6b11ba10cb11509f3cc445f17beb7acfd064f030b4d59faa1c9894b29"
+    },
+    {
+      "path": "update/_internal/VCRUNTIME140.dll",
+      "size": 120400,
+      "sha256": "36585912e5eaf83ba9fea0631534f690ccdc2d7ba91537166fe53e56c221e153"
+    },
+    {
+      "path": "update/_internal/VCRUNTIME140_1.dll",
+      "size": 49744,
+      "sha256": "82a2f9ae1e6146ae3cb0f4bc5a62b7227e0384209d9b1aef86bbcc105912f7cd"
+    },
+    {
+      "path": "update/_internal/更新系统/update-config.json",
+      "size": 403,
+      "sha256": "7a86a9ad7861dfd52237da5d37ee98bf9780eb6446ea42ed3bf21154519e5997"
+    },
+    {
+      "path": "update/component-manifest.json",
+      "size": 16052,
+      "sha256": "bdc011cf8650c95cc01be14da5fe26b05557e881f145468b2ae12a996a8083f8"
+    },
+    {
+      "path": "update/install-layout.json",
+      "size": 187789,
+      "sha256": "1f1fadf6df5b6ba4d320bfeb44a8b2ee9f5a55412a5029df5089f6016035d45e"
+    },
+    {
+      "path": "update/SHIYING 更新器.exe",
+      "size": 667136,
+      "sha256": "22202c2fd7b5db8e4d0c846e4cda27f9556be635cd51f707ec2380eb28cfc8d4"
+    },
+    {
+      "path": "update/update-worker.exe",
+      "size": 2027706,
+      "sha256": "ea95b78ff77bc167e436be7801aebeed9f02b908af881354d35215e1c9408238"
+    },
+    {
+      "path": "update/worker-manifest.json",
+      "size": 10563,
+      "sha256": "f96eb315b98b0d5b818a0e0b059d157bd30b40605b9854ce564f6fd54331a114"
+    },
+    {
+      "path": "update/卸载SHIYING 数字资产.exe",
+      "size": 32812544,
+      "sha256": "5cb502d2927b059dab0e7dad58ed030a51f96f8cf7fc78ffbfd2104dd1f2008b"
+    },
+    {
+      "path": "update-config.json",
+      "size": 403,
+      "sha256": "7a86a9ad7861dfd52237da5d37ee98bf9780eb6446ea42ed3bf21154519e5997"
+    },
+    {
+      "path": "使用说明.txt",
+      "size": 1030,
+      "sha256": "e1567b4b4fda82cf88385e3ecd3f4269d522d3b08ae9fa7ae82b4c071ee7382a"
+    },
+    {
+      "path": "完整使用说明.md",
+      "size": 118048,
+      "sha256": "739032a22794e60b27c9a3ac5a07e988f3757164d0742b4999855294b66e58da"
+    }
+  ]
+}

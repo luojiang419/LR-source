@@ -1,0 +1,17 @@
+{
+  "protected_source_files": 1456,
+  "source_files_unchanged": 1455,
+  "intended_source_changes": [
+    "更新系统/update-config.json"
+  ],
+  "missing_source_files": [],
+  "installed_program_files_unchanged": 870,
+  "build_removed": true,
+  "dist_removed": true,
+  "runtime_models_preserved": true,
+  "signing_key_preserved": true,
+  "project_config_preserved": true,
+  "deletedGiB": 12.484,
+  "actualFreedGiB": 12.091,
+  "freeGiB": 331.184
+}

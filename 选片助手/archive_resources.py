@@ -51,5 +51,7 @@ def worker_budget(cpus,available=None,total=None):
 CPU_THREADS=available_cpus()
 AVAILABLE_MEMORY,TOTAL_MEMORY=physical_memory()
 PREVIEW_WORKERS=worker_budget(CPU_THREADS,AVAILABLE_MEMORY,TOTAL_MEMORY)
+# 显式批量任务允许更多 I/O 在途；仍按单任务内存预算留出系统余量。
+MAX_PREVIEW_WORKERS=max(PREVIEW_WORKERS,worker_budget(min(128,CPU_THREADS*4),AVAILABLE_MEMORY,TOTAL_MEMORY)) if AVAILABLE_MEMORY is not None else PREVIEW_WORKERS
 # 元数据枚举不展开图片；同样限制在本机预算内，所有位置共享一个目录池。
 INDEX_WORKERS=PREVIEW_WORKERS

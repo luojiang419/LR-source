@@ -16,12 +16,17 @@ VERSION = 1
 MAX_BYTES = 200_000_000
 TABLES = {
     'catalog': ('sessions', 'captures', 'settings'),
-    'sku': ('projects', 'sku_rows', 'jobs', 'parse_jobs', 'ocr_documents', 'ocr_choices', 'sku_shoot_versions',
-            'metadata_versions', 'archive_events', 'library_bins', 'library_items', 'library_renames'),
+    'sku': ('projects', 'sku_rows', 'jobs', 'parse_jobs', 'ocr_documents', 'ocr_choices', 'sku_shoot_versions','sku_shoot_days',
+            'metadata_versions', 'archive_events', 'library_bins', 'library_items', 'library_renames', 'shooting_captures'),
     'archive': ('assets', 'files', 'locations', 'versions', 'file_fingerprints', 'catalog_links',
                 'assignments', 'operations', 'metadata_jobs', 'streams', 'bindings', 'segments',
                 'event_receipts', 'audit', 'shared_ratings', 'rating_capture_paths'),
 }
+BASE_DATABASES={'catalog','sku','archive'}
+TABLES['analysis']=('schemas','batches','jobs','results','workflow_runs','workflow_jobs','workflow_members')
+TABLES['retrieval']=('roots','items','exclusions','intelligence_jobs','intelligence_results','intelligence_ocr',
+    'intelligence_dimensions','intelligence_vectors','intelligence_lsh','intelligence_groups','video_analysis_plans','video_analysis_frames',
+    'intelligence_ocr_evidence','intelligence_ocr_groups','intelligence_file_fingerprints')
 SETTING_PREFIXES = ('archive_session:', 'archive_disabled:', 'archive_excluded:', 'shooting_session:', 'removed_session:')
 
 
@@ -29,12 +34,28 @@ def _canonical(value):
     return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(',', ':'), allow_nan=False).encode('utf-8')
 
 
-def _services(sku):
+def _services(sku,requested=()):
     if not sku.archive:
         raise ValueError('资产元数据库尚未启动')
     initialize(sku)
     sku.archive.ratings  # 初始化可选的共享星级表。
-    return {'catalog': sku.store, 'sku': sku, 'archive': sku.archive}
+    services={'catalog': sku.store, 'sku': sku, 'archive': sku.archive}
+    if 'analysis' in requested and not getattr(sku,'analysis',None):
+        from asset_analysis import AssetAnalysis
+        from vision_scheduler import VisionScheduler
+        sku.analysis=AssetAnalysis(sku.archive,sku.providers,getattr(sku,'scheduler',None) or VisionScheduler(),autostart=False)
+        from analysis_workflow import install
+        with sku.analysis.connect() as c:install(c)
+        sku.__dict__.setdefault('_metadata_owned_services',[]).append(sku.analysis)
+    if 'retrieval' in requested and not getattr(sku,'intelligence',None):
+        from asset_catalog import AssetCatalog
+        from asset_intelligence import AssetIntelligence
+        catalog=AssetCatalog(sku.store.data)
+        sku.intelligence=AssetIntelligence(catalog,sku.providers,sku,autostart=False)
+        sku.__dict__.setdefault('_metadata_owned_services',[]).extend([sku.intelligence,catalog])
+    if getattr(sku,'analysis',None):services['analysis']=sku.analysis
+    if getattr(sku,'intelligence',None):services['retrieval']=sku.intelligence.catalog
+    return services
 
 
 def _columns(c, alias, table):
@@ -55,7 +76,14 @@ def export_metadata(sku):
             for table in TABLES[key]:
                 if not _columns(c, 'main', table):
                     continue
-                rows = [dict(row) for row in c.execute(f'SELECT * FROM "{table}"')]
+                clause=''
+                if key=='retrieval' and table=='items':clause=' WHERE id IN (SELECT item FROM intelligence_results UNION SELECT item FROM intelligence_ocr)'
+                if key=='retrieval' and table=='roots':clause=' WHERE id IN (SELECT root FROM items WHERE id IN (SELECT item FROM intelligence_results UNION SELECT item FROM intelligence_ocr))'
+                if key=='retrieval' and table=='intelligence_jobs':clause=' WHERE item IN (SELECT item FROM intelligence_results UNION SELECT item FROM intelligence_ocr)'
+                if key=='analysis' and table in ('jobs','workflow_jobs'):clause=" WHERE result!=''"
+                if key=='analysis' and table=='workflow_members':clause=" WHERE job IN (SELECT id FROM workflow_jobs WHERE result!='')"
+                rows = [{field:('base64:'+base64.b64encode(value).decode('ascii') if isinstance(value,bytes) else value) for field,value in dict(row).items()}
+                        for row in c.execute(f'SELECT * FROM "{table}"'+clause)]
                 if table == 'settings':
                     rows = [row for row in rows if row['key'].startswith(SETTING_PREFIXES)]
                 tables[table] = rows
@@ -70,7 +98,7 @@ def export_metadata(sku):
                     files[name] = base64.b64encode(path.read_bytes()).decode('ascii')
             if files:
                 payload['documents'][pid] = files
-    backup = {'schema': SCHEMA, 'version': VERSION, 'id': uuid.uuid4().hex,
+    backup = {'schema': SCHEMA, 'version': 2 if set(services)-BASE_DATABASES else VERSION, 'id': uuid.uuid4().hex,
               'created_at': datetime.now(timezone.utc).isoformat(),
               'sha256': hashlib.sha256(_canonical(payload)).hexdigest(), 'payload': payload}
     if len(_canonical(backup)) > MAX_BYTES:
@@ -84,14 +112,14 @@ def _decode(content):
     try:
         backup = json.loads(content.decode('utf-8-sig'))
         if not isinstance(backup, dict) or backup.get('schema') != SCHEMA:
-            raise ValueError('请选择末帧导出的 SKU 元数据文件')
-        if type(backup.get('version')) is not int or backup['version'] != VERSION:
+            raise ValueError('请选择SHIYING导出的 SKU 元数据文件')
+        if type(backup.get('version')) is not int or backup['version'] not in (1,2):
             raise ValueError('元数据版本不兼容，请使用兼容版本的软件')
         payload = backup['payload']
         if hashlib.sha256(_canonical(payload)).hexdigest() != backup.get('sha256'):
             raise ValueError('元数据文件校验失败，文件可能损坏')
         databases = payload['databases']
-        if set(databases) != set(TABLES):
+        if not BASE_DATABASES<=set(databases) or set(databases)-set(TABLES):
             raise ValueError('元数据库不完整')
         for key, tables in databases.items():
             if not isinstance(tables, dict) or set(tables) - set(TABLES[key]):
@@ -136,15 +164,21 @@ def _paused(table, row):
         row['delivered'] = 1
     if table == 'library_renames' and row.get('status') in ('running', 'queued'):
         row['status'] = 'imported'
+    if table in ('workflow_jobs','intelligence_jobs') and row.get('status') in ('queued','running'):
+        row.update(status='cancelled',reason='跨设备导入后暂停，等待用户手动执行')
+    if table=='workflow_runs' and row.get('status')=='running':row.update(status='cancelled',finished=row.get('started',0))
     return row
 
 
-def import_metadata(sku, content, *, sync=None):
+def import_metadata(sku, content, *, sync=None,mode='merge'):
+    if mode not in ('merge','replace'):raise ValueError('导入模式须为合并或替换')
     backup, documents = _decode(content)
-    result = _import_records(sku, backup, documents, sync)
+    result = _import_records(sku, backup, documents, sync,mode)
     sku.archive.ratings.invalidate_seeds()
     for session in sku.store.sessions():sku.archive.ratings.seed_session(session['id'])
     if sync:result['sync'] = sync.start(backup['sha256'], backup['payload'])
+    getattr(sku,'folder_progress_cache',{}).clear()
+    if getattr(sku,'workflow',None):sku.workflow.refresh_progress()
     return result
 
 
@@ -197,72 +231,104 @@ def _merge_discovered(c, alias, table, row, existing, local_sessions, versions):
     return False
 
 
-def _import_records(sku, backup, documents, sync):
-    services = _services(sku)
+def _import_records(sku, backup, documents, sync, mode):
+    services = _services(sku,backup['payload']['databases'])
     local_sessions=set()
     if sync:
         roots={str(Path(root['path']).resolve()).casefold() for root in sync.catalog.state()['roots']}
-        with sku.store.connect() as c:local_sessions={r['id'] for r in c.execute('SELECT id,root FROM sessions') if str(Path(r['root']).resolve()).casefold() in roots}
+        with sku.store.connect() as db:local_sessions={r['id'] for r in db.execute('SELECT id,root FROM sessions') if str(Path(r['root']).resolve()).casefold() in roots}
     versions={(r['file'],r['sha']) for r in backup['payload']['databases']['archive'].get('versions',[])}
-    stamp = backup['sha256']
-    created = []
-    count = 0
-    with sku.lock, sku.archive.lock, sku.store.lock, sku.connect() as c:
-        for alias in ('catalog', 'archive'):
-            c.execute(f'ATTACH DATABASE ? AS {alias}', (str(services[alias].db),))
+    stamp=backup['sha256'];created=[];restored={};count=skipped=conflicts=0
+    with sku.lock,sku.archive.lock,sku.store.lock,ExitStack() as locks,sku.connect() as c:
+        for key in ('analysis','retrieval'):
+            if key in services and getattr(services[key],'lock',None):locks.enter_context(services[key].lock)
+        if getattr(sku,'workflow',None):locks.enter_context(sku.workflow.lock)
+        for alias,service in services.items():
+            if alias!='sku':c.execute('ATTACH DATABASE ? AS '+alias,(str(service.db),))
         c.execute('CREATE TABLE IF NOT EXISTS metadata_imports(sha256 TEXT PRIMARY KEY,created TEXT)')
         c.execute('BEGIN IMMEDIATE')
-        if c.execute('SELECT 1 FROM metadata_imports WHERE sha256=?', (stamp,)).fetchone():
-            return {'already_imported': True, 'records': 0, 'projects': 0}
+        local_projects={r[0] for r in c.execute('SELECT id FROM projects')}
+        if mode=='merge' and c.execute('SELECT 1 FROM metadata_imports WHERE sha256=?',(stamp,)).fetchone():
+            return {'mode':mode,'already_imported':True,'records':0,'projects':0,'skipped':0,'conflicts':0}
         try:
-            for key, tables in backup['payload']['databases'].items():
-                alias = 'main' if key == 'sku' else key
+            if mode=='replace':
+                c.execute('DELETE FROM shooting_bindings')
+                for key in services:
+                    alias='main' if key=='sku' else key
+                    for table in reversed(TABLES[key]):
+                        if not _columns(c,alias,table):continue
+                        if table=='settings':
+                            for prefix in SETTING_PREFIXES:c.execute('DELETE FROM '+alias+'.settings WHERE key LIKE ?',(prefix+'%',))
+                            c.execute("DELETE FROM "+alias+".settings WHERE key='active'")
+                        elif key=='retrieval' and table in ('roots','items','exclusions'):continue
+                        else:c.execute('DELETE FROM '+alias+'."'+table+'"')
+                c.execute('DELETE FROM metadata_imports')
+                for alias,tables in {'main':('metadata_archive_results','metadata_archive_syncs'),
+                        'analysis':('workflow_inbox','workflow_catalog_dirty','auto_inputs')}.items():
+                    if alias=='analysis' and 'analysis' not in services:continue
+                    for table in tables:
+                        if _columns(c,alias,table):c.execute('DELETE FROM '+alias+'.'+table)
+            for key,tables in backup['payload']['databases'].items():
+                alias='main' if key=='sku' else key
                 for table in TABLES[key]:
-                    rows = tables.get(table, [])
-                    columns = _columns(c, alias, table)
-                    allowed = {col['name'] for col in columns}
-                    pk = [col['name'] for col in sorted(columns, key=lambda col: col['pk']) if col['pk']]
-                    for original in rows:
-                        if not set(original) <= allowed or not set(pk) <= set(original) or not pk:
-                            raise ValueError('元数据字段不兼容，请使用相同或更新版本的软件')
-                        if table == 'settings' and not original['key'].startswith(SETTING_PREFIXES):
-                            raise ValueError('备份包含不支持的机器设置')
-                        row = _paused(table, original)
-                        if sync and table=='metadata_jobs' and original.get('status') in ('queued','running'):
-                            row.update(status='cancelled',reason='旧机器待写入任务已停止，由本机归档迁移队列接续')
-                        where = ' AND '.join('"' + field + '" IS ?' for field in pk)
-                        existing = c.execute(f'SELECT * FROM {alias}."{table}" WHERE {where}', [row[field] for field in pk]).fetchone()
+                    columns=_columns(c,alias,table)
+                    allowed={col['name'] for col in columns}
+                    pk=[col['name'] for col in sorted(columns,key=lambda col:col['pk']) if col['pk']]
+                    blobs={col['name'] for col in columns if col['type'].upper()=='BLOB'}
+                    for original in tables.get(table,[]):
+                        if not set(original)<=allowed or not set(pk)<=set(original) or not pk:raise ValueError('元数据字段不兼容，请使用相同或更新版本的软件')
+                        if table=='settings' and not original['key'].startswith(SETTING_PREFIXES):raise ValueError('备份包含不支持的机器设置')
+                        row=_paused(table,original)
+                        for field in blobs:
+                            if field in row and isinstance(row[field],str) and row[field].startswith('base64:'):row[field]=base64.b64decode(row[field][7:],validate=True)
+                        if sync and table=='metadata_jobs' and original.get('status') in ('queued','running'):row.update(status='cancelled',reason='旧机器待写入任务已停止，由本机归档迁移队列接续')
+                        where=' AND '.join('"'+field+'" IS ?' for field in pk)
+                        existing=c.execute('SELECT * FROM '+alias+'."'+table+'" WHERE '+where,[row[field] for field in pk]).fetchone()
                         if existing:
-                            if table != 'settings' and any(existing[field] != value for field, value in row.items()):
-                                if sync and _merge_discovered(c,alias,table,row,existing,local_sessions,versions):continue
-                                raise ValueError('备份与本机已有记录冲突，未导入；请在新机器或独立资料库中加载')
+                            comparable=_paused(table,dict(existing))
+                            different=table!='settings' and any(comparable[field]!=value for field,value in row.items())
+                            if different and sync and _merge_discovered(c,alias,table,row,existing,local_sessions,versions):skipped+=1;continue
+                            skipped+=1
+                            if different:conflicts+=1
                             continue
-                        fields = ','.join('"' + field + '"' for field in row)
-                        c.execute(f'INSERT INTO {alias}."{table}" ({fields}) VALUES ({",".join("?" for _ in row)})', list(row.values()))
-                        count += 1
-            # FTS rowid 必须按导入后的本机 rowid 重建。
+                        fields=','.join('"'+field+'"' for field in row)
+                        try:c.execute('INSERT INTO '+alias+'."'+table+'" ('+fields+') VALUES ('+','.join('?' for _ in row)+')',list(row.values()))
+                        except sqlite3.IntegrityError as error:
+                            if 'UNIQUE constraint failed' not in str(error):raise
+                            skipped+=1;continue
+                        count+=1
             c.execute('DELETE FROM ocr_document_search')
             c.execute('INSERT INTO ocr_document_search(rowid,searchable) SELECT rowid,searchable FROM ocr_documents')
-            for pid, name in documents:
-                path = sku.root / pid / name
+            if 'retrieval' in services and 'retrieval' in backup['payload']['databases']:
+                from catalog_ocr import rebuild_search
+                c.execute('DELETE FROM retrieval.intelligence_fts')
+                for row in c.execute('SELECT item FROM retrieval.intelligence_results UNION SELECT item FROM retrieval.intelligence_ocr').fetchall():
+                    rebuild_search(c,row['item'],schema='retrieval')
+                c.execute('INSERT OR IGNORE INTO retrieval.smart_pending SELECT item FROM retrieval.intelligence_results')
+                c.execute("DELETE FROM retrieval.intelligence_settings WHERE key='ocr_backfill_rules'")
+                c.execute("INSERT OR REPLACE INTO retrieval.intelligence_settings VALUES('ocr_metadata_paused','1')")
+            for (pid,name),content in documents.items():
+                path=sku.root/pid/name
                 if path.exists():
-                    if path.read_bytes() != documents[(pid, name)]:
-                        raise ValueError('本机已有不同的同编号拍摄文档，未导入')
-                    continue
-                path.parent.mkdir(parents=True, exist_ok=True)
-                with path.open('xb') as output:
-                    created.append(path)
-                    output.write(documents[(pid, name)])
-            c.execute('INSERT INTO metadata_imports VALUES (?,?)', (stamp, datetime.now(timezone.utc).isoformat()))
+                    prior=path.read_bytes()
+                    if prior==content:continue
+                    if mode=='merge':
+                        if pid not in local_projects:raise ValueError('本机有未登记的同编号文档，未导入')
+                        conflicts+=1;continue
+                    restored[path]=prior
+                    temporary=path.with_suffix('.importing.xlsx');temporary.write_bytes(content);temporary.replace(path)
+                else:
+                    path.parent.mkdir(parents=True,exist_ok=True)
+                    with path.open('xb') as output:created.append(path);output.write(content)
+            c.execute('INSERT OR REPLACE INTO metadata_imports VALUES (?,?)',(stamp,datetime.now(timezone.utc).isoformat()))
             c.commit()
         except Exception as exc:
             c.rollback()
+            for path,content in restored.items():path.write_bytes(content)
             for path in created:
                 path.unlink(missing_ok=True)
-                if not any(path.parent.iterdir()):
-                    path.parent.rmdir()
-            if isinstance(exc, sqlite3.Error):
-                raise ValueError('元数据库记录冲突或无效，已撤销本次导入') from None
+                if not any(path.parent.iterdir()):path.parent.rmdir()
+            if isinstance(exc,sqlite3.Error):raise ValueError('元数据库记录冲突或无效，已撤销本次导入') from None
             raise
-    return {'already_imported': False, 'records': count,
-            'projects': len(backup['payload']['databases']['sku']['projects'])}
+    return {'mode':mode,'already_imported':False,'records':count,'skipped':skipped,'conflicts':conflicts,
+            'projects':len(backup['payload']['databases']['sku']['projects'])}

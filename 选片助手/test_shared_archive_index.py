@@ -73,6 +73,13 @@ class SharedArchiveIndexTests(unittest.TestCase):
         for extension in ('dng', 'tif', 'mov', 'mxf', 'r3d', 'braw', 'psd', 'psb', 'ai', 'indd'):
             self.assertIn(extension, query)
 
+    def test_reference_folder_excludes_offline_items_and_uses_online_index_scope(self):
+        root_id=self.library.add_root(str(self.media))['root_id'];self.ready(root_id)
+        with self.catalog.connect() as c:c.execute("UPDATE items SET online=0 WHERE name='look.TIF'")
+        result=self.library.items(root_id)
+        self.assertEqual(result['total'],2)
+        self.assertNotIn('look.TIF',{row['name'] for row in result['rows']})
+
 
 if __name__ == '__main__':
     unittest.main()

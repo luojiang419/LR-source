@@ -6,7 +6,7 @@ import re
 from urllib.parse import quote
 
 from sku_match import normalize, extract_codes
-from sku_intervals import partition
+from sku_intervals import partition,frozen_contexts
 from ocr_metadata import matching_ocr
 
 
@@ -51,7 +51,7 @@ def recognized_rows(sku, session_id=''):
                     'trigger':'choice','data':chosen['data'],'root':chosen['root']}
             rows=list(by_capture.values())
     recognized=[]
-    sessions={}
+    sessions={};ratings={}
     for row in rows:
         if row['trigger']=='full_auto' and row['status'] not in ('matched','confirmed'):continue
         result=_json(row['result'],{});record=_json(row['data'],{})
@@ -77,9 +77,12 @@ def recognized_rows(sku, session_id=''):
         if not relative:
             continue
         root=row['root'];folder=PurePosixPath(relative).parent.as_posix()
-        if row['session_id'] not in sessions:sessions[row['session_id']]=sku.store.session(row['session_id'])
+        if row['session_id'] not in sessions:
+            sid=row['session_id'];sessions[sid]=sku.store.session(sid)
+            ratings[sid]=dict(sessions[sid]['state'].get('overrides',{})) if sessions[sid] else {}
         session=sessions[row['session_id']]
-        rating=session['state'].get('overrides',{}).get(row['capture_id'],record.get('existingRating',0)) if session else 0
+        if sku.archive and session:ratings[row['session_id']].update(sku.archive.ratings.session(session,[record])['sharedRatings'])
+        rating=ratings[row['session_id']].get(row['capture_id'],record.get('existingRating',0))
         preview=f"/api/preview/{quote(row['session_id'])}/{quote(row['capture_id'])}?v={quote(record.get('fingerprint',''))}"
         recognized.append({'id':row['session_id']+':'+row['capture_id'],'capture_id':row['capture_id'],'session_id':row['session_id'],
             'sku':code,'normalized':key,'source':'ocr','boundary':row['trigger'] not in ('full_auto','choice') or rating==2,'created':row['evidence_at'],'time':record.get('time') or '',
@@ -103,7 +106,8 @@ def interval_rows(sku, session_id=''):
     rows=[];intervals=[]
     for sid,boundaries in sessions.items():
         records=sku.store.records(sid)
-        session=sku.store.session(sid);overrides=session['state'].get('overrides',{}) if session else {}
+        session=sku.store.session(sid);overrides=dict(session['state'].get('overrides',{})) if session else {}
+        if sku.archive and session:overrides.update(sku.archive.ratings.session(session,records)['sharedRatings'])
         # 尚未识别成功的二星标签也结束上一段，防止下一款覆盖这个未知区间。
         for record in records:
             if overrides.get(record['id'],record.get('existingRating',0))==2:
@@ -113,7 +117,7 @@ def interval_rows(sku, session_id=''):
         if archive:
             with archive.connect() as c:
                 protected={row['capture']:normalize(row['sku']) for row in c.execute('SELECT k.capture,a.sku FROM catalog_links k JOIN assets a ON a.id=k.asset WHERE k.session=? AND a.locked=1',(sid,))}
-        for interval in partition(records,boundaries):
+        for interval in partition(records,boundaries,contexts=frozen_contexts(sku,sid)):
             marker=interval['boundary'];interval_id=sid+':'+interval['label']
             if not marker['sku']:continue
             intervals.append({'id':interval_id,'session_id':sid,'label':interval['label'],'sku':marker['sku'],
@@ -195,21 +199,27 @@ def labels(sku, session_id, capture_ids=None):
     if capture_ids is not None:
         if len(capture_ids)>240:raise ValueError('一次读取的照片标签过多')
         archive=getattr(sku,'archive',None)
-        if not archive or not capture_ids:return {'session_id':session_id,'labels':{},'interval_count':0}
-        with archive.connect() as db:
-            rows=db.execute('SELECT k.capture,a.sku FROM catalog_links k JOIN assets a ON a.id=k.asset WHERE k.session=? AND k.capture IN ('+','.join('?' for _ in capture_ids)+") AND a.sku!=''",(session_id,*capture_ids)).fetchall()
-            intervals=db.execute("SELECT count(*) FROM segments g JOIN streams s ON s.id=g.stream WHERE s.session=? AND g.sku!='' AND g.status NOT IN ('cancelled','superseded')",(session_id,)).fetchone()[0]
-        return {'session_id':session_id,'labels':{r['capture']:r['sku'] for r in rows},'interval_count':intervals}
+        if not capture_ids:return {'session_id':session_id,'labels':{},'interval_count':0}
+        result={};intervals=0
+        if archive:
+            with archive.connect() as db:
+                rows=db.execute('SELECT k.capture,a.sku FROM catalog_links k JOIN assets a ON a.id=k.asset WHERE k.session=? AND k.capture IN ('+','.join('?' for _ in capture_ids)+") AND a.sku!=''",(session_id,*capture_ids)).fetchall()
+                intervals=db.execute("SELECT count(*) FROM segments g JOIN streams s ON s.id=g.stream WHERE s.session=? AND g.sku!='' AND g.status NOT IN ('cancelled','superseded')",(session_id,)).fetchone()[0]
+            result={r['capture']:r['sku'] for r in rows}
+        missing=set(capture_ids)-result.keys()
+        if missing:
+            # 旧版识别区间可能尚无 catalog_links；分页只改变取数范围，不能丢掉旧标签。
+            rows,legacy=interval_rows(sku,session_id)
+            result.update({r['capture_id']:r['sku'] for r in rows if r['capture_id'] in missing})
+            intervals=max(intervals,len(legacy))
+        return {'session_id':session_id,'labels':result,'interval_count':intervals}
     rows,intervals=interval_rows(sku,session_id)
     rows+=onsite_assigned_rows(sku,session_id)
     return {'session_id':session_id,'labels':{r['capture_id']:r['sku'] for r in rows},'interval_count':len(intervals)}
 
 
-def browse(sku, search='', order='name', root='', folder='', code='', offset=0, limit=120,*,bin_id='',include_removed=False,all_rows=False,management=True):
-    orders={'name','name_desc','added','added_asc','captured','captured_asc'}
-    if order not in orders:
-        raise ValueError('SKU 排序方式无效')
-    offset=max(0,int(offset));limit=max(1,min(240,int(limit)));query=normalize(search)
+def project(sku):
+    """从持久业务证据构造完整投影；前台浏览复用其持久快照。"""
     unique={}
     projected,intervals=interval_rows(sku)
     inherited={r['id']:r for r in projected}
@@ -220,9 +230,25 @@ def browse(sku, search='', order='name', root='', folder='', code='', offset=0, 
             row['interval_id']=prior['interval_id']
     projected+=assigned
     projected+=archived_rows(sku,projected)
-    for row in sorted(projected,key=lambda r:(r['source'] in ('assignment','archive'),r['created'],r['id'])):
+    from sku_library_catalog import catalog_rows
+    projected+=catalog_rows(sku,projected)
+    archive=getattr(sku,'archive',None)
+    if archive:
+        with archive.connect() as c:
+            if c.execute("SELECT 1 FROM sqlite_master WHERE name='portable_sku_evidence'").fetchone():
+                projected += [json.loads(r[0]) for r in c.execute('SELECT data FROM portable_sku_evidence')]
+    for row in sorted(projected,key=lambda r:(r['source']=='portable',r['source'] in ('assignment','archive'),r['created'],r['id'])):
         identity=str(Path(row['path']).with_suffix('')).casefold()
         unique[identity]=row
+    return {'rows':[r for r in unique.values() if r.get('normalized')],'intervals':intervals}
+
+
+def browse(sku, search='', order='name', root='', folder='', code='', offset=0, limit=120,*,bin_id='',include_removed=False,all_rows=False,management=True,projection=None,probe_files=True):
+    orders={'name','name_desc','added','added_asc','captured','captured_asc'}
+    if order not in orders:raise ValueError('SKU 排序方式无效')
+    offset=max(0,int(offset));limit=max(1,min(240,int(limit)));query=normalize(search)
+    source=project(sku) if projection is None else projection
+    unique={r['id']:r for r in source['rows']};intervals=source['intervals']
     matched=matching_ocr(sku,search) if search.strip() else []
     auxiliary={r['session_id']+':'+r['capture_id'] for r in matched}
     rows=[r for r in unique.values() if not search.strip() or (query and query in r['normalized']) or r['id'] in auxiliary or r.get('interval_id') in auxiliary]
@@ -232,7 +258,9 @@ def browse(sku, search='', order='name', root='', folder='', code='', offset=0, 
         identity=doc['session_id']+':'+doc['capture_id']
         if identity in known:continue
         known.add(identity);sid=doc['session_id']
-        if sid not in sessions:sessions[sid]=(sku.store.session(sid),{r['id']:r for r in sku.store.records(sid)})
+        if sid not in sessions:
+            ids=[d['capture_id'] for d in matched if d['session_id']==sid]
+            sessions[sid]=(sku.store.session(sid),{r['id']:r for r in sku.store.records(sid,ids=ids)})
         session,records=sessions[sid];record=records.get(doc['capture_id'])
         if not session or not record:continue
         relative=record.get('jpg') or record.get('raw')
@@ -244,7 +272,7 @@ def browse(sku, search='', order='name', root='', folder='', code='', offset=0, 
             'relative':relative,'name':PurePosixPath(relative).name,'path':str(Path(base)/relative),'preview':f'/api/preview/{quote(sid)}/{quote(doc["capture_id"])}',
             'has_jpg':bool(record.get('jpg')),'has_raw':bool(record.get('raw'))})
     from sku_metadata_sync import prefer_local_archives
-    if getattr(sku,'archive',None):rows=prefer_local_archives(sku,rows)
+    if getattr(sku,'archive',None) and not source.get('local_preferred'):rows=prefer_local_archives(sku,rows)
     organization=None
     if management:
         from sku_library_management import organize
@@ -253,6 +281,7 @@ def browse(sku, search='', order='name', root='', folder='', code='', offset=0, 
     for row in rows:
         if not row['normalized']:continue
         group=groups.setdefault(row['normalized'],{'sku':row['sku'],'normalized':row['normalized'],'count':0,'created':0,'name':row['name'],'time':row['time']})
+        if row.get('customer') or row.get('brand'):group.update(customer=row.get('customer',''),brand=row.get('brand',''))
         group['count']+=1;group['created']=max(group['created'],row['created']);group['name']=min(group['name'],row['name'])
         location=roots.setdefault(row['root'],{'id':row['root'],'path':row['root_path'],'folders':{}})
         directory=location['folders'].setdefault(row['folder'],{'folder':row['folder'],'count':0,'skus':{}});directory['count']+=1
@@ -268,7 +297,7 @@ def browse(sku, search='', order='name', root='', folder='', code='', offset=0, 
         for directory in location['folders'].values():
             directory['skus']=sorted(directory['skus'].values(),key=lambda r:_natural(r['sku']));directories.append(directory)
         root_rows.append({**location,'folders':directories})
-    selected=[r for r in rows if (not root or r['root']==root) and (not folder or r['folder']==folder or r['folder'].startswith(folder.rstrip('/')+'/')) and (not code or r['normalized']==normalize(code))]
+    selected=[r for r in rows if (not root or r['root']==root) and (not folder or r['folder']==folder or r['folder'].startswith(folder.rstrip('/')+'/')) and (not code or r['normalized']==code or r['normalized']==normalize(code))]
     selected.sort(key=sort_key,reverse=reverse)
     visible_ids={r.get('interval_id') for r in rows}
     visible_intervals=[i for i in intervals if not search.strip() or (query and query in normalize(i['sku'])) or i['id'] in auxiliary or i['id'] in visible_ids]
@@ -276,5 +305,5 @@ def browse(sku, search='', order='name', root='', folder='', code='', offset=0, 
     visible_intervals=[i for i in visible_intervals if any(i['session_id']+':'+cid in captures for cid in i['members'])]
     summaries=[{'id':i['id'],'label':i['label'],'sku':i['sku'],'count':len(i['members']),'order_source':i['order_source']} for i in visible_intervals]
     page_rows=selected if all_rows else selected[offset:offset+limit]
-    if not all_rows:page_rows=[dict(row,offline=not Path(row['path']).is_file()) for row in page_rows]
+    if not all_rows:page_rows=[dict(row,offline=not Path(row['path']).is_file() if probe_files else False) for row in page_rows]
     return {'groups':group_rows,'roots':root_rows,'rows':page_rows,'total':len(selected),'offset':offset,'has_more':False if all_rows else len(selected)>offset+limit,'interval_count':len(summaries),'intervals':summaries,'organization':organization}
