@@ -2,12 +2,18 @@
 
 [CODEX_LONG_TASK_CONTINUE_V3]
 
-- 当前状态：2026-11-17 当前工作区完整源码已推送至公开仓库 luojiang419/LR-source 的默认分支 main；源码快照 d901de6，交付记录随最终快照同步。
+- 当前状态：2026-11-18 将自动备份详细进度提交 `8c5031b` 同步至公开仓库 `luojiang419/LR-source` 的 `main`；本轮推送和远端核验结果以 Git 引用及当日同步标记为准。
 - 下一步：其他设备直接 git clone https://github.com/luojiang419/LR-source.git；已有检出按正常 Git 流程更新 main。
 - TODO：无本次源码同步遗留。
-- 最近验证：1,507 份受管文件完成敏感路径及高置信度凭据模式扫描；唯一命中为 test_ai_retirement.py 中 example.invalid 的合成测试地址，人工确认并非真实凭据。git push 成功，git ls-remote 与 GitHub API 均确认 main 为 d901de6；其源码树与本地提交完全一致。
-- branch/commit：本地 codex/source-sync-20261117，源码提交 8e6c6f0；公开 public/main，源码快照 d901de6；最终交付记录 hash 以 Git 为准。
+- 最近验证：同步前 `git ls-remote public refs/heads/main` 确认为 `b7b6876`，与本地公开快照一致；当前仅缺自动备份详细进度的6份文件。本轮扫描新增内容后以完整源码树生成独立快照，正常快进推送并再次核对远端提交。
+- branch/commit：本地 `feat/automatic-backup-progress`，实现 `8c5031b`；公开 `public/main` 与 `public/source-snapshot` 的最终提交以 Git 为准。
 - 阻塞：无。密钥、本机资料、缓存、依赖及构建产物继续排除；本次仅同步源码，不改变 ModelScope 发布状态。
+
+## 2026-11-18 自动备份进度源码同步
+
+- 昨日优化仅本地提交，公开 main 尚未包含；按每天首次 Git 操作检查并按需同步的既定规则补齐。沿用公开仓库独立快照历史，以已核对的公开 main 为唯一父提交，不发布私有历史、不改写远程历史。
+- 同步全部当前受管源码，新增内容为自动备份后台进度、前端展示、回归测试及说明；测试验证沿用任务230的31项通过与真实浏览器验收，本轮不重复构建／运行测试。
+- 厂商SDK、本机资料、密钥、模型和构建产物继续保留本地；推送成功且远端提交及源码树一致后才写入 `2026-11-18` 同步标记。源码同步不表示正式安装包或魔搭更新已发布。
 
 ## 2026-11-17 当前完整源码同步
 

@@ -83,6 +83,7 @@ class AutomaticBackup:
         self.processing = threading.Lock()
         self.closed = threading.Event()
         self.error = self.active = ''
+        self.progress = {}
         self.validated = {}
         self.config = {**DEFAULTS, **(json.loads(self.config_path.read_text('utf8')) if self.config_path.exists() else {})}
         self.next_sync = time.time() + self.config['interval_seconds']
@@ -134,6 +135,8 @@ CREATE TABLE IF NOT EXISTS transfer_staging(path TEXT PRIMARY KEY,destination TE
             atomic_write(self.config_path, json.dumps(config, ensure_ascii=False).encode('utf8'))
             changed = config['folder'] != self.config['folder']
             self.config = config
+            if not self.active:
+                self.progress = {}
             self.next_sync = time.time() + config['interval_seconds']
             with self.connect() as c:
                 c.execute("UPDATE folder_jobs SET status='queued',generation=generation+1,retry_at=0,reason='',output=CASE WHEN ? THEN '' ELSE output END", (changed,))
@@ -189,13 +192,34 @@ CREATE TABLE IF NOT EXISTS transfer_staging(path TEXT PRIMARY KEY,destination TE
         if self.closed.is_set() or not self.config['enabled'] or key(self.config['folder']) != key(destination.parent):
             raise InterruptedError('备份已暂停或目标已改变，待处理记录保留')
 
+    def _progress(self, **values):
+        # 状态接口只读取内存快照；进度锁内不做文件或网络盘 I/O。
+        with self.lock:
+            self.progress.update(values)
+            self.progress['updated_at'] = time.time()
+
+    def _hash(self, path, phase):
+        self._progress(phase=phase, stage_bytes=0, stage_total=path.stat().st_size)
+        checksum = hashlib.sha256()
+        done, reported = 0, time.monotonic()
+        with path.open('rb') as stream:
+            while block := stream.read(1024 * 1024):
+                checksum.update(block)
+                done += len(block)
+                now = time.monotonic()
+                if now - reported >= .1:
+                    self._progress(stage_bytes=done)
+                    reported = now
+        self._progress(stage_bytes=done)
+        return checksum.hexdigest()
+
     def _copy(self, source, target, previous, destination):
         """仅替换校验一致的受管副本，未知同名文件及外部修改保持原样。"""
         self._ordinary(source)
         self._ordinary(target)
         before = source.stat()
-        expected = digest(source)
-        current = digest(target) if target.exists() else None
+        expected = self._hash(source, 'checking_source')
+        current = self._hash(target, 'checking_target') if target.exists() else None
         if current == expected:
             return expected, before.st_size
         if current is not None and current != previous:
@@ -206,17 +230,26 @@ CREATE TABLE IF NOT EXISTS transfer_staging(path TEXT PRIMARY KEY,destination TE
                 stat = os.fstat(out.fileno())
                 with self.connect() as c:
                     c.execute('INSERT OR REPLACE INTO transfer_staging VALUES(?,?,?,?)', (str(temporary), key(destination), str(stat.st_ino), str(stat.st_ctime_ns)))
+                self._progress(phase='copying', stage_bytes=0, stage_total=before.st_size)
+                transferred, reported = 0, time.monotonic()
                 while block := stream.read(1024 * 1024):
                     self._check_enabled(destination)
                     out.write(block)
+                    transferred += len(block)
+                    now = time.monotonic()
+                    if now - reported >= .1:
+                        self._progress(stage_bytes=transferred)
+                        reported = now
                 out.flush()
                 os.fsync(out.fileno())
-            if digest(temporary) != expected or digest(source) != expected:
+            self._progress(stage_bytes=transferred)
+            if self._hash(temporary, 'verifying_copy') != expected or self._hash(source, 'verifying_source') != expected:
                 raise OSError('源文件变化或传输校验失败，未发布：' + str(source))
             self._check_enabled(destination)
-            if (digest(target) if target.exists() else None) != current:
+            if (self._hash(target, 'checking_target') if target.exists() else None) != current:
                 raise ValueError('提交前目标发生变化，未覆盖：' + str(target))
             os.utime(temporary, ns=(before.st_atime_ns, before.st_mtime_ns))
+            self._progress(phase='publishing_file')
             if current is None:
                 publish_new(temporary, target)
             else:
@@ -326,14 +359,19 @@ CREATE TABLE IF NOT EXISTS transfer_staging(path TEXT PRIMARY KEY,destination TE
         # 不获取源目录编辑权，不触发识别，不复制活动本机 SQLite／WAL。
         with dataset.connect() as c:
             c.execute('BEGIN')
-            if c.execute("SELECT 1 FROM events WHERE status='pending' LIMIT 1").fetchone():
-                raise OSError('随行元数据尚未发布完成，等待自动重试')
-            if c.execute("""SELECT 1 FROM tasks t JOIN records r ON r.id=t.record
+            records = [json.loads(r[0]) for r in c.execute('SELECT data FROM records ORDER BY path')]
+            pending = {r[0] for r in c.execute("""SELECT DISTINCT t.record FROM tasks t JOIN records r ON r.id=t.record
  WHERE t.kind IN ('metadata','metadata_fill','metadata_sidecar') AND t.status IN ('queued','running','waiting_native','failed')
  AND t.revision=json_extract(r.data,'$.decision_id')
- AND (t.status!='failed' OR t.kind='metadata_sidecar' OR COALESCE(json_extract(r.data,'$.write_state'),'') NOT IN ('verified','sku_verified')) LIMIT 1""").fetchone():
+ AND (t.status!='failed' OR t.kind='metadata_sidecar' OR COALESCE(json_extract(r.data,'$.write_state'),'') NOT IN ('verified','sku_verified'))""")}
+            waiting = len(pending | {r['id'] for r in records if r.get('sku') and r.get('write_state') not in ('verified', 'sku_verified')})
+            self._progress(waiting=waiting)
+            with self.connect() as backup_db:
+                backup_db.execute('UPDATE folder_jobs SET waiting=? WHERE root=?', (waiting, key(root)))
+            if c.execute("SELECT 1 FROM events WHERE status='pending' LIMIT 1").fetchone():
+                raise OSError('随行元数据尚未发布完成，等待自动重试')
+            if pending:
                 raise OSError('照片元数据仍在写入或等待处理，完成后自动备份')
-            records = [json.loads(r[0]) for r in c.execute('SELECT data FROM records ORDER BY path')]
             revision = int(c.execute("SELECT value FROM meta WHERE key='revision'").fetchone()[0])
         if any(r.get('sku') and r.get('write_state') not in ('verified', 'sku_verified') for r in records):
             raise OSError('款号文件尚未全部回读验证，完成后自动备份')
@@ -361,12 +399,17 @@ CREATE TABLE IF NOT EXISTS transfer_staging(path TEXT PRIMARY KEY,destination TE
                 sidecars.setdefault(side.as_posix().casefold(), []).append(path.as_posix().casefold())
         ready = []
         waiting = 0
+        scanned, reported = 0, time.monotonic()
         # 记录本次全部相对路径；不跟随源目录中的链接或联接。
         for directory, dirs, files in os.walk(root, followlinks=False):
             parent = Path(directory)
             for name in list(dirs):
                 self._ordinary(parent / name)
             for name in files:
+                scanned += 1
+                if time.monotonic() - reported >= .1:
+                    self._progress(scanned_files=scanned, waiting=waiting)
+                    reported = time.monotonic()
                 path = parent / name
                 self._ordinary(path)
                 relative = path.relative_to(root).as_posix()
@@ -393,6 +436,7 @@ CREATE TABLE IF NOT EXISTS transfer_staging(path TEXT PRIMARY KEY,destination TE
             if relative.startswith('.shiying/'):
                 return 2, relative
             return 1, relative
+        self._progress(scanned_files=scanned, waiting=waiting)
         return sorted(ready, key=order), waiting
 
     def _refresh_receipt(self, dataset, record, acknowledgement, checksum):
@@ -422,8 +466,15 @@ CREATE TABLE IF NOT EXISTS transfer_staging(path TEXT PRIMARY KEY,destination TE
         self._ordinary(root)
         if not root.is_dir():
             raise OSError('现场拍摄目录离线，等待恢复')
+        self._progress(phase='checking_metadata')
         dataset, records, revision = self._dataset(root)
+        self._progress(phase='scanning')
         relatives, waiting = self._files(root, records)
+        sizes = {relative: (root / relative).stat().st_size for relative in relatives}
+        self._progress(phase='connecting', total_files=len(relatives), total_bytes=sum(sizes.values()),
+                       done_files=0, done_bytes=0, waiting=waiting)
+        with self.connect() as c:
+            c.execute('UPDATE folder_jobs SET waiting=? WHERE root=?', (waiting, key(root)))
         folder = Path(folder)
         if not folder.is_dir():
             raise OSError('备份文件夹离线或不存在，请连接目标盘／NAS')
@@ -459,7 +510,9 @@ CREATE TABLE IF NOT EXISTS transfer_staging(path TEXT PRIMARY KEY,destination TE
             copied = {**identity.get('files', {}), **copied}
             source_hashes = {str(r.get('relative_path') or r['path']): r.get('file_sha256') for r in records if r.get('file_sha256') and r.get('write_state') == 'verified'}
             records_by_path = {str(r.get('relative_path') or r['path']): r for r in records}
-            for relative in relatives:
+            done_bytes = 0
+            for index, relative in enumerate(relatives):
+                self._progress(current_file=relative, phase='checking_source', stage_bytes=0, stage_total=sizes[relative])
                 self._check_enabled(destination)
                 ownership.check()
                 # 新版本提交标记只在媒体与依赖齐全、源修订仍稳定时发布。
@@ -473,12 +526,14 @@ CREATE TABLE IF NOT EXISTS transfer_staging(path TEXT PRIMARY KEY,destination TE
                                source_hashes.get(relative), acknowledgements.get(key(source)))
                     # 已校验版本只核对属性与成功写入回执；修改、重启及手动重试重新做完整 SHA-256。
                     if self.validated.get(cache_key) == version:
+                        done_bytes += sizes[relative]
+                        self._progress(done_files=index + 1, done_bytes=done_bytes)
                         continue
                     record = records_by_path.get(relative, {})
                     if record.get('write_state') == 'sku_verified' and record.get('signature') and tuple(record['signature']) != version[0][:2]:
                         raise OSError('照片已变化，等待最新元数据回读校验：' + relative)
                     if relative in source_hashes:
-                        checksum = digest(source)
+                        checksum = self._hash(source, 'checking_source')
                         if checksum != source_hashes[relative]:
                             self._refresh_receipt(dataset, records_by_path[relative], acknowledgements.get(key(source)), checksum)
                             raise OSError('照片已变化，等待最新元数据回读校验：' + relative)
@@ -488,6 +543,9 @@ CREATE TABLE IF NOT EXISTS transfer_staging(path TEXT PRIMARY KEY,destination TE
                 copied[relative] = checksum
                 with self.connect() as c:
                     c.execute('INSERT OR REPLACE INTO copied_files VALUES(?,?,?,?)', (key(destination), relative, checksum, size))
+                done_bytes += sizes[relative]
+                self._progress(done_files=index + 1, done_bytes=done_bytes)
+            self._progress(phase='publishing', current_file='', stage_bytes=0, stage_total=0)
             _, _, latest = self._dataset(root)
             if latest != revision:
                 raise OSError('拍摄期间资料已更新，下一轮自动补齐')
@@ -513,7 +571,11 @@ CREATE TABLE IF NOT EXISTS transfer_staging(path TEXT PRIMARY KEY,destination TE
                     job = dict(row)
                     c.execute("UPDATE folder_jobs SET status='running' WHERE root=?", (job['root'],))
                 self.active = job['root']
+                self.progress = {'source': job['root'], 'phase': 'preparing', 'started_at': time.time(),
+                                 'done_files': 0, 'done_bytes': 0, 'total_files': None, 'total_bytes': None,
+                                 'current_file': '', 'stage_bytes': 0, 'stage_total': 0, 'waiting': 0, 'scanned_files': 0}
             if job['metadata_request']:
+                self._progress(phase='preparing_metadata')
                 self._prepare_metadata(Path(job['root']))
                 with self.connect() as c:
                     c.execute("UPDATE folder_jobs SET metadata_request='' WHERE root=? AND metadata_request=?", (job['root'], job['metadata_request']))
@@ -522,6 +584,7 @@ CREATE TABLE IF NOT EXISTS transfer_staging(path TEXT PRIMARY KEY,destination TE
                 changed = folder != self.config['folder']
                 c.execute("UPDATE folder_jobs SET status=CASE WHEN generation=? AND ?=0 THEN 'complete' ELSE 'queued' END,output=?,waiting=?,reason='',attempts=0 WHERE root=?", (job['generation'], changed, '' if changed else output, waiting, job['root']))
             self.error = ''
+            self._progress(phase='complete', finished_at=time.time(), waiting=waiting)
             return True
         except Exception as exc:
             self.error = str(exc)
@@ -530,6 +593,7 @@ CREATE TABLE IF NOT EXISTS transfer_staging(path TEXT PRIMARY KEY,destination TE
                 delay = min(300, 2 ** min(attempts, 8))
                 with self.connect() as c:
                     c.execute("UPDATE folder_jobs SET status='queued',attempts=?,reason=?,retry_at=? WHERE root=?", (attempts, str(exc)[:1000], time.time() + delay, job['root']))
+                self._progress(phase='retrying', failed_phase=self.progress.get('phase'), finished_at=time.time())
             return False
         finally:
             self.active = ''
@@ -545,6 +609,9 @@ CREATE TABLE IF NOT EXISTS transfer_staging(path TEXT PRIMARY KEY,destination TE
             c.execute("UPDATE folder_jobs SET status='queued',retry_at=0,reason='',metadata_request=CASE WHEN root IN (SELECT value FROM json_each(?)) THEN ? ELSE metadata_request END",
                       (json.dumps([key(root) for root in roots]), uuid.uuid4().hex))
         self.error = ''
+        with self.lock:
+            if not self.active:
+                self.progress = {}
         self.next_sync = 0
         return self.state()
 
@@ -554,11 +621,16 @@ CREATE TABLE IF NOT EXISTS transfer_staging(path TEXT PRIMARY KEY,destination TE
             jobs = [dict(r) for r in c.execute('SELECT * FROM folder_jobs ORDER BY updated DESC')]
             outputs = [key(r['output']) for r in jobs if r['output']]
             count = c.execute('SELECT count(*) FROM copied_files WHERE destination IN (SELECT value FROM json_each(?))', (json.dumps(outputs),)).fetchone()[0]
+            progress = dict(self.progress)
+            if progress:
+                progress['elapsed_seconds'] = max(0, progress.get('finished_at', time.time()) - progress['started_at'])
+            retry_at = min((max(r['retry_at'], self.next_sync) for r in jobs if r['status'] == 'queued'), default=0)
             return {'config': dict(self.config), 'pending': sum(r['status'] != 'complete' for r in jobs), 'completed': sum(r['status'] == 'complete' for r in jobs),
                     'waiting': sum(r['waiting'] for r in jobs), 'copied_files': count, 'retrying': sum(bool(r['reason']) for r in jobs),
                     'active': self.active, 'issues': [{'source': r['root'], 'reason': r['reason']} for r in jobs if r['reason']][:20],
                     'sources': list(sources), 'error': self.error,
-                    'last_output': next((r['output'] for r in jobs if r['output']), ''), 'next_sync': self.next_sync}
+                    'last_output': next((r['output'] for r in jobs if r['output']), ''), 'next_sync': self.next_sync,
+                    'retry_at': retry_at, 'progress': progress}
 
     def _run(self):
         while not self.closed.wait(.5):

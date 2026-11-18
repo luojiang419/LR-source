@@ -81,6 +81,10 @@ class FolderBackupTests(unittest.TestCase):
         self.assertFalse(self.backup.process_one(force=True))
         self.assertFalse(self.output.exists())
         self.assertIn('元数据', self.backup.state()['error'])
+        self.assertEqual(self.backup.state()['waiting'], 1)
+        self.assertIsNone(self.backup.state()['progress']['total_files'])
+        self.assertEqual(self.backup.state()['progress']['phase'], 'retrying')
+        self.assertGreater(self.backup.state()['retry_at'], time.time())
         self.dataset.change([self.record])
         with self.dataset.connect() as c:
             c.execute("UPDATE tasks SET status='complete'")
@@ -260,8 +264,55 @@ class FolderBackupTests(unittest.TestCase):
         self.sync()
         self.backup.touch(self.photos, changed=False)
         self.backup.next_sync = 0
-        with patch('automatic_backup.digest', side_effect=AssertionError('未变化轮询不应重复全量读取文件')):
+        with patch.object(self.backup, '_hash', side_effect=AssertionError('未变化轮询不应重复全量读取文件')):
             self.assertTrue(self.backup.process_one(), self.backup.state())
+        progress = self.backup.state()['progress']
+        self.assertEqual(progress['done_files'], progress['total_files'])
+        self.assertEqual(progress['done_bytes'], progress['total_bytes'])
+
+    def test_live_progress_is_readable_during_copy_and_verification_without_disk_access(self):
+        # 真实多块文件；在复制及回读阶段暂停后台，状态读取必须即时返回且不能探测目标盘。
+        payload = self.photos/'大文件.bin'
+        payload.write_bytes(b'progress' * (512 * 1024))
+        reached, resume = threading.Event(), threading.Event()
+        original = self.backup._progress
+        observed = []
+        def progress(**values):
+            original(**values)
+            if values.get('phase') in ('copying', 'verifying_copy') and self.backup.progress.get('current_file') == payload.name:
+                reached.set()
+                if not resume.wait(5):
+                    raise TimeoutError('进度测试未释放后台')
+                resume.clear()
+        worker = threading.Thread(target=self.backup.process_one, kwargs={'force': True})
+        with patch.object(self.backup, '_progress', side_effect=progress):
+            worker.start()
+            try:
+                for phase in ('copying', 'verifying_copy'):
+                    self.assertTrue(reached.wait(5))
+                    reached.clear()
+                    with patch.object(Path, 'stat', side_effect=AssertionError('状态接口不应读取文件系统')):
+                        state = self.backup.state()
+                    p = state['progress']
+                    self.assertEqual(p['phase'], phase)
+                    self.assertEqual(p['current_file'], payload.name)
+                    self.assertEqual(p['stage_total'], payload.stat().st_size)
+                    self.assertGreater(p['total_files'], p['done_files'])
+                    self.assertGreaterEqual(p['elapsed_seconds'], 0)
+                    observed.append(p)
+                    resume.set()
+            finally:
+                resume.set()
+                worker.join(10)
+        self.assertFalse(worker.is_alive())
+        self.assertEqual(len(observed), 2)
+        state = self.backup.state()
+        self.assertEqual(state['progress']['phase'], 'complete', state)
+        self.assertEqual(state['progress']['done_files'], state['progress']['total_files'])
+        self.assertEqual(state['progress']['done_bytes'], state['progress']['total_bytes'])
+        self.assertEqual(digest(payload), digest(self.output/payload.name))
+        self.backup.configure({'folder': str(self.target), 'enabled': False})
+        self.assertEqual(self.backup.state()['progress'], {})
 
     def test_restart_cleans_only_registered_own_partial_files(self):
         self.sync()
@@ -625,6 +676,79 @@ class ArchiveReaderBackupTests(unittest.TestCase):
                 self.assertTrue(page.locator('#backup-enabled').is_checked())
                 self.assertFalse(errors, errors)
             finally:
+                browser.close()
+
+    def test_browser_live_copy_verify_retry_and_pause_progress(self):
+        from playwright.sync_api import sync_playwright
+        self.ready()
+        payload = self.photos/('长文件名_现场拍摄进度_' * 6 + '.bin')
+        payload.write_bytes(b'progress' * (512 * 1024))
+        out = ROOT/'build/task230-backup-progress'
+        out.mkdir(parents=True, exist_ok=True)
+        reached, resume = threading.Event(), threading.Event()
+        original = self.backup._progress
+        def progress(**values):
+            original(**values)
+            if values.get('phase') in ('copying', 'verifying_copy') and self.backup.progress.get('current_file') == payload.name:
+                reached.set()
+                if not resume.wait(20):
+                    raise TimeoutError('浏览器未释放备份阶段')
+                resume.clear()
+        with self.http() as url, sync_playwright() as pw:
+            browser = pw.chromium.launch(channel='msedge', headless=True)
+            worker = threading.Thread(target=self.backup.process_one, kwargs={'force': True})
+            try:
+                page = browser.new_page(viewport={'width': 1400, 'height': 1000}, reduced_motion='reduce')
+                errors = []
+                page.on('pageerror', lambda e: errors.append(str(e)))
+                page.goto(url, wait_until='domcontentloaded')
+                page.wait_for_function('()=>!!window.FramekeepArchiveOpenItem&&!window.FramekeepBoot?.loading')
+                page.locator('#app-settings-open').click()
+                page.locator('#settings-tab-backup').click()
+                page.wait_for_function('()=>!document.getElementById("backup-save").disabled')
+                with patch.object(self.backup, '_progress', side_effect=progress):
+                    worker.start()
+                    for phase, text in [('copying', '复制文件'), ('verifying_copy', '回读校验备份')]:
+                        self.assertTrue(reached.wait(5))
+                        reached.clear()
+                        page.wait_for_function('(text)=>document.getElementById("backup-stage").textContent===text', arg=text)
+                        self.assertTrue(page.locator('#backup-meter').is_visible())
+                        self.assertIn(payload.name, page.locator('#backup-current').inner_text())
+                        self.assertIn('MB', page.locator('#backup-detail').inner_text())
+                        page.wait_for_function('()=>!document.getElementById("toast").classList.contains("visible")')
+                        page.locator('#automatic-backup-controls').screenshot(path=str(out/(phase+'.png')))
+                        if phase == 'copying':
+                            for theme in ('dark', 'light', 'pure-white', 'hardcore'):
+                                page.evaluate('(t)=>FramekeepTheme.set(t)', theme)
+                                for width in (375, 320):
+                                    page.set_viewport_size({'width': width, 'height': 950})
+                                    self.assertFalse(page.evaluate('document.documentElement.scrollWidth>innerWidth'), (theme, width))
+                            page.evaluate('FramekeepTheme.set("dark")')
+                            page.set_viewport_size({'width': 375, 'height': 950})
+                            page.locator('#automatic-backup-controls').screenshot(path=str(out/'copying-narrow.png'))
+                            page.set_viewport_size({'width': 1400, 'height': 1000})
+                        resume.set()
+                    worker.join(10)
+                self.assertFalse(worker.is_alive())
+                page.wait_for_function('()=>document.getElementById("backup-percent").textContent==="100%"')
+                page.locator('#automatic-backup-controls').screenshot(path=str(out/'complete.png'))
+                target = self.target/self.photos.name/payload.name
+                target.write_bytes(b'other user edit')
+                self.backup.retry()
+                self.assertFalse(self.backup.process_one(force=True))
+                page.wait_for_function('()=>document.getElementById("backup-stage").textContent==="等待自动重试"')
+                self.assertFalse(page.locator('#backup-meter').is_visible())
+                self.assertIn('未覆盖', page.locator('#backup-issues').inner_text())
+                self.assertIn('自动重试', page.locator('#backup-detail').inner_text())
+                page.locator('#automatic-backup-controls').screenshot(path=str(out/'retrying.png'))
+                self.backup.configure({'enabled': False})
+                page.wait_for_function('()=>document.getElementById("backup-stage").textContent==="已暂停"')
+                self.assertFalse(page.locator('#backup-meter').is_visible())
+                self.assertFalse(errors, errors)
+            finally:
+                resume.set()
+                if worker.ident:
+                    worker.join(10)
                 browser.close()
 
 
