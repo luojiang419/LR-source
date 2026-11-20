@@ -35,11 +35,29 @@ def affected(path):
 
 
 class WorkbenchViews:
-    def __init__(self,data,db):
+    def __init__(self,data,db,*,save_delay=2):
         self.folder=Path(data)/'workbench-views';self.db=Path(db)
         self.identity=hashlib.sha256((str(self.db.resolve()).casefold()+':'+str(self.db.stat().st_ino)).encode()).hexdigest()
         self.lock=threading.Lock();self.epoch=0;self.context='';self.values={};self.images={}
+        self.save_delay=save_delay;self.save_timer=None;self.dirty=False
         self._load()
+
+    def _schedule_save(self):
+        self.dirty=True
+        while len(self.values)>32:self.values.pop(next(iter(self.values)))
+        if self.save_delay<=0:
+            self._save();self.dirty=False
+        elif self.save_timer is None:
+            self.save_timer=threading.Timer(self.save_delay,self.flush)
+            self.save_timer.daemon=True;self.save_timer.start()
+
+    def flush(self):
+        with self.lock:
+            timer=self.save_timer;self.save_timer=None
+            if timer:timer.cancel()
+            if self.dirty:
+                try:self._save();self.dirty=False
+                except OSError:pass
 
     def _load(self):
         try:
@@ -64,7 +82,7 @@ class WorkbenchViews:
         while len(content)>4*1024*1024 and self.values:
             self.values.pop(next(iter(self.values)))
             content=json.dumps({'schema':1,'identity':self.identity,'values':self.values},ensure_ascii=False,separators=(',',':')).encode()
-        atomic_write(path,content)
+        atomic_write(path,content,durable=False)
 
     def remember(self,url,value,scope,epoch):
         key=view_key(url)
@@ -76,7 +94,7 @@ class WorkbenchViews:
             if len(raw.encode())>512*1024:return
             full=json.dumps([scope or '',key],ensure_ascii=False)
             if self.values.get(full)==value:return
-            self.values.pop(full,None);self.values[full]=json.loads(raw);self._save()
+            self.values.pop(full,None);self.values[full]=json.loads(raw);self._schedule_save()
         except (OSError,ValueError,TypeError):pass
         finally:self.lock.release()
 
@@ -90,7 +108,7 @@ class WorkbenchViews:
             # 新进程先恢复后核对；只推进代际，禁止迟到旧读取覆盖已保存状态。
             if not path or not path.startswith('/api/session'):
                 self.values={key:value for key,value in self.values.items() if urlsplit(json.loads(key)[1]).path not in paths}
-            try:self._save()
+            try:self._schedule_save()
             except OSError:pass
 
     @staticmethod
@@ -120,7 +138,7 @@ class WorkbenchViews:
             value={'identity':self.identity,'key':key,'digest':hashlib.sha256(payload).hexdigest(),'mime':mime,'data':base64.b64encode(payload).decode()}
             if path.is_symlink() or path.is_junction():return
             if path.exists():return
-            atomic_write(path,json.dumps(value).encode())
+            atomic_write(path,json.dumps(value).encode(),durable=False)
             files=sorted(self.folder.glob('image-'+category+'-*.json'),key=lambda p:p.stat().st_mtime_ns,reverse=True)
             for old in files[24:]:old.unlink(missing_ok=True)
         except (OSError,ValueError,TypeError):pass

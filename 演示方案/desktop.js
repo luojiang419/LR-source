@@ -1,5 +1,7 @@
 (() => {
   'use strict';
+  const syncVisibility=()=>document.documentElement.toggleAttribute('data-page-hidden',document.hidden);
+  document.addEventListener('visibilitychange',syncVisibility);syncVisibility();
   window.FramekeepPaths={driveOf(value){
     let path=String(value||'').replace(/\//g,'\\');
     if(/^\\\\\?\\UNC\\/i.test(path))path='\\\\'+path.slice(8);

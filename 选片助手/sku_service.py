@@ -1,5 +1,7 @@
 """独立 SKU 对账库、二星标签队列、冻结工作表范围及可追溯复核。"""
 from contextlib import contextmanager,nullcontext
+from worker_activity import transaction
+import worker_activity as activity
 import hashlib
 import json
 from pathlib import Path
@@ -79,7 +81,7 @@ class SkuService(ShootingDocuments,ConcurrentLabels,FullAutoOCR,OcrMetadata,SkuR
     def connect(self):
         c=sqlite3.connect(self.db,timeout=30);c.row_factory=sqlite3.Row
         try:
-            with c:yield c
+            with transaction(c):yield c
         finally:c.close()
 
     def project(self,pid=None):
@@ -969,10 +971,11 @@ class SkuService(ShootingDocuments,ConcurrentLabels,FullAutoOCR,OcrMetadata,SkuR
     def _run(self):
         self.label_thread.start()
         while not self.closed.is_set():
+            observed=activity.revision()
             self.wake.clear()
             try:self.tick()
             except Exception:pass  # 已保存的任务和导出错误可在界面查询；下次循环继续。
-            self.wake.wait(.2)
+            activity.wait(self.closed,observed,wake=self.wake)
 
     def close(self):
         if hasattr(self,'_exports'):self._exports.close()

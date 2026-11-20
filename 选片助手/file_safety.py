@@ -26,12 +26,14 @@ def metadata_retry_delay(error, attempts):
     return None
 
 
-def atomic_write(path,payload):
+def atomic_write(path,payload,*,durable=True):
     """仅用于程序自有配置；独占随机临时文件，禁止接管同名临时文件。"""
     path=Path(path);path.parent.mkdir(parents=True,exist_ok=True)
     with tempfile.NamedTemporaryFile(dir=path.parent,prefix='.framekeep-config-',suffix='.tmp',delete=False) as stream:
         temporary=Path(stream.name)
-        try:stream.write(payload);stream.flush();os.fsync(stream.fileno())
+        try:
+            stream.write(payload);stream.flush()
+            if durable:os.fsync(stream.fileno())
         except BaseException:
             stream.close();temporary.unlink(missing_ok=True);raise
     try:os.replace(temporary,path)

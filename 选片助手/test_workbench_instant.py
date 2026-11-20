@@ -1,5 +1,6 @@
 """全页缓存恢复、写后失效、会话隔离、脚本包和慢接口下的实际交互。"""
 import json
+import gzip
 from pathlib import Path
 import tempfile
 import unittest
@@ -22,7 +23,7 @@ ROOT=Path(__file__).resolve().parents[1]
 class ViewSnapshotTests(unittest.TestCase):
     def setUp(self):
         self.tmp=tempfile.TemporaryDirectory();self.base=Path(self.tmp.name);self.db=self.base/'db';self.db.touch()
-        self.views=WorkbenchViews(self.base,self.db)
+        self.views=WorkbenchViews(self.base,self.db,save_delay=0)
 
     def tearDown(self):self.tmp.cleanup()
 
@@ -30,23 +31,23 @@ class ViewSnapshotTests(unittest.TestCase):
         value={'rows':[{'sku':'LC123'}],'request_token':'old-token'}
         self.views.remember('/api/sku/library?fresh=0&sku=A',value,'one',0)
         value['rows'].clear()
-        views=WorkbenchViews(self.base,self.db)
+        views=WorkbenchViews(self.base,self.db,save_delay=0)
         self.assertEqual(views.bootstrap('two')['values'],{})
         saved=views.bootstrap('one')['values']['/api/sku/library?sku=A']
         self.assertEqual(saved['rows'][0]['sku'],'LC123');self.assertNotIn('request_token',saved)
         views.invalidate();views.remember('/api/sku',{'stale':True},'one',0)
-        self.assertFalse(WorkbenchViews(self.base,self.db).bootstrap('one')['values'])
+        self.assertFalse(WorkbenchViews(self.base,self.db,save_delay=0).bootstrap('one')['values'])
 
     def test_corrupt_foreign_bounded_and_failed_queries(self):
         self.views.folder.mkdir();path=self.views.folder/'views.json';path.write_text('[]')
-        self.assertFalse(WorkbenchViews(self.base,self.db).values)
+        self.assertFalse(WorkbenchViews(self.base,self.db,save_delay=0).values)
         for n in range(50):self.views.remember('/api/sku/library?sku='+str(n),{'rows':[]},'',0)
         self.assertLessEqual(len(self.views.values),32)
         before=self.views.values.copy()
         self.views.remember('/api/sku',{'error':'busy'},'',0);self.views.remember('/api/sku',{'loading':True},'',0)
         self.assertEqual(before,self.views.values)
         value=json.loads(path.read_bytes());value['identity']='other';path.write_text(json.dumps(value))
-        self.assertFalse(WorkbenchViews(self.base,self.db).values)
+        self.assertFalse(WorkbenchViews(self.base,self.db,save_delay=0).values)
 
     def test_bundle_order_and_source_invalidation_and_image_versions(self):
         assets=WorkbenchAssets(ROOT/'演示方案');body,etag=assets.read()
@@ -72,7 +73,7 @@ class ViewSnapshotTests(unittest.TestCase):
         self.views.remember('/api/parsing',{'jobs':['saved']},'one',0)
         self.views.invalidate('/api/session/patch')
         self.views.remember('/api/parsing',{'jobs':['late']},'one',0)
-        values=WorkbenchViews(self.base,self.db).bootstrap('one')['values']
+        values=WorkbenchViews(self.base,self.db,save_delay=0).bootstrap('one')['values']
         self.assertEqual(values['/api/sku/library']['rows'],['saved']);self.assertEqual(values['/api/parsing']['jobs'],['saved'])
 
 
@@ -100,7 +101,10 @@ class InstantWorkbenchBrowserTests(unittest.TestCase):
         with urlopen(self.url+paths[-1]) as response:data=json.load(response)
         if data['groups']:
             with urlopen(self.url+paths[-1].replace('sku=&','sku='+data['groups'][0]['normalized']+'&')) as response:response.read()
-        with urlopen(self.url+'/workbench.js') as response:etag=response.headers['ETag'];self.assertGreater(len(response.read()),10000)
+        with urlopen(self.url+'/workbench.js') as response:etag=response.headers['ETag'];bundle=response.read();self.assertGreater(len(bundle),10000)
+        with urlopen(Request(self.url+'/workbench.js',headers={'Accept-Encoding':'gzip'})) as response:
+            self.assertEqual(response.headers['Content-Encoding'],'gzip');self.assertEqual(response.headers['Vary'],'Accept-Encoding')
+            self.assertEqual(gzip.decompress(response.read()),bundle);self.assertNotEqual(response.headers['ETag'],etag)
         import urllib.error
         with self.assertRaises(urllib.error.HTTPError) as response:urlopen(Request(self.url+'/workbench.js',headers={'If-None-Match':etag}))
         self.assertEqual(response.exception.code,304)

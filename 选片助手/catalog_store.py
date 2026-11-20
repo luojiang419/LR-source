@@ -1,5 +1,6 @@
 """正式会话数据库；与演示数据库隔离，源文件始终只读。"""
 from __future__ import annotations
+from worker_activity import transaction
 import hashlib
 import json
 import sqlite3
@@ -73,7 +74,7 @@ class Store:
     def connect(self):
         c=sqlite3.connect(self.db,timeout=30);c.row_factory=sqlite3.Row
         try:
-            with c:yield c
+            with transaction(c):yield c
         finally:c.close()
     def active_id(self):
         with self.connect() as c:r=c.execute("SELECT value FROM settings WHERE key='active'").fetchone()

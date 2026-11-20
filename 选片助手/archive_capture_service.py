@@ -3,6 +3,7 @@ from collections import defaultdict
 from contextlib import contextmanager,nullcontext
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone, timedelta
+import worker_activity as activity
 import hashlib
 import io
 import json
@@ -12,6 +13,7 @@ import sqlite3
 import string
 import threading
 import time
+from typing import NamedTuple
 import uuid
 
 from portable_capture_store import Dataset, DatasetBusy, digest, encoded, relative_path, resolve_under, BUSINESS_FIELDS
@@ -59,6 +61,14 @@ def decision_parents(record):
     return list(dict.fromkeys(v for v in [record.get('decision_id'),*record.get('parents',[])] if v))
 
 
+class ScanVisit(NamedTuple):
+    path: Path
+    key: tuple[str, str]
+    generation: int
+    running: bool
+    error: str
+
+
 class ArchiveCaptureService:
     def __init__(self, store, archive, catalog, sku=None, *, autostart=True, watch=None, readonly=None, metadata_workers=None):
         self.store, self.archive, self.catalog, self.sku = store, archive, catalog, sku
@@ -93,8 +103,9 @@ class ArchiveCaptureService:
         self.backup_scan_scope = threading.local()
         # 锁外取得的目录浅枚举；锁内扫描直接采用，避免在交互锁内等待NAS。
         self.scan_versions_ready = None
-        # 本进程内已完成过整轮读取的数据集；例行复核不再阻挡补写请求。
+        # 记录已完成读取的当前文件夹，例行复核沿用同一次访问的完成状态。
         self.scan_complete = {}
+        self.scan_visit = {}
         self.scan_window = {}
         self.scan_interval = {}
         self.scan_progress = {}
@@ -568,15 +579,30 @@ class ArchiveCaptureService:
                     if self.closed.is_set() or time.monotonic()>=deadline:return False
             finally:self.backup_scan_scope.full_root=False
 
-    def _rows(self, dataset, *, after='', focus=None, limit=16):
+    def _scan_visit(self,dataset):
+        visits=getattr(self.catalog,'visits',None)
+        if not visits or getattr(self.backup_scan_scope,'full_root',False):return None
+        with visits.lock:
+            path=visits.path
+            if not visits.key or path is None or not path.is_relative_to(dataset.root) or not visits.allows(path/'_scope'):return None
+            return ScanVisit(path,visits.key,visits.generation,visits.running,visits.error)
+
+    def _align_scan_cursor(self,key,visit):
+        if self.scan_visit.get(key)==visit:return
+        self.scan_cursor.pop(key,None)
+        self.last_scan.pop(key,None)
+        self.scan_progress.pop(key,None)
+        self.scan_visit[key]=visit
+
+    def _rows(self, dataset, *, after='', focus=None, limit=16, visit=None):
         prefix = str(dataset.root).rstrip('\\/') + '\\'
         with self.catalog.connect() as c:
             if focus is not None:
                 rows=[dict(r) for r in c.execute('SELECT rowid AS capture_order,* FROM items WHERE path=? AND online=1',(str(focus),))]
             elif getattr(self.catalog,'visits',None) and not getattr(self.backup_scan_scope,'full_root',False):
-                visits=self.catalog.visits
-                with visits.lock:key=visits.key;path=visits.path
-                if not key or path is None or not visits.allows(path/'_scope'):return []
+                visit=visit or self._scan_visit(dataset)
+                if visit is None:return []
+                key=visit.key
                 rows=[dict(r) for r in c.execute('SELECT rowid AS capture_order,* FROM items WHERE root=? AND folder=? AND path>? AND online=1 ORDER BY path LIMIT ?', (key[0],key[1] or '/',after or '',limit+1))]
                 more=len(rows)>limit;rows=rows[:limit]
                 self.scan_page[str(dataset.root)]=(rows[-1]['path'] if rows else after,more)
@@ -781,6 +807,11 @@ class ArchiveCaptureService:
                 total=self._scan_total(dataset)
             with self.io_lock:return self._scan(dataset, True,focus,limit=limit,total=total)
         key = str(dataset.root)
+        visit=None
+        if focus is None:
+            visit=self._scan_visit(dataset)
+            if visit is None and getattr(self.catalog,'visits',None) and not getattr(self.backup_scan_scope,'full_root',False):return
+            self._align_scan_cursor(key,visit)
         authority = self.dataset_for_path(dataset.root)
         if authority is not None and authority is not dataset and authority.root in dataset.root.parents and (authority.folder / 'dataset.json').is_file():
             return
@@ -804,7 +835,7 @@ class ArchiveCaptureService:
             if starting:
                 self.scan_progress[key]={'done':0,'total':total if total is not None else 0,'started':time.time(),'running':True}
                 self._pass_started=getattr(self,'_pass_started',{});self._pass_started[key]=time.monotonic()
-            items=self._rows(dataset,after=self.scan_cursor.get(key,''),focus=focus,limit=limit)
+            items=self._rows(dataset,after=self.scan_cursor.get(key,''),focus=focus,limit=limit,visit=visit)
             ready=self.scan_versions_ready if focus is None else None
             # 调度线程已在锁外、预读之后取得同批浅枚举；其余调用仍在此即时枚举。
             versions=(ready if ready is not None else self._scan_versions(items)) if focus is None else {}
@@ -972,7 +1003,10 @@ class ArchiveCaptureService:
                     if conflicts:self.errors[key] = conflicts[0]
                     else:self.errors.pop(key, None)
                     now=time.monotonic()
-                    self.last_scan[key] = now;self.scan_complete[key]=now
+                    self.last_scan[key]=now
+                    # 目录索引仍在入库或已切换时，本轮不能证明补写范围完整。
+                    if visit is None or (not visit.running and not visit.error and visit==self._scan_visit(dataset)):
+                        self.scan_complete[key]=visit
                     started=getattr(self,'_pass_started',{}).get(key,now)
                     # 大目录例行复核按实际耗时放宽间隔，后台占用不超过约三分之一；有变化时保持4秒。
                     self.scan_interval[key]=4 if dirty else min(10,max(4,2*(now-started)))
@@ -2143,6 +2177,9 @@ class ArchiveCaptureService:
         """锁外预读与浅枚举，锁内只核对；无变化的复核批次逐步放大，并在预算内连续推进。"""
         root=str(dataset.root);deadline=time.monotonic()+budget;worked=False
         while True:
+            visit=self._scan_visit(dataset)
+            if getattr(self.catalog,'visits',None) and visit is None:return worked
+            with self.io_lock:self._align_scan_cursor(root,visit)
             before=self.scan_cursor.get(root,'')
             self._prefetched=None
             prepared=self._prefetch_scan(dataset)
@@ -2157,6 +2194,9 @@ class ArchiveCaptureService:
             # 进度计数不参与业务校验，不能持有标星锁等待目录统计 SQL。
             total=self._scan_total(dataset) if not before else None
             with self.io_lock:
+                if visit!=self._scan_visit(dataset):
+                    self.schedule(dataset,force=True)
+                    break
                 self.scan_reads=prepared;self.scan_versions_ready=versions
                 try:self._scan(dataset,limit=self.scan_window.get(root,16),total=total)
                 finally:self.scan_reads={};self.scan_versions_ready=None
@@ -2180,12 +2220,12 @@ class ArchiveCaptureService:
         self.wake.set()
         return {'queued': True}
 
-    def write_metadata(self, root_id, folder='', *, activate=True):
+    def write_metadata(self, root_id, folder='', *, activate=True, require_scan=False):
         """手动补齐当前范围的漏写任务，只重试当前确认版本，不触发 OCR。"""
         dataset,scope=self.scope(root_id,folder,activate=activate)
         with self.io_lock:
             # 首次/新文件读取未完成时不能补写；已完成整轮后的例行复核与补写串行于交互锁，无需等待。
-            if self.loading.get(str(dataset.root)):
+            if self.loading.get(str(dataset.root)) or (require_scan and self._metadata_request_wait(dataset,scope)):
                 raise ValueError('正在读取元数据及SKU区间，请读取完成后补写')
             self._acquire_editor(dataset,metadata_scope=scope)
             self.check_editable(dataset)
@@ -2255,7 +2295,10 @@ class ArchiveCaptureService:
         if dataset is not None:
             key=str(dataset.root)
             if row['status'] in ('queued','preparing'):
-                state['scan']={**(self.scan_progress.get(key) or {}),'loading':bool(self.loading.get(key)),'complete':key in self.scan_complete}
+                visit=self._scan_visit(dataset)
+                if not getattr(self.catalog,'visits',None) or (visit and visit.key==(root_id,folder) and visit==self.scan_visit.get(key)):
+                    state['scan']={**(self.scan_progress.get(key) or {}),'loading':bool(self.loading.get(key)),
+                                   'complete':key in self.scan_complete and self.scan_complete[key]==visit}
             elif row['status']=='submitted':
                 try:state['progress']=self._request_progress(row['id'],dataset,result.get('records') or [],result.get('revisions'))
                 except (OSError,ValueError,sqlite3.Error) as exc:state['progress_error']=str(exc)[:300]
@@ -2313,17 +2356,22 @@ class ArchiveCaptureService:
         self.wake.set()
         return self.metadata_write_state(root_id,folder)
 
-    def _metadata_request_wait(self,dataset):
+    def _metadata_request_wait(self,dataset,scope):
         """补写请求的等待原因；空字符串表示可以立即补写。"""
         key=str(dataset.root)
-        if key in self.scan_complete and not self.loading.get(key):return ''
         visits=getattr(self.catalog,'visits',None)
         if visits:
-            with visits.lock:path=visits.path
-            # 按访问加载只读取正在浏览的文件夹；离开后不在后台扫描，需回到该文件夹继续。
-            if path is None or not path.is_relative_to(dataset.root) or not visits.allows(path/'_scope'):
+            visit=self._scan_visit(dataset)
+            # 同一数据集可以涵盖多个子目录，只有所选目录扫描结束才能补写。
+            if visit is None or visit.path!=scope:
                 return '请打开此文件夹，目录读取完成后自动补写'
-        if not self.loading.get(key) and not self.scan_cursor.get(key):self.schedule(dataset,force=True)
+            if visit.error:return '目录读取失败，请刷新此文件夹后重试：'+visit.error
+            if visit==self.scan_complete.get(key) and not self.loading.get(key):return ''
+            # 离开目录时调度会丢弃待扫描项，返回后即使有旧游标也应重新入队。
+            self.schedule(dataset,force=True)
+        else:
+            if key in self.scan_complete and not self.loading.get(key):return ''
+            if not self.loading.get(key) and not self.scan_cursor.get(key):self.schedule(dataset,force=True)
         return '正在读取目录元数据及SKU区间，完成后自动补写'
 
     def _start_metadata_request_worker(self):
@@ -2354,14 +2402,14 @@ class ArchiveCaptureService:
         dataset=None
         try:
             if self.readonly():raise DatasetBusy('正在单向接收，请断开同步后补写元数据')
-            dataset,_=self.scope(request['root'],request['folder'],activate=False)
+            dataset,scope=self.scope(request['root'],request['folder'],activate=False)
             key=str(dataset.root)
             if self.closed.is_set():return False
-            reason=self._metadata_request_wait(dataset)
+            reason=self._metadata_request_wait(dataset,scope)
             if reason:return wait(reason,dataset)
             with self.archive.connect() as c:
                 c.execute("UPDATE capture_metadata_requests SET reason='正在核对补写范围…',result=? WHERE id=?",(encoded({'dataset':key}).decode(),request['id']))
-            result=self.write_metadata(request['root'],request['folder'],activate=False)
+            result=self.write_metadata(request['root'],request['folder'],activate=False,require_scan=True)
             status='submitted'
             reason='已确认款号无需新增补写任务' if not result.get('records') else '已提交补写，正在逐张写入'
             if result.get('unassigned'):reason+=f"；{result['unassigned']} 张无SKU，保持原样，不参与款号补写"
@@ -2594,6 +2642,8 @@ class ArchiveCaptureService:
             pending=c.execute("SELECT 1 FROM capture_metadata_requests WHERE status='queued' LIMIT 1").fetchone()
         if pending:self._start_metadata_request_worker()
         while not self.closed.is_set():
+            observed=activity.revision()
+            self.wake.clear()
             before_cursor=dict(self.scan_cursor);worked=False
             try:
                 visits=getattr(self.catalog,'visits',None);resume=True
@@ -2621,8 +2671,8 @@ class ArchiveCaptureService:
                 self.errors['service'] = str(exc)
             # 首次区间入库逐张释放锁并尽快接续；刚处理过任务时立即接续下一张，空闲保持低频。
             busy=worked or (self.pending and any(self.loading.values()) and self.scan_cursor!=before_cursor)
-            self.wake.wait(.01 if busy else .2)
-            self.wake.clear()
+            self.closed.wait(.01) if busy else activity.wait(self.closed,observed,wake=self.wake)
+
 
     def close(self):
         self.closed.set()

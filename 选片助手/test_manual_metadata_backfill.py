@@ -175,6 +175,60 @@ class ManualBackfillTests(unittest.TestCase):
         self.assertEqual((result['status'],result['result']['queued']),('submitted',2))
         self.assertFalse(self.api.process_metadata_request());self.drain()
 
+    def test_request_waits_for_its_own_visit_and_resumes_after_return(self):
+        from archive_visits import ArchiveVisits
+
+        for folder in ('A','B'):(self.photos/folder).mkdir()
+        path=self.photos/'B'/'UNASSIGNED.JPG'
+        Image.new('RGB',(120,160),'teal').save(path)
+        visits=ArchiveVisits(self.catalog)
+        self.catalog.visits=visits
+        entered=threading.Event();release=threading.Event()
+        original=self.catalog._scan
+
+        def visit_scan(*args,**kwargs):
+            if kwargs.get('visit_folder')=='B':
+                entered.set()
+                if not release.wait(10):raise TimeoutError('测试未释放目录枚举')
+            return original(*args,**kwargs)
+
+        def finish_visit():
+            until=time.monotonic()+10
+            while visits.state()['running'] and time.monotonic()<until:time.sleep(.02)
+            self.assertFalse(visits.state()['running'])
+            self.assertFalse(visits.state()['error'])
+
+        def process_request():
+            with self.archive.connect() as c:c.execute('UPDATE capture_metadata_requests SET due=0')
+            return self.api.process_metadata_request()
+
+        visits.touch(self.rid,'A');finish_visit();self.api._scan_batches(self.dataset)
+        with patch.object(self.catalog,'_scan',side_effect=visit_scan),patch.object(self.api,'_start_metadata_request_worker'):
+            try:
+                visits.touch(self.rid,'B');self.assertTrue(entered.wait(5))
+                request=self.api.request_metadata_write(self.rid,'B')
+                self.api._scan_batches(self.dataset)
+                self.assertFalse(process_request(),'目录仍在入库时不能使用半轮扫描结果')
+                state=self.api.metadata_write_state(self.rid,'B')
+                self.assertIn('正在读取',state['reason'])
+                self.assertFalse(state['scan']['complete'])
+                visits.touch(self.rid,'A');finish_visit();self.api._scan_batches(self.dataset)
+                self.assertFalse(process_request(),'同一父数据集的另一目录不能替代目标目录')
+                state=self.api.metadata_write_state(self.rid,'B')
+                self.assertIn('请打开此文件夹',state['reason'])
+                self.assertNotIn('scan',state)
+            finally:release.set()
+        # 模拟切走前另一子目录的游标仍在，返回后不能从该路径继续读取 B。
+        self.api.scan_cursor[str(self.dataset.root)]=str(self.photos/'Z'/'IMG.JPG')
+        visits.touch(self.rid,'B');finish_visit()
+        self.assertFalse(process_request(),'目录入库后仍须完成便携元数据读取')
+        self.api.tick()
+        self.assertTrue(process_request())
+        state=self.api.metadata_write_state(self.rid,'B')
+        self.assertEqual((state['id'],state['status']),(request['id'],'submitted'))
+        self.assertEqual(state['result']['unassigned_examples'],['B/UNASSIGNED.JPG'])
+        self.assertEqual(state['progress']['total'],0)
+
     def test_request_rejects_receiver_and_bad_folder_before_queueing(self):
         with patch.object(self.api,'readonly',return_value=True):
             with self.assertRaisesRegex(ValueError,'单向接收'):self.api.request_metadata_write(self.rid)

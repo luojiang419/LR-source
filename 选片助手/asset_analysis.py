@@ -1,4 +1,6 @@
 """可版本化视觉方案、持久化两路解析与本机模型能力检查。"""
+from worker_activity import transaction
+import worker_activity as activity
 import base64
 from contextlib import contextmanager
 import hashlib
@@ -111,7 +113,7 @@ PRAGMA user_version=1;''')
         c=sqlite3.connect(self.db,timeout=30);c.row_factory=sqlite3.Row
         try:
             c.execute('PRAGMA mmap_size=1073741824')
-            with c:yield c
+            with transaction(c):yield c
         finally:c.close()
     def save_schema(self,name,prompt,schema,schema_id=None):
         safe_schema(schema)
@@ -174,7 +176,9 @@ PRAGMA user_version=1;''')
 
     def request_auto(self,sid):
         with self.lock:
-            if self.auto.get('enabled') and sid==self.auto.get('session_id'):self.auto_pending.add(sid)
+            if self.auto.get('enabled') and sid==self.auto.get('session_id'):
+                self.auto_pending.add(sid)
+                activity.notify()
 
     def auto_tick(self):
         if not self.auto_lock.acquire(blocking=False):return
@@ -202,9 +206,10 @@ PRAGMA user_version=1;''')
 
     def _auto_run(self):
         while not self.closed.is_set():
+            observed=activity.revision()
             try:self.auto_tick()
             except Exception:pass  # 未提交的持久队列保留，下轮继续处理。
-            self.closed.wait(.3)
+            activity.wait(self.closed,observed)
     def test_provider(self,pid):
         p=self.providers.by_id(pid)
         if not p:raise ValueError('模型卡片不存在')
@@ -305,6 +310,7 @@ PRAGMA user_version=1;''')
             return task_history.clear(c, 'jobs', ('completed',))
     def _api_pool_run(self):
         while not self.closed.is_set():
+            observed=activity.revision()
             try:
                 with self.lock:
                     with self.connect() as c:rows=c.execute("SELECT provider,count(*) AS n FROM jobs WHERE status IN ('queued','running') GROUP BY provider").fetchall()
@@ -317,13 +323,14 @@ PRAGMA user_version=1;''')
                         thread=threading.Thread(target=self._run,daemon=True,name='asset-vision-'+str(len(self.threads)))
                         self.threads.append(thread);thread.start()
             except Exception:pass  # 队列保留，下一轮重新读取有效卡片容量。
-            self.closed.wait(.2)
+            activity.wait(self.closed,observed)
 
     def _run(self):
         with self.lock:
             if not self.api_pool_started and not self.closed.is_set():self.api_pool_started=True;self.api_pool.start()
         while not self.closed.is_set():
-            self.tick();self.closed.wait(.3)
+            observed=activity.revision()
+            self.tick();activity.wait(self.closed,observed)
     def close(self):
         self.closed.set()
         deadline=time.monotonic()+2

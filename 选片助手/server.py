@@ -264,6 +264,9 @@ class Handler(SimpleHTTPRequestHandler):
     def trusted(self):return self.headers.get('Host')==f'127.0.0.1:{self.server.server_port}'
     def reply(self,data,status=200,kind='application/json; charset=utf-8',filename=None):
         if status==200:
+            if self.command=='POST':
+                from worker_activity import notify
+                notify()
             from workbench_views import PATHS
             target=urlsplit(self.path).path
             relevant=self.command=='GET' and target in PATHS or self.command=='POST' and target.startswith(('/api/sku/','/api/providers/','/api/inventory/','/api/session','/api/folders','/api/video-preview','/api/preview-cache','/api/parsing/','/api/catalog/','/api/archive/','/api/intelligence/config'))
@@ -304,12 +307,15 @@ class Handler(SimpleHTTPRequestHandler):
         try:
             if path=='/workbench.js':
                 global _WORKBENCH_ASSETS
-                from workbench_assets import WorkbenchAssets
+                from workbench_assets import WorkbenchAssets,accepts_gzip
                 if _WORKBENCH_ASSETS is None or _WORKBENCH_ASSETS.web!=WEB:_WORKBENCH_ASSETS=WorkbenchAssets(WEB)
-                payload,etag=_WORKBENCH_ASSETS.read();self.preview_cache='private, max-age=0, must-revalidate'
+                compressed=accepts_gzip(self.headers.get('Accept-Encoding',''))
+                payload,etag=_WORKBENCH_ASSETS.read(compressed=compressed);self.preview_cache='private, max-age=0, must-revalidate'
                 if self.headers.get('If-None-Match')=='"'+etag+'"':
-                    self.send_response(304);self.send_header('ETag','"'+etag+'"');self.end_headers();return
-                self.send_response(200);self.send_header('Content-Type','text/javascript; charset=utf-8');self.send_header('Content-Length',str(len(payload)));self.send_header('ETag','"'+etag+'"');self.end_headers()
+                    self.send_response(304);self.send_header('ETag','"'+etag+'"');self.send_header('Vary','Accept-Encoding');self.end_headers();return
+                self.send_response(200);self.send_header('Content-Type','text/javascript; charset=utf-8');self.send_header('Content-Length',str(len(payload)));self.send_header('ETag','"'+etag+'"');self.send_header('Vary','Accept-Encoding')
+                if compressed:self.send_header('Content-Encoding','gzip')
+                self.end_headers()
                 try:self.wfile.write(payload)
                 except (BrokenPipeError,ConnectionResetError,ConnectionAbortedError):pass
                 return
@@ -1111,6 +1117,7 @@ def _initialize_server(server,args,startup):
     import gpu_media,gpu_video
     from video_preview import find_tool
     CATALOG=AssetCatalog(DATA,keep_wal_open=True)
+    CATALOG.metadata.maintenance_blocked=lambda:bool(WATCH and WATCH.state().get('enabled') or getattr(CATALOG,'visits',None) and CATALOG.visits.state()['running'])
     from archive_visits import ArchiveVisits
     CATALOG.visits=ArchiveVisits(CATALOG)
     startup_checkpoint('catalog ready')
@@ -1131,8 +1138,8 @@ def _initialize_server(server,args,startup):
     from automatic_backup import AutomaticBackup
     BACKUP=AutomaticBackup(DATA,ARCHIVE.writer,roots=lambda:[WATCH.state()['folder']] if WATCH and WATCH.state().get('folder') else [])
     # 后台归档可能长时间持锁读取照片，须先完成共享评级初始化。
-    active=STORE.active_id()
-    if active:ARCHIVE.ratings.seed_session(active)
+    ratings=ARCHIVE.ratings
+    # 大会话评级合并由 historical-ratings 完成；首屏读取仍可按需获取评级。
     startup_checkpoint('ratings ready')
     FILESEARCH=EverythingSearch(ARCHIVE)
     STORE.discovery=FILESEARCH
@@ -1200,7 +1207,7 @@ def _initialize_server(server,args,startup):
     tasks=[('catalog-wal-maintenance',CATALOG.wal_maintenance.start),
            ('catalog-wal-recovery',CATALOG.wal_maintenance.wait_for_startup_recovery),
            ('historical-ratings',seed_history),
-           ('archive',ARCHIVE.thread.start),('ratings',ARCHIVE.ratings.sync.thread.start),
+           ('archive',ARCHIVE.thread.start),('ratings',ratings.sync.thread.start),
            ('pipeline',PIPELINE.thread.start),('sku',SKU.thread.start),('rawlink',RAWLINK.thread.start),('archive-capture',capture_service.thread.start),
            *[(f'analysis-{i}',thread.start) for i,thread in enumerate((*ANALYSIS.threads,ANALYSIS.auto_thread))],
            *([('quick-file-index',INTELLIGENCE.quick_index.start)] if INTELLIGENCE.quick_index else []),
@@ -1226,6 +1233,7 @@ def _initialize_server(server,args,startup):
     try:server._startup_http_thread.join()
     except KeyboardInterrupt:pass
     finally:
+        if _WORKBENCH_VIEWS:_WORKBENCH_VIEWS.flush()
         if BACKUP:BACKUP.close()
         CAPTURESYNC.close()
         folder_archive_api.close(server)

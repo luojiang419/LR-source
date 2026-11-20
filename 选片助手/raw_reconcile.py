@@ -1,5 +1,6 @@
 """先 JPG 后 RAW 的跨目录匹配、明确评级继承与 RAW 内嵌补写。"""
 from datetime import datetime
+import worker_activity as activity
 import hashlib
 import json
 from pathlib import Path
@@ -540,9 +541,10 @@ CREATE INDEX IF NOT EXISTS raw_pairs_updated ON raw_pairs(session,updated DESC);
                 with self.archive.connect() as c:c.execute('UPDATE raw_session_work SET status=?,reason=? WHERE session=? AND updated=?',('queued' if self.closed.is_set() else 'failed','应用退出，等待恢复' if self.closed.is_set() else str(exc)[:300],sid,stamp))
     def _run(self):
         while not self.closed.is_set():
+            observed=activity.revision()
             try:self.tick()
             except Exception:pass
-            self.closed.wait(.5)
+            activity.wait(self.closed,observed)
     def close(self):
         self.closed.set()
         if self.thread.is_alive():self.thread.join(timeout=3)

@@ -1,5 +1,6 @@
 """现场新图、全库自动和按次手动解析，共用持久任务、结果和真实进度。"""
 from contextlib import contextmanager
+import worker_activity as activity
 import hashlib
 import json
 from pathlib import Path
@@ -111,6 +112,7 @@ class AnalysisWorkflow:
             with self.analysis.connect() as c:c.execute("INSERT OR REPLACE INTO workflow_settings VALUES('config',?)",(dumps(next_config),))
             self.config=next_config
         self._sync_background_priority()
+        activity.notify()
         return self.state()
 
     def changed(self,sid,records=None):
@@ -168,6 +170,7 @@ class AnalysisWorkflow:
             self.config=next_config
             self.progress_epoch+=1
         self.refresh_progress()
+        activity.notify()
         return self.state()
 
     def stop(self,kind):
@@ -182,6 +185,7 @@ class AnalysisWorkflow:
             self.config=next_config
             self.progress_epoch+=1
         self.refresh_progress()
+        activity.notify()
         return self.state()
 
     def discover_tick(self):
@@ -449,9 +453,11 @@ class AnalysisWorkflow:
                 c.execute("INSERT INTO workflow_runs(id,kind,status,started,total,discovered) VALUES (?,?,'running',?,1,1)",(rid,job['kind'],time.time()))
                 c.execute('INSERT INTO workflow_members VALUES (?,?)',(rid,jid))
         self.refresh_progress()
+        activity.notify()
 
     def _run(self):
         while not self.closed.is_set():
+            observed=activity.revision()
             try:
                 self.discover_tick()
                 capacity=max([1]+[self.providers.concurrency(self._provider(kind)) for kind in ('vision','ocr') if self.progress.get(kind,{}).get('status')=='running' or kind=='vision' and (self.config['live_enabled'] or self.config['global_enabled'])])
@@ -461,13 +467,14 @@ class AnalysisWorkflow:
                     worker=threading.Thread(target=self._worker,name='analysis-workflow-'+str(len(self.workers)),daemon=True);self.workers.append(worker);worker.start()
                 self.error=''
             except Exception as exc:self.error=str(exc)[:300]
-            self.closed.wait(.5)
+            activity.wait(self.closed,observed)
 
     def _worker(self):
         while not self.closed.is_set():
+            observed=activity.revision()
             try:worked=self.tick()
             except Exception:worked=False
-            if not worked:self.closed.wait(.2)
+            if not worked:activity.wait(self.closed,observed)
 
     def close(self):
         self.closed.set()

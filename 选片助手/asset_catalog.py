@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from contextlib import contextmanager,nullcontext,closing
 from functools import lru_cache
+from worker_activity import transaction
 import base64
 from hashlib import sha256
 import json
@@ -237,7 +238,7 @@ class AssetCatalog:
             # 映射只读页交给系统页缓存；大库位于慢盘时避免每次关联查找
             # 都进行 4 KiB 随机读取。上限是虚拟地址映射，不预分配物理内存。
             c.execute('PRAGMA mmap_size=2147418112')
-            with c:
+            with transaction(c):
                 yield c
         finally:
             c.close()

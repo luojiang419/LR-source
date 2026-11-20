@@ -179,3 +179,6 @@ html[data-hardcore-layout] .header-actions .help-button{display:inline-flex;alig
 @media(prefers-reduced-motion:reduce){.shooting-document-dialog tr[data-history-project],[data-edit-sku]{transition:none}}
 
 .identity img.app-logo{object-fit:contain;background:transparent;border:0;border-radius:0;flex-shrink:0}
+
+/* 隐藏窗口暂停动画，恢复可见时沿用当前状态。 */
+html[data-page-hidden] *,html[data-page-hidden] *::before,html[data-page-hidden] *::after{animation-play-state:paused!important}

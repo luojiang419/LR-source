@@ -1,5 +1,6 @@
 """换机导入后将备份身份关联到本机归档，沿用持久写入队列和冲突保护。"""
 from collections import defaultdict
+import worker_activity as activity
 import hashlib
 import json
 from pathlib import Path
@@ -231,11 +232,12 @@ class MetadataArchiveSync:
 
     def _run(self):
         while not self.closed.is_set():
+            observed=activity.revision()
             try:self.tick()
             except Exception as exc:
                 if self.closed.is_set():break
                 with self.sku.connect() as c:c.execute("UPDATE metadata_archive_syncs SET status='attention',report=?,updated=? WHERE status IN ('queued','running')",(json.dumps({'error':str(exc)[:300]},ensure_ascii=False),time.time()))
-            self.closed.wait(.2)
+            activity.wait(self.closed,observed)
 
     def close(self):
         self.closed.set()

@@ -258,6 +258,8 @@ class ReferenceLibrary:
         with self.condition:
             if self.started or self.stopping.is_set():return
             self.started=True
+        if self.shared_catalog is not None and any(root.get('count_pending') for root in self.config['roots']):
+            self.index_pool.submit(self._refresh_shared_counts)
         demand=bool(getattr(self.shared_catalog,'visits',None))
         if not demand:
             self.thread.start()
@@ -276,22 +278,35 @@ class ReferenceLibrary:
         changed=False
         with self.shared_catalog.connect() as connection:
             roots=[dict(row) for row in connection.execute('SELECT id,path,status FROM roots WHERE removed=0')]
-            known={row['id'] for row in self.config['roots']}
-            missing=[row['id'] for row in roots if row['id'] not in known]
-            # 已接管的目录沿用已有进度，不在每次启动重新统计整个配对视图。
-            counts={row['root']:row['count'] for row in connection.execute(
-                'SELECT root,count(*) AS count FROM capture_items WHERE root IN ('+','.join('?' for _ in missing)+') GROUP BY root',missing)} if missing else {}
+            # 构造阶段只登记目录；大库配对统计移到 start 后，不能挡住 HTTP。
         with self.lock:
             known={row['id']:row for row in self.config['roots']}
             for root in roots:
                 row=known.get(root['id'])
                 if row is None:
                     path=Path(root['path'])
-                    row={'id':root['id'],'path':root['path'],'name':path.name or path.anchor.rstrip('\\/'),'count':counts.get(root['id'],0),
+                    row={'id':root['id'],'path':root['path'],'name':path.name or path.anchor.rstrip('\\/'),'count':0,'count_pending':True,
                          'status':'ready','native_complete':True,'index_source':'archive',
-                         'progress':{'phase':'completed','done':counts.get(root['id'],0),'total':counts.get(root['id'],0),'percent':100,'basis':'files','directories_done':0,'directories_total':0}}
+                         'progress':{'phase':'completed','done':0,'total':0,'percent':100,'basis':'files','directories_done':0,'directories_total':0}}
                     self.config['roots'].append(row);changed=True
             if changed:self.save()
+
+    def _refresh_shared_counts(self):
+        with self.lock:ids=[row['id'] for row in self.config['roots'] if row.get('count_pending') and not row.get('removed')]
+        for root_id in ids:
+            if self.stopping.is_set():return
+            try:
+                with self.shared_catalog.connect() as connection:
+                    connection.set_progress_handler(lambda:int(self.stopping.is_set()),10000)
+                    count=connection.execute('SELECT count(*) FROM capture_items WHERE root=?',(root_id,)).fetchone()[0]
+                with self.lock:
+                    row=next((r for r in self.config['roots'] if r['id']==root_id and not r.get('removed')),None)
+                    if row:
+                        row.update(count=count,count_pending=False)
+                        row['progress'].update(done=count,total=count)
+                        self.save()
+            except sqlite3.Error as exc:
+                if not self.stopping.is_set():self.sharing_error=str(exc)
 
     def _shared_root_exists(self, root_id):
         with self.shared_catalog.connect() as connection:

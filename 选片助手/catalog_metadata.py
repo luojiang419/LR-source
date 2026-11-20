@@ -6,6 +6,8 @@ from pathlib import Path
 import sqlite3
 import threading
 import time
+from catalog_metadata_codec import pack, unpack
+import worker_activity as activity
 
 import media_engine as media
 from rating_xmp import sidecar_metadata, sidecar_paths, sidecar_fingerprint
@@ -26,6 +28,8 @@ class CatalogMetadata:
         self.scheduler = None
         self.fts = False
         self.start_lock = threading.Lock()
+        self.compact_lock = threading.Lock()
+        self.maintenance_blocked = None
         with catalog.connect() as c:
             c.executescript('''
                 CREATE TABLE IF NOT EXISTS catalog_metadata(
@@ -36,6 +40,10 @@ class CatalogMetadata:
                 );
                 CREATE INDEX IF NOT EXISTS catalog_metadata_queue ON catalog_metadata(status,priority DESC,updated,item);
                 CREATE INDEX IF NOT EXISTS catalog_metadata_status_cover ON catalog_metadata(item,status);
+                CREATE TABLE IF NOT EXISTS catalog_metadata_maintenance(
+                  key TEXT PRIMARY KEY, cursor INTEGER NOT NULL DEFAULT 0,
+                  done INTEGER NOT NULL DEFAULT 0, rewritten INTEGER NOT NULL DEFAULT 0
+                );
                 CREATE TRIGGER IF NOT EXISTS catalog_metadata_insert AFTER INSERT ON items BEGIN
                   INSERT OR IGNORE INTO catalog_metadata(item,fingerprint) VALUES(new.id,new.fingerprint);
                 END;
@@ -54,6 +62,9 @@ class CatalogMetadata:
                     WHERE item=new.id AND status='failed';
                 END;
             ''')
+            # 新库没有历史大字段；后续写入已使用紧凑格式，不必再扫描新入库队列。
+            c.execute("""INSERT OR IGNORE INTO catalog_metadata_maintenance(key,done)
+                SELECT 'compact-v2',1 WHERE NOT EXISTS(SELECT 1 FROM catalog_metadata LIMIT 1)""")
             try:
                 c.executescript('''
                     CREATE VIRTUAL TABLE IF NOT EXISTS catalog_metadata_fts
@@ -148,7 +159,7 @@ class CatalogMetadata:
             row = c.execute('SELECT * FROM catalog_metadata WHERE item=?', (item_id,)).fetchone()
         if not row:
             return {'status':'queued', 'data':{}, 'error':''}
-        return {'status':row['status'], 'data':json.loads(row['payload']), 'error':row['error'], 'updated':row['updated']}
+        return {'status':row['status'], 'data':unpack(row['payload']), 'error':row['error'], 'updated':row['updated']}
 
     def condition(self, text):
         # 从任一配对成员命中代表图；过滤旧文件版本，短词完整回退。
@@ -235,7 +246,7 @@ class CatalogMetadata:
 
     @staticmethod
     def _search_text(payload):
-        capture = payload['capture']
+        capture = payload.get('capture', {})
         def text(value):
             if isinstance(value,dict):
                 return '\n'.join(str(key)+' '+text(item) for key,item in value.items())
@@ -243,12 +254,42 @@ class CatalogMetadata:
                 return '\n'.join(text(item) for item in value)
             return '' if value is None else str(value)
         # 保存原始文字而非 JSON 转义后的字符串，使引号、换行和反斜线可按字面查找。
-        search = text({key:value for key,value in payload.items() if key!='stamp'})
+        description = {key:value for key,value in payload.get('description',{}).items()
+                       if key in ('title','description','keywords','label')}
+        tags = {key:value for key,value in payload.get('tags',{}).items()
+                if key.rsplit(':',1)[-1] in ('SKU','ShootType')}
+        search = text({'capture':capture,'media':payload.get('media',{}),'description':description,'tags':tags})
         # 同时支持常用的人类输入形式，如 1/125、f/2.8、ISO 400、日期及尺寸。
-        if capture['shutter'] and isinstance(capture['shutter'],(float,int)) and capture['shutter']<1:
+        if capture.get('shutter') and isinstance(capture['shutter'],(float,int)) and capture['shutter']<1:
             search += f" 1/{round(1/capture['shutter'])}"
-        search += f" ISO {capture['iso']} f/{capture['aperture']} {capture['width']} × {capture['height']}"
+        search += f" ISO {capture.get('iso','')} f/{capture.get('aperture','')} {capture.get('width','')} × {capture.get('height','')}"
         return search
+
+    def compact_batch(self, limit=32):
+        """按 rowid 断点压缩；不读原图，不更改任务代际或启动时重写整库。"""
+        if self.maintenance_blocked and self.maintenance_blocked():return False
+        if not self.compact_lock.acquire(False):return False
+        try:
+            with self.catalog.connect() as c:
+                c.execute('PRAGMA busy_timeout=50')
+                progress=c.execute("SELECT cursor,done FROM catalog_metadata_maintenance WHERE key='compact-v2'").fetchone()
+                if progress and progress['done']:return False
+                cursor=progress['cursor'] if progress else 0
+                rows=c.execute('SELECT rowid AS rid,item,fingerprint,generation,payload FROM catalog_metadata WHERE rowid>? ORDER BY rowid LIMIT ?', (cursor,limit)).fetchall()
+            changes=[]
+            for row in rows:
+                payload=json.loads(row['payload'])
+                if payload.get('_format')==2 or not payload.get('capture'):continue
+                payload=unpack(row['payload'])
+                changes.append((pack(payload),self._search_text(payload),row['item'],row['fingerprint'],row['generation'],row['payload']))
+            with self.catalog.connect() as c:
+                c.execute('PRAGMA busy_timeout=50')
+                c.executemany('UPDATE catalog_metadata SET payload=?,search_text=? WHERE item=? AND fingerprint=? AND generation=? AND payload=?',changes)
+                c.execute("""INSERT INTO catalog_metadata_maintenance(key,cursor,done,rewritten) VALUES('compact-v2',?,?,?)
+                    ON CONFLICT(key) DO UPDATE SET cursor=excluded.cursor,done=excluded.done,rewritten=rewritten+excluded.rewritten""",
+                    (rows[-1]['rid'] if rows else cursor,int(len(rows)<limit),len(changes)))
+            return bool(rows)
+        finally:self.compact_lock.release()
 
     def process_one(self, *, priority_only=False):
         priority=priority_only or bool(self.scheduler and self.scheduler.background_blocked())
@@ -260,18 +301,19 @@ class CatalogMetadata:
         with self.catalog.connect() as c:
             if priority_only and not c.execute("SELECT 1 FROM catalog_metadata WHERE status='queued' AND priority>0 LIMIT 1").fetchone():
                 return False
-            c.execute('BEGIN IMMEDIATE')
             row = c.execute('''SELECT i.*,m.generation FROM catalog_metadata m JOIN items i ON i.id=m.item
                 JOIN roots r ON r.id=i.root WHERE m.status='queued' AND i.online=1 AND r.removed=0'''+
                 (' AND m.priority>0' if priority else '')+scope+' ORDER BY m.priority DESC,m.updated,m.item LIMIT 1',scope_args).fetchone()
             if row is None:
                 return False
+            c.execute('BEGIN IMMEDIATE')
             row = dict(row)
             visits=getattr(self.catalog,'visits',None)
             if visits and not visits.allows(row['path']):
                 c.execute('UPDATE catalog_metadata SET priority=0 WHERE item=?',(row['id'],))
                 return False
-            c.execute("UPDATE catalog_metadata SET status='running' WHERE item=?", (row['id'],))
+            claimed=c.execute("UPDATE catalog_metadata SET status='running' WHERE item=? AND status='queued' AND generation=? AND fingerprint=?", (row['id'],row['generation'],row['fingerprint'])).rowcount
+            if not claimed:return False
         try:
             payload, search = self._extract(row)
             status, error = 'ready', ''
@@ -285,7 +327,7 @@ class CatalogMetadata:
             saved=c.execute('''UPDATE catalog_metadata SET status=?,error=?,updated=?,priority=0,
                 payload=coalesce(?,payload),search_text=coalesce(?,search_text)
                 WHERE item=? AND fingerprint=? AND generation=?''',
-                (status,error,time.time(),dumps(payload) if payload is not None else None,search,row['id'],row['fingerprint'],row['generation'])).rowcount
+                (status,error,time.time(),pack(payload) if payload is not None else None,search,row['id'],row['fingerprint'],row['generation'])).rowcount
             if saved and status=='ready':
                 from sku_match import normalize
                 tags=payload.get('tags',{});sku=tags.get('XMP-fk:SKU','')
@@ -307,11 +349,15 @@ class CatalogMetadata:
     def _run_foreground(self):
         # 另一共享盘离线时，其 stat/EXIF 不能堵住用户正在浏览的目录。
         while not self.stop.is_set():
+            observed=activity.revision()
+            self.wake.clear()
             try:
                 if self.process_one(priority_only=True):continue
+                if not (self.scheduler and self.scheduler.background_blocked()) and self.compact_batch():
+                    self.stop.wait(.1);continue
             except Exception as exc:
                 self.error=str(exc)
-            self.stop.wait(.25)
+            activity.wait(self.stop,observed,wake=self.wake)
 
     def _run(self):
         recovered=False;restored=False
@@ -347,7 +393,8 @@ class CatalogMetadata:
                         WHERE i.online=1 AND m.item IS NULL LIMIT 512''').rowcount
                 if added:
                     continue
-                self.wake.wait(2)
+                if self.compact_batch():continue
+                self.wake.wait(10)
                 self.wake.clear()
             except sqlite3.Error as exc:
                 self.error = str(exc)

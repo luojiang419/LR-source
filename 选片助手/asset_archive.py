@@ -1,5 +1,7 @@
 """永久资产、拍摄结束区间与可恢复文件元数据写入队列。"""
 from contextlib import contextmanager,closing,nullcontext
+from worker_activity import transaction
+import worker_activity as activity
 import json
 import os
 from pathlib import Path
@@ -80,6 +82,8 @@ PRAGMA user_version=1;''')
         from metadata_backfill import pause_pending
         with self.connect() as c:pause_pending(c,'metadata_jobs','fields',linked_only=True)
         self.metadata_io_lock=threading.RLock()
+        self._metadata_recovery_needed=False
+        self._metadata_retry_pending=False
         self.metadata_start_lock=threading.Lock();self.metadata_thread=None;self.backfill_thread=None
         self.metadata_progress={'phase':'stopped','since':time.time(),'path':'','job_id':'','error':''}
         self.backfill_progress={'phase':'stopped','since':time.time(),'error':''}
@@ -89,7 +93,7 @@ PRAGMA user_version=1;''')
     def connect(self):
         c=sqlite3.connect(self.db,timeout=30);c.row_factory=sqlite3.Row;c.execute('PRAGMA foreign_keys=ON')
         try:
-            with c:yield c
+            with transaction(c):yield c
         finally:c.close()
     @property
     def ratings(self):
@@ -410,17 +414,27 @@ PRAGMA user_version=1;''')
             capture=getattr(self,'capture_service',None)
             frozen=capture.blocked_io_roots() if capture else []
             with self.connect() as c:
-                c.execute('BEGIN IMMEDIATE')
-                # 本进程的唯一消费者锁已取得：没有活跃提交者，running 只能是异常遗留。
-                c.execute("""UPDATE metadata_jobs SET status='queued',retry_at=0,reason='已恢复中断的文件写入'
-                    WHERE status='running'""")
+                # 唯一消费者锁内发现 running 即为异常遗留；空闲时只读探测。
+                if self._metadata_recovery_needed or c.execute("SELECT 1 FROM metadata_jobs WHERE status='running' LIMIT 1").fetchone():
+                    c.execute("""UPDATE metadata_jobs SET status='queued',retry_at=0,reason='已恢复中断的文件写入'
+                        WHERE status='running'""")
+                    c.commit()
+                    self._metadata_recovery_needed=False
+                if not c.execute("SELECT 1 FROM metadata_jobs WHERE status='queued' LIMIT 1").fetchone():
+                    self._metadata_retry_pending=False
+                    self._metadata_phase('idle');return False
                 guards=''.join(" AND NOT (path=? OR path LIKE ? ESCAPE '\\')" for _ in frozen)
                 params=[time.time()]
                 for root in frozen:
                     prefix=root.rstrip('\\/')+'\\';params.extend([root,prefix.replace('\\','\\\\').replace('%','\\%').replace('_','\\_')+'%'])
                 row=self._next_metadata_job(c,guards,params,live)
                 if not row:
-                    self._metadata_phase('idle');return
+                    self._metadata_retry_pending=True
+                    self._metadata_phase('idle');return False
+                c.execute('BEGIN IMMEDIATE')
+                # 只在有可执行任务时取得写锁，并重新选择以核对事务前的外部修改。
+                row=self._next_metadata_job(c,guards,params,live)
+                if not row:return False
                 job=dict(row);current=c.execute('SELECT revision FROM assets WHERE id=?',(job['asset'],)).fetchone()
                 descriptive=json.loads(job['fields']).get('_descriptive')
                 prepared_revision=current[0] if current else None
@@ -899,15 +913,18 @@ PRAGMA user_version=1;''')
         if process_metadata:self.process_one()
     def _run_metadata(self):
         while not self.closed.is_set():
+            observed=activity.revision()
             worked=False
             try:
                 worked=self.process_one()
                 self.metadata_worker_error=''
             except Exception as exc:
                 self.metadata_worker_error=str(exc)[:250]
+                self._metadata_recovery_needed=True
+                self._metadata_retry_pending=True
                 self._metadata_phase('error',error=self.metadata_worker_error)
             # 有积压时连续消费；仅空闲或异常退避，单图校验/落盘过程仍完整执行。
-            self.closed.wait(.001 if worked else .1)
+            self.closed.wait(.001) if worked else activity.wait(self.closed,observed,timeout=1 if self._metadata_retry_pending else 10)
     def request_backfill(self,prefix=''):
         """旧照片补写只在用户于资产归档点击补写后执行，不再后台自动全库扫描。"""
         from metadata_backfill import release_pending
@@ -992,13 +1009,14 @@ PRAGMA user_version=1;''')
         # 目录枚举/事件投递可能很慢或失败，不能阻止已持久化的文件任务。
         self.start_metadata()
         while not self.closed.is_set():
+            observed=activity.revision()
             try:self.tick(process_metadata=False)
             except Exception as exc:
                 self.worker_error=str(exc)[:250]
                 try:
                     with self.connect() as c:c.execute('INSERT INTO audit VALUES (?,?,?,?)',(uid(),'worker_error',dumps({'error':self.worker_error}),time.time()))
                 except sqlite3.Error:pass # 同一次占用也可能阻止记录日志；保留任务并继续下一轮。
-            self.closed.wait(.4)
+            activity.wait(self.closed,observed)
     def close(self):
         self.closed.set()
         if hasattr(self,'_ratings'):self._ratings.sync.close()

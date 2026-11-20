@@ -29,7 +29,10 @@
   }
   let paused=false;
   const identity=value=>{const url=new URL(value,location.href);url.searchParams.delete('cached');return url.href};
-  function notify(img){for(const grid of grids.values())for(const done of [...(grid.waiters.get(img)||[])])done(img)}
+  function notify(grid,img){
+    const waiters=grid.waiters.get(img);grid.waiters.delete(img);
+    if(waiters)for(const done of waiters)done(img);
+  }
   function state(img,value){
     const host=img.closest('.catalog-thumb');if(!host)return;
     host.dataset.previewState=value;
@@ -48,11 +51,19 @@
     const value=src.startsWith('data:')||new URL(src,location.href).searchParams.has('cached');
     cachedSource.set(img,[src,value]);return value;
   }
+  function* loadingCandidates(nearby,visibleGrids){
+    yield* nearby;
+    // 按登记顺序取空闲的屏外图片。只取本次有连接可用的几张，不逐次排序整个目录。
+    for(const grid of visibleGrids)for(const img of grid.waiters.keys()){
+      if(!grid.visible.has(img))yield {img,grid,visible:false};
+    }
+  }
   function pump(){
     if(paused)return;
-    const candidates=[];let order=0;
+    const candidates=[],visibleGrids=[];
     for(const grid of grids.values()){
       if(!grid.host.isConnected||!grid.host.getClientRects().length)continue;
+      visibleGrids.push(grid);
       const bounds=grid.host.getBoundingClientRect();
       // 只测量观察区内（视口±400px）的图片位置；整页预取的其余图片按页面顺序排队，
       // 不为上千张图片逐次读取布局。
@@ -60,14 +71,10 @@
         if(img.dataset.previewDone)continue;
         const rect=img.getBoundingClientRect(),visible=img.isConnected&&rect.bottom>bounds.top&&rect.top<bounds.bottom;
         // 首屏先于预读边缘，同一层内优先本地缓存，慢图不挡住已就绪图片。
-        candidates.push({img,grid,visible,near:true,priority:(visible?0:2)+(cachedPreview(img)?0:1),top:rect.top,order:order++});
-      }
-      for(const img of grid.waiters.keys()){
-        if(img.dataset.previewDone||grid.visible.has(img))continue;
-        candidates.push({img,grid,visible:false,near:false,priority:4+(cachedPreview(img)?0:1),top:0,order:order++});
+        candidates.push({img,grid,visible,priority:(visible?0:2)+(cachedPreview(img)?0:1),top:rect.top});
       }
     }
-    candidates.sort((a,b)=>a.priority-b.priority||a.top-b.top||a.order-b.order);
+    candidates.sort((a,b)=>a.priority-b.priority||a.top-b.top);
     const shown=new Set(candidates.filter(c=>c.visible).map(c=>c.img));
     for(const img of shown)if(active.has(img))img.fetchPriority='high';
     // 滚动后把前台位置让给新视口；后台最多占两路，已完成的图片保持。
@@ -75,16 +82,19 @@
     const offscreen=[...active.keys()].filter(img=>!shown.has(img));
     if(foreground)for(const img of offscreen.slice(2))cancel(img);
     let background=[...active.keys()].filter(img=>!shown.has(img)).length;
-    for(const {img,grid,visible,near} of candidates){
+    for(const {img,grid,visible} of loadingCandidates(candidates,visibleGrids)){
       // 留出同源连接供目录导航和资料请求使用。
       if(active.size>=4)return;
-      if((!img.isConnected&&!grid.extras.has(img))||(img.isConnected&&!img.getClientRects().length&&!grid.waiters.has(img))||img.dataset.previewDone||img.dataset.previewRetrying||active.has(img))continue;
-      if(!visible&&background>=3)continue;
+      if(!visible&&background>=3)return;
+      if(img.dataset.previewDone||img.dataset.previewRetrying||active.has(img))continue;
+      if(img.isConnected?!grid.waiters.has(img)&&!img.getClientRects().length:!grid.extras.has(img))continue;
+      // 未挂载的预取不抢占用于当前卡片的第三个后台连接。
+      if(!img.isConnected&&background>=2)continue;
       if(!visible)background++;
       let done=false,timer;
       const finish=()=>{if(done)return;done=true;clearTimeout(timer);active.delete(img)};
       active.set(img,finish);
-      img.onload=()=>{if(active.get(img)!==finish)return;finish();rememberDirect(img);delete img.dataset.previewAttempts;img.dataset.previewDone='ready';state(img,'ready');notify(img);pump()};
+      img.onload=()=>{if(active.get(img)!==finish)return;finish();rememberDirect(img);delete img.dataset.previewAttempts;img.dataset.previewDone='ready';state(img,'ready');notify(grid,img);pump()};
       img.onerror=()=>{
         if(active.get(img)!==finish)return;
         finish();const attempts=Number(img.dataset.previewAttempts||0)+1;
@@ -92,7 +102,7 @@
         if(attempts<3&&img.isConnected&&!paused&&grid.visible.has(img)){
           img.dataset.previewAttempts=String(attempts);img.dataset.previewRetrying='1';state(img,'loading');img.removeAttribute('src');
           retries.set(img,setTimeout(()=>{retries.delete(img);delete img.dataset.previewRetrying;pump()},attempts*350));
-        }else{delete img.dataset.previewRetrying;img.dataset.previewDone='error';state(img,'error');notify(img);pump()}
+        }else{delete img.dataset.previewRetrying;img.dataset.previewDone='error';state(img,'error');notify(grid,img);pump()}
       };
       // 慢存储或挂起连接不能永久占满请求；超时沿用有限重试，旧回调无效。
       timer=setTimeout(()=>{if(active.get(img)===finish){const fail=img.onerror;img.onload=img.onerror=null;img.removeAttribute('src');fail()}},15000);
@@ -103,7 +113,7 @@
     const previous=grids.get(host);
     if(previous){
       const images=[...host.querySelectorAll('img[data-preview-src]')],current=new Set(images),before=new Set(previous.images);
-      for(const img of previous.images)if(!current.has(img)){previous.observer.unobserve(img);previous.visible.delete(img);cancel(img);notify(img)}
+      for(const img of previous.images)if(!current.has(img)){previous.observer.unobserve(img);previous.visible.delete(img);cancel(img);notify(previous,img)}
       previous.images=images;for(const img of images)if(!before.has(img))previous.observer.observe(img);
       pump();return;
     }

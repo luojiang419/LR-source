@@ -1,4 +1,5 @@
 """最新二星的独立 API 调度；网络请求并发，持久任务原子领取。"""
+import worker_activity as activity
 import threading
 import time
 import uuid
@@ -91,10 +92,11 @@ class ConcurrentLabels:
 
     def _run_labels(self):
         while not self.closed.is_set():
+            observed=activity.revision()
             self.label_wake.clear()
             try:self._dispatch_labels()
             except Exception:pass  # 任务保留在持久队列；失败不会终止独立调度。
-            self.label_wake.wait(.2)
+            activity.wait(self.closed,observed,wake=self.label_wake)
 
     def _close_label_workers(self):
         self.label_wake.set()
