@@ -322,6 +322,7 @@ class Store:
                     if candidate and not candidate.get('raw'):previous=candidate
                 if previous:
                     r['id']=previous['id'];r['liveRating']=previous.get('liveRating',0)
+                    if previous.get('ingested_at'):r['ingested_at']=previous['ingested_at']
                     if r.get('existingRating')!=previous.get('existingRating'):r['liveRating']=r.get('existingRating',0)
                     if r['fingerprint']==previous['fingerprint'] and r.get('sidecarFingerprint')==previous.get('sidecarFingerprint'):continue
                     if r.get('sidecarFingerprint')!=previous.get('sidecarFingerprint') and r.get('sidecarMetadata',{}).get('Rating') is not None:
@@ -329,6 +330,7 @@ class Store:
                     c.execute('UPDATE captures SET data=? WHERE session=? AND id=?',(stable_json(r),sid,r['id']))
                 else:
                     r['liveRating']=r.get('existingRating',0)
+                    r.setdefault('ingested_at',now())
                     record_position=initial_positions.get(r['id'],position)
                     c.execute('INSERT INTO captures VALUES (?,?,?,?)',(sid,r['id'],stable_json(r),record_position));position=max(position,record_position+1);added.append(r['id'])
                 known[r['id']]=r

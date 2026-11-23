@@ -48,7 +48,7 @@
     return {session_id:session.id,revision,changes:delta,state_baseline:stateBaseline,rating_baseline:baseline};
   }
   async function flush(){
-    clearTimeout(timer);if(!session.id)return;
+    clearTimeout(timer);if(!session.id||window.FramekeepLanSync?.receiving()){stash();return;}
     // 入队时冻结本次操作，避免保存中的快速 2→0→2 被合并为重复二星。
     const serialized=canonical(Framekeep.persistedState()),state=JSON.parse(serialized);
     saving=saving.catch(()=>{}).then(async()=>{if(serialized===lastSaved)return;$('save-status').textContent='保存中…';const paged=!!session.browser?.paged,body=partialBody(state);if(!paged)body.state=state;const result=await api(paged?'/api/session/patch':'/api/session',body);revision=result.revision;conflicted=false;const previous=JSON.parse(lastSaved);lastSaved=serialized;stash();$('save-status').textContent='已保存';window.FramekeepPaging?.saved(previous,state);if(canonical(previous.overrides||{})!==canonical(state.overrides||{}))document.dispatchEvent(new CustomEvent('framekeep:ratings-saved',{detail:{session_id:session.id,overrides:body.changes?.overrides||{}}}));if(result.sku_error){document.dispatchEvent(new CustomEvent('framekeep:ocr-enqueue-failed',{detail:{session_id:session.id,capture_ids:Object.keys(state.overrides||{}).filter(id=>state.overrides[id]===2&&previous.overrides?.[id]!==2),message:result.sku_error}}))}});
@@ -56,7 +56,7 @@
   }
   function schedule(){if(switching||window.FramekeepPaging?.busy)return;stash();clearTimeout(timer);const save=()=>flush().catch(e=>{$('save-status').textContent=e.message});if(canonical(Framekeep.persistedState().overrides||{})!==canonical(JSON.parse(lastSaved).overrides||{}))save();else timer=setTimeout(save,450)}
   document.addEventListener('framekeep:selection',schedule);$('thumb-size').addEventListener('input',schedule);$('thumb-smaller').addEventListener('click',schedule);$('thumb-larger').addEventListener('click',schedule);$('catalog-view').addEventListener('wheel',e=>{if(e.ctrlKey)schedule()},{passive:true});
-  window.addEventListener('pagehide',()=>{stash();const state=Framekeep.persistedState();if(token&&session.id&&!conflicted&&canonical(state)!==lastSaved){const paged=!!session.browser?.paged,body=partialBody(state);if(!paged)body.state=state;fetch(paged?'/api/session/patch':'/api/session',{method:'POST',headers:{'Content-Type':'application/json','X-Framekeep-Token':token},body:JSON.stringify(body),keepalive:true}).catch(()=>{})}});
+  window.addEventListener('pagehide',()=>{stash();const state=Framekeep.persistedState();if(token&&session.id&&!window.FramekeepLanSync?.receiving()&&!conflicted&&canonical(state)!==lastSaved){const paged=!!session.browser?.paged,body=partialBody(state);if(!paged)body.state=state;fetch(paged?'/api/session/patch':'/api/session',{method:'POST',headers:{'Content-Type':'application/json','X-Framekeep-Token':token},body:JSON.stringify(body),keepalive:true}).catch(()=>{})}});
   async function reloadRatings(){
     await window.FramekeepPaging?.whenIdle();
     if(!session.id||switching)return;
@@ -69,7 +69,13 @@
     lastSaved=canonical(Framekeep.persistedState());stash();sessionDetails();
   }
   window.FramekeepIO={flush,api,openSession,refreshFolders,refreshLive,reloadRatings,
+    get openingLiveSession(){return pendingLiveSession},
     restoreStartup(data){
+      const direct=data.session?.directPreview;
+      if(direct&&(session.directPreview?.origin!==direct.origin||session.directPreview?.token!==direct.token)){
+        session.directPreview=direct;
+        document.dispatchEvent(new Event('framekeep:preview-channel'));
+      }
       // 用户或现场监控已进入其它会话时，迟到的历史恢复不能切回旧目录。
       if(!session.restoring||session.id||switching){if(session.id)session.restoring=false;return false}
       const next=data.session;
@@ -79,11 +85,11 @@
       document.dispatchEvent(new CustomEvent('framekeep:session-restored'));
       return true;
     },
-    async followSync(sid){
+    async followSync(sid,followId=null){
       if(!sid||switching)return false;
       await window.FramekeepPaging?.whenIdle();
       const current=session.id,same=sid===current,local=same?Framekeep.persistedState():null;
-      const query=new URLSearchParams({session_id:sid,fresh:1,...(local?{around:local.selectedId||'',filter:local.filter,sort:local.sort,q:local.query,folder:local.folderPrefix,keep:local.keep,threshold:local.threshold}:{})});
+      const query=new URLSearchParams({session_id:sid,fresh:1,...(local?{around:followId||local.selectedId||'',filter:local.filter,sort:local.sort,q:local.query,folder:local.folderPrefix,keep:local.keep,threshold:local.threshold}:{})});
       const next=await api('/api/state?'+query);
       if(next.session?.id!==sid||switching||session.id!==current)return false;
       if(local&&['selectedId','filter','query','sort','folderPrefix'].some(key=>local[key]!==Framekeep.persistedState()[key]))return false;
@@ -93,6 +99,7 @@
         await api('/api/activate',{session_id:sid});revision=next.session.revision;conflicted=false;
         if(same)Framekeep.refreshSyncedPage(next.session,next.catalog);
         else Framekeep.loadSession({...next.session,saved:next.session.state||{},demo:false},next.catalog);
+        if(followId){const preview=await Framekeep.prepareLivePreview(next.session,next.catalog,followId);if(preview.follow)Framekeep.updateLiveCatalog(next.session,next.catalog,followId,false,preview.ready)}
         lastSaved=canonical(Framekeep.persistedState());stash();sessionDetails();folderSelection();
         return true;
       }finally{switching=false}
@@ -112,7 +119,7 @@
   async function refreshLive(sid,followId=null,enter=false,incremental=null){
     await window.FramekeepPaging?.whenIdle();
     if(switching)return false;
-    if(session.id!==sid){if(!enter)return false;await openSession(sid)}
+    if(session.id!==sid){if(!enter)return false;await openSession(sid,true)}
     if(session.id!==sid||switching)return false;
     const query=session.browser?.paged?FramekeepPaging.query({around:followId||Framekeep.remoteTarget().photoId||''}):new URLSearchParams({session_id:sid,around:followId||Framekeep.remoteTarget().photoId||'',...(incremental?{live_after:incremental.after,live_generation:incremental.generation}:{})});
     const next=await api('/api/state?'+query);
@@ -140,12 +147,12 @@
       button.firstElementChild.textContent=(selected?'▾ ':'▸ ')+button.dataset.name;
     }
   }
-  let pendingSession=null;
-  async function openSession(id){
+  let pendingSession=null,pendingLiveSession=null;
+  async function openSession(id,live=false){
     if(switching)return;
     await window.FramekeepPaging?.whenIdle();if(switching)return;
     if(id===session.id){await flush();await api('/api/activate',{session_id:id});Framekeep.showAll();return}
-    switching=true;pendingSession=id;Framekeep.setSessionLoading(true);document.querySelector('.header-actions').inert=true;folderSelection();
+    switching=true;pendingSession=id;pendingLiveSession=live?id:null;Framekeep.setSessionLoading(true);document.querySelector('.header-actions').inert=true;folderSelection();
     $('folder-activity').classList.remove('hidden');$('folder-activity').textContent='正在加载文件夹…';
     try{
       await flush();
@@ -157,7 +164,7 @@
       Framekeep.loadSession({...next.session,saved,demo:false},next.catalog);
       sessionDetails();folderSelection();
     }catch(e){Framekeep.notify('切换失败，仍在当前文件夹：'+e.message)}
-    finally{switching=false;pendingSession=null;Framekeep.setSessionLoading(false);document.querySelector('.header-actions').inert=false;folderSelection();folderActivity();schedule()}
+    finally{switching=false;pendingSession=null;pendingLiveSession=null;Framekeep.setSessionLoading(false);document.querySelector('.header-actions').inert=false;folderSelection();folderActivity();schedule()}
   }
   const folderEntries=new Map();
   function reconcile(parent,nodes){

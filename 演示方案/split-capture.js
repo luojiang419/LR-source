@@ -39,7 +39,9 @@ const startSplitCapture= async () => {
   } catch {}
   let videoPosterRevision='';
   document.addEventListener('framekeep:video-preview',event=>{videoPosterRevision=String(event.detail.frame_number);if(enabled){paintImage();}});
-  const imageUrl = (item, size=1800) => item.url || '/api/reference/library/preview?'+new URLSearchParams({device:item.device,root:item.root,file:item.relative,size,v:item.fingerprint||'',poster_revision:videoPosterRevision,cache_generation:referenceGeneration});
+  // 资产检索结果自带 /api 预览地址（默认 420 缩略图），需按用途改写尺寸；本机加载的 blob 地址原样使用。
+  const sizedUrl = (url, size) => {if(!url.startsWith('/api/')||size===420&&!/[?&]size=/.test(url))return url;const next=new URL(url,location.href);next.searchParams.set('size',String(size));return next.pathname+next.search;};
+  const imageUrl = (item, size=1800) => item.url ? sizedUrl(item.url,size) : '/api/reference/library/preview?'+new URLSearchParams({device:item.device,root:item.root,file:item.relative,size,v:item.fingerprint||'',poster_revision:videoPosterRevision,cache_generation:referenceGeneration});
   const call = async (route, params) => api('library/'+route+'?'+new URLSearchParams({...params,cache_generation:referenceGeneration}));
   const reference = document.createElement('section'); reference.id='split-reference'; reference.classList.add('resources-collapsed'); reference.setAttribute('aria-label','参考图片工作区');
   reference.innerHTML=`<div class="split-resource-dock">
@@ -90,7 +92,7 @@ const startSplitCapture= async () => {
   function setGridScale(value){
     const requested=Number(value);gridScale=Math.max(10,Math.min(400,Math.round(Number.isFinite(requested)?requested:100)));
     $('split-preview-grid').style.setProperty('--split-result-size',160*gridScale/100+'px');$('split-preview-grid').classList.toggle('is-compact',gridScale<50);
-    $('split-grid-scale').value=gridScale;$('split-grid-scale-value').textContent=gridScale+'%';updateFilenames();saveView();
+    $('split-grid-scale').value=gridScale;$('split-grid-scale-value').textContent=gridScale+'%';updateFilenames();sharpenVisible();saveView();
   }
   function updateFilenames(){
     if(!filenameMeasure)return;
@@ -102,14 +104,53 @@ const startSplitCapture= async () => {
     }
   }
   function wireSplitPreviews(){
+    sharpObserver.disconnect();
     for(const image of reference.querySelectorAll('.split-card-preview img')){
       const preview=image.closest('.split-card-preview');
       image.addEventListener('load',()=>preview.dataset.previewState='ready',{once:true});
       image.addEventListener('error',()=>preview.dataset.previewState='error',{once:true});
       if(image.complete&&image.naturalWidth)preview.dataset.previewState='ready';
+      image.dataset.base=image.getAttribute('src')||'';
+      image.addEventListener('load',()=>{if(sharpVisible.has(image))queueSharp(image);},{once:true});
+      sharpObserver.observe(image);
     }
   }
-  const filenameResize=new ResizeObserver(updateFilenames);filenameResize.observe($('split-grid'));filenameResize.observe($('split-preview-grid'));
+  // 卡片先显示快速缩略图（多为文件内嵌小图），进入可见区后按卡片实际像素换成清晰预览；限制并发，避免挤占大图请求。
+  const sharpVisible=new WeakSet(),sharpQueue=new Set(),sharpLoading=new Set(),sharpSizes=[640,1024,1800];let sharpTimer=0;
+  const sharpObserver=new IntersectionObserver(entries=>{for(const entry of entries){if(entry.isIntersecting){sharpVisible.add(entry.target);queueSharp(entry.target);}else{sharpVisible.delete(entry.target);sharpQueue.delete(entry.target);}}},{rootMargin:'200px'});
+  window.addEventListener('pagehide',()=>sharpObserver.disconnect(),{once:true});
+  function queueSharp(image){sharpQueue.add(image);pumpSharp();}
+  function pumpSharp(){
+    // 重新检索会移除旧卡片或清空 src，被中止的请求不再触发事件，这里回收其并发名额。
+    for(const image of sharpLoading)if(!image.isConnected||!image.getAttribute('src'))sharpLoading.delete(image);
+    while(sharpLoading.size<3&&sharpQueue.size){const image=sharpQueue.values().next().value;sharpQueue.delete(image);if(sharpenCard(image,()=>{sharpLoading.delete(image);pumpSharp();}))sharpLoading.add(image);}
+  }
+  function sharpenVisible(){clearTimeout(sharpTimer);sharpTimer=setTimeout(()=>{for(const image of reference.querySelectorAll('.split-card-preview img'))if(sharpVisible.has(image))sharpQueue.add(image);pumpSharp();},150);}
+  function sharpTarget(image){
+    const base=image.dataset.base||'',box=image.getBoundingClientRect(),width=image.naturalWidth,height=image.naturalHeight;
+    if(!base.startsWith('/api/')||image.dataset.sharpMax||!image.isConnected||!image.complete||!width||!box.width||!box.height)return 0;
+    const fit=getComputedStyle(image).objectFit,scale=(fit==='cover'?Math.max:Math.min)(box.width/width,box.height/height)*(window.devicePixelRatio||1);
+    if(scale<=1.05)return 0;
+    const size=sharpSizes.find(value=>value>=Math.max(width,height)*scale)||sharpSizes[sharpSizes.length-1];
+    return size>Number(image.dataset.sharpSize||420)?size:0;
+  }
+  function sharpenCard(image,done){
+    const size=sharpTarget(image);if(!size)return false;
+    const url=sizedUrl(image.dataset.base,size),preview=image.closest('.split-card-preview');
+    image.dataset.sharpSize=String(size);
+    const finish=success=>{image.removeEventListener('load',loaded);image.removeEventListener('error',failed);if(success){if(Math.max(image.naturalWidth,image.naturalHeight)<size*.98)image.dataset.sharpMax='1';preview.dataset.previewState='ready';}done();};
+    const loaded=()=>{if(image.getAttribute('src')===url)finish(true);};
+    const failed=()=>{if(image.getAttribute('src')!==url)return;image.dataset.sharpMax='1';finish(false);image.addEventListener('load',()=>preview.dataset.previewState='ready',{once:true});image.src=image.dataset.base;};
+    image.addEventListener('load',loaded);image.addEventListener('error',failed);
+    image.fetchPriority='low';image.src=url;return true;
+  }
+  // 大图加载期间先显示已解码的同图缩略图，加载完成后由叠化切到清晰图。
+  function loadedThumbnail(item,target){
+    const bases=new Set([imageUrl(item,420),imageUrl(item,240)]);let best=null;
+    for(const image of reference.querySelectorAll('.split-card-preview img,#split-reference-thumbnails img'))if(bases.has(image.dataset.base||image.getAttribute('src'))&&image.complete&&image.naturalWidth&&(!best||image.naturalWidth>best.naturalWidth))best=image;
+    return best&&best.currentSrc!==new URL(target,location.href).href?best.currentSrc:'';
+  }
+  const filenameResize=new ResizeObserver(()=>{updateFilenames();sharpenVisible();});filenameResize.observe($('split-grid'));filenameResize.observe($('split-preview-grid'));
   window.addEventListener('pagehide',()=>filenameResize.disconnect(),{once:true});
   function resultIndex(){return previewCollection==='results'&&active?rows.findIndex(row=>referenceId({device:scope?.device,root:scope?.root,...row})===referenceId(active)):-1;}
   function browsePreview(step){
@@ -155,11 +196,11 @@ const startSplitCapture= async () => {
     }
   },true);
   function paintImage() {
-    const item=shown(),pinned=referenceOf(item)>=0,image=$('split-reference-image'),nextUrl=item&&(item.url||imageUrl(item));
+    const item=shown(),pinned=referenceOf(item)>=0,image=$('split-reference-image'),nextUrl=item&&imageUrl(item);
     if(nextUrl!==paintedUrl){cancelReferenceMotion();finishReferenceDrag();paintedUrl=nextUrl;zoom=1;panX=panY=0;$('split-reference-stage').classList.remove('is-zoomed');image.style.transform='scale(1)';}
     image.hidden=!item;$('split-reference-empty').hidden=!!item;$('split-pin-large').disabled=!item;
     $('split-reference-focus').disabled=!item;
-    if(item){if(referenceTaskReady&&resultView==='single'&&image.getAttribute('src')!==nextUrl){clearFade();const outgoing=$('split-reference-outgoing');if(displayedUrl&&displayedUrl!==nextUrl){outgoing.src=displayedUrl;outgoing.style.transform=displayedTransform;outgoing.hidden=false;outgoing.style.opacity='1';image.style.opacity='0';}image.src=nextUrl;}image.alt=item.name;$('split-reference-name').textContent=item.name;$('split-reference-source').textContent=(pinned?'固定参考 · ':'正在浏览 · ')+(item.source||'本机加载')+' · 滚轮切图 · Ctrl＋滚轮缩放';}else{clearFade();displayedUrl='';image.removeAttribute('src');}
+    if(item){if(referenceTaskReady&&resultView==='single'&&image.getAttribute('src')!==nextUrl){clearFade();const outgoing=$('split-reference-outgoing');const placeholder=loadedThumbnail(item,nextUrl);if(placeholder){outgoing.src=placeholder;outgoing.style.transform='scale(1)';outgoing.hidden=false;outgoing.style.opacity='1';image.style.opacity='0';}else if(displayedUrl&&displayedUrl!==nextUrl){outgoing.src=displayedUrl;outgoing.style.transform=displayedTransform;outgoing.hidden=false;outgoing.style.opacity='1';image.style.opacity='0';}image.src=nextUrl;}image.alt=item.name;$('split-reference-name').textContent=item.name;$('split-reference-source').textContent=(pinned?'固定参考 · ':'正在浏览 · ')+(item.source||'本机加载')+' · 滚轮切图 · Ctrl＋滚轮缩放';}else{clearFade();displayedUrl='';image.removeAttribute('src');}
     if(resultView==='grid'){$('split-reference-name').textContent=`${resultTotal} 张图片 · 当前页 ${rows.length} 张`;$('split-reference-source').textContent=(submittedSearch?'搜索：'+submittedSearch+' · ':'')+'双击查看大图 · 滚轮浏览 · Ctrl＋滚轮缩放 10%–400% · 图钉加入底部参考区';}
     $('split-pin-large').setAttribute('aria-pressed',String(!!pinned));$('split-pin-large').setAttribute('aria-label',pinned?'取消固定参考':'将当前大图固定为参考');$('split-pin-large').title=pinned?'取消固定参考':'固定为参考';$('split-pin-state').hidden=!pinned;$('split-zoom-reset').textContent=zoom===1?'适应':Math.round(zoom*100)+'%';
     $('split-pin-state').textContent=`参考 ${referenceOf(item)+1} / ${references.length}`;

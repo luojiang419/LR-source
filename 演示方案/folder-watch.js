@@ -69,7 +69,7 @@
     if(busy)return;busy=true;
     controller=new AbortController();pollSession=window.FRAMEKEEP_SESSION.id;
     try{
-      const state=await api('/api/watch'+(watchEnabled&&lastEvent!==null?'?after='+lastEvent+'&wait=15':''),undefined,20000,controller.signal);
+      const state=await api('/api/watch'+(lastEvent!==null?'?after='+lastEvent+'&wait=15':''),undefined,20000,controller.signal);
       lastEvent=state.event_id??null;watchEnabled=!!state.enabled;window.FramekeepWatch.initializing=!!state.initializing&&state.session_id===window.FRAMEKEEP_SESSION.id;show(state);
       if(state.enabled&&state.source==='eos'&&state.canon_event&&state.canon_event!==lastCanonEvent&&!document.querySelector('dialog[open]')&&!Framekeep.remoteTarget().paused){
         if(window.FRAMEKEEP_SESSION.id!==state.session_id||window.FramekeepWorkspace&&FramekeepWorkspace.current()!=='selection')await FramekeepIO.flush();
@@ -78,8 +78,9 @@
         lastCanonEvent=state.canon_event;
       }
       if(state.enabled&&state.source==='eos'&&autoGeneration!==state.generation&&!document.querySelector('dialog[open]')&&!Framekeep.remoteTarget().paused&&(!window.FramekeepWorkspace||FramekeepWorkspace.current()==='selection')){
-        await FramekeepIO.flush();await FramekeepIO.refreshFolders();
+        await FramekeepIO.flush();
         if(await FramekeepIO.refreshLive(state.session_id,null,true))autoGeneration=state.generation;
+        FramekeepIO.refreshFolders().catch(()=>{});
       }
       const current=window.FRAMEKEEP_SESSION.id;
       if(state.enabled&&current===state.session_id&&!document.querySelector('dialog[open]')&&!Framekeep.remoteTarget().paused){
@@ -92,8 +93,8 @@
           }
         }
       }
-    }catch(e){if(e.name!=='AbortError'){badge.classList.remove('hidden');badge.textContent='监控连接中断，正在重试：'+e.message;watchEnabled=false}}
-    finally{busy=false;clearTimeout(timer);timer=setTimeout(poll,watchEnabled?25:window.FramekeepWorkspace?.current()==='selection'?1500:5000)}
+    }catch(e){if(e.name!=='AbortError'){badge.classList.remove('hidden');badge.textContent='监控连接中断，正在重试：'+e.message;watchEnabled=false;lastEvent=null}}
+    finally{busy=false;clearTimeout(timer);timer=setTimeout(poll,controller.signal.aborted||lastEvent!==null?25:window.FramekeepWorkspace?.current()==='selection'?1500:5000)}
   }
   function wakePoll(){lastEvent=null;if(busy)controller?.abort();else{clearTimeout(timer);timer=setTimeout(poll,0)}}
   dialog.addEventListener('close',wakePoll);

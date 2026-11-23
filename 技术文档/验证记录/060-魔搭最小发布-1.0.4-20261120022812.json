@@ -1,0 +1,243 @@
+{
+  "status": "published-and-verified",
+  "source_commit": "56c31972f1841270c6a4428f4b267b6347e4d9c0",
+  "branch": "release/modelscope-1.0.4-20261120",
+  "github_daily_source_snapshot": "e0ee74e3c22b79192f2eb38c7069fd3bf414cf08",
+  "github_release_commit_pushed": false,
+  "publication": {
+    "published": true,
+    "version": "1.0.4",
+    "releaseId": "20261120022812",
+    "online_latest_activated": true,
+    "runtime_uploaded": false,
+    "package_bytes": 14468541,
+    "artifacts": [
+      {
+        "path": "minimal/20261120022812/SHIYING-Windows-x64.zip",
+        "size": 14468541,
+        "sha256": "fe9358b3ded9fe51de96985a094a9e6ba4d47af2f847e8bf1ee85bfb8aa14eef",
+        "url": "https://modelscope.cn/api/v1/models/jiangjiang419/framekeep-updates/repo?Revision=master&FilePath=minimal%2F20261120022812%2FSHIYING-Windows-x64.zip"
+      },
+      {
+        "path": "minimal/20261120022812/安装最小更新.exe",
+        "size": 1237504,
+        "sha256": "a195542cf128867207d0abab8909e0c15e3090440e2409fc64cd33a7d029b707",
+        "url": "https://modelscope.cn/api/v1/models/jiangjiang419/framekeep-updates/repo?Revision=master&FilePath=minimal%2F20261120022812%2F%E5%AE%89%E8%A3%85%E6%9C%80%E5%B0%8F%E6%9B%B4%E6%96%B0.exe"
+      },
+      {
+        "path": "minimal/20261120022812/SHIYING-Setup.exe",
+        "size": 178176,
+        "sha256": "539bd1c72a5cc732b81bbd515438e6423accc9021d341317d8bd6826b555aea3",
+        "url": "https://modelscope.cn/api/v1/models/jiangjiang419/framekeep-updates/repo?Revision=master&FilePath=minimal%2F20261120022812%2FSHIYING-Setup.exe"
+      },
+      {
+        "path": "minimal/20261120022812/envelope.json",
+        "size": 19665,
+        "sha256": "bd3405e2095897b6a81f8472266486cb46d19f82cbfd4d61eed2e843953b31c2",
+        "url": "https://modelscope.cn/api/v1/models/jiangjiang419/framekeep-updates/repo?Revision=master&FilePath=minimal%2F20261120022812%2Fenvelope.json"
+      }
+    ],
+    "previous_release": "20261116071842",
+    "install_base": "20261116021119"
+  },
+  "verification": {
+    "status": "passed",
+    "version": "1.0.4",
+    "releaseId": "20261120022812",
+    "package_sha256": "fe9358b3ded9fe51de96985a094a9e6ba4d47af2f847e8bf1ee85bfb8aa14eef",
+    "baselines": {
+      "20261114043205": {
+        "frozen_worker_update": "complete",
+        "elapsed_seconds": 5.81,
+        "version": "1.0.4",
+        "runtime_files_preserved": 730,
+        "data_preserved": true,
+        "custom_model_preserved": true,
+        "rollback_verified": true,
+        "next_worker_verified": true
+      },
+      "20261116013944": {
+        "frozen_worker_update": "complete",
+        "elapsed_seconds": 6.16,
+        "version": "1.0.4",
+        "runtime_files_preserved": 730,
+        "data_preserved": true,
+        "custom_model_preserved": true,
+        "rollback_verified": true,
+        "next_worker_verified": true
+      },
+      "20261116021119": {
+        "frozen_worker_update": "complete",
+        "elapsed_seconds": 5.41,
+        "version": "1.0.4",
+        "runtime_files_preserved": 730,
+        "data_preserved": true,
+        "custom_model_preserved": true,
+        "rollback_verified": true,
+        "next_worker_verified": true
+      },
+      "20261116030917": {
+        "frozen_worker_update": "complete",
+        "elapsed_seconds": 5.52,
+        "version": "1.0.4",
+        "runtime_files_preserved": 730,
+        "data_preserved": true,
+        "custom_model_preserved": true,
+        "rollback_verified": true,
+        "next_worker_verified": true
+      },
+      "20261116034116": {
+        "frozen_worker_update": "complete",
+        "elapsed_seconds": 5.67,
+        "version": "1.0.4",
+        "runtime_files_preserved": 730,
+        "data_preserved": true,
+        "custom_model_preserved": true,
+        "rollback_verified": true,
+        "next_worker_verified": true
+      },
+      "20261116071842": {
+        "frozen_worker_update": "complete",
+        "elapsed_seconds": 5.45,
+        "version": "1.0.4",
+        "runtime_files_preserved": 730,
+        "data_preserved": true,
+        "custom_model_preserved": true,
+        "rollback_verified": true,
+        "next_worker_verified": true
+      }
+    },
+    "fresh_install_uses_complete_base": true,
+    "production_install_modified": false,
+    "frozen_feature_check": {
+      "status": "passed",
+      "frozen_engine": "G:\\app\\LR\\build\\tauri-release\\SHIYING 数字资产\\engine\\framekeep-engine.exe",
+      "historical_jobs_paused": 2,
+      "historical_photos_unchanged_while_monitoring": true,
+      "explicit_queued_rename_synchronized": true,
+      "legacy_verifier_also_failed_on_previous_release": true,
+      "new_jpeg_painted_ms": 264.90609999746084,
+      "notification_status": "active",
+      "page_errors": [],
+      "production_data_used": false
+    },
+    "package_audit": {
+      "status": "passed",
+      "version": "1.0.4",
+      "releaseId": "20261120022812",
+      "web_source_files_verified": 84,
+      "frozen_source_modules_verified": 167,
+      "worker_entry_matches_source": true,
+      "signed_package_files_verified": 114,
+      "no_models_runtime_or_user_data": true
+    },
+    "update_tests_passed": 93,
+    "feature_tests_passed": 62
+  },
+  "online_clients": {
+    "status": "passed",
+    "clients": {
+      "previous-1.0.3": {
+        "status": "downloaded",
+        "available": true,
+        "version": "1.0.4",
+        "releaseId": "20261120022812",
+        "package_bytes": 14468541,
+        "old_client_source": "signed frozen package",
+        "client_code_sha256": "740eb760b334626f1f0a87b86572a92e61a3a89c754e2ae6e722beed1dc909f2",
+        "download_verified": true,
+        "cache_reused": false
+      },
+      "previous-1.0.2": {
+        "status": "downloaded",
+        "available": true,
+        "version": "1.0.4",
+        "releaseId": "20261120022812",
+        "package_bytes": 14468541,
+        "old_client_source": "signed frozen package",
+        "client_code_sha256": "740eb760b334626f1f0a87b86572a92e61a3a89c754e2ae6e722beed1dc909f2",
+        "download_verified": true,
+        "cache_reused": true
+      },
+      "legacy-14": {
+        "status": "downloaded",
+        "available": true,
+        "version": "1.0.4",
+        "releaseId": "20261120022812",
+        "package_bytes": 14468541,
+        "old_client_source": "signed frozen package",
+        "client_code_sha256": "c3ce0ae015455e80c7bd599b19462b99730caae2581ae764aca8a50ffc2e7400",
+        "download_verified": true,
+        "cache_reused": true
+      },
+      "legacy-16": {
+        "status": "downloaded",
+        "available": true,
+        "version": "1.0.4",
+        "releaseId": "20261120022812",
+        "package_bytes": 14468541,
+        "old_client_source": "signed frozen package",
+        "client_code_sha256": "c3ce0ae015455e80c7bd599b19462b99730caae2581ae764aca8a50ffc2e7400",
+        "download_verified": true,
+        "cache_reused": true
+      },
+      "new-version": {
+        "status": "checked",
+        "available": false,
+        "version": "1.0.4",
+        "releaseId": "20261120022812",
+        "package_bytes": 14468541,
+        "old_client_source": "current",
+        "client_code_sha256": "23ad2a17603e200c728b5b0941c43d8192bfa9a7d4220bec2ab28184407af073",
+        "download_verified": false,
+        "cache_reused": false
+      }
+    }
+  },
+  "cleanup": {
+    "removed": [
+      {
+        "path": "G:\\app\\LR\\build\\release-20261120\\qa-publish",
+        "files": 6951,
+        "logical_bytes": 5633220179
+      },
+      {
+        "path": "G:\\app\\LR\\build\\release-20261120\\previous-stage",
+        "files": 963,
+        "logical_bytes": 865118695
+      }
+    ],
+    "skipped": [],
+    "logical_bytes_removed": 6498338874,
+    "free_before": 242570448896,
+    "free_after": 249086119936,
+    "preserved": "signed full baselines, minimal snapshots, current staged build, models, source and release evidence",
+    "online_download_cache_removed": [
+      {
+        "path": "G:\\app\\LR\\build\\release-20261120\\online-clients\\legacy-14\\data\\maintenance\\updates\\downloads",
+        "logical_bytes": 14488206
+      },
+      {
+        "path": "G:\\app\\LR\\build\\release-20261120\\online-clients\\legacy-16\\data\\maintenance\\updates\\downloads",
+        "logical_bytes": 14488206
+      },
+      {
+        "path": "G:\\app\\LR\\build\\release-20261120\\online-clients\\previous-1.0.2\\data\\maintenance\\updates\\downloads",
+        "logical_bytes": 14488206
+      },
+      {
+        "path": "G:\\app\\LR\\build\\release-20261120\\online-clients\\previous-1.0.3\\data\\maintenance\\updates\\downloads",
+        "logical_bytes": 14488206
+      }
+    ],
+    "online_cleanup_free_before": 248992354304,
+    "online_cleanup_free_after": 249050320896
+  },
+  "scope": {
+    "ocr_models_uploaded": false,
+    "runtime_uploaded": false,
+    "production_install_modified": false,
+    "customer_hardware_or_real_NAS_tested": false
+  },
+  "verification_notes": "旧版冻结验收脚本夹具含明确改款操作，原 1.0.3 同样在开启监控后同步写回。先完成该已提交操作后验证：历史队列保持暂停，监控期间照片保持，新 JPG 实际显示；未修改产品代码或声明本次验证覆盖所有客户硬件。"
+}

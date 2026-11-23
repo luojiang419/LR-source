@@ -101,7 +101,7 @@ class FolderWatch:
                 saved=json.loads(self.config.read_text(encoding='utf8'))
                 if saved.get('enabled'):
                     photo_directory(saved['folder'],self.store.data)
-                    self.info.update(enabled=True,folder=saved['folder'],recursive=bool(saved.get('recursive',True)),session_id=saved['session_id'],source='manual',initializing=True,message='正在恢复现场监控并读取已有照片')
+                    self.info.update(enabled=True,folder=saved['folder'],recursive=bool(saved.get('recursive',True)),session_id=saved['session_id'],generation=saved.get('generation',self.info['generation']),source='manual',initializing=True,message='正在恢复现场监控并读取已有照片')
             except (OSError,ValueError,KeyError):self.info['error']='监控配置读取失败，请重新选择文件夹'
         if self.info['enabled'] and self.info['session_id']:
             with self.store.connect() as c:c.execute('INSERT OR REPLACE INTO settings VALUES (?,?)',('shooting_session:'+self.info['session_id'],self.info['folder']))
@@ -133,7 +133,7 @@ class FolderWatch:
             self.info.update(values);self.info['event_id']+=1;self.condition.notify_all()
 
     def _persist(self):
-        payload={k:self.info[k] for k in ('enabled','folder','recursive','session_id','source')}
+        payload={k:self.info[k] for k in ('enabled','folder','recursive','session_id','source','generation')}
         atomic_write(self.config,json.dumps(payload,ensure_ascii=False).encode('utf8'))
 
     def set_source(self,source):
@@ -272,6 +272,8 @@ class FolderWatch:
                         records.append(record);completed.append((str(primary),sig))
                     pending+=max(0,len(ready)-len(batch))
                 # 在 watch 锁外登记文档；SKU/归档不得与状态查询形成反向锁等待。
+                if records and getattr(self.store,'lan_sync_data',None) and not cancel.is_set():
+                    self.store.lan_sync_data.prime_files(root,records)
                 if records and self.on_arrivals and not cancel.is_set():
                     self.on_arrivals(info['session_id'],[r for r in records if not any(existing.get(path.casefold()) for path in (r.get('raw'),r.get('jpg')) if path)])
                 with self.lock:

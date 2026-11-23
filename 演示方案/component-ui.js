@@ -39,7 +39,8 @@
     while(state.status==='working'||state.status==='idle'){
       paint(state,'正在准备鼠标遥控');await pause();state=await api('/api/mouse/driver');
     }
-    if(!state.installed||state.status==='error'||activate&&state.usable===false){paint({...state,status:'error'},'鼠标驱动需要处理');throw new Error(state.message||'鼠标驱动尚未就绪')}
+    // 未插接收器等驱动问题只在鼠标设置中提示，不弹出悬浮窗。
+    if(!state.installed||state.status==='error'||activate&&state.usable===false){box.hidden=true;throw new Error(state.message||'鼠标驱动尚未就绪')}
     box.hidden=true;return state;
     }finally{driverBusy=false}
   }
@@ -54,7 +55,8 @@
       const state=await api('/api/components');
       if(requests||driverBusy)return;
       const silentPreload=window.FramekeepOcrRuntime?.preloading;
-      if(['working','error'].includes(state.status)&&!dismissed&&!silentPreload){
+      const driverOnly=state.status==='error'&&state.groups?.length&&state.groups.every(group=>group==='driver');
+      if(['working','error'].includes(state.status)&&!dismissed&&!silentPreload&&!driverOnly){
         if(state.status==='error'&&state.groups?.length)retry=state.groups.includes('driver')?driver:()=>models('',{},state.groups);
         paint(state);
       }

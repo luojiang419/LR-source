@@ -32,6 +32,10 @@ class DirectoryEvents:
         self.kernel.ResetEvent(self.handle)
         return bool(self.kernel.ReadDirectoryChangesW(self.directory,self.buffer,len(self.buffer),self.recursive,0x1|0x2|0x8|0x10,None,C.byref(self.overlapped),None))
 
+    def wait(self,milliseconds):
+        """有新文件时由内核立即唤醒；超时后仍检查写入进度和目录切换。"""
+        if self.handle is not None:self.kernel.WaitForSingleObject(self.handle,milliseconds)
+
     def changed(self):
         if self.handle is None:return False
         status=self.kernel.WaitForSingleObject(self.handle,0)

@@ -197,6 +197,11 @@ def rated_session(sid=None):
     return ARCHIVE.ratings.session(session,STORE.records(session['id'])) if ARCHIVE and session else session
 
 
+def watch_direct_feed():
+    if CAPTURESYNC and CAPTURESYNC.receiving:return CAPTURESYNC.direct
+    return WATCH.direct if WATCH else None
+
+
 def save_session_state(body,partial=False):
     if CAPTURESYNC and CAPTURESYNC.receiving:
         current=STORE.session(body['session_id'])
@@ -295,7 +300,8 @@ class Handler(SimpleHTTPRequestHandler):
                 try:return self.reply(BOOT_GATE.preview(parse_qs(url.query).get('id',[''])[0]),kind='image/jpeg')
                 except (OSError,ValueError,RuntimeError):return self.reply({'error':'照片正在传输，请稍后重试'},409)
             if path=='/api/bootstrap' and parse_qs(url.query).get('shell')==['1']:
-                return self.reply({'session':{'id':None,'name':'正在恢复照片','root':'','snapshot':'','revision':0,'saved':{},'demo':False,'requestToken':TOKEN,'restoring':True},
+                return self.reply({'session':{'id':None,'name':'正在恢复照片','root':'','snapshot':'','revision':0,'saved':{},'demo':False,'requestToken':TOKEN,'restoring':True,
+                                              **({'directPreview':DIRECT.public()} if DIRECT else {})},
                                    'photos':[],'request_token':TOKEN,'workbench_bundle':True,'progressive':True})
             capture_path=path in ('/api/bootstrap','/api/state','/api/folders','/api/watch','/api/watch/direct') or path.startswith(('/api/preview/','/api/watch/preview/'))
             available=BOOT_GATE.wait_capture if capture_path else BOOT_GATE.wait
@@ -579,11 +585,12 @@ class Handler(SimpleHTTPRequestHandler):
             if path=='/api/mouse/options':return self.reply(MOUSE.state() if MOUSE else {'active':False,'options':{},'message':'鼠标输入服务未启动'})
             if path=='/api/folders':return self.reply(capture_folder_state())
             if path=='/api/watch/direct':
-                if not WATCH:return self.reply({'enabled':False,'event_id':0,'receiving':None,'last_photo_id':None})
+                feed=watch_direct_feed()
+                if not feed:return self.reply({'enabled':False,'event_id':0,'receiving':None,'last_photo_id':None})
                 params=parse_qs(url.query)
                 if 'after' in params:
-                    return self.reply(WATCH.direct.wait_state(int(params['after'][0]),max(0,min(15,float(params.get('wait',['15'])[0])))))
-                return self.reply(WATCH.direct.state())
+                    return self.reply(feed.wait_state(int(params['after'][0]),max(0,min(15,float(params.get('wait',['15'])[0])))))
+                return self.reply(feed.state())
             if path=='/api/watch':
                 if not WATCH:return self.reply({'enabled':False,'message':'监控服务未启动'})
                 params=parse_qs(url.query)
@@ -592,8 +599,9 @@ class Handler(SimpleHTTPRequestHandler):
                 return self.reply(WATCH.state())
             if path.startswith('/api/watch/preview/'):
                 parts=path.split('/')
-                source=WATCH.direct.source_path(parts[4],parts[5]) if WATCH and len(parts)==6 else None
-                root=WATCH.direct.source_root(parts[4],parts[5]) if source is not None else None
+                feed=watch_direct_feed()
+                source=feed.source_path(parts[4],parts[5]) if feed and len(parts)==6 else None
+                root=feed.source_root(parts[4],parts[5]) if source is not None else None
                 if source is None or root is None:return self.reply({'error':'接收中的照片已失效'},404)
                 return self.original_jpeg(source,root)
             if path=='/api/health':
@@ -1076,6 +1084,9 @@ def _run_server(startup):
     server.daemon_threads=True
     from startup_gate import StartupGate
     BOOT_GATE=StartupGate(DATA,ROOT)
+    # 首次 HTML 响应的 CSP 必须包含真实原图端口，后续恢复会话不能改写已加载页面的策略。
+    DIRECT=DirectImageChannel(None,f'http://127.0.0.1:{server.server_port}')
+    DIRECT.feed_provider=watch_direct_feed
     server._startup_http_thread=threading.Thread(target=server.serve_forever,name='startup-http',daemon=True)
     server._startup_http_thread.start()
     startup_checkpoint('shell ready')
@@ -1105,7 +1116,6 @@ def _initialize_server(server,args,startup):
     BOOT_GATE.capture_readonly=receiving
     pending_eos=any((DATA/'canon-link/inbox').glob('*.json'))
     WATCH=FolderWatch(STORE,autostart=False,restore=not pending_eos and not receiving)
-    DIRECT=DirectImageChannel(WATCH,f'http://127.0.0.1:{server.server_port}')
     CANON=EosMonitor(STORE,WATCH)
     if receiving:CANON.pause()
     from catalog_notifications import CatalogNotifications

@@ -458,6 +458,10 @@
       render();return true;
     },
     remoteTarget:()=>({sessionId:session.id,photoId:model().current?.p.id??null,paused:sessionLoading||interactionPaused}),
+    canPreviewSession(id){
+      if(!id||interactionPaused)return false;
+      return sessionLoading?id===window.FramekeepIO?.openingLiveSession:id===session.id;
+    },
     setInteractionPaused(value){if(value)finishPickStroke();interactionPaused=!!value;document.dispatchEvent(new CustomEvent('framekeep:selection'))},
     setMonitoring(value){if(monitoring===!!value)return;monitoring=!!value;if(monitoring){view='single';compare=false;filter='all';query=''}render()},
     syncSharedRatings(shared){overrides={...overrides,...shared};history.length=0;session.sharedRatings=shared;render()},

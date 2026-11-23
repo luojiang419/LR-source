@@ -67,7 +67,8 @@ class MouseActivationBrowserTests(unittest.TestCase):
                             page.wait_for_function('(s)=>document.getElementById("mouse-status").textContent.includes(s)',arg=expected)
                             self.assertTrue(page.locator('#mouse-start').is_disabled())
                             self.assertEqual(page.locator('#mouse-device option').count(),0)
-                            self.assertTrue(page.locator('#component-retry').is_visible())
+                            # 驱动问题只在鼠标设置状态中显示，不弹出“鼠标驱动需要处理”悬浮窗。
+                            self.assertTrue(page.locator('#component-progress').is_hidden())
                         mode[0]='ready';page.locator('#mouse-refresh').click()
                         page.wait_for_function('()=>document.querySelectorAll("#mouse-device option").length===1')
                         self.assertEqual(calls,['ready','cancel','restart','ready'])

@@ -1,0 +1,506 @@
+{
+  "date": "2026-11-20",
+  "status": "passed_and_published",
+  "version": "1.0.8",
+  "releaseId": "20261120090004",
+  "implementation_commit": "f5f272b",
+  "branch": "release/capture-latency-1.0.8",
+  "package_audit": {
+    "status": "passed",
+    "version": "1.0.8",
+    "releaseId": "20261120090004",
+    "file_count": 114,
+    "package_bytes": 14518389,
+    "package_sha256": "b5d3f72f466f218f2a26a39897235ee68c596f06340138d5345722f4db9c15cb",
+    "no_models_runtime_or_user_data": true,
+    "web_matches_source": true,
+    "supported_baselines": 10
+  },
+  "upgrade_validation": {
+    "status": "passed",
+    "version": "1.0.8",
+    "releaseId": "20261120090004",
+    "package_sha256": "b5d3f72f466f218f2a26a39897235ee68c596f06340138d5345722f4db9c15cb",
+    "baselines": {
+      "20261114043205": {
+        "baseline_version": "1.0.1",
+        "install": "complete",
+        "frozen_engine_startup": "complete",
+        "frozen_worker_full_update": false,
+        "elapsed_seconds": 2.84,
+        "runtime_files_preserved": 730,
+        "data_preserved": true,
+        "custom_model_preserved": true,
+        "rollback_verified": true,
+        "next_frozen_worker_runnable": true
+      },
+      "20261116013944": {
+        "baseline_version": "1.0.1",
+        "install": "complete",
+        "frozen_engine_startup": "complete",
+        "frozen_worker_full_update": false,
+        "elapsed_seconds": 2.77,
+        "runtime_files_preserved": 730,
+        "data_preserved": true,
+        "custom_model_preserved": true,
+        "rollback_verified": true,
+        "next_frozen_worker_runnable": true
+      },
+      "20261116021119": {
+        "baseline_version": "1.0.1",
+        "install": "complete",
+        "frozen_engine_startup": "complete",
+        "frozen_worker_full_update": false,
+        "elapsed_seconds": 3.12,
+        "runtime_files_preserved": 730,
+        "data_preserved": true,
+        "custom_model_preserved": true,
+        "rollback_verified": true,
+        "next_frozen_worker_runnable": true
+      },
+      "20261116030917": {
+        "baseline_version": "1.0.1",
+        "install": "complete",
+        "frozen_engine_startup": "complete",
+        "frozen_worker_full_update": false,
+        "elapsed_seconds": 2.81,
+        "runtime_files_preserved": 730,
+        "data_preserved": true,
+        "custom_model_preserved": true,
+        "rollback_verified": true,
+        "next_frozen_worker_runnable": true
+      },
+      "20261116034116": {
+        "baseline_version": "1.0.2",
+        "install": "complete",
+        "frozen_engine_startup": "complete",
+        "frozen_worker_full_update": false,
+        "elapsed_seconds": 2.75,
+        "runtime_files_preserved": 730,
+        "data_preserved": true,
+        "custom_model_preserved": true,
+        "rollback_verified": true,
+        "next_frozen_worker_runnable": true
+      },
+      "20261116071842": {
+        "baseline_version": "1.0.3",
+        "install": "complete",
+        "frozen_engine_startup": "complete",
+        "frozen_worker_full_update": false,
+        "elapsed_seconds": 3.05,
+        "runtime_files_preserved": 730,
+        "data_preserved": true,
+        "custom_model_preserved": true,
+        "rollback_verified": true,
+        "next_frozen_worker_runnable": true
+      },
+      "20261120022812": {
+        "baseline_version": "1.0.4",
+        "install": "complete",
+        "frozen_engine_startup": "complete",
+        "frozen_worker_full_update": false,
+        "elapsed_seconds": 2.53,
+        "runtime_files_preserved": 730,
+        "data_preserved": true,
+        "custom_model_preserved": true,
+        "rollback_verified": true,
+        "next_frozen_worker_runnable": true
+      },
+      "20261120031447": {
+        "baseline_version": "1.0.5",
+        "install": "complete",
+        "frozen_engine_startup": "complete",
+        "frozen_worker_full_update": false,
+        "elapsed_seconds": 3.88,
+        "runtime_files_preserved": 730,
+        "data_preserved": true,
+        "custom_model_preserved": true,
+        "rollback_verified": true,
+        "next_frozen_worker_runnable": true
+      },
+      "20261120051425": {
+        "baseline_version": "1.0.6",
+        "install": "complete",
+        "frozen_engine_startup": "complete",
+        "frozen_worker_full_update": false,
+        "elapsed_seconds": 2.89,
+        "runtime_files_preserved": 730,
+        "data_preserved": true,
+        "custom_model_preserved": true,
+        "rollback_verified": true,
+        "next_frozen_worker_runnable": true
+      },
+      "20261120062008": {
+        "baseline_version": "1.0.7",
+        "install": "complete",
+        "frozen_engine_startup": "complete",
+        "frozen_worker_full_update": true,
+        "elapsed_seconds": 6.39,
+        "runtime_files_preserved": 730,
+        "data_preserved": true,
+        "custom_model_preserved": true,
+        "rollback_verified": true,
+        "next_frozen_worker_runnable": true
+      }
+    },
+    "fresh_install_uses_complete_base": true,
+    "frozen_recovery_validation": true,
+    "production_install_modified": false
+  },
+  "frozen_runtime": {
+    "status": "passed",
+    "version": "1.0.8",
+    "releaseId": "20261120090004",
+    "binary": "current rebuilt frozen engine",
+    "cpu_throttle": 4,
+    "gpu_disabled": true,
+    "cases": {
+      "transient_read": {
+        "failure_ms": 800,
+        "jpeg_available_to_painted_ms": 1116.7849000003116,
+        "attempt_ms": [
+          21.482200000718876,
+          43.314500000633416,
+          123.31140000060259,
+          251.16090000028635,
+          517.4688000006427,
+          1016.1323000002085,
+          1042.6496000000043
+        ],
+        "writer_still_open": true
+      },
+      "native_notification_stress": {
+        "noise_events": 3600,
+        "jpeg_available_to_painted_ms": 823.2402000003276,
+        "recovered_notifications": 0,
+        "writer_still_open": true,
+        "loss_observed": false
+      }
+    },
+    "formal_handoff_and_rating": true,
+    "page_errors": [],
+    "production_data_used": false
+  },
+  "tests": {
+    "update_system_passed": 93,
+    "update_system_seconds": 19.86,
+    "frozen_recovery_and_channel_passed": 13,
+    "frozen_tests_seconds": 18.768,
+    "source_prior_combined_passed": 77,
+    "source_final_recovery_passed": 10
+  },
+  "publication": {
+    "published": true,
+    "version": "1.0.8",
+    "releaseId": "20261120090004",
+    "online_latest_activated": true,
+    "runtime_uploaded": false,
+    "package_bytes": 14518389,
+    "artifacts": [
+      {
+        "path": "minimal/20261120090004/SHIYING-Windows-x64.zip",
+        "size": 14518389,
+        "sha256": "b5d3f72f466f218f2a26a39897235ee68c596f06340138d5345722f4db9c15cb",
+        "url": "https://modelscope.cn/api/v1/models/jiangjiang419/framekeep-updates/repo?Revision=master&FilePath=minimal%2F20261120090004%2FSHIYING-Windows-x64.zip"
+      },
+      {
+        "path": "minimal/20261120090004/安装最小更新.exe",
+        "size": 2052096,
+        "sha256": "bb449fc0df95f41ee14489018d3d1e4fe0d4a37ccdda693ebdd1ce97397a6136",
+        "url": "https://modelscope.cn/api/v1/models/jiangjiang419/framekeep-updates/repo?Revision=master&FilePath=minimal%2F20261120090004%2F%E5%AE%89%E8%A3%85%E6%9C%80%E5%B0%8F%E6%9B%B4%E6%96%B0.exe"
+      },
+      {
+        "path": "minimal/20261120090004/SHIYING-Setup.exe",
+        "size": 178176,
+        "sha256": "6ae3144464786ce6b5f9c2a2768a5bdcc16a1a19f37f1f37be8859ba5d327ad2",
+        "url": "https://modelscope.cn/api/v1/models/jiangjiang419/framekeep-updates/repo?Revision=master&FilePath=minimal%2F20261120090004%2FSHIYING-Setup.exe"
+      },
+      {
+        "path": "minimal/20261120090004/envelope.json",
+        "size": 19697,
+        "sha256": "ce3a954d3a2b682f144d3ca71072280668e443e3933367a74e49f9e7ed72ef65",
+        "url": "https://modelscope.cn/api/v1/models/jiangjiang419/framekeep-updates/repo?Revision=master&FilePath=minimal%2F20261120090004%2Fenvelope.json"
+      }
+    ],
+    "previous_release": "20261120062008",
+    "install_base": "20261116021119"
+  },
+  "public_clients": {
+    "status": "passed",
+    "clients": {
+      "previous-1.0.7": {
+        "status": "downloaded",
+        "available": true,
+        "version": "1.0.8",
+        "releaseId": "20261120090004",
+        "package_bytes": 14518389,
+        "old_client_source": "signed frozen package",
+        "client_code_sha256": "740eb760b334626f1f0a87b86572a92e61a3a89c754e2ae6e722beed1dc909f2",
+        "download_verified": true,
+        "cache_reused": false
+      },
+      "previous-1.0.6": {
+        "status": "downloaded",
+        "available": true,
+        "version": "1.0.8",
+        "releaseId": "20261120090004",
+        "package_bytes": 14518389,
+        "old_client_source": "signed frozen package",
+        "client_code_sha256": "740eb760b334626f1f0a87b86572a92e61a3a89c754e2ae6e722beed1dc909f2",
+        "download_verified": true,
+        "cache_reused": true
+      },
+      "previous-1.0.5": {
+        "status": "downloaded",
+        "available": true,
+        "version": "1.0.8",
+        "releaseId": "20261120090004",
+        "package_bytes": 14518389,
+        "old_client_source": "signed frozen package",
+        "client_code_sha256": "740eb760b334626f1f0a87b86572a92e61a3a89c754e2ae6e722beed1dc909f2",
+        "download_verified": true,
+        "cache_reused": true
+      },
+      "previous-1.0.4": {
+        "status": "downloaded",
+        "available": true,
+        "version": "1.0.8",
+        "releaseId": "20261120090004",
+        "package_bytes": 14518389,
+        "old_client_source": "signed frozen package",
+        "client_code_sha256": "740eb760b334626f1f0a87b86572a92e61a3a89c754e2ae6e722beed1dc909f2",
+        "download_verified": true,
+        "cache_reused": true
+      },
+      "previous-1.0.3": {
+        "status": "downloaded",
+        "available": true,
+        "version": "1.0.8",
+        "releaseId": "20261120090004",
+        "package_bytes": 14518389,
+        "old_client_source": "signed frozen package",
+        "client_code_sha256": "740eb760b334626f1f0a87b86572a92e61a3a89c754e2ae6e722beed1dc909f2",
+        "download_verified": true,
+        "cache_reused": true
+      },
+      "previous-1.0.2": {
+        "status": "downloaded",
+        "available": true,
+        "version": "1.0.8",
+        "releaseId": "20261120090004",
+        "package_bytes": 14518389,
+        "old_client_source": "signed frozen package",
+        "client_code_sha256": "740eb760b334626f1f0a87b86572a92e61a3a89c754e2ae6e722beed1dc909f2",
+        "download_verified": true,
+        "cache_reused": true
+      },
+      "legacy-14": {
+        "status": "downloaded",
+        "available": true,
+        "version": "1.0.8",
+        "releaseId": "20261120090004",
+        "package_bytes": 14518389,
+        "old_client_source": "signed frozen package",
+        "client_code_sha256": "c3ce0ae015455e80c7bd599b19462b99730caae2581ae764aca8a50ffc2e7400",
+        "download_verified": true,
+        "cache_reused": true
+      },
+      "legacy-16": {
+        "status": "downloaded",
+        "available": true,
+        "version": "1.0.8",
+        "releaseId": "20261120090004",
+        "package_bytes": 14518389,
+        "old_client_source": "signed frozen package",
+        "client_code_sha256": "c3ce0ae015455e80c7bd599b19462b99730caae2581ae764aca8a50ffc2e7400",
+        "download_verified": true,
+        "cache_reused": true
+      },
+      "new-version": {
+        "status": "checked",
+        "available": false,
+        "version": "1.0.8",
+        "releaseId": "20261120090004",
+        "package_bytes": 14518389,
+        "old_client_source": "current",
+        "client_code_sha256": "23ad2a17603e200c728b5b0941c43d8192bfa9a7d4220bec2ab28184407af073",
+        "download_verified": false,
+        "cache_reused": false
+      }
+    },
+    "network_download_client": "previous-1.0.7",
+    "cache_metadata_note": "Corrected inherited hardcoded report labels to match execution: first 1.0.7 downloaded from public URL; following old clients reused that verified package."
+  },
+  "cleanup": {
+    "free_change": 9843376128,
+    "free_after": 213622226944,
+    "free_before": 203778850816,
+    "deleted_bytes": 9815982312,
+    "retained": [
+      "signed historical baselines",
+      "final signed release and update entry points",
+      "current build runtime and source",
+      "all production installations and business data",
+      "verification reports, rollback logs, archived session records and screenshots"
+    ],
+    "items": [
+      {
+        "bytes": 868322412,
+        "path": "G:\\app\\LR\\build\\release-1.0.8\\qa-upgrades\\20261114043205\\program",
+        "status": "deleted verified temporary install"
+      },
+      {
+        "bytes": 86818865,
+        "path": "G:\\app\\LR\\build\\release-1.0.8\\qa-upgrades\\20261114043205\\session",
+        "status": "deleted verified temporary install"
+      },
+      {
+        "bytes": 32147755,
+        "path": "G:\\app\\LR\\build\\release-1.0.8\\qa-upgrades\\20261114043205\\next-worker",
+        "status": "deleted verified temporary install"
+      },
+      {
+        "bytes": 868299536,
+        "path": "G:\\app\\LR\\build\\release-1.0.8\\qa-upgrades\\20261116013944\\program",
+        "status": "deleted verified temporary install"
+      },
+      {
+        "bytes": 86541931,
+        "path": "G:\\app\\LR\\build\\release-1.0.8\\qa-upgrades\\20261116013944\\session",
+        "status": "deleted verified temporary install"
+      },
+      {
+        "bytes": 32147755,
+        "path": "G:\\app\\LR\\build\\release-1.0.8\\qa-upgrades\\20261116013944\\next-worker",
+        "status": "deleted verified temporary install"
+      },
+      {
+        "bytes": 868299536,
+        "path": "G:\\app\\LR\\build\\release-1.0.8\\qa-upgrades\\20261116021119\\program",
+        "status": "deleted verified temporary install"
+      },
+      {
+        "bytes": 86542561,
+        "path": "G:\\app\\LR\\build\\release-1.0.8\\qa-upgrades\\20261116021119\\session",
+        "status": "deleted verified temporary install"
+      },
+      {
+        "bytes": 32147755,
+        "path": "G:\\app\\LR\\build\\release-1.0.8\\qa-upgrades\\20261116021119\\next-worker",
+        "status": "deleted verified temporary install"
+      },
+      {
+        "bytes": 868299536,
+        "path": "G:\\app\\LR\\build\\release-1.0.8\\qa-upgrades\\20261116030917\\program",
+        "status": "deleted verified temporary install"
+      },
+      {
+        "bytes": 86534388,
+        "path": "G:\\app\\LR\\build\\release-1.0.8\\qa-upgrades\\20261116030917\\session",
+        "status": "deleted verified temporary install"
+      },
+      {
+        "bytes": 32147755,
+        "path": "G:\\app\\LR\\build\\release-1.0.8\\qa-upgrades\\20261116030917\\next-worker",
+        "status": "deleted verified temporary install"
+      },
+      {
+        "bytes": 868299535,
+        "path": "G:\\app\\LR\\build\\release-1.0.8\\qa-upgrades\\20261116034116\\program",
+        "status": "deleted verified temporary install"
+      },
+      {
+        "bytes": 86535184,
+        "path": "G:\\app\\LR\\build\\release-1.0.8\\qa-upgrades\\20261116034116\\session",
+        "status": "deleted verified temporary install"
+      },
+      {
+        "bytes": 32147755,
+        "path": "G:\\app\\LR\\build\\release-1.0.8\\qa-upgrades\\20261116034116\\next-worker",
+        "status": "deleted verified temporary install"
+      },
+      {
+        "bytes": 868299534,
+        "path": "G:\\app\\LR\\build\\release-1.0.8\\qa-upgrades\\20261116071842\\program",
+        "status": "deleted verified temporary install"
+      },
+      {
+        "bytes": 86542655,
+        "path": "G:\\app\\LR\\build\\release-1.0.8\\qa-upgrades\\20261116071842\\session",
+        "status": "deleted verified temporary install"
+      },
+      {
+        "bytes": 32147755,
+        "path": "G:\\app\\LR\\build\\release-1.0.8\\qa-upgrades\\20261116071842\\next-worker",
+        "status": "deleted verified temporary install"
+      },
+      {
+        "bytes": 868299536,
+        "path": "G:\\app\\LR\\build\\release-1.0.8\\qa-upgrades\\20261120022812\\program",
+        "status": "deleted verified temporary install"
+      },
+      {
+        "bytes": 86391228,
+        "path": "G:\\app\\LR\\build\\release-1.0.8\\qa-upgrades\\20261120022812\\session",
+        "status": "deleted verified temporary install"
+      },
+      {
+        "bytes": 32147755,
+        "path": "G:\\app\\LR\\build\\release-1.0.8\\qa-upgrades\\20261120022812\\next-worker",
+        "status": "deleted verified temporary install"
+      },
+      {
+        "bytes": 868299536,
+        "path": "G:\\app\\LR\\build\\release-1.0.8\\qa-upgrades\\20261120031447\\program",
+        "status": "deleted verified temporary install"
+      },
+      {
+        "bytes": 86226112,
+        "path": "G:\\app\\LR\\build\\release-1.0.8\\qa-upgrades\\20261120031447\\session",
+        "status": "deleted verified temporary install"
+      },
+      {
+        "bytes": 32147755,
+        "path": "G:\\app\\LR\\build\\release-1.0.8\\qa-upgrades\\20261120031447\\next-worker",
+        "status": "deleted verified temporary install"
+      },
+      {
+        "bytes": 868299536,
+        "path": "G:\\app\\LR\\build\\release-1.0.8\\qa-upgrades\\20261120051425\\program",
+        "status": "deleted verified temporary install"
+      },
+      {
+        "bytes": 86326904,
+        "path": "G:\\app\\LR\\build\\release-1.0.8\\qa-upgrades\\20261120051425\\session",
+        "status": "deleted verified temporary install"
+      },
+      {
+        "bytes": 32147755,
+        "path": "G:\\app\\LR\\build\\release-1.0.8\\qa-upgrades\\20261120051425\\next-worker",
+        "status": "deleted verified temporary install"
+      },
+      {
+        "bytes": 868489816,
+        "path": "G:\\app\\LR\\build\\release-1.0.8\\qa-upgrades\\20261120062008\\program",
+        "status": "deleted verified temporary install"
+      },
+      {
+        "bytes": 32836421,
+        "path": "G:\\app\\LR\\build\\release-1.0.8\\qa-upgrades\\20261120062008\\session",
+        "status": "deleted verified temporary install"
+      },
+      {
+        "bytes": 32147755,
+        "path": "G:\\app\\LR\\build\\release-1.0.8\\qa-upgrades\\20261120062008\\next-worker",
+        "status": "deleted verified temporary install"
+      }
+    ]
+  },
+  "production_install_modified": false,
+  "real_customer_shutter_test": false,
+  "limitations": [
+    "Frozen event stress produced 3600 filesystem events but did not actually lose the JPEG notification; deterministic lost-event cases passed using code extracted from the signed release binary.",
+    "Times start at synthetic JPG write and include no camera exposure or transmission."
+  ],
+  "retained_evidence": "build/release-1.0.8/"
+}

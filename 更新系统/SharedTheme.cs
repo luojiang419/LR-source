@@ -5,7 +5,7 @@ using System.Windows.Forms;
 
 [assembly: System.Reflection.AssemblyTitle("SHIYING 数字资产")]
 [assembly: System.Reflection.AssemblyProduct("SHIYING 数字资产")]
-[assembly: System.Reflection.AssemblyFileVersion("1.0.3.0")]
+[assembly: System.Reflection.AssemblyFileVersion("1.0.8.0")]
 
 namespace FramekeepBootstrap {
     public static class Brand {

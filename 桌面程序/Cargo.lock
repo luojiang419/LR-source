@@ -1033,7 +1033,7 @@ dependencies = [
 
 [[package]]
 name = "framekeep-desktop"
-version = "1.0.3"
+version = "1.0.8"
 dependencies = [
  "base64 0.22.1",
  "png 0.17.16",

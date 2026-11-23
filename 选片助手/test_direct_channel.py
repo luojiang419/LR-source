@@ -62,6 +62,13 @@ class DirectChannelTests(unittest.TestCase):
             outside=base/'outside.JPG';outside.write_bytes(b'private outside content')
             with self.assertRaises(urllib.error.HTTPError) as caught:urllib.request.urlopen(channel.register(photos,'../outside.JPG'))
             self.assertEqual(caught.exception.code,400)
+            link=photos/'linked.JPG'
+            try:link.symlink_to(outside)
+            except OSError:return  # 部分 Windows 账号没有创建符号链接的权限。
+            with urllib.request.urlopen(urllib.request.Request(state_url+'?wait=0',headers={'X-Framekeep-Preview':channel.token,'X-Framekeep-After':'-1'})) as response:
+                self.assertTrue(json.load(response)['enabled'])
+            with self.assertRaises(urllib.error.HTTPError) as caught:urllib.request.urlopen(channel.register(photos,link.name))
+            self.assertEqual(caught.exception.code,400)
 
     def test_saturated_business_connections_cannot_delay_original_frame(self):
         from playwright.sync_api import sync_playwright

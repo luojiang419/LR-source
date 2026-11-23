@@ -1,0 +1,213 @@
+{
+  "status": "published-and-verified",
+  "source_commit": "88ff7e37f1ef1c2750b2e47390c47af141918fcb",
+  "branch": "release/modelscope-1.0.5-20261120",
+  "github_release_commit_pushed": false,
+  "publication": {
+    "published": true,
+    "version": "1.0.5",
+    "releaseId": "20261120031447",
+    "online_latest_activated": true,
+    "runtime_uploaded": false,
+    "package_bytes": 14473923,
+    "artifacts": [
+      {
+        "path": "minimal/20261120031447/SHIYING-Windows-x64.zip",
+        "size": 14473923,
+        "sha256": "fd096b00d826dca6a0aaa4294e10f63d8afac13b4468a6c06fafc13a8803d359",
+        "url": "https://modelscope.cn/api/v1/models/jiangjiang419/framekeep-updates/repo?Revision=master&FilePath=minimal%2F20261120031447%2FSHIYING-Windows-x64.zip"
+      },
+      {
+        "path": "minimal/20261120031447/瀹夎鏈€灏忔洿鏂?exe",
+        "size": 1441280,
+        "sha256": "adc7c1c810aec89527ce6a8f29e180c1dfa87e20fc741cd270a9d9998d895fef",
+        "url": "https://modelscope.cn/api/v1/models/jiangjiang419/framekeep-updates/repo?Revision=master&FilePath=minimal%2F20261120031447%2F%E5%AE%89%E8%A3%85%E6%9C%80%E5%B0%8F%E6%9B%B4%E6%96%B0.exe"
+      },
+      {
+        "path": "minimal/20261120031447/SHIYING-Setup.exe",
+        "size": 178176,
+        "sha256": "6e1cb21ba32ad9cdda686f68cfa5de0fc3fdc14b33c5db1da05a0b98212ac6fa",
+        "url": "https://modelscope.cn/api/v1/models/jiangjiang419/framekeep-updates/repo?Revision=master&FilePath=minimal%2F20261120031447%2FSHIYING-Setup.exe"
+      },
+      {
+        "path": "minimal/20261120031447/envelope.json",
+        "size": 19704,
+        "sha256": "f0d3cf8114da6fba4aff77a715d008f0947f833f7f4f760fcba9a37232fa4b78",
+        "url": "https://modelscope.cn/api/v1/models/jiangjiang419/framekeep-updates/repo?Revision=master&FilePath=minimal%2F20261120031447%2Fenvelope.json"
+      }
+    ],
+    "previous_release": "20261120022812",
+    "install_base": "20261116021119"
+  },
+  "verification": {
+    "status": "passed",
+    "version": "1.0.5",
+    "releaseId": "20261120031447",
+    "package_sha256": "fd096b00d826dca6a0aaa4294e10f63d8afac13b4468a6c06fafc13a8803d359",
+    "baselines": {
+      "20261114043205": {
+        "frozen_worker_update": "complete",
+        "elapsed_seconds": 6.27,
+        "version": "1.0.5",
+        "runtime_files_preserved": 730,
+        "data_preserved": true,
+        "custom_model_preserved": true,
+        "rollback_verified": true,
+        "next_worker_verified": true
+      },
+      "20261116013944": {
+        "frozen_worker_update": "complete",
+        "elapsed_seconds": 6.67,
+        "version": "1.0.5",
+        "runtime_files_preserved": 730,
+        "data_preserved": true,
+        "custom_model_preserved": true,
+        "rollback_verified": true,
+        "next_worker_verified": true
+      },
+      "20261116021119": {
+        "frozen_worker_update": "complete",
+        "elapsed_seconds": 5.39,
+        "version": "1.0.5",
+        "runtime_files_preserved": 730,
+        "data_preserved": true,
+        "custom_model_preserved": true,
+        "rollback_verified": true,
+        "next_worker_verified": true
+      },
+      "20261116030917": {
+        "frozen_worker_update": "complete",
+        "elapsed_seconds": 5.25,
+        "version": "1.0.5",
+        "runtime_files_preserved": 730,
+        "data_preserved": true,
+        "custom_model_preserved": true,
+        "rollback_verified": true,
+        "next_worker_verified": true
+      },
+      "20261116034116": {
+        "frozen_worker_update": "complete",
+        "elapsed_seconds": 5.61,
+        "version": "1.0.5",
+        "runtime_files_preserved": 730,
+        "data_preserved": true,
+        "custom_model_preserved": true,
+        "rollback_verified": true,
+        "next_worker_verified": true
+      },
+      "20261116071842": {
+        "frozen_worker_update": "complete",
+        "elapsed_seconds": 5.48,
+        "version": "1.0.5",
+        "runtime_files_preserved": 730,
+        "data_preserved": true,
+        "custom_model_preserved": true,
+        "rollback_verified": true,
+        "next_worker_verified": true
+      },
+      "20261120022812": {
+        "frozen_worker_update": "complete",
+        "elapsed_seconds": 5.41,
+        "version": "1.0.5",
+        "runtime_files_preserved": 730,
+        "data_preserved": true,
+        "custom_model_preserved": true,
+        "rollback_verified": true,
+        "next_worker_verified": true
+      }
+    },
+    "fresh_install_uses_complete_base": true,
+    "production_install_modified": false
+  },
+  "package_audit": {
+    "status": "passed",
+    "version": "1.0.5",
+    "releaseId": "20261120031447",
+    "package_files": 114,
+    "web_files_match_source": 85,
+    "split_capture_matches_source": true,
+    "no_runtime_models_or_user_data": true,
+    "frozen_engine_update_state": {
+      "currentVersion": "1.0.5",
+      "currentReleaseId": "20261120031447"
+    },
+    "split_view_opened": true,
+    "page_errors": []
+  },
+  "online_clients": {
+    "status": "passed",
+    "clients": {
+      "previous-1.0.4": {
+        "status": "downloaded",
+        "available": true,
+        "version": "1.0.5",
+        "releaseId": "20261120031447",
+        "package_bytes": 14473923,
+        "old_client_source": "signed frozen package",
+        "client_code_sha256": "740eb760b334626f1f0a87b86572a92e61a3a89c754e2ae6e722beed1dc909f2",
+        "download_verified": true,
+        "cache_reused": false
+      },
+      "previous-1.0.3": {
+        "status": "downloaded",
+        "available": true,
+        "version": "1.0.5",
+        "releaseId": "20261120031447",
+        "package_bytes": 14473923,
+        "old_client_source": "signed frozen package",
+        "client_code_sha256": "740eb760b334626f1f0a87b86572a92e61a3a89c754e2ae6e722beed1dc909f2",
+        "download_verified": true,
+        "cache_reused": true
+      },
+      "previous-1.0.2": {
+        "status": "downloaded",
+        "available": true,
+        "version": "1.0.5",
+        "releaseId": "20261120031447",
+        "package_bytes": 14473923,
+        "old_client_source": "signed frozen package",
+        "client_code_sha256": "740eb760b334626f1f0a87b86572a92e61a3a89c754e2ae6e722beed1dc909f2",
+        "download_verified": true,
+        "cache_reused": true
+      },
+      "legacy-14": {
+        "status": "downloaded",
+        "available": true,
+        "version": "1.0.5",
+        "releaseId": "20261120031447",
+        "package_bytes": 14473923,
+        "old_client_source": "signed frozen package",
+        "client_code_sha256": "c3ce0ae015455e80c7bd599b19462b99730caae2581ae764aca8a50ffc2e7400",
+        "download_verified": true,
+        "cache_reused": true
+      },
+      "legacy-16": {
+        "status": "downloaded",
+        "available": true,
+        "version": "1.0.5",
+        "releaseId": "20261120031447",
+        "package_bytes": 14473923,
+        "old_client_source": "signed frozen package",
+        "client_code_sha256": "c3ce0ae015455e80c7bd599b19462b99730caae2581ae764aca8a50ffc2e7400",
+        "download_verified": true,
+        "cache_reused": true
+      },
+      "new-version": {
+        "status": "checked",
+        "available": false,
+        "version": "1.0.5",
+        "releaseId": "20261120031447",
+        "package_bytes": 14473923,
+        "old_client_source": "current",
+        "client_code_sha256": "23ad2a17603e200c728b5b0941c43d8192bfa9a7d4220bec2ab28184407af073",
+        "download_verified": false,
+        "cache_reused": false
+      }
+    }
+  },
+  "ucrt_restore": {
+    "files": 80,
+    "reason": "PyInstaller 从 PATH 中 RedHat OpenJDK bin 收集了不同版本的 UCRT 转发 DLL；替换为已签名基线中相同路径的原副本，与已安装客户端实际使用的一致"
+  },
+  "update_tests": "93 项通过（首轮 1 项进程退出测试因 conhost 竞争失败，单独重跑 3 次及整套重跑均通过）"
+}

@@ -1,5 +1,6 @@
 """两端独立数据库、真实 HTTP、原始 JPG/XMP 与持久化回看集成验证。"""
 import json
+import socket
 from pathlib import Path
 import tempfile
 import time
@@ -20,12 +21,12 @@ ROOT=Path(__file__).resolve().parents[1]
 
 
 class Node:
-    def __init__(self,base,name):
+    def __init__(self,base,name,discovery_port=48781):
         self.base=base;self.photos=base/'photos';self.photos.mkdir(parents=True)
         self.store=Store(base/'data',ROOT);self.archive=AssetArchive(self.store,autostart=False)
         self.sku=SkuService(self.store,Providers(self.store.data),archive=self.archive,autostart=False)
         self.archive.sku=self.sku
-        self.sync=LanCaptureSync(self.store,self.sku,self.archive,autostart=False,host_state=lambda:{'watch':{'enabled':True}})
+        self.sync=LanCaptureSync(self.store,self.sku,self.archive,autostart=False,share_enabled=False,discovery_port=discovery_port,host_state=lambda:{'watch':{'enabled':True,'session_id':self.store.active_id()}})
         self.sync.configure({'enabled':True,'name':name,'password':'同步 001Ab!','folder':str(base/'received')})
 
     def photo(self,name='one.JPG',color='steelblue',stamp='2026-11-08T14:20:00.123'):
@@ -36,13 +37,16 @@ class Node:
         self.store.append_live(sid,[r]);self.store.activate(sid)
         return sid,r
 
+    def local_id(self,value):return mapped_id(self.sync.config['device'],value+':'+self.sync.manifest()['set']['id'])
+
     def close(self):self.sync.close();self.sku.close();self.archive.close()
 
 
 class LanCaptureSyncTests(unittest.TestCase):
     def setUp(self):
         self.temp=tempfile.TemporaryDirectory();self.base=Path(self.temp.name)
-        self.host=Node(self.base/'host','现场 A');self.receiver=Node(self.base/'receiver','办公室')
+        with socket.socket(socket.AF_INET,socket.SOCK_DGRAM) as udp:udp.bind(('127.0.0.1',0));discovery_port=udp.getsockname()[1]
+        self.host=Node(self.base/'host','现场 A',discovery_port);self.receiver=Node(self.base/'receiver','办公室',discovery_port)
 
     def tearDown(self):
         self.receiver.close();self.host.close();self.temp.cleanup()
@@ -81,10 +85,10 @@ class LanCaptureSyncTests(unittest.TestCase):
             c.execute("UPDATE sku_rows SET status='已拍摄',baseline='已拍摄',completed_at='2026-11-08T14:20:00.123' WHERE project=? AND sku=?",(pid,CODE))
         self.connect();self.receiver.sync.sync_once()
         state=self.receiver.sync.state();self.assertEqual(state['phase'],'following')
-        local_sid=mapped_id(self.host.sync.config['device'],sid);local_pid=mapped_id(self.host.sync.config['device'],pid)
+        local_sid=self.host.local_id(sid);local_pid=self.host.local_id(pid)
         session=self.receiver.store.session(local_sid);records=self.receiver.store.records(local_sid)
         local_file=Path(session['root'])/records[0]['jpg']
-        self.assertTrue(local_file.is_file());self.assertIn('2026-11-08',local_file.parts)
+        self.assertTrue(local_file.is_file());self.assertIn(self.host.sync.manifest()['set']['date'],local_file.parts)
         self.assertEqual(local_file.read_bytes(),(self.host.photos/'one.JPG').read_bytes())
         self.assertEqual(local_file.with_suffix('.xmp').read_text(),side.read_text())
         self.assertEqual(self.receiver.archive.asset(aid)['files'][0]['path'],str(local_file))
@@ -109,7 +113,7 @@ class LanCaptureSyncTests(unittest.TestCase):
             c.execute('UPDATE sessions SET state=?,revision=revision+1 WHERE id=?',(stable_json(session['state']),sid))
         self.receiver.sync.sync_once()
         self.assertEqual(len(self.receiver.store.records(local_sid)),2)
-        self.assertEqual(self.receiver.store.session(local_sid)['state']['overrides'][mapped_id(self.host.sync.config['device'],cid)],4)
+        self.assertEqual(self.receiver.store.session(local_sid)['state']['overrides'][self.host.local_id(cid)],4)
         self.receiver.sync.disconnect();self.host.sync.configure({'enabled':False})
         self.assertTrue(local_file.is_file());self.assertEqual(len(self.receiver.store.records(local_sid)),2)
         reopened=Store(self.receiver.store.data,ROOT)
@@ -133,9 +137,9 @@ class LanCaptureSyncTests(unittest.TestCase):
 
     def test_either_side_can_disconnect_without_deleting_data_or_disabling_discovery(self):
         sid,_=self.host.photo();peer=self.connect();self.receiver.sync.sync_once()
-        local_sid=mapped_id(peer['device'],sid);session=self.receiver.store.session(local_sid)
+        local_sid=self.host.local_id(sid);session=self.receiver.store.session(local_sid)
         photo=Path(session['root'])/self.receiver.store.records(local_sid)[0]['jpg'];before=photo.read_bytes()
-        self.assertEqual(self.host.sync.state()['sending_count'],1)
+        self.assertEqual(self.host.sync.state()['connected_count'],1)
         self.assertEqual(self.host.sync.state()['connected_clients'][0]['name'],'办公室')
         token=self.receiver.sync.token;self.host.sync.disconnect()
         with self.assertRaises(HTTPError) as error:self.receiver.sync.request_json(peer['address'],'/sync/revision',token=token)
@@ -146,14 +150,14 @@ class LanCaptureSyncTests(unittest.TestCase):
         self.assertIn('已断开同步',self.receiver.sync.state()['error'])
         self.assertEqual(photo.read_bytes(),before)
         self.assertTrue(self.host.sync.state()['enabled']);self.assertTrue(self.receiver.sync.state()['enabled'])
-        self.connect();self.receiver.sync.sync_once();self.assertEqual(self.host.sync.state()['sending_count'],1)
-        self.receiver.sync.disconnect();self.assertEqual(self.host.sync.state()['sending_count'],0)
+        self.connect();self.receiver.sync.sync_once();self.assertEqual(self.host.sync.state()['connected_count'],1)
+        self.receiver.sync.disconnect();self.assertEqual(self.host.sync.state()['connected_count'],0)
         self.assertEqual(photo.read_bytes(),before)
         self.assertIn(self.receiver.sync.config['device'],[p['device'] for p in self.host.sync.discover(timeout=.5)['peers']])
 
     def test_new_sidecar_restart_reconnect_and_independent_sources(self):
         sid,r=self.host.photo();self.connect();self.receiver.sync.sync_once()
-        local_sid=mapped_id(self.host.sync.config['device'],sid)
+        local_sid=self.host.local_id(sid)
         root=Path(self.receiver.store.session(local_sid)['root']);local=root/self.receiver.store.records(local_sid)[0]['jpg']
         (self.host.photos/'one.xmp').write_text('<xmp>new sidecar</xmp>')
         self.receiver.sync.sync_once();self.assertEqual(local.with_suffix('.xmp').read_text(),'<xmp>new sidecar</xmp>')
@@ -168,7 +172,7 @@ class LanCaptureSyncTests(unittest.TestCase):
         self.receiver.sync.peers[peer['device']]=peer
         self.receiver.sync.connect_peer({'device':peer['device'],'password':'同步 001Ab!'})
         self.receiver.sync.sync_once()
-        other_local=self.receiver.store.session(mapped_id(peer['device'],other_sid))
+        other_local=self.receiver.store.session(other.local_id(other_sid))
         self.assertNotEqual(other_local['root'],str(root));self.assertTrue(local.is_file())
 
     def test_received_confirmation_can_browse_export_and_prepare_archive_offline(self):
@@ -186,17 +190,17 @@ class LanCaptureSyncTests(unittest.TestCase):
             with fixture.store.connect() as c:c.execute('UPDATE captures SET data=? WHERE session=? AND id=?',(stable_json(fresh),fixture.sid,record['id']))
         fixture.parse();fixture.choose()
         while fixture.archive.process_one():pass
-        fixture_sync=LanCaptureSync(fixture.store,fixture.sku,fixture.archive,autostart=False)
+        fixture_sync=LanCaptureSync(fixture.store,fixture.sku,fixture.archive,autostart=False,host_state=lambda:{'watch':{'enabled':True,'session_id':fixture.sid}})
         self.addCleanup(fixture_sync.close);fixture_sync.configure({'enabled':True,'password':'001abc','name':'实拍确认'})
         peer={'device':fixture_sync.config['device'],'name':'实拍确认','address':f'http://127.0.0.1:{fixture_sync.server.server_port}','receiving':False,'seen':time.time()}
         self.receiver.sync.peers[peer['device']]=peer;self.receiver.sync.connect_peer({'device':peer['device'],'password':'001abc'})
         self.receiver.sync.sync_once();self.receiver.sync.disconnect();fixture_sync.configure({'enabled':False})
-        local_sid=mapped_id(peer['device'],fixture.sid);local_pid=mapped_id(peer['device'],fixture.pid)
+        local_sid=mapped_id(peer['device'],fixture.sid+':'+fixture_sync.manifest()['set']['id']);local_pid=mapped_id(peer['device'],fixture.pid+':'+fixture_sync.manifest()['set']['id'])
         result=browse(self.receiver.sku)
         self.assertEqual(result['groups'][0]['sku'],CODE)
         self.assertGreater(browse(self.receiver.sku,search='COTTON')['total'],0)
         self.assertTrue(all(Path(row['path']).is_file() for row in result['rows']))
-        self.assertEqual(labels(self.receiver.sku,local_sid)['labels'][mapped_id(peer['device'],fixture.ids[0])],CODE)
+        self.assertEqual(labels(self.receiver.sku,local_sid)['labels'][mapped_id(peer['device'],fixture.ids[0]+':'+fixture_sync.manifest()['set']['id'])],CODE)
         self.receiver.sku.activate(local_pid);row=next(r for r in self.receiver.sku.state()['rows'] if r['sku']==CODE and r['sheet']=='模特图')
         self.assertEqual(row['status'],'已拍摄');self.assertIsNotNone(row['sku_image']);self.assertIsNotNone(row['label_image'])
         self.receiver.store.activate(local_sid)
@@ -222,11 +226,11 @@ class LanCaptureSyncTests(unittest.TestCase):
         sid,r=self.host.photo();self.connect()
         with patch.object(self.receiver.sync.data,'apply',side_effect=RuntimeError('simulated power loss')):
             with self.assertRaisesRegex(RuntimeError,'power loss'):self.receiver.sync.sync_once()
-        self.assertIsNone(self.receiver.store.session(mapped_id(self.host.sync.config['device'],sid)))
+        self.assertIsNone(self.receiver.store.session(self.host.local_id(sid)))
         self.host.sync.configure({'enabled':False})
         # 模拟重启后的首轮：无需主机在线即可完成已经校验到盘的待发布快照。
         with self.assertRaises(OSError):self.receiver.sync.sync_once()
-        session=self.receiver.store.session(mapped_id(self.host.sync.config['device'],sid));self.assertIsNotNone(session)
+        session=self.receiver.store.session(self.host.local_id(sid));self.assertIsNotNone(session)
         self.assertTrue((Path(session['root'])/self.receiver.store.records(session['id'])[0]['jpg']).is_file())
 
 
@@ -260,7 +264,7 @@ class LanCaptureSyncBrowserTests(unittest.TestCase):
             self.assertTrue(page.locator('#lan-sync-exit').is_disabled())
             self.assertEqual(page.locator('#lan-sync-controls > .lan-sync-card').count(),3)
             self.assertEqual(page.locator('#lan-sync-peers-dialog,#lan-sync-discover').count(),0)
-            peer=page.locator('.lan-sync-peer').filter(has_text='现场 A');peer.wait_for()
+            peer=page.locator('[data-sync-device="'+self.host.sync.config['device']+'"]');peer.wait_for()
             self.assertGreater(page.locator('#lan-sync-clients').bounding_box()['x'],page.locator('.lan-sync-machine').bounding_box()['x'])
             discovery_requests=[];page.on('request',lambda r:discovery_requests.append(r.url) if r.url.endswith('/api/lan-sync/discover') else None)
             peer.focus()
@@ -283,11 +287,16 @@ class LanCaptureSyncBrowserTests(unittest.TestCase):
             self.assertEqual(page.locator('.lan-sync-peer').count(),0)
             self.assertTrue(page.locator('#lan-sync-refresh').is_disabled())
             page.locator('#lan-sync-enabled').check();peer.wait_for()
-            page.locator('.lan-sync-peer').filter(has_text='现场 A').dblclick();page.locator('#lan-sync-code').fill('wrong');page.locator('#lan-sync-login-submit').click()
+            peer.dblclick();page.locator('#lan-sync-code').fill('wrong');page.locator('#lan-sync-login-submit').click()
             page.wait_for_function('()=>document.getElementById("lan-sync-login-status").textContent.includes("同步码错误")')
             page.locator('#lan-sync-code').fill('同步 001Ab!');page.locator('#lan-sync-login-submit').click()
             page.wait_for_function('()=>window.FramekeepLanSync?.receiving()&&window.FRAMEKEEP_SESSION.id',timeout=20000)
+            page.evaluate('()=>FramekeepWorkspace.show("selection")')
             page.wait_for_selector('#lan-sync-badge:visible')
+            self.assertEqual(page.locator('#lan-sync-badge').evaluate('(node)=>getComputedStyle(node).position'),'static')
+            self.assertTrue(page.locator('#lan-sync-badge').evaluate('(node)=>!!node.closest(".workspace-tool-content,.filterbar")'))
+            self.assertTrue(page.evaluate('()=>{const badge=document.getElementById("lan-sync-badge").getBoundingClientRect(),search=document.getElementById("search").getBoundingClientRect();return Math.abs(badge.top-search.top)<12&&badge.right>search.right}'))
+            inline=ROOT/'build/lan-sync-validation/inline-status.png';inline.parent.mkdir(exist_ok=True,parents=True);page.screenshot(path=str(inline))
             # 写接口由引擎拒绝；不能依靠按钮禁用保证单向接收。
             code=page.evaluate("""async()=>{const r=await fetch('/api/sku/full-auto',{method:'POST',headers:{'Content-Type':'application/json','X-Framekeep-Token':FRAMEKEEP_SESSION.requestToken},body:JSON.stringify({enabled:true})});return r.status}""")
             self.assertEqual(code,423)
@@ -308,6 +317,9 @@ class LanCaptureSyncBrowserTests(unittest.TestCase):
                 self.assertLessEqual(page.evaluate('document.documentElement.scrollWidth'),width)
                 self.assertGreaterEqual(page.locator('#lan-sync-clients').bounding_box()['y'],page.locator('.lan-sync-storage').bounding_box()['y'])
             page.set_viewport_size({'width':1440,'height':1000})
+            # 复现：接收端改变浏览视图后 flush 会触发只读拒绝，退出仍必须成功。
+            page.evaluate('()=>{const flush=FramekeepIO.flush;FramekeepIO.flush=async()=>{if(FramekeepLanSync.receiving())throw new Error("正在单向接收");return flush()}}')
+            self.assertNotIn('发现',page.locator('#lan-sync-peers-status').inner_text())
             page.locator('#lan-sync-connection-disconnect').click();page.wait_for_function('()=>!window.FramekeepLanSync.receiving()')
             self.assertTrue(page.locator('#lan-sync-exit').is_disabled())
             self.assertEqual(len(self.receiver.store.sessions()),1)
@@ -317,7 +329,7 @@ class LanCaptureSyncBrowserTests(unittest.TestCase):
             page.route('**/api/lan-sync',lambda route:route.fulfill(content_type='application/json',body=stable_json(self.host.sync.state())))
             page.route('**/api/lan-sync/disconnect',lambda route:route.fulfill(content_type='application/json',body=stable_json(self.host.sync.disconnect())))
             page.locator('[data-settings-section="sync"]').click()
-            page.wait_for_function('()=>document.getElementById("lan-sync-connection-state").textContent.includes("正在发送")')
+            page.wait_for_function('()=>document.getElementById("lan-sync-connection-state").textContent.includes("已连接")')
             self.assertTrue(page.locator('#lan-sync-exit').is_enabled())
             page.screenshot(path=str(shots/'disconnect-sender.png'))
             page.locator('#lan-sync-exit').click();page.wait_for_function('()=>document.getElementById("lan-sync-exit").disabled')

@@ -1,0 +1,54 @@
+{
+  "date": "2026-11-20",
+  "source_commit": "93591319918082703b02064268bdc11587ea9a6f",
+  "scope": "仅分析；临时目录、合成3600x2400主JPG、真实无头Edge、人工故障注入；未修改业务程序和生产资料",
+  "customer": {
+    "location": "非本机",
+    "version_reported": "最新版，尚无精确发布号",
+    "shutter_to_display_reported_seconds": 3,
+    "actual_root_cause_confirmed": false,
+    "pending": ["拍摄主机或同步接收端", "仅JPG或RAW+JPG", "保存位置", "分段时序"]
+  },
+  "unchanged_since_notification_fix": [
+    "选片助手/direct_jpeg.py",
+    "选片助手/directory_events.py",
+    "演示方案/receiving-preview.js"
+  ],
+  "existing_regression": {
+    "command": "python -X utf8 -m unittest test_capture_notification_recovery test_direct_channel -v",
+    "passed": 7,
+    "failed": 0,
+    "elapsed_seconds": 11.134,
+    "modified_only_notification_to_painted_ms": 325.7476,
+    "reconnected_with_injected_notification_to_painted_ms": 79.5974,
+    "six_busy_business_connections_original_painted_ms": 221.8131
+  },
+  "fault_probes": {
+    "command": "python -X utf8 build/capture-latency-247/probe.py",
+    "lost_notifications": {
+      "condition": "监听句柄有效但不补发失联窗口的事件",
+      "notification_status_at_500ms": "active",
+      "target_notice_at_500ms": false,
+      "target_visible_at_500ms": false,
+      "file_write_to_painted_ms": 2052.8493,
+      "formal_rescan_seconds": 2.0,
+      "page_errors": 0
+    },
+    "transient_read_failure": {
+      "injected_423_window_ms": 800,
+      "formal_lock_held_ms": 1700,
+      "same_revision_automatic_failure_ms": [103.6995, 175.9371, 310.8699],
+      "automatic_retries_stopped": true,
+      "manual_same_url_get_after_recovery": {"status": 200, "bytes": 2323188},
+      "visible_before_formal_lock_release": false,
+      "file_write_to_formal_path_painted_ms": 1863.2913,
+      "page_errors": 0
+    }
+  },
+  "limitations": [
+    "两项注入仅证明软件恢复缺口，不等于客户实际根因",
+    "计时从测试写入开始，不包含相机曝光或传输",
+    "短暂读取失败的总耗时包含人为保持的1700ms正式监控锁",
+    "未操作客户机，未安装或发布版本"
+  ]
+}

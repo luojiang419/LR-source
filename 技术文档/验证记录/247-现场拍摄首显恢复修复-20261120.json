@@ -1,0 +1,161 @@
+{
+  "date": "2026-11-20",
+  "branch": "fix/capture-latency-recovery-247",
+  "base_commit": "39c7e19",
+  "scope": "本机源码修复与模拟验收；未发布、未安装至生产、未操作客户机",
+  "before": {
+    "scope": "current source, injected faults, temporary photos, no camera shutter timing",
+    "transient_read_failure": {
+      "failure_window_ms": 800,
+      "formal_lock_held_ms": 1700,
+      "first_frame_with_formal_lock": false,
+      "request_after_recovery": {
+        "status": 200,
+        "bytes": 2323188
+      },
+      "automatic_retry_stopped": true,
+      "formal_path_frame_ms": 1802.446300000156,
+      "attempts": [
+        {
+          "ms": 14.936999999918044,
+          "url": "http://127.0.0.1:61122/api/watch/preview/cbc650166c41415fb3f088f7de361286/ac9f23e6199543de828a8e1d9865caa5?rev=0&read=4",
+          "status": 423
+        },
+        {
+          "ms": 85.9296000003269,
+          "url": "http://127.0.0.1:61122/api/watch/preview/cbc650166c41415fb3f088f7de361286/ac9f23e6199543de828a8e1d9865caa5?rev=2&read=5",
+          "status": 423
+        },
+        {
+          "ms": 151.29860000024564,
+          "url": "http://127.0.0.1:61122/api/watch/preview/cbc650166c41415fb3f088f7de361286/ac9f23e6199543de828a8e1d9865caa5?rev=2&read=6",
+          "status": 423
+        },
+        {
+          "ms": 286.4582000001974,
+          "url": "http://127.0.0.1:61122/api/watch/preview/cbc650166c41415fb3f088f7de361286/ac9f23e6199543de828a8e1d9865caa5?rev=2&read=7",
+          "status": 423
+        },
+        {
+          "ms": 1716.2912000003416,
+          "url": "http://127.0.0.1:61122/api/watch/preview/cbc650166c41415fb3f088f7de361286/ac9f23e6199543de828a8e1d9865caa5?rev=2&read=7",
+          "status": 200
+        }
+      ],
+      "page_errors": []
+    },
+    "lost_notifications": {
+      "injection": "active handles without replay of lost notifications",
+      "painted_at_500ms": false,
+      "notification_status_at_500ms": "active",
+      "notice_at_500ms": null,
+      "file_write_to_painted_ms": 2056.2457999999424,
+      "rescan_seconds": 2.0,
+      "page_errors": []
+    }
+  },
+  "after": {
+    "notification_recovery": {
+      "cases": {
+        "lost": {
+          "jpeg_available_to_painted_ms": 315.88860000010754,
+          "formal_monitor_locked": true
+        },
+        "reconnect": {
+          "jpeg_available_to_painted_ms": 63.417000000299595,
+          "formal_monitor_locked": true
+        },
+        "overflow": {
+          "jpeg_available_to_painted_ms": 80.34960000077263,
+          "formal_monitor_locked": true
+        }
+      },
+      "page_errors": []
+    },
+    "transient_read_recovery": {
+      "failure_window_ms": 800,
+      "jpeg_available_to_painted_ms": 1127.2522999997818,
+      "formal_monitor_locked": true,
+      "attempts": [
+        {
+          "ms": 72.3134999998365,
+          "status": 423,
+          "url": "http://127.0.0.1:15935/api/watch/preview/2b1a5fae84d1456186cf762a798d1334/8e89cec88af54d7ca109cb4c6b04daaf?rev=0&read=4"
+        },
+        {
+          "ms": 146.26229999976204,
+          "status": 423,
+          "url": "http://127.0.0.1:15935/api/watch/preview/2b1a5fae84d1456186cf762a798d1334/8e89cec88af54d7ca109cb4c6b04daaf?rev=2&read=5"
+        },
+        {
+          "ms": 210.79769999960263,
+          "status": 423,
+          "url": "http://127.0.0.1:15935/api/watch/preview/2b1a5fae84d1456186cf762a798d1334/8e89cec88af54d7ca109cb4c6b04daaf?rev=2&read=6"
+        },
+        {
+          "ms": 337.2687000000951,
+          "status": 423,
+          "url": "http://127.0.0.1:15935/api/watch/preview/2b1a5fae84d1456186cf762a798d1334/8e89cec88af54d7ca109cb4c6b04daaf?rev=2&read=7"
+        },
+        {
+          "ms": 592.6181000004362,
+          "status": 423,
+          "url": "http://127.0.0.1:15935/api/watch/preview/2b1a5fae84d1456186cf762a798d1334/8e89cec88af54d7ca109cb4c6b04daaf?rev=2&read=8"
+        },
+        {
+          "ms": 1078.074299999571,
+          "status": 200,
+          "url": "http://127.0.0.1:15935/api/watch/preview/2b1a5fae84d1456186cf762a798d1334/8e89cec88af54d7ca109cb4c6b04daaf?rev=2&read=9"
+        }
+      ],
+      "cancel_follow_stops_retries": true,
+      "new_photo_cancels_old": true,
+      "page_errors": []
+    }
+  },
+  "full_source": {
+    "engine": "complete source services",
+    "history_photos": 600,
+    "browser_cpu_throttle": 4,
+    "gpu_disabled": true,
+    "direct_notifications": "silently dropped",
+    "formal_monitor_locked_during_frames": true,
+    "jpeg_available_to_painted_ms": [
+      371.80160000025353,
+      312.66109999978653,
+      216.32669999962673
+    ],
+    "original_pixels": [
+      3600,
+      2400
+    ],
+    "recovered_notifications": 3,
+    "formal_handoff_and_two_star": true,
+    "page_errors": [],
+    "production_data_used": false
+  },
+  "regression": {
+    "combined_passed": 77,
+    "combined_seconds": 132.621,
+    "final_recovery_passed": 10,
+    "final_recovery_seconds": 12.09,
+    "js_syntax": "passed"
+  },
+  "sha256": {
+    "选片助手/direct_jpeg.py": "97b24f0e0195a3cba17b592f36b0058b3f41a8d7918008de6ca3b8bc058f519b",
+    "选片助手/direct_jpeg_recovery.py": "b0fb34f0edc535f713e0059f86d82098a78ac7d850419f5da5a5c3c4f4b14096",
+    "演示方案/receiving-preview.js": "ce9f830a1f32db8a15597cd468b33b96e588802a6ccc132410e6d9c0c3721e06",
+    "选片助手/test_capture_latency_recovery.py": "13d275e36973b7ef09750ed96bfac1511557473811e6eeb99bb152ed6f213d62"
+  },
+  "limitations": [
+    "非物理快门计时，不含相机传输",
+    "客户机实际触发因素未确诊",
+    "无通知且目录属性也不变时仍需2秒名称校核",
+    "未编译发布正式更新，客户机尚未获得修复"
+  ],
+  "fixture_corrections": [
+    "隐藏checkbox改用产品setFollow入口",
+    "历史图建立时间与监控开启时间明确隔开",
+    "移除探针人为全局附加的桌面管理头，未改产品CORS"
+  ]
+}
