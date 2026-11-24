@@ -1,0 +1,4824 @@
+{
+ "版本": "1.0.8",
+ "安装引擎SHA256": "be361d46cbfb7df4d5170c494f32a5667dff7c908b8e10d63b303dde4e237642",
+ "测试": "本机安装目录引擎、独立数据目录、无头 Edge 1440×960、独立 Windows 文件通知。原始实拍 JPG 在本机 D 盘经 EOS 回调重放。每轮单独启动，从第二张文件开始统计，首张为预热图。",
+ "素材": {
+  "去重方式": "完整文件 SHA-256",
+  "独立图片数": 120,
+  "机型": [
+   "Canon EOS R6m2"
+  ],
+  "字节范围": [
+   333617,
+   1504037
+  ]
+ },
+ "字段": "legacy_ms 沿用历史基准，目录通知至主图和左栏各自两次 requestAnimationFrame 后仍有效，取较晚者。notification_ms 为独立可见性观察，要求两侧同图连续两帧可见。write_ms 为开始写入至独立观察到两侧显示。null 为未取得对应双帧记录。P95/P99 按有记录样本的最近秩计算，达标率以全部输入为分母。",
+ "结果": {
+  "normalA": {
+   "历史口径": {
+    "完整": 119,
+    "总数": 120,
+    "达标": 47,
+    "占全部百分比": 39.17,
+    "中位数": 63.15,
+    "P95": 82.781,
+    "P99": 265.009,
+    "最长": 776.026,
+    "超过100ms": 3
+   },
+   "两帧均可见": {
+    "完整": 119,
+    "总数": 120,
+    "达标": 65,
+    "占全部百分比": 54.17,
+    "中位数": 58.04,
+    "P95": 72.723,
+    "P99": 265.009,
+    "最长": 775.826,
+    "超过100ms": 3
+   },
+   "实际写入间隔中位数_ms": 1008.96,
+   "测量前后最小往返半程_ms": [
+    0.5051500014960766,
+    0.4161500036716461
+   ],
+   "实测入库数_扣除预热图": 120,
+   "页面异常": []
+  },
+  "burst": {
+   "历史口径": {
+    "完整": 120,
+    "总数": 120,
+    "达标": 65,
+    "占全部百分比": 54.17,
+    "中位数": 59.57,
+    "P95": 76.276,
+    "P99": 85.383,
+    "最长": 215.07,
+    "超过100ms": 1
+   },
+   "两帧均可见": {
+    "完整": 120,
+    "总数": 120,
+    "达标": 79,
+    "占全部百分比": 65.83,
+    "中位数": 57.14,
+    "P95": 71.541,
+    "P99": 75.518,
+    "最长": 214.87,
+    "超过100ms": 1
+   },
+   "实际写入间隔中位数_ms": 260.3,
+   "测量前后最小往返半程_ms": [
+    0.5680500008165836,
+    0.432499997317791
+   ],
+   "实测入库数_扣除预热图": 120,
+   "页面异常": []
+  },
+  "normalB": {
+   "历史口径": {
+    "完整": 119,
+    "总数": 120,
+    "达标": 55,
+    "占全部百分比": 45.83,
+    "中位数": 61.45,
+    "P95": 77.934,
+    "P99": 83.051,
+    "最长": 165.06,
+    "超过100ms": 1
+   },
+   "两帧均可见": {
+    "完整": 120,
+    "总数": 120,
+    "达标": 68,
+    "占全部百分比": 56.67,
+    "中位数": 57.72,
+    "P95": 71.315,
+    "P99": 132.96,
+    "最长": 336.824,
+    "超过100ms": 2
+   },
+   "实际写入间隔中位数_ms": 1007.04,
+   "测量前后最小往返半程_ms": [
+    0.4893000014126301,
+    0.32145000249147415
+   ],
+   "实测入库数_扣除预热图": 120,
+   "页面异常": []
+  },
+  "合计": {
+   "历史口径": {
+    "完整": 358,
+    "总数": 360,
+    "达标": 167,
+    "占全部百分比": 46.39,
+    "中位数": 61.28,
+    "P95": 78.083,
+    "P99": 165.06,
+    "最长": 776.026,
+    "超过100ms": 5
+   },
+   "两帧均可见": {
+    "完整": 359,
+    "总数": 360,
+    "达标": 212,
+    "占全部百分比": 58.89,
+    "中位数": 57.66,
+    "P95": 72.264,
+    "P99": 214.87,
+    "最长": 775.826,
+    "超过100ms": 6
+   }
+  }
+ },
+ "逐张记录": {
+  "normalA": [
+   {
+    "i": 0,
+    "source": "XSY_3686.JPG",
+    "sha256": "d4f347c42ea916b51c1be18f9dd90aa9d1da8cfe7508592806f36db79067e3a9",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 986873,
+    "legacy_ms": 75.755,
+    "notification_ms": 75.655,
+    "write_ms": 105.188
+   },
+   {
+    "i": 1,
+    "source": "XSY_8079.JPG",
+    "sha256": "f3c8aa6de8921ae4567fa6413d10528145f67ae6c9152a8faa846bc8e471ed0c",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 815383,
+    "legacy_ms": 123.336,
+    "notification_ms": 123.236,
+    "write_ms": 123.983
+   },
+   {
+    "i": 2,
+    "source": "XSY_3600.JPG",
+    "sha256": "5245cb3cff8632f5343939a6e9aca70aa8916b502d5b35c9f233c9f72ff1f5e7",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 785453,
+    "legacy_ms": 43.996,
+    "notification_ms": 43.896,
+    "write_ms": 44.921
+   },
+   {
+    "i": 3,
+    "source": "XSY_3506.JPG",
+    "sha256": "8a677d6366e711b58bd2290b8ef54fa2f2131e43f5bf85da1cae7f12e59ecc86",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 1353549,
+    "legacy_ms": 67.394,
+    "notification_ms": 67.394,
+    "write_ms": 67.976
+   },
+   {
+    "i": 4,
+    "source": "XSY_8101.JPG",
+    "sha256": "79cf37db90575d88be0737e2f3a17c72f5e43abb9ee59086eb145f1f86ff2624",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 684934,
+    "legacy_ms": 58.043,
+    "notification_ms": 58.043,
+    "write_ms": 61.385
+   },
+   {
+    "i": 5,
+    "source": "XSY_8048.JPG",
+    "sha256": "4cb4bc75a51c87a3b1ff155ed74cfb3983231f4ebc46ff44d51e6904b7514eb5",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 653746,
+    "legacy_ms": 46.163,
+    "notification_ms": 46.063,
+    "write_ms": 46.708
+   },
+   {
+    "i": 6,
+    "source": "XSY_3604.JPG",
+    "sha256": "5f179cdaea5a97c2e24d4ffd822feebe69afd91e971c1cb109c36131648bfd55",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 890084,
+    "legacy_ms": 70.083,
+    "notification_ms": 70.083,
+    "write_ms": 70.808
+   },
+   {
+    "i": 7,
+    "source": "XSY_8089.JPG",
+    "sha256": "690375b23e3168e76e64e21dcd3386bde33b496363aaa4a9abe70430e87be695",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 744061,
+    "legacy_ms": 64.476,
+    "notification_ms": 64.476,
+    "write_ms": 65.272
+   },
+   {
+    "i": 8,
+    "source": "XSY_8093.JPG",
+    "sha256": "aa250550c3d29598649689f05548de9f7ecdda2f93b0b5c3141d0e67718fd280",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 675113,
+    "legacy_ms": 62.71,
+    "notification_ms": 62.61,
+    "write_ms": 63.242
+   },
+   {
+    "i": 9,
+    "source": "XSY_8045.JPG",
+    "sha256": "299c2467902e92160bf185f2956dc584665f5ceb3c36a06c41cfe0db3a7d98ad",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 800622,
+    "legacy_ms": 54.669,
+    "notification_ms": 54.569,
+    "write_ms": 55.421
+   },
+   {
+    "i": 10,
+    "source": "XSY_3489.JPG",
+    "sha256": "032c39e2bbd0717865902fb1a5cbda03a23d599a23992e0a5d0737f588d6d59b",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 1274237,
+    "legacy_ms": 77.474,
+    "notification_ms": 44.974,
+    "write_ms": 45.63
+   },
+   {
+    "i": 11,
+    "source": "XSY_3568.JPG",
+    "sha256": "91a9dc1870b5910391a137d64888eee91cecd4f368e2b27c00d966649b82e775",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 775910,
+    "legacy_ms": 65.348,
+    "notification_ms": 65.248,
+    "write_ms": 65.954
+   },
+   {
+    "i": 12,
+    "source": "XSY_8090.JPG",
+    "sha256": "227f3cc4147eed730d891e4e901bdb6c3cdc27227be611a8900f3278e8ce1323",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 717887,
+    "legacy_ms": 51.087,
+    "notification_ms": 51.087,
+    "write_ms": 51.735
+   },
+   {
+    "i": 13,
+    "source": "XSY_8086.JPG",
+    "sha256": "06f5cc0d3b3c0355feae6fe5803d68c6e466cb082d3076b622b22d235218b95b",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 855729,
+    "legacy_ms": 47.101,
+    "notification_ms": 47.001,
+    "write_ms": 47.572
+   },
+   {
+    "i": 14,
+    "source": "XSY_3599.JPG",
+    "sha256": "ce8115811947a84693605d4f25aef1b58edd25f3fc2b64180a2c2eee76d5440d",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 789019,
+    "legacy_ms": 74.448,
+    "notification_ms": 42.048,
+    "write_ms": 42.823
+   },
+   {
+    "i": 15,
+    "source": "XSY_3494.JPG",
+    "sha256": "22e22e186d740fdc21d0bbc71d3c47f4a01b11334710577735413f2c9ff21ae9",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 1207737,
+    "legacy_ms": 65.621,
+    "notification_ms": 65.521,
+    "write_ms": 66.406
+   },
+   {
+    "i": 16,
+    "source": "XSY_8047.JPG",
+    "sha256": "a8b6b607f4806953232628a4c1da56e98e6270c6be36575d265af96bfbe7e7fd",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 801800,
+    "legacy_ms": 60.182,
+    "notification_ms": 60.182,
+    "write_ms": 60.601
+   },
+   {
+    "i": 17,
+    "source": "XSY_3758.JPG",
+    "sha256": "f8eba5ec2434738ff092e98863be2aa9c629216eead0e4afde5fe3677ec7c59d",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 799853,
+    "legacy_ms": 52.447,
+    "notification_ms": 52.347,
+    "write_ms": 52.843
+   },
+   {
+    "i": 18,
+    "source": "XSY_3463.JPG",
+    "sha256": "0c3b9544bfc7c40cdaa10695b32440fdd5eca41a05c8f0d73eb4e794f47aaddf",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 1504037,
+    "legacy_ms": 76.072,
+    "notification_ms": 43.672,
+    "write_ms": 44.299
+   },
+   {
+    "i": 19,
+    "source": "XSY_8081.JPG",
+    "sha256": "fccd6587dc6b84f5d1dd46a3be802923ae06afd707cb8a98d2f3b94b1b5dba31",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 820396,
+    "legacy_ms": 265.009,
+    "notification_ms": 265.009,
+    "write_ms": 265.522
+   },
+   {
+    "i": 20,
+    "source": "XSY_8053.JPG",
+    "sha256": "22a6a66c62be0fd7a6978d0261dc9a2f0f6cad34519f12cb3fbc91de30fb2e77",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 657143,
+    "legacy_ms": null,
+    "notification_ms": null,
+    "write_ms": null
+   },
+   {
+    "i": 21,
+    "source": "IMG_0002.JPG",
+    "sha256": "bb540f073b92d4874cb546172e2f0468acd85ababf14b2fbb2e1cf62ce4b79bc",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 851942,
+    "legacy_ms": 776.026,
+    "notification_ms": 775.826,
+    "write_ms": 776.32
+   },
+   {
+    "i": 22,
+    "source": "XSY_8088.JPG",
+    "sha256": "0bac291ed42ba40fbeba30195a8e0b643de976dd5d6ce4d5a43ebd63fac2461e",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 777347,
+    "legacy_ms": 68.296,
+    "notification_ms": 68.196,
+    "write_ms": 68.976
+   },
+   {
+    "i": 23,
+    "source": "XSY_8099.JPG",
+    "sha256": "e2c1333d1bb595c3da15b1b2266b6146e193b6c3eaeeca33909e0735bff37a9f",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 821880,
+    "legacy_ms": 64.497,
+    "notification_ms": 64.497,
+    "write_ms": 65.419
+   },
+   {
+    "i": 24,
+    "source": "XSY_3569.JPG",
+    "sha256": "a72c80d08cd5175ef333c8f59b8fef46928dc072737a06720195fe5d01ac6114",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 826657,
+    "legacy_ms": 51.092,
+    "notification_ms": 51.092,
+    "write_ms": 51.599
+   },
+   {
+    "i": 25,
+    "source": "XSY_8073.JPG",
+    "sha256": "3a926359b207987c52d923e73d41efc9e36d8d803af9430d04c1cda5b85e78a3",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 833131,
+    "legacy_ms": 69.108,
+    "notification_ms": 69.108,
+    "write_ms": 69.75
+   },
+   {
+    "i": 26,
+    "source": "XSY_3800.JPG",
+    "sha256": "59b1b21282900a0095afaa3802ddf667e14497a40f84230b752b6789e1916669",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 1398627,
+    "legacy_ms": 65.572,
+    "notification_ms": 65.572,
+    "write_ms": 66.351
+   },
+   {
+    "i": 27,
+    "source": "XSY_8102.JPG",
+    "sha256": "dabe224ee8a306ba7caa702ac8f8eebee94348bb64029ed9d94d026d18839d44",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 767112,
+    "legacy_ms": 86.302,
+    "notification_ms": 53.302,
+    "write_ms": 54.057
+   },
+   {
+    "i": 28,
+    "source": "XSY_8069.JPG",
+    "sha256": "556ba193a0b6135ef00ff17c53a89d8d001d0941fa8670a9bbb90f1df8db4ab2",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 862522,
+    "legacy_ms": 47.292,
+    "notification_ms": 47.192,
+    "write_ms": 47.686
+   },
+   {
+    "i": 29,
+    "source": "XSY_3723.JPG",
+    "sha256": "8b76a4eabd7c0d43f0df1d56a03315d3b8323c1685489af273c49f4343d4c1b8",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 724577,
+    "legacy_ms": 70.776,
+    "notification_ms": 70.776,
+    "write_ms": 71.546
+   },
+   {
+    "i": 30,
+    "source": "XSY_8110.JPG",
+    "sha256": "2f211188b0f30236a00294a30a170c02079a96cc2c44e1a0ab18a665da232ef4",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 906444,
+    "legacy_ms": 63.92,
+    "notification_ms": 63.92,
+    "write_ms": 64.896
+   },
+   {
+    "i": 31,
+    "source": "XSY_3732.JPG",
+    "sha256": "8371c9c23a49a9769863bb61aa908b01b563f854852b6177bce6596b9eb2a735",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 818811,
+    "legacy_ms": 59.484,
+    "notification_ms": 59.484,
+    "write_ms": 60.211
+   },
+   {
+    "i": 32,
+    "source": "XSY_3570.JPG",
+    "sha256": "78774d388e6b0fdb07ac74428ad3ae35e480354b496c58a34664644610fd3f57",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 836217,
+    "legacy_ms": 54.965,
+    "notification_ms": 54.965,
+    "write_ms": 55.957
+   },
+   {
+    "i": 33,
+    "source": "XSY_8106.JPG",
+    "sha256": "0a943f1b8abdf374fa0372d4a7b0d905358cff7f6c5c4738d6d126c3b3a3067b",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 728556,
+    "legacy_ms": 48.467,
+    "notification_ms": 48.467,
+    "write_ms": 48.947
+   },
+   {
+    "i": 34,
+    "source": "XSY_3598.JPG",
+    "sha256": "701b50fcd803c648c07f4250a6e530ce265f5cb640897120aba8c27795eba9d2",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 885170,
+    "legacy_ms": 68.829,
+    "notification_ms": 68.729,
+    "write_ms": 69.176
+   },
+   {
+    "i": 35,
+    "source": "XSY_3826.JPG",
+    "sha256": "01233183b82a9330d579bab1d32f66df64e0afcb4933ef308ee6c651fd47d7a8",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 1442067,
+    "legacy_ms": 58.752,
+    "notification_ms": 58.752,
+    "write_ms": 59.252
+   },
+   {
+    "i": 36,
+    "source": "XSY_8087.JPG",
+    "sha256": "620cbe4b57183214d6c7f8bd4c7c74fa95b6d160b84cc77a3e594e4d3d38ade7",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 825460,
+    "legacy_ms": 48.472,
+    "notification_ms": 48.372,
+    "write_ms": 49.276
+   },
+   {
+    "i": 37,
+    "source": "XSY_3792.JPG",
+    "sha256": "96e7448ee1396824780cda37183a9c59207b2d5cdb9679536648474c341ef0c1",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 1020241,
+    "legacy_ms": 72.391,
+    "notification_ms": 72.391,
+    "write_ms": 73.001
+   },
+   {
+    "i": 38,
+    "source": "XSY_3745.JPG",
+    "sha256": "7cb5093e51ebfe973739ad4bf055d8092775fcec899d575f0c8e10569f4730ca",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 805709,
+    "legacy_ms": 61.384,
+    "notification_ms": 61.384,
+    "write_ms": 61.966
+   },
+   {
+    "i": 39,
+    "source": "XSY_3707.JPG",
+    "sha256": "9b421ecda591be7037109bf32105ebc49129b4f16a0e8c88d51035c90e8b4314",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 844504,
+    "legacy_ms": 50.389,
+    "notification_ms": 50.389,
+    "write_ms": 51.15
+   },
+   {
+    "i": 40,
+    "source": "XSY_8071.JPG",
+    "sha256": "bf9c1c98e098953d553cec90f70d1978f67b16faab6cb59b48e63b1829e685a6",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 789282,
+    "legacy_ms": 67.989,
+    "notification_ms": 67.989,
+    "write_ms": 68.823
+   },
+   {
+    "i": 41,
+    "source": "XSY_8091.JPG",
+    "sha256": "1ddd3ad7a3c26a9673a74e9988a050d393b2ca9c7afa420279bc91721bca06cd",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 805571,
+    "legacy_ms": 61.704,
+    "notification_ms": 61.604,
+    "write_ms": 62.226
+   },
+   {
+    "i": 42,
+    "source": "XSY_8105.JPG",
+    "sha256": "7ba1b0840360478ad90724eb6ac924430884d6096f4f18db66793e401168b85a",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 742350,
+    "legacy_ms": 50.522,
+    "notification_ms": 50.422,
+    "write_ms": 51.274
+   },
+   {
+    "i": 43,
+    "source": "XSY_8097.JPG",
+    "sha256": "fb15aa0333fa25eed59c84dc341d128ed763e8cd55bdd58b590554a2c2a88d7d",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 748287,
+    "legacy_ms": 45.412,
+    "notification_ms": 45.412,
+    "write_ms": 45.841
+   },
+   {
+    "i": 44,
+    "source": "XSY_8080.JPG",
+    "sha256": "e061c389e6546099b2a3e9f44ef279c3cdee262357890fa053223375d9fe5675",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 874031,
+    "legacy_ms": 64.352,
+    "notification_ms": 64.252,
+    "write_ms": 65.049
+   },
+   {
+    "i": 45,
+    "source": "XSY_8066.JPG",
+    "sha256": "db271b5570f09076740b4bb747fd99a4ed65f25fae566cab9c56617b5f472c90",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 725626,
+    "legacy_ms": 50.362,
+    "notification_ms": 50.362,
+    "write_ms": 50.874
+   },
+   {
+    "i": 46,
+    "source": "XSY_8076.JPG",
+    "sha256": "e7cfbe87d68d2d90f0936280bf2da49308a07f5363762b48ba1aea029ce3a996",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 787730,
+    "legacy_ms": 73.899,
+    "notification_ms": 41.399,
+    "write_ms": 42.07
+   },
+   {
+    "i": 47,
+    "source": "XSY_8107.JPG",
+    "sha256": "164f4b711e1cadefb34a9eaad1c2f52a682b1a65f9709f4be6f05a6cc6245ebd",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 805799,
+    "legacy_ms": 60.692,
+    "notification_ms": 60.592,
+    "write_ms": 61.351
+   },
+   {
+    "i": 48,
+    "source": "XSY_3794.JPG",
+    "sha256": "19524a3c7abdfa80b02df97848d31a21487f2fec57c7cde4293aea889a79ddee",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 1013123,
+    "legacy_ms": 52.413,
+    "notification_ms": 52.313,
+    "write_ms": 53.186
+   },
+   {
+    "i": 49,
+    "source": "XSY_3806.JPG",
+    "sha256": "d84c6c710bbd034ec66e89bcfa331cabaea1724de50f9b76d985e43cf599701b",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 1022686,
+    "legacy_ms": 74.507,
+    "notification_ms": 41.407,
+    "write_ms": 41.901
+   },
+   {
+    "i": 50,
+    "source": "XSY_8075.JPG",
+    "sha256": "66fda75a9e6c35dd0f337ea9310ab2a933ee8715ba254a922feb2f93b1534162",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 832641,
+    "legacy_ms": 73.672,
+    "notification_ms": 40.772,
+    "write_ms": 41.446
+   },
+   {
+    "i": 51,
+    "source": "IMG_0006.JPG",
+    "sha256": "c1849832eac67f94f945b1f410ed9c82bc89c78529b9296d55c9f73a6939d56e",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 764728,
+    "legacy_ms": 68.193,
+    "notification_ms": 68.093,
+    "write_ms": 68.536
+   },
+   {
+    "i": 52,
+    "source": "XSY_8092.JPG",
+    "sha256": "62aadb4bf7a392a72019430b7bcfee42550a403fcf6105f8951d5e8906486ff5",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 752920,
+    "legacy_ms": 56.551,
+    "notification_ms": 56.551,
+    "write_ms": 57.394
+   },
+   {
+    "i": 53,
+    "source": "XSY_3455.JPG",
+    "sha256": "3e65549e71e93c87c3e02a2ca0fac97c023d709921c7af759688d2aa7a1aabef",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 988085,
+    "legacy_ms": 47.946,
+    "notification_ms": 47.846,
+    "write_ms": 48.464
+   },
+   {
+    "i": 54,
+    "source": "XSY_3672.JPG",
+    "sha256": "7b00e19aa946b6efa283c6de71d4e97a20730bb1839534a281e53f490cea5c31",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 1009486,
+    "legacy_ms": 69.199,
+    "notification_ms": 69.099,
+    "write_ms": 69.538
+   },
+   {
+    "i": 55,
+    "source": "XSY_3708.JPG",
+    "sha256": "424c034328dcf77e0bccb7825a10cab54a8459466e657b2aaa1f73dfe1695f9b",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 873291,
+    "legacy_ms": 57.311,
+    "notification_ms": 57.311,
+    "write_ms": 57.982
+   },
+   {
+    "i": 56,
+    "source": "XSY_3523.JPG",
+    "sha256": "419210d10bb8af3491da77da2496f8e6a833aadeb3e333a8af30c5abfd5019c7",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 1005434,
+    "legacy_ms": 45.387,
+    "notification_ms": 45.387,
+    "write_ms": 46.226
+   },
+   {
+    "i": 57,
+    "source": "XSY_8068.JPG",
+    "sha256": "58fd10b89f4ff7a7d56d87f80f24cf79e9f26b07d42149e8e9f4122217ade9c1",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 708235,
+    "legacy_ms": 70.414,
+    "notification_ms": 70.314,
+    "write_ms": 71.091
+   },
+   {
+    "i": 58,
+    "source": "XSY_3535.JPG",
+    "sha256": "3a4fb4c763f65dc9881a20f18b1e04f87d5be85e3ec57149518d1bc1b1f7761f",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 862356,
+    "legacy_ms": 64.069,
+    "notification_ms": 64.069,
+    "write_ms": 64.624
+   },
+   {
+    "i": 59,
+    "source": "XSY_3490.JPG",
+    "sha256": "018984b6943d751e47cfb33fbbc956a1ad4e3625cdcb3e38e79c507bf0b5ac5c",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 1251487,
+    "legacy_ms": 82.781,
+    "notification_ms": 50.081,
+    "write_ms": 50.824
+   },
+   {
+    "i": 60,
+    "source": "XSY_3652.JPG",
+    "sha256": "d4f6b8d03a402e2503c361f62588282d43274d8ff1ea1f04e3458f5d188fac7b",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 1027244,
+    "legacy_ms": 77.192,
+    "notification_ms": 44.392,
+    "write_ms": 44.98
+   },
+   {
+    "i": 61,
+    "source": "XSY_8040.JPG",
+    "sha256": "afe8c1fb05539623cacea1f0e0ae08e486748cf9a3c9052cc1c7292f23404ee0",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 399784,
+    "legacy_ms": 66.26,
+    "notification_ms": 66.26,
+    "write_ms": 67.23
+   },
+   {
+    "i": 62,
+    "source": "XSY_3653.JPG",
+    "sha256": "a32bd50977951145cde36d368e71152199d0f2d2679a7234d996dc6eb8e903b5",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 929253,
+    "legacy_ms": 58.766,
+    "notification_ms": 58.766,
+    "write_ms": 59.274
+   },
+   {
+    "i": 63,
+    "source": "IMG_0001.JPG",
+    "sha256": "6b898fd0dffe42b90b93e7d75ed4369777dc556df0705fc557e93e110753709b",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 333617,
+    "legacy_ms": 51.043,
+    "notification_ms": 51.043,
+    "write_ms": 51.589
+   },
+   {
+    "i": 64,
+    "source": "XSY_8049.JPG",
+    "sha256": "43bde2a609cfbcfafbf790b1cefade6641451762ad60f5a8e59f3be0436770ee",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 737006,
+    "legacy_ms": 45.114,
+    "notification_ms": 45.114,
+    "write_ms": 45.795
+   },
+   {
+    "i": 65,
+    "source": "IMG_0003.JPG",
+    "sha256": "9bf205a81f30ebab4781ed29de9bc631bb9108237b27d9eea67ca2a00757670d",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 819162,
+    "legacy_ms": 70.787,
+    "notification_ms": 70.787,
+    "write_ms": 71.283
+   },
+   {
+    "i": 66,
+    "source": "XSY_8078.JPG",
+    "sha256": "fb5e287054ca9acfc340d741b330c71cd0aab8ef681c77c4de9b9ac9cc694c51",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 813586,
+    "legacy_ms": 62.441,
+    "notification_ms": 62.441,
+    "write_ms": 63.111
+   },
+   {
+    "i": 67,
+    "source": "XSY_8064.JPG",
+    "sha256": "74d8db1705a213e5d8587476ba4d493324d20f54dcacf9fe87acd09064512550",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 674058,
+    "legacy_ms": 52.852,
+    "notification_ms": 52.852,
+    "write_ms": 53.663
+   },
+   {
+    "i": 68,
+    "source": "XSY_8095.JPG",
+    "sha256": "0abbb000b0b2302c848325307836aeb82086808653abca2ccf51fb69ea9328af",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 810662,
+    "legacy_ms": 76.376,
+    "notification_ms": 44.076,
+    "write_ms": 44.74
+   },
+   {
+    "i": 69,
+    "source": "XSY_8112.JPG",
+    "sha256": "e450d1f6f2e0fcce1d2f07fda4a3d2cc8e23bfad53de3ab5b67ad9c6b1cc457b",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 738005,
+    "legacy_ms": 67.847,
+    "notification_ms": 67.747,
+    "write_ms": 68.484
+   },
+   {
+    "i": 70,
+    "source": "XSY_3755.JPG",
+    "sha256": "0948e0b1aeb7ef9ac98088a0d72c577c02ea13072cfd402df7c598a8db4c7a51",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 764646,
+    "legacy_ms": 54.197,
+    "notification_ms": 54.197,
+    "write_ms": 54.837
+   },
+   {
+    "i": 71,
+    "source": "XSY_3818.JPG",
+    "sha256": "0b59555ba7c8f34b724d3faffd71f1136c062cef02a2449b2109ad39cbbcb208",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 1057243,
+    "legacy_ms": 47.008,
+    "notification_ms": 46.908,
+    "write_ms": 47.701
+   },
+   {
+    "i": 72,
+    "source": "XSY_8051.JPG",
+    "sha256": "ddc3035adbb9f6f2aee00fbba14a982c1aaee59d5c9a42321389445343aec614",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 676717,
+    "legacy_ms": 78.771,
+    "notification_ms": 46.271,
+    "write_ms": 46.796
+   },
+   {
+    "i": 73,
+    "source": "XSY_8082.JPG",
+    "sha256": "12db2cc2432a23f0f8e1723d111bf82cdc35e61af54bcd3c6c929af30cba66bd",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 747152,
+    "legacy_ms": 72.723,
+    "notification_ms": 72.723,
+    "write_ms": 73.468
+   },
+   {
+    "i": 74,
+    "source": "XSY_3518.JPG",
+    "sha256": "320047a57c0ba8a62152809ec87fe94fc22a7e58230df4b006c5d0c375d15a4d",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 1057599,
+    "legacy_ms": 63.305,
+    "notification_ms": 63.305,
+    "write_ms": 64.163
+   },
+   {
+    "i": 75,
+    "source": "XSY_3530.JPG",
+    "sha256": "159b65005a484efecabe356c33a9b2aa29e4c1a16a1a66e1878e9ca23e063d30",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 783273,
+    "legacy_ms": 56.811,
+    "notification_ms": 56.711,
+    "write_ms": 57.342
+   },
+   {
+    "i": 76,
+    "source": "XSY_8113.JPG",
+    "sha256": "bf82bb1fe4206728cdfe64f6fb0ccddd0cdc8b4dee477ce42212c6b9ed14fec9",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 790513,
+    "legacy_ms": 45.671,
+    "notification_ms": 45.671,
+    "write_ms": 46.564
+   },
+   {
+    "i": 77,
+    "source": "XSY_8061.JPG",
+    "sha256": "768127df000a14c610c56c00e5898220a41d599576012e5944bea06785b408c4",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 633708,
+    "legacy_ms": 75.365,
+    "notification_ms": 42.865,
+    "write_ms": 43.3
+   },
+   {
+    "i": 78,
+    "source": "XSY_3608.JPG",
+    "sha256": "ea5f9a4b0967c7788ff29076dd09badc4e7daca9716b2db2ae2fe5894f2c25cf",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 837885,
+    "legacy_ms": 61.466,
+    "notification_ms": 61.366,
+    "write_ms": 62.348
+   },
+   {
+    "i": 79,
+    "source": "XSY_8072.JPG",
+    "sha256": "de917691d8c1f2a3a56af183f2315d123565d7efa4380610e777be376394bd80",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 802431,
+    "legacy_ms": 57.103,
+    "notification_ms": 57.103,
+    "write_ms": 57.828
+   },
+   {
+    "i": 80,
+    "source": "XSY_3498.JPG",
+    "sha256": "2122c9b47f2aa7546c2f7ac10011cdd55fdf0dffcf0f977f6629547fec49ae74",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 1360807,
+    "legacy_ms": 47.333,
+    "notification_ms": 47.233,
+    "write_ms": 47.731
+   },
+   {
+    "i": 81,
+    "source": "XSY_8062.JPG",
+    "sha256": "718ea1a1ed7c3b2969866313ae41be89cf7ae8953d54c55c72a2d8df0e389852",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 721691,
+    "legacy_ms": 69.74,
+    "notification_ms": 69.54,
+    "write_ms": 69.968
+   },
+   {
+    "i": 82,
+    "source": "XSY_8056.JPG",
+    "sha256": "db12f04e3b98937785e294bc3daad4dbc6ea43f5d5d2813172c20fde9767138a",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 805299,
+    "legacy_ms": 59.305,
+    "notification_ms": 59.205,
+    "write_ms": 60.005
+   },
+   {
+    "i": 83,
+    "source": "XSY_3596.JPG",
+    "sha256": "f9a411a99b2394495d7fd5da61e9f6d3d5e29f8f3a51d3bef3f3bfd96e9bed4d",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 775544,
+    "legacy_ms": 44.872,
+    "notification_ms": 44.872,
+    "write_ms": 45.428
+   },
+   {
+    "i": 84,
+    "source": "XSY_3527.JPG",
+    "sha256": "0b952bfa71189bfdf37d7a91a8bf0942696c5b9ad23722d95a9e517c42ff4df1",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 992008,
+    "legacy_ms": 71.886,
+    "notification_ms": 71.886,
+    "write_ms": 72.432
+   },
+   {
+    "i": 85,
+    "source": "XSY_8054.JPG",
+    "sha256": "de4506fbcec683402856a130aa20f021c8a8d129a17e05114ac50a72c209a9f8",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 846506,
+    "legacy_ms": 63.152,
+    "notification_ms": 63.152,
+    "write_ms": 63.944
+   },
+   {
+    "i": 86,
+    "source": "XSY_3761.JPG",
+    "sha256": "66b6daef13fc8876614858cd8496c1875a6965885ce1af5ca9e7e5bdc78047af",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 800705,
+    "legacy_ms": 61.168,
+    "notification_ms": 61.068,
+    "write_ms": 61.653
+   },
+   {
+    "i": 87,
+    "source": "XSY_3644.JPG",
+    "sha256": "d0a9a5aae2170dce41d6c3ca33133870d05a6c5873fff717e67490cb768aa0f3",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 922139,
+    "legacy_ms": 53.414,
+    "notification_ms": 53.314,
+    "write_ms": 53.764
+   },
+   {
+    "i": 88,
+    "source": "XSY_3556.JPG",
+    "sha256": "ca4153b58dab84523ef77969f2d1685371636bfb3ac676a577649f4e047123e7",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 942241,
+    "legacy_ms": 76.593,
+    "notification_ms": 43.993,
+    "write_ms": 44.464
+   },
+   {
+    "i": 89,
+    "source": "XSY_3562.JPG",
+    "sha256": "30c9a14d52d42505c27242c51638bdb26abc0337460b4c73475a2af0bc3ba8b5",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 753272,
+    "legacy_ms": 66.235,
+    "notification_ms": 66.235,
+    "write_ms": 66.773
+   },
+   {
+    "i": 90,
+    "source": "XSY_3648.JPG",
+    "sha256": "2e722870c0e9313644960804d89d05252e3f846ae7cba0e3dfb8dbefd1793adc",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 1040087,
+    "legacy_ms": 66.105,
+    "notification_ms": 66.105,
+    "write_ms": 66.745
+   },
+   {
+    "i": 91,
+    "source": "XSY_3620.JPG",
+    "sha256": "ae204928b79242a06b9f77a5c8006936e486f97c98abfd6734eaaef53f1c3065",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 746791,
+    "legacy_ms": 62.648,
+    "notification_ms": 62.548,
+    "write_ms": 63.038
+   },
+   {
+    "i": 92,
+    "source": "XSY_3705.JPG",
+    "sha256": "fbbe3f05b1ccac5ddb8353da2877854f75ab2e799bf12b792fe527d832ddbef0",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 790698,
+    "legacy_ms": 51.875,
+    "notification_ms": 51.875,
+    "write_ms": 52.349
+   },
+   {
+    "i": 93,
+    "source": "XSY_3585.JPG",
+    "sha256": "4bfd569174b7ab5a1c145471ed3a685f7e150a83e591b1f2b0232e7af6411620",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 707084,
+    "legacy_ms": 72.717,
+    "notification_ms": 72.617,
+    "write_ms": 73.335
+   },
+   {
+    "i": 94,
+    "source": "XSY_3651.JPG",
+    "sha256": "4c67945508adc05545da3f4ca6bfd710ea9e33238d614cc5bba46897e7040302",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 907281,
+    "legacy_ms": 59.762,
+    "notification_ms": 59.762,
+    "write_ms": 60.53
+   },
+   {
+    "i": 95,
+    "source": "XSY_8070.JPG",
+    "sha256": "12001065e583945fd07b40636276405062d91c8f9c4a2782db8b3fcf5e9a51d5",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 795353,
+    "legacy_ms": 48.813,
+    "notification_ms": 48.813,
+    "write_ms": 49.505
+   },
+   {
+    "i": 96,
+    "source": "XSY_8060.JPG",
+    "sha256": "b7f504a834996e600b946985ffbb3f82e5fec3ff9dbc3362376091cc9514bb62",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 641374,
+    "legacy_ms": 44.373,
+    "notification_ms": 44.373,
+    "write_ms": 45.496
+   },
+   {
+    "i": 97,
+    "source": "XSY_3711.JPG",
+    "sha256": "f32ed18537a61c9441a4ef0e557bc78a7bceb53e84457e9e19450243c71ad34b",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 866698,
+    "legacy_ms": 66.711,
+    "notification_ms": 66.611,
+    "write_ms": 67.385
+   },
+   {
+    "i": 98,
+    "source": "XSY_8074.JPG",
+    "sha256": "9c13a62ec544c01e96268062ddd979743399e57cf39b9a16f16c4335b2ea4da3",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 754116,
+    "legacy_ms": 56.65,
+    "notification_ms": 56.55,
+    "write_ms": 57.078
+   },
+   {
+    "i": 99,
+    "source": "XSY_8103.JPG",
+    "sha256": "67fbcf07c58e359039873009abba65545424094b7f078bc29a9c570d41f964ed",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 771107,
+    "legacy_ms": 44.469,
+    "notification_ms": 44.369,
+    "write_ms": 45.057
+   },
+   {
+    "i": 100,
+    "source": "XSY_3638.JPG",
+    "sha256": "213c13f869821dbcbf7dcf529bfecb932d893b08a0910d1a9a86404a674c6e2a",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 768421,
+    "legacy_ms": 74.202,
+    "notification_ms": 41.902,
+    "write_ms": 42.502
+   },
+   {
+    "i": 101,
+    "source": "XSY_8104.JPG",
+    "sha256": "d104f2be08d87f547f6c784bce2b8d41b4089c965873b83d22ea78601a7ef898",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 779247,
+    "legacy_ms": 65.825,
+    "notification_ms": 65.725,
+    "write_ms": 66.574
+   },
+   {
+    "i": 102,
+    "source": "XSY_3470.JPG",
+    "sha256": "b9e617e77e189f16ae7027f7dfe1f6ce09c4367f5e7b68087e0e6a347ea4e793",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 1492666,
+    "legacy_ms": 63.247,
+    "notification_ms": 63.247,
+    "write_ms": 63.94
+   },
+   {
+    "i": 103,
+    "source": "XSY_8108.JPG",
+    "sha256": "e893c957f8353ecf03aadfb7cc1f940bf91e7c6cd8cb7b396a2d737098e85e91",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 820733,
+    "legacy_ms": 53.783,
+    "notification_ms": 53.683,
+    "write_ms": 54.674
+   },
+   {
+    "i": 104,
+    "source": "XSY_3767.JPG",
+    "sha256": "dae3db980b506a6c432c47290a620f2f955281b3a5689787f9a598dbbf1600dc",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 924416,
+    "legacy_ms": 48.821,
+    "notification_ms": 48.821,
+    "write_ms": 49.382
+   },
+   {
+    "i": 105,
+    "source": "XSY_8055.JPG",
+    "sha256": "82144f04b7ee3c045c08f3f4687a6dc847d7da087cdd6f7a1416ad12e06a2dca",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 800854,
+    "legacy_ms": 46.802,
+    "notification_ms": 46.702,
+    "write_ms": 47.358
+   },
+   {
+    "i": 106,
+    "source": "XSY_3727.JPG",
+    "sha256": "e610d334242660af284978bcfab9614e1327e4486d0ec04c6fe312b301188654",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 791834,
+    "legacy_ms": 68.188,
+    "notification_ms": 68.188,
+    "write_ms": 68.726
+   },
+   {
+    "i": 107,
+    "source": "XSY_8044.JPG",
+    "sha256": "61f806362bb140a907d67f434456c3e6a6dc1c09fd3d37086d78953d97e41363",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 800314,
+    "legacy_ms": 63.801,
+    "notification_ms": 63.801,
+    "write_ms": 64.547
+   },
+   {
+    "i": 108,
+    "source": "XSY_3659.JPG",
+    "sha256": "10ae5559db66c2aef45073085d9efa4f6187b4dc5ab04dda1c8be2200f9db906",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 846203,
+    "legacy_ms": 85.96,
+    "notification_ms": 52.66,
+    "write_ms": 53.37
+   },
+   {
+    "i": 109,
+    "source": "XSY_8059.JPG",
+    "sha256": "7bccbcc9c09b52e777f1b39f87eaa6ba8b8f2279491b8800c346e3a39813f66c",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 766982,
+    "legacy_ms": 78.991,
+    "notification_ms": 45.591,
+    "write_ms": 46.357
+   },
+   {
+    "i": 110,
+    "source": "XSY_8043.JPG",
+    "sha256": "a8e98883fde523ba33f052b2b13b10126b829a6e7160c89f31a2898356ddd7e1",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 806725,
+    "legacy_ms": 72.728,
+    "notification_ms": 72.728,
+    "write_ms": 73.562
+   },
+   {
+    "i": 111,
+    "source": "XSY_8096.JPG",
+    "sha256": "e1594d667746bd36a150fe259bbcd44134f90269d36f4e4dc428db2948542d83",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 751034,
+    "legacy_ms": 60.935,
+    "notification_ms": 60.935,
+    "write_ms": 61.609
+   },
+   {
+    "i": 112,
+    "source": "IMG_0005.JPG",
+    "sha256": "1f4be5c33828d72e74a887b8b548adf0789481cd7cf1e2c713d2a155a8729607",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 794210,
+    "legacy_ms": 60.53,
+    "notification_ms": 60.53,
+    "write_ms": 61.048
+   },
+   {
+    "i": 113,
+    "source": "XSY_3733.JPG",
+    "sha256": "4ad2c12b5574d01638f7966df2bee1c4b763f4f1454851de8d8e9b1dc255fc83",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 730082,
+    "legacy_ms": 52.157,
+    "notification_ms": 52.157,
+    "write_ms": 52.991
+   },
+   {
+    "i": 114,
+    "source": "XSY_8077.JPG",
+    "sha256": "48010bdfd8aa9a48fcd4751429ac4bd05ab335c8ced4dc6564a42908424760e0",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 833809,
+    "legacy_ms": 76.531,
+    "notification_ms": 42.931,
+    "write_ms": 43.705
+   },
+   {
+    "i": 115,
+    "source": "XSY_8063.JPG",
+    "sha256": "8521b138d420c3a8b5cce17be1a75426a5dae0f4eb3db77cffb073afd5a6befc",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 711233,
+    "legacy_ms": 73.486,
+    "notification_ms": 40.686,
+    "write_ms": 41.419
+   },
+   {
+    "i": 116,
+    "source": "XSY_8067.JPG",
+    "sha256": "3de2d865138f342cdff3a79ea145b4ebf8dcc92ad1bc4380c96d826edb1a9bac",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 604415,
+    "legacy_ms": 69.028,
+    "notification_ms": 69.028,
+    "write_ms": 131.014
+   },
+   {
+    "i": 117,
+    "source": "XSY_3641.JPG",
+    "sha256": "d9e3a6853c0d504b24a51d76f829c2b357d42633a84a13b8dd1922245335a852",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 687842,
+    "legacy_ms": 62.567,
+    "notification_ms": 62.467,
+    "write_ms": 63.078
+   },
+   {
+    "i": 118,
+    "source": "XSY_8065.JPG",
+    "sha256": "8b72f313fb76af22e68a893cef1d362e138e2dae8b7b6b9e075551a194f1f448",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 726129,
+    "legacy_ms": 48.792,
+    "notification_ms": 48.792,
+    "write_ms": 50.87
+   },
+   {
+    "i": 119,
+    "source": "XSY_8109.JPG",
+    "sha256": "8ee78ced70de2427ca24a99aa10f529887a5347fb50ac161cdd083a2269d8769",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 963695,
+    "legacy_ms": 68.954,
+    "notification_ms": 68.954,
+    "write_ms": 69.838
+   }
+  ],
+  "burst": [
+   {
+    "i": 0,
+    "source": "XSY_8109.JPG",
+    "sha256": "8ee78ced70de2427ca24a99aa10f529887a5347fb50ac161cdd083a2269d8769",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 963695,
+    "legacy_ms": 215.07,
+    "notification_ms": 214.87,
+    "write_ms": 215.606
+   },
+   {
+    "i": 1,
+    "source": "XSY_8065.JPG",
+    "sha256": "8b72f313fb76af22e68a893cef1d362e138e2dae8b7b6b9e075551a194f1f448",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 726129,
+    "legacy_ms": 75.407,
+    "notification_ms": 75.307,
+    "write_ms": 75.945
+   },
+   {
+    "i": 2,
+    "source": "XSY_3641.JPG",
+    "sha256": "d9e3a6853c0d504b24a51d76f829c2b357d42633a84a13b8dd1922245335a852",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 687842,
+    "legacy_ms": 48.787,
+    "notification_ms": 48.687,
+    "write_ms": 49.47
+   },
+   {
+    "i": 3,
+    "source": "XSY_8067.JPG",
+    "sha256": "3de2d865138f342cdff3a79ea145b4ebf8dcc92ad1bc4380c96d826edb1a9bac",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 604415,
+    "legacy_ms": 55.947,
+    "notification_ms": 55.847,
+    "write_ms": 56.868
+   },
+   {
+    "i": 4,
+    "source": "XSY_8063.JPG",
+    "sha256": "8521b138d420c3a8b5cce17be1a75426a5dae0f4eb3db77cffb073afd5a6befc",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 711233,
+    "legacy_ms": 57.798,
+    "notification_ms": 57.698,
+    "write_ms": 66.455
+   },
+   {
+    "i": 5,
+    "source": "XSY_8077.JPG",
+    "sha256": "48010bdfd8aa9a48fcd4751429ac4bd05ab335c8ced4dc6564a42908424760e0",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 833809,
+    "legacy_ms": 75.383,
+    "notification_ms": 42.983,
+    "write_ms": 43.802
+   },
+   {
+    "i": 6,
+    "source": "XSY_3733.JPG",
+    "sha256": "4ad2c12b5574d01638f7966df2bee1c4b763f4f1454851de8d8e9b1dc255fc83",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 730082,
+    "legacy_ms": 47.332,
+    "notification_ms": 47.332,
+    "write_ms": 48.332
+   },
+   {
+    "i": 7,
+    "source": "IMG_0005.JPG",
+    "sha256": "1f4be5c33828d72e74a887b8b548adf0789481cd7cf1e2c713d2a155a8729607",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 794210,
+    "legacy_ms": 55.799,
+    "notification_ms": 55.799,
+    "write_ms": 56.52
+   },
+   {
+    "i": 8,
+    "source": "XSY_8096.JPG",
+    "sha256": "e1594d667746bd36a150fe259bbcd44134f90269d36f4e4dc428db2948542d83",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 751034,
+    "legacy_ms": 60.989,
+    "notification_ms": 60.989,
+    "write_ms": 61.677
+   },
+   {
+    "i": 9,
+    "source": "XSY_8043.JPG",
+    "sha256": "a8e98883fde523ba33f052b2b13b10126b829a6e7160c89f31a2898356ddd7e1",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 806725,
+    "legacy_ms": 70.547,
+    "notification_ms": 70.547,
+    "write_ms": 71.156
+   },
+   {
+    "i": 10,
+    "source": "XSY_8059.JPG",
+    "sha256": "7bccbcc9c09b52e777f1b39f87eaa6ba8b8f2279491b8800c346e3a39813f66c",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 766982,
+    "legacy_ms": 43.329,
+    "notification_ms": 43.329,
+    "write_ms": 44.044
+   },
+   {
+    "i": 11,
+    "source": "XSY_3659.JPG",
+    "sha256": "10ae5559db66c2aef45073085d9efa4f6187b4dc5ab04dda1c8be2200f9db906",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 846203,
+    "legacy_ms": 49.868,
+    "notification_ms": 49.868,
+    "write_ms": 50.462
+   },
+   {
+    "i": 12,
+    "source": "XSY_8044.JPG",
+    "sha256": "61f806362bb140a907d67f434456c3e6a6dc1c09fd3d37086d78953d97e41363",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 800314,
+    "legacy_ms": 56.899,
+    "notification_ms": 56.899,
+    "write_ms": 57.764
+   },
+   {
+    "i": 13,
+    "source": "XSY_3727.JPG",
+    "sha256": "e610d334242660af284978bcfab9614e1327e4486d0ec04c6fe312b301188654",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 791834,
+    "legacy_ms": 62.924,
+    "notification_ms": 62.924,
+    "write_ms": 63.697
+   },
+   {
+    "i": 14,
+    "source": "XSY_8055.JPG",
+    "sha256": "82144f04b7ee3c045c08f3f4687a6dc847d7da087cdd6f7a1416ad12e06a2dca",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 800854,
+    "legacy_ms": 68.239,
+    "notification_ms": 68.239,
+    "write_ms": 69.064
+   },
+   {
+    "i": 15,
+    "source": "XSY_3767.JPG",
+    "sha256": "dae3db980b506a6c432c47290a620f2f955281b3a5689787f9a598dbbf1600dc",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 924416,
+    "legacy_ms": 72.593,
+    "notification_ms": 72.593,
+    "write_ms": 73.362
+   },
+   {
+    "i": 16,
+    "source": "XSY_8108.JPG",
+    "sha256": "e893c957f8353ecf03aadfb7cc1f940bf91e7c6cd8cb7b396a2d737098e85e91",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 820733,
+    "legacy_ms": 46.495,
+    "notification_ms": 46.495,
+    "write_ms": 47.144
+   },
+   {
+    "i": 17,
+    "source": "XSY_3470.JPG",
+    "sha256": "b9e617e77e189f16ae7027f7dfe1f6ce09c4367f5e7b68087e0e6a347ea4e793",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 1492666,
+    "legacy_ms": 51.171,
+    "notification_ms": 51.171,
+    "write_ms": 51.811
+   },
+   {
+    "i": 18,
+    "source": "XSY_8104.JPG",
+    "sha256": "d104f2be08d87f547f6c784bce2b8d41b4089c965873b83d22ea78601a7ef898",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 779247,
+    "legacy_ms": 57.373,
+    "notification_ms": 57.373,
+    "write_ms": 58.047
+   },
+   {
+    "i": 19,
+    "source": "XSY_3638.JPG",
+    "sha256": "213c13f869821dbcbf7dcf529bfecb932d893b08a0910d1a9a86404a674c6e2a",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 768421,
+    "legacy_ms": 64.33,
+    "notification_ms": 64.33,
+    "write_ms": 65.06
+   },
+   {
+    "i": 20,
+    "source": "XSY_8103.JPG",
+    "sha256": "67fbcf07c58e359039873009abba65545424094b7f078bc29a9c570d41f964ed",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 771107,
+    "legacy_ms": 72.935,
+    "notification_ms": 40.435,
+    "write_ms": 41.315
+   },
+   {
+    "i": 21,
+    "source": "XSY_8074.JPG",
+    "sha256": "9c13a62ec544c01e96268062ddd979743399e57cf39b9a16f16c4335b2ea4da3",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 754116,
+    "legacy_ms": 44.345,
+    "notification_ms": 44.345,
+    "write_ms": 45.093
+   },
+   {
+    "i": 22,
+    "source": "XSY_3711.JPG",
+    "sha256": "f32ed18537a61c9441a4ef0e557bc78a7bceb53e84457e9e19450243c71ad34b",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 866698,
+    "legacy_ms": 50.905,
+    "notification_ms": 50.905,
+    "write_ms": 51.404
+   },
+   {
+    "i": 23,
+    "source": "XSY_8060.JPG",
+    "sha256": "b7f504a834996e600b946985ffbb3f82e5fec3ff9dbc3362376091cc9514bb62",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 641374,
+    "legacy_ms": 58.494,
+    "notification_ms": 58.494,
+    "write_ms": 59.277
+   },
+   {
+    "i": 24,
+    "source": "XSY_8070.JPG",
+    "sha256": "12001065e583945fd07b40636276405062d91c8f9c4a2782db8b3fcf5e9a51d5",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 795353,
+    "legacy_ms": 66.432,
+    "notification_ms": 66.432,
+    "write_ms": 67.516
+   },
+   {
+    "i": 25,
+    "source": "XSY_3651.JPG",
+    "sha256": "4c67945508adc05545da3f4ca6bfd710ea9e33238d614cc5bba46897e7040302",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 907281,
+    "legacy_ms": 74.733,
+    "notification_ms": 41.733,
+    "write_ms": 42.48
+   },
+   {
+    "i": 26,
+    "source": "XSY_3585.JPG",
+    "sha256": "4bfd569174b7ab5a1c145471ed3a685f7e150a83e591b1f2b0232e7af6411620",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 707084,
+    "legacy_ms": 47.384,
+    "notification_ms": 47.384,
+    "write_ms": 48.037
+   },
+   {
+    "i": 27,
+    "source": "XSY_3705.JPG",
+    "sha256": "fbbe3f05b1ccac5ddb8353da2877854f75ab2e799bf12b792fe527d832ddbef0",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 790698,
+    "legacy_ms": 54.306,
+    "notification_ms": 54.306,
+    "write_ms": 54.97
+   },
+   {
+    "i": 28,
+    "source": "XSY_3620.JPG",
+    "sha256": "ae204928b79242a06b9f77a5c8006936e486f97c98abfd6734eaaef53f1c3065",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 746791,
+    "legacy_ms": 63.858,
+    "notification_ms": 63.858,
+    "write_ms": 64.573
+   },
+   {
+    "i": 29,
+    "source": "XSY_3648.JPG",
+    "sha256": "2e722870c0e9313644960804d89d05252e3f846ae7cba0e3dfb8dbefd1793adc",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 1040087,
+    "legacy_ms": 68.56,
+    "notification_ms": 68.46,
+    "write_ms": 69.259
+   },
+   {
+    "i": 30,
+    "source": "XSY_3562.JPG",
+    "sha256": "30c9a14d52d42505c27242c51638bdb26abc0337460b4c73475a2af0bc3ba8b5",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 753272,
+    "legacy_ms": 75.518,
+    "notification_ms": 75.518,
+    "write_ms": 76.163
+   },
+   {
+    "i": 31,
+    "source": "XSY_3556.JPG",
+    "sha256": "ca4153b58dab84523ef77969f2d1685371636bfb3ac676a577649f4e047123e7",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 942241,
+    "legacy_ms": 52.2,
+    "notification_ms": 52.2,
+    "write_ms": 52.714
+   },
+   {
+    "i": 32,
+    "source": "XSY_3644.JPG",
+    "sha256": "d0a9a5aae2170dce41d6c3ca33133870d05a6c5873fff717e67490cb768aa0f3",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 922139,
+    "legacy_ms": 59.409,
+    "notification_ms": 59.409,
+    "write_ms": 60.288
+   },
+   {
+    "i": 33,
+    "source": "XSY_3761.JPG",
+    "sha256": "66b6daef13fc8876614858cd8496c1875a6965885ce1af5ca9e7e5bdc78047af",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 800705,
+    "legacy_ms": 69.109,
+    "notification_ms": 69.109,
+    "write_ms": 69.92
+   },
+   {
+    "i": 34,
+    "source": "XSY_8054.JPG",
+    "sha256": "de4506fbcec683402856a130aa20f021c8a8d129a17e05114ac50a72c209a9f8",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 846506,
+    "legacy_ms": 76.584,
+    "notification_ms": 44.984,
+    "write_ms": 45.919
+   },
+   {
+    "i": 35,
+    "source": "XSY_3527.JPG",
+    "sha256": "0b952bfa71189bfdf37d7a91a8bf0942696c5b9ad23722d95a9e517c42ff4df1",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 992008,
+    "legacy_ms": 85.103,
+    "notification_ms": 52.403,
+    "write_ms": 52.952
+   },
+   {
+    "i": 36,
+    "source": "XSY_3596.JPG",
+    "sha256": "f9a411a99b2394495d7fd5da61e9f6d3d5e29f8f3a51d3bef3f3bfd96e9bed4d",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 775544,
+    "legacy_ms": 59.612,
+    "notification_ms": 59.512,
+    "write_ms": 60.9
+   },
+   {
+    "i": 37,
+    "source": "XSY_8056.JPG",
+    "sha256": "db12f04e3b98937785e294bc3daad4dbc6ea43f5d5d2813172c20fde9767138a",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 805299,
+    "legacy_ms": 69.144,
+    "notification_ms": 69.144,
+    "write_ms": 69.805
+   },
+   {
+    "i": 38,
+    "source": "XSY_8062.JPG",
+    "sha256": "718ea1a1ed7c3b2969866313ae41be89cf7ae8953d54c55c72a2d8df0e389852",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 721691,
+    "legacy_ms": 43.665,
+    "notification_ms": 43.665,
+    "write_ms": 44.316
+   },
+   {
+    "i": 39,
+    "source": "XSY_3498.JPG",
+    "sha256": "2122c9b47f2aa7546c2f7ac10011cdd55fdf0dffcf0f977f6629547fec49ae74",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 1360807,
+    "legacy_ms": 85.383,
+    "notification_ms": 52.783,
+    "write_ms": 53.47
+   },
+   {
+    "i": 40,
+    "source": "XSY_8072.JPG",
+    "sha256": "de917691d8c1f2a3a56af183f2315d123565d7efa4380610e777be376394bd80",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 802431,
+    "legacy_ms": 59.532,
+    "notification_ms": 59.532,
+    "write_ms": 60.17
+   },
+   {
+    "i": 41,
+    "source": "XSY_3608.JPG",
+    "sha256": "ea5f9a4b0967c7788ff29076dd09badc4e7daca9716b2db2ae2fe5894f2c25cf",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 837885,
+    "legacy_ms": 68.248,
+    "notification_ms": 68.248,
+    "write_ms": 68.99
+   },
+   {
+    "i": 42,
+    "source": "XSY_8061.JPG",
+    "sha256": "768127df000a14c610c56c00e5898220a41d599576012e5944bea06785b408c4",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 633708,
+    "legacy_ms": 41.977,
+    "notification_ms": 41.977,
+    "write_ms": 42.539
+   },
+   {
+    "i": 43,
+    "source": "XSY_8113.JPG",
+    "sha256": "bf82bb1fe4206728cdfe64f6fb0ccddd0cdc8b4dee477ce42212c6b9ed14fec9",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 790513,
+    "legacy_ms": 55.616,
+    "notification_ms": 55.616,
+    "write_ms": 56.084
+   },
+   {
+    "i": 44,
+    "source": "XSY_3530.JPG",
+    "sha256": "159b65005a484efecabe356c33a9b2aa29e4c1a16a1a66e1878e9ca23e063d30",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 783273,
+    "legacy_ms": 54.901,
+    "notification_ms": 54.801,
+    "write_ms": 55.526
+   },
+   {
+    "i": 45,
+    "source": "XSY_3518.JPG",
+    "sha256": "320047a57c0ba8a62152809ec87fe94fc22a7e58230df4b006c5d0c375d15a4d",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 1057599,
+    "legacy_ms": 59.802,
+    "notification_ms": 59.802,
+    "write_ms": 60.476
+   },
+   {
+    "i": 46,
+    "source": "XSY_8082.JPG",
+    "sha256": "12db2cc2432a23f0f8e1723d111bf82cdc35e61af54bcd3c6c929af30cba66bd",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 747152,
+    "legacy_ms": 69.197,
+    "notification_ms": 69.197,
+    "write_ms": 69.997
+   },
+   {
+    "i": 47,
+    "source": "XSY_8051.JPG",
+    "sha256": "ddc3035adbb9f6f2aee00fbba14a982c1aaee59d5c9a42321389445343aec614",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 676717,
+    "legacy_ms": 45.772,
+    "notification_ms": 45.672,
+    "write_ms": 46.165
+   },
+   {
+    "i": 48,
+    "source": "XSY_3818.JPG",
+    "sha256": "0b59555ba7c8f34b724d3faffd71f1136c062cef02a2449b2109ad39cbbcb208",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 1057243,
+    "legacy_ms": 53.062,
+    "notification_ms": 53.062,
+    "write_ms": 53.799
+   },
+   {
+    "i": 49,
+    "source": "XSY_3755.JPG",
+    "sha256": "0948e0b1aeb7ef9ac98088a0d72c577c02ea13072cfd402df7c598a8db4c7a51",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 764646,
+    "legacy_ms": 61.409,
+    "notification_ms": 61.409,
+    "write_ms": 62.119
+   },
+   {
+    "i": 50,
+    "source": "XSY_8112.JPG",
+    "sha256": "e450d1f6f2e0fcce1d2f07fda4a3d2cc8e23bfad53de3ab5b67ad9c6b1cc457b",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 738005,
+    "legacy_ms": 67.972,
+    "notification_ms": 67.972,
+    "write_ms": 68.538
+   },
+   {
+    "i": 51,
+    "source": "XSY_8095.JPG",
+    "sha256": "0abbb000b0b2302c848325307836aeb82086808653abca2ccf51fb69ea9328af",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 810662,
+    "legacy_ms": 42.552,
+    "notification_ms": 42.552,
+    "write_ms": 43.025
+   },
+   {
+    "i": 52,
+    "source": "XSY_8064.JPG",
+    "sha256": "74d8db1705a213e5d8587476ba4d493324d20f54dcacf9fe87acd09064512550",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 674058,
+    "legacy_ms": 48.918,
+    "notification_ms": 48.818,
+    "write_ms": 49.403
+   },
+   {
+    "i": 53,
+    "source": "XSY_8078.JPG",
+    "sha256": "fb5e287054ca9acfc340d741b330c71cd0aab8ef681c77c4de9b9ac9cc694c51",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 813586,
+    "legacy_ms": 54.39,
+    "notification_ms": 54.39,
+    "write_ms": 55.098
+   },
+   {
+    "i": 54,
+    "source": "IMG_0003.JPG",
+    "sha256": "9bf205a81f30ebab4781ed29de9bc631bb9108237b27d9eea67ca2a00757670d",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 819162,
+    "legacy_ms": 70.717,
+    "notification_ms": 70.717,
+    "write_ms": 71.207
+   },
+   {
+    "i": 55,
+    "source": "XSY_8049.JPG",
+    "sha256": "43bde2a609cfbcfafbf790b1cefade6641451762ad60f5a8e59f3be0436770ee",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 737006,
+    "legacy_ms": 48.941,
+    "notification_ms": 48.941,
+    "write_ms": 49.307
+   },
+   {
+    "i": 56,
+    "source": "IMG_0001.JPG",
+    "sha256": "6b898fd0dffe42b90b93e7d75ed4369777dc556df0705fc557e93e110753709b",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 333617,
+    "legacy_ms": 57.693,
+    "notification_ms": 57.693,
+    "write_ms": 58.468
+   },
+   {
+    "i": 57,
+    "source": "XSY_3653.JPG",
+    "sha256": "a32bd50977951145cde36d368e71152199d0f2d2679a7234d996dc6eb8e903b5",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 929253,
+    "legacy_ms": 64.783,
+    "notification_ms": 64.783,
+    "write_ms": 65.551
+   },
+   {
+    "i": 58,
+    "source": "XSY_8040.JPG",
+    "sha256": "afe8c1fb05539623cacea1f0e0ae08e486748cf9a3c9052cc1c7292f23404ee0",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 399784,
+    "legacy_ms": 71.87,
+    "notification_ms": 71.87,
+    "write_ms": 72.618
+   },
+   {
+    "i": 59,
+    "source": "XSY_3652.JPG",
+    "sha256": "d4f6b8d03a402e2503c361f62588282d43274d8ff1ea1f04e3458f5d188fac7b",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 1027244,
+    "legacy_ms": 48.975,
+    "notification_ms": 48.875,
+    "write_ms": 49.582
+   },
+   {
+    "i": 60,
+    "source": "XSY_3490.JPG",
+    "sha256": "018984b6943d751e47cfb33fbbc956a1ad4e3625cdcb3e38e79c507bf0b5ac5c",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 1251487,
+    "legacy_ms": 53.875,
+    "notification_ms": 53.875,
+    "write_ms": 54.322
+   },
+   {
+    "i": 61,
+    "source": "XSY_3535.JPG",
+    "sha256": "3a4fb4c763f65dc9881a20f18b1e04f87d5be85e3ec57149518d1bc1b1f7761f",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 862356,
+    "legacy_ms": 58.543,
+    "notification_ms": 58.543,
+    "write_ms": 59.136
+   },
+   {
+    "i": 62,
+    "source": "XSY_8068.JPG",
+    "sha256": "58fd10b89f4ff7a7d56d87f80f24cf79e9f26b07d42149e8e9f4122217ade9c1",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 708235,
+    "legacy_ms": 65.524,
+    "notification_ms": 65.524,
+    "write_ms": 66.242
+   },
+   {
+    "i": 63,
+    "source": "XSY_3523.JPG",
+    "sha256": "419210d10bb8af3491da77da2496f8e6a833aadeb3e333a8af30c5abfd5019c7",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 1005434,
+    "legacy_ms": 71.541,
+    "notification_ms": 71.541,
+    "write_ms": 72.038
+   },
+   {
+    "i": 64,
+    "source": "XSY_3708.JPG",
+    "sha256": "424c034328dcf77e0bccb7825a10cab54a8459466e657b2aaa1f73dfe1695f9b",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 873291,
+    "legacy_ms": 73.93,
+    "notification_ms": 41.73,
+    "write_ms": 42.681
+   },
+   {
+    "i": 65,
+    "source": "XSY_3672.JPG",
+    "sha256": "7b00e19aa946b6efa283c6de71d4e97a20730bb1839534a281e53f490cea5c31",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 1009486,
+    "legacy_ms": 46.632,
+    "notification_ms": 46.532,
+    "write_ms": 47.053
+   },
+   {
+    "i": 66,
+    "source": "XSY_3455.JPG",
+    "sha256": "3e65549e71e93c87c3e02a2ca0fac97c023d709921c7af759688d2aa7a1aabef",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 988085,
+    "legacy_ms": 51.064,
+    "notification_ms": 51.064,
+    "write_ms": 51.746
+   },
+   {
+    "i": 67,
+    "source": "XSY_8092.JPG",
+    "sha256": "62aadb4bf7a392a72019430b7bcfee42550a403fcf6105f8951d5e8906486ff5",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 752920,
+    "legacy_ms": 54.001,
+    "notification_ms": 54.001,
+    "write_ms": 54.754
+   },
+   {
+    "i": 68,
+    "source": "IMG_0006.JPG",
+    "sha256": "c1849832eac67f94f945b1f410ed9c82bc89c78529b9296d55c9f73a6939d56e",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 764728,
+    "legacy_ms": 57.779,
+    "notification_ms": 57.679,
+    "write_ms": 58.225
+   },
+   {
+    "i": 69,
+    "source": "XSY_8075.JPG",
+    "sha256": "66fda75a9e6c35dd0f337ea9310ab2a933ee8715ba254a922feb2f93b1534162",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 832641,
+    "legacy_ms": 60.764,
+    "notification_ms": 60.764,
+    "write_ms": 61.465
+   },
+   {
+    "i": 70,
+    "source": "XSY_3806.JPG",
+    "sha256": "d84c6c710bbd034ec66e89bcfa331cabaea1724de50f9b76d985e43cf599701b",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 1022686,
+    "legacy_ms": 69.527,
+    "notification_ms": 69.527,
+    "write_ms": 70.085
+   },
+   {
+    "i": 71,
+    "source": "XSY_3794.JPG",
+    "sha256": "19524a3c7abdfa80b02df97848d31a21487f2fec57c7cde4293aea889a79ddee",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 1013123,
+    "legacy_ms": 74.064,
+    "notification_ms": 74.064,
+    "write_ms": 74.617
+   },
+   {
+    "i": 72,
+    "source": "XSY_8107.JPG",
+    "sha256": "164f4b711e1cadefb34a9eaad1c2f52a682b1a65f9709f4be6f05a6cc6245ebd",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 805799,
+    "legacy_ms": 47.241,
+    "notification_ms": 47.241,
+    "write_ms": 47.841
+   },
+   {
+    "i": 73,
+    "source": "XSY_8076.JPG",
+    "sha256": "e7cfbe87d68d2d90f0936280bf2da49308a07f5363762b48ba1aea029ce3a996",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 787730,
+    "legacy_ms": 51.784,
+    "notification_ms": 51.784,
+    "write_ms": 52.664
+   },
+   {
+    "i": 74,
+    "source": "XSY_8066.JPG",
+    "sha256": "db271b5570f09076740b4bb747fd99a4ed65f25fae566cab9c56617b5f472c90",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 725626,
+    "legacy_ms": 58.985,
+    "notification_ms": 58.985,
+    "write_ms": 59.587
+   },
+   {
+    "i": 75,
+    "source": "XSY_8080.JPG",
+    "sha256": "e061c389e6546099b2a3e9f44ef279c3cdee262357890fa053223375d9fe5675",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 874031,
+    "legacy_ms": 62.6,
+    "notification_ms": 62.5,
+    "write_ms": 63.204
+   },
+   {
+    "i": 76,
+    "source": "XSY_8097.JPG",
+    "sha256": "fb15aa0333fa25eed59c84dc341d128ed763e8cd55bdd58b590554a2c2a88d7d",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 748287,
+    "legacy_ms": 58.155,
+    "notification_ms": 58.155,
+    "write_ms": 131.731
+   },
+   {
+    "i": 77,
+    "source": "XSY_8105.JPG",
+    "sha256": "7ba1b0840360478ad90724eb6ac924430884d6096f4f18db66793e401168b85a",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 742350,
+    "legacy_ms": 70.304,
+    "notification_ms": 70.204,
+    "write_ms": 70.761
+   },
+   {
+    "i": 78,
+    "source": "XSY_8091.JPG",
+    "sha256": "1ddd3ad7a3c26a9673a74e9988a050d393b2ca9c7afa420279bc91721bca06cd",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 805571,
+    "legacy_ms": 44.955,
+    "notification_ms": 44.855,
+    "write_ms": 45.671
+   },
+   {
+    "i": 79,
+    "source": "XSY_8071.JPG",
+    "sha256": "bf9c1c98e098953d553cec90f70d1978f67b16faab6cb59b48e63b1829e685a6",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 789282,
+    "legacy_ms": 48.977,
+    "notification_ms": 48.977,
+    "write_ms": 50.292
+   },
+   {
+    "i": 80,
+    "source": "XSY_3707.JPG",
+    "sha256": "9b421ecda591be7037109bf32105ebc49129b4f16a0e8c88d51035c90e8b4314",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 844504,
+    "legacy_ms": 55.285,
+    "notification_ms": 55.285,
+    "write_ms": 55.944
+   },
+   {
+    "i": 81,
+    "source": "XSY_3745.JPG",
+    "sha256": "7cb5093e51ebfe973739ad4bf055d8092775fcec899d575f0c8e10569f4730ca",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 805709,
+    "legacy_ms": 58.942,
+    "notification_ms": 58.942,
+    "write_ms": 59.792
+   },
+   {
+    "i": 82,
+    "source": "XSY_3792.JPG",
+    "sha256": "96e7448ee1396824780cda37183a9c59207b2d5cdb9679536648474c341ef0c1",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 1020241,
+    "legacy_ms": 63.305,
+    "notification_ms": 63.205,
+    "write_ms": 63.984
+   },
+   {
+    "i": 83,
+    "source": "XSY_8087.JPG",
+    "sha256": "620cbe4b57183214d6c7f8bd4c7c74fa95b6d160b84cc77a3e594e4d3d38ade7",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 825460,
+    "legacy_ms": 65.795,
+    "notification_ms": 65.695,
+    "write_ms": 66.807
+   },
+   {
+    "i": 84,
+    "source": "XSY_3826.JPG",
+    "sha256": "01233183b82a9330d579bab1d32f66df64e0afcb4933ef308ee6c651fd47d7a8",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 1442067,
+    "legacy_ms": 69.109,
+    "notification_ms": 69.009,
+    "write_ms": 69.66
+   },
+   {
+    "i": 85,
+    "source": "XSY_3598.JPG",
+    "sha256": "701b50fcd803c648c07f4250a6e530ce265f5cb640897120aba8c27795eba9d2",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 885170,
+    "legacy_ms": 70.245,
+    "notification_ms": 70.145,
+    "write_ms": 70.908
+   },
+   {
+    "i": 86,
+    "source": "XSY_8106.JPG",
+    "sha256": "0a943f1b8abdf374fa0372d4a7b0d905358cff7f6c5c4738d6d126c3b3a3067b",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 728556,
+    "legacy_ms": 73.927,
+    "notification_ms": 41.827,
+    "write_ms": 42.666
+   },
+   {
+    "i": 87,
+    "source": "XSY_3570.JPG",
+    "sha256": "78774d388e6b0fdb07ac74428ad3ae35e480354b496c58a34664644610fd3f57",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 836217,
+    "legacy_ms": 44.636,
+    "notification_ms": 44.636,
+    "write_ms": 45.33
+   },
+   {
+    "i": 88,
+    "source": "XSY_3732.JPG",
+    "sha256": "8371c9c23a49a9769863bb61aa908b01b563f854852b6177bce6596b9eb2a735",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 818811,
+    "legacy_ms": 51.177,
+    "notification_ms": 51.077,
+    "write_ms": 51.95
+   },
+   {
+    "i": 89,
+    "source": "XSY_8110.JPG",
+    "sha256": "2f211188b0f30236a00294a30a170c02079a96cc2c44e1a0ab18a665da232ef4",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 906444,
+    "legacy_ms": 55.716,
+    "notification_ms": 55.616,
+    "write_ms": 56.568
+   },
+   {
+    "i": 90,
+    "source": "XSY_3723.JPG",
+    "sha256": "8b76a4eabd7c0d43f0df1d56a03315d3b8323c1685489af273c49f4343d4c1b8",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 724577,
+    "legacy_ms": 59.148,
+    "notification_ms": 59.048,
+    "write_ms": 59.677
+   },
+   {
+    "i": 91,
+    "source": "XSY_8069.JPG",
+    "sha256": "556ba193a0b6135ef00ff17c53a89d8d001d0941fa8670a9bbb90f1df8db4ab2",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 862522,
+    "legacy_ms": 68.684,
+    "notification_ms": 68.584,
+    "write_ms": 69.327
+   },
+   {
+    "i": 92,
+    "source": "XSY_8102.JPG",
+    "sha256": "dabe224ee8a306ba7caa702ac8f8eebee94348bb64029ed9d94d026d18839d44",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 767112,
+    "legacy_ms": 44.347,
+    "notification_ms": 44.347,
+    "write_ms": 44.965
+   },
+   {
+    "i": 93,
+    "source": "XSY_3800.JPG",
+    "sha256": "59b1b21282900a0095afaa3802ddf667e14497a40f84230b752b6789e1916669",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 1398627,
+    "legacy_ms": 79.815,
+    "notification_ms": 46.815,
+    "write_ms": 47.572
+   },
+   {
+    "i": 94,
+    "source": "XSY_8073.JPG",
+    "sha256": "3a926359b207987c52d923e73d41efc9e36d8d803af9430d04c1cda5b85e78a3",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 833131,
+    "legacy_ms": 51.508,
+    "notification_ms": 51.408,
+    "write_ms": 51.863
+   },
+   {
+    "i": 95,
+    "source": "XSY_3569.JPG",
+    "sha256": "a72c80d08cd5175ef333c8f59b8fef46928dc072737a06720195fe5d01ac6114",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 826657,
+    "legacy_ms": 61.635,
+    "notification_ms": 61.535,
+    "write_ms": 123.649
+   },
+   {
+    "i": 96,
+    "source": "XSY_8099.JPG",
+    "sha256": "e2c1333d1bb595c3da15b1b2266b6146e193b6c3eaeeca33909e0735bff37a9f",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 821880,
+    "legacy_ms": 59.67,
+    "notification_ms": 59.67,
+    "write_ms": 60.924
+   },
+   {
+    "i": 97,
+    "source": "XSY_8088.JPG",
+    "sha256": "0bac291ed42ba40fbeba30195a8e0b643de976dd5d6ce4d5a43ebd63fac2461e",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 777347,
+    "legacy_ms": 65.453,
+    "notification_ms": 65.453,
+    "write_ms": 66.384
+   },
+   {
+    "i": 98,
+    "source": "IMG_0002.JPG",
+    "sha256": "bb540f073b92d4874cb546172e2f0468acd85ababf14b2fbb2e1cf62ce4b79bc",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 851942,
+    "legacy_ms": 71.512,
+    "notification_ms": 71.512,
+    "write_ms": 72.088
+   },
+   {
+    "i": 99,
+    "source": "XSY_8053.JPG",
+    "sha256": "22a6a66c62be0fd7a6978d0261dc9a2f0f6cad34519f12cb3fbc91de30fb2e77",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 657143,
+    "legacy_ms": 44.655,
+    "notification_ms": 44.555,
+    "write_ms": 45.257
+   },
+   {
+    "i": 100,
+    "source": "XSY_8081.JPG",
+    "sha256": "fccd6587dc6b84f5d1dd46a3be802923ae06afd707cb8a98d2f3b94b1b5dba31",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 820396,
+    "legacy_ms": 47.264,
+    "notification_ms": 47.164,
+    "write_ms": 48.046
+   },
+   {
+    "i": 101,
+    "source": "XSY_3463.JPG",
+    "sha256": "0c3b9544bfc7c40cdaa10695b32440fdd5eca41a05c8f0d73eb4e794f47aaddf",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 1504037,
+    "legacy_ms": 51.779,
+    "notification_ms": 51.679,
+    "write_ms": 53.02
+   },
+   {
+    "i": 102,
+    "source": "XSY_3758.JPG",
+    "sha256": "f8eba5ec2434738ff092e98863be2aa9c629216eead0e4afde5fe3677ec7c59d",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 799853,
+    "legacy_ms": 59.886,
+    "notification_ms": 59.886,
+    "write_ms": 60.543
+   },
+   {
+    "i": 103,
+    "source": "XSY_8047.JPG",
+    "sha256": "a8b6b607f4806953232628a4c1da56e98e6270c6be36575d265af96bfbe7e7fd",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 801800,
+    "legacy_ms": 65.34,
+    "notification_ms": 65.24,
+    "write_ms": 65.958
+   },
+   {
+    "i": 104,
+    "source": "XSY_3494.JPG",
+    "sha256": "22e22e186d740fdc21d0bbc71d3c47f4a01b11334710577735413f2c9ff21ae9",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 1207737,
+    "legacy_ms": 73.377,
+    "notification_ms": 40.877,
+    "write_ms": 41.479
+   },
+   {
+    "i": 105,
+    "source": "XSY_3599.JPG",
+    "sha256": "ce8115811947a84693605d4f25aef1b58edd25f3fc2b64180a2c2eee76d5440d",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 789019,
+    "legacy_ms": 43.813,
+    "notification_ms": 43.813,
+    "write_ms": 44.368
+   },
+   {
+    "i": 106,
+    "source": "XSY_8086.JPG",
+    "sha256": "06f5cc0d3b3c0355feae6fe5803d68c6e466cb082d3076b622b22d235218b95b",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 855729,
+    "legacy_ms": 52.479,
+    "notification_ms": 52.479,
+    "write_ms": 53.355
+   },
+   {
+    "i": 107,
+    "source": "XSY_8090.JPG",
+    "sha256": "227f3cc4147eed730d891e4e901bdb6c3cdc27227be611a8900f3278e8ce1323",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 717887,
+    "legacy_ms": 59.955,
+    "notification_ms": 59.855,
+    "write_ms": 60.508
+   },
+   {
+    "i": 108,
+    "source": "XSY_3568.JPG",
+    "sha256": "91a9dc1870b5910391a137d64888eee91cecd4f368e2b27c00d966649b82e775",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 775910,
+    "legacy_ms": 65.691,
+    "notification_ms": 65.591,
+    "write_ms": 66.415
+   },
+   {
+    "i": 109,
+    "source": "XSY_3489.JPG",
+    "sha256": "032c39e2bbd0717865902fb1a5cbda03a23d599a23992e0a5d0737f588d6d59b",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 1274237,
+    "legacy_ms": 71.208,
+    "notification_ms": 71.108,
+    "write_ms": 72.005
+   },
+   {
+    "i": 110,
+    "source": "XSY_8045.JPG",
+    "sha256": "299c2467902e92160bf185f2956dc584665f5ceb3c36a06c41cfe0db3a7d98ad",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 800622,
+    "legacy_ms": 76.276,
+    "notification_ms": 44.376,
+    "write_ms": 45.027
+   },
+   {
+    "i": 111,
+    "source": "XSY_8093.JPG",
+    "sha256": "aa250550c3d29598649689f05548de9f7ecdda2f93b0b5c3141d0e67718fd280",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 675113,
+    "legacy_ms": 56.217,
+    "notification_ms": 56.117,
+    "write_ms": 56.93
+   },
+   {
+    "i": 112,
+    "source": "XSY_8089.JPG",
+    "sha256": "690375b23e3168e76e64e21dcd3386bde33b496363aaa4a9abe70430e87be695",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 744061,
+    "legacy_ms": 54.305,
+    "notification_ms": 54.205,
+    "write_ms": 55.057
+   },
+   {
+    "i": 113,
+    "source": "XSY_3604.JPG",
+    "sha256": "5f179cdaea5a97c2e24d4ffd822feebe69afd91e971c1cb109c36131648bfd55",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 890084,
+    "legacy_ms": 60.072,
+    "notification_ms": 59.972,
+    "write_ms": 60.654
+   },
+   {
+    "i": 114,
+    "source": "XSY_8048.JPG",
+    "sha256": "4cb4bc75a51c87a3b1ff155ed74cfb3983231f4ebc46ff44d51e6904b7514eb5",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 653746,
+    "legacy_ms": 65.018,
+    "notification_ms": 64.918,
+    "write_ms": 65.752
+   },
+   {
+    "i": 115,
+    "source": "XSY_8101.JPG",
+    "sha256": "79cf37db90575d88be0737e2f3a17c72f5e43abb9ee59086eb145f1f86ff2624",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 684934,
+    "legacy_ms": 73.155,
+    "notification_ms": 40.955,
+    "write_ms": 41.766
+   },
+   {
+    "i": 116,
+    "source": "XSY_3506.JPG",
+    "sha256": "8a677d6366e711b58bd2290b8ef54fa2f2131e43f5bf85da1cae7f12e59ecc86",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 1353549,
+    "legacy_ms": 78.083,
+    "notification_ms": 46.083,
+    "write_ms": 47.161
+   },
+   {
+    "i": 117,
+    "source": "XSY_3600.JPG",
+    "sha256": "5245cb3cff8632f5343939a6e9aca70aa8916b502d5b35c9f233c9f72ff1f5e7",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 785453,
+    "legacy_ms": 48.863,
+    "notification_ms": 48.763,
+    "write_ms": 49.723
+   },
+   {
+    "i": 118,
+    "source": "XSY_8079.JPG",
+    "sha256": "f3c8aa6de8921ae4567fa6413d10528145f67ae6c9152a8faa846bc8e471ed0c",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 815383,
+    "legacy_ms": 57.797,
+    "notification_ms": 57.797,
+    "write_ms": 58.549
+   },
+   {
+    "i": 119,
+    "source": "XSY_3686.JPG",
+    "sha256": "d4f347c42ea916b51c1be18f9dd90aa9d1da8cfe7508592806f36db79067e3a9",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 986873,
+    "legacy_ms": 62.57,
+    "notification_ms": 62.57,
+    "write_ms": 63.287
+   }
+  ],
+  "normalB": [
+   {
+    "i": 0,
+    "source": "XSY_8071.JPG",
+    "sha256": "bf9c1c98e098953d553cec90f70d1978f67b16faab6cb59b48e63b1829e685a6",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 789282,
+    "legacy_ms": null,
+    "notification_ms": 336.824,
+    "write_ms": 337.381
+   },
+   {
+    "i": 1,
+    "source": "XSY_8091.JPG",
+    "sha256": "1ddd3ad7a3c26a9673a74e9988a050d393b2ca9c7afa420279bc91721bca06cd",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 805571,
+    "legacy_ms": 83.051,
+    "notification_ms": 52.151,
+    "write_ms": 53.332
+   },
+   {
+    "i": 2,
+    "source": "XSY_8105.JPG",
+    "sha256": "7ba1b0840360478ad90724eb6ac924430884d6096f4f18db66793e401168b85a",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 742350,
+    "legacy_ms": 76.809,
+    "notification_ms": 44.809,
+    "write_ms": 45.664
+   },
+   {
+    "i": 3,
+    "source": "XSY_8097.JPG",
+    "sha256": "fb15aa0333fa25eed59c84dc341d128ed763e8cd55bdd58b590554a2c2a88d7d",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 748287,
+    "legacy_ms": 64.822,
+    "notification_ms": 64.722,
+    "write_ms": 65.592
+   },
+   {
+    "i": 4,
+    "source": "XSY_8080.JPG",
+    "sha256": "e061c389e6546099b2a3e9f44ef279c3cdee262357890fa053223375d9fe5675",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 874031,
+    "legacy_ms": 61.597,
+    "notification_ms": 61.597,
+    "write_ms": 89.453
+   },
+   {
+    "i": 5,
+    "source": "XSY_8066.JPG",
+    "sha256": "db271b5570f09076740b4bb747fd99a4ed65f25fae566cab9c56617b5f472c90",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 725626,
+    "legacy_ms": 45.213,
+    "notification_ms": 45.213,
+    "write_ms": 45.869
+   },
+   {
+    "i": 6,
+    "source": "XSY_8076.JPG",
+    "sha256": "e7cfbe87d68d2d90f0936280bf2da49308a07f5363762b48ba1aea029ce3a996",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 787730,
+    "legacy_ms": 71.315,
+    "notification_ms": 71.315,
+    "write_ms": 71.806
+   },
+   {
+    "i": 7,
+    "source": "XSY_8107.JPG",
+    "sha256": "164f4b711e1cadefb34a9eaad1c2f52a682b1a65f9709f4be6f05a6cc6245ebd",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 805799,
+    "legacy_ms": 68.95,
+    "notification_ms": 68.95,
+    "write_ms": 69.464
+   },
+   {
+    "i": 8,
+    "source": "XSY_3794.JPG",
+    "sha256": "19524a3c7abdfa80b02df97848d31a21487f2fec57c7cde4293aea889a79ddee",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 1013123,
+    "legacy_ms": 63.535,
+    "notification_ms": 63.535,
+    "write_ms": 64.055
+   },
+   {
+    "i": 9,
+    "source": "XSY_3806.JPG",
+    "sha256": "d84c6c710bbd034ec66e89bcfa331cabaea1724de50f9b76d985e43cf599701b",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 1022686,
+    "legacy_ms": 56.366,
+    "notification_ms": 56.366,
+    "write_ms": 56.791
+   },
+   {
+    "i": 10,
+    "source": "XSY_8075.JPG",
+    "sha256": "66fda75a9e6c35dd0f337ea9310ab2a933ee8715ba254a922feb2f93b1534162",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 832641,
+    "legacy_ms": 43.364,
+    "notification_ms": 43.264,
+    "write_ms": 43.676
+   },
+   {
+    "i": 11,
+    "source": "IMG_0006.JPG",
+    "sha256": "c1849832eac67f94f945b1f410ed9c82bc89c78529b9296d55c9f73a6939d56e",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 764728,
+    "legacy_ms": 65.49,
+    "notification_ms": 65.49,
+    "write_ms": 66.387
+   },
+   {
+    "i": 12,
+    "source": "XSY_8092.JPG",
+    "sha256": "62aadb4bf7a392a72019430b7bcfee42550a403fcf6105f8951d5e8906486ff5",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 752920,
+    "legacy_ms": 58.351,
+    "notification_ms": 58.351,
+    "write_ms": 59.068
+   },
+   {
+    "i": 13,
+    "source": "XSY_3455.JPG",
+    "sha256": "3e65549e71e93c87c3e02a2ca0fac97c023d709921c7af759688d2aa7a1aabef",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 988085,
+    "legacy_ms": 51.928,
+    "notification_ms": 51.928,
+    "write_ms": 52.355
+   },
+   {
+    "i": 14,
+    "source": "XSY_3672.JPG",
+    "sha256": "7b00e19aa946b6efa283c6de71d4e97a20730bb1839534a281e53f490cea5c31",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 1009486,
+    "legacy_ms": 72.717,
+    "notification_ms": 72.717,
+    "write_ms": 73.508
+   },
+   {
+    "i": 15,
+    "source": "XSY_3708.JPG",
+    "sha256": "424c034328dcf77e0bccb7825a10cab54a8459466e657b2aaa1f73dfe1695f9b",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 873291,
+    "legacy_ms": 66.228,
+    "notification_ms": 66.228,
+    "write_ms": 66.979
+   },
+   {
+    "i": 16,
+    "source": "XSY_3523.JPG",
+    "sha256": "419210d10bb8af3491da77da2496f8e6a833aadeb3e333a8af30c5abfd5019c7",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 1005434,
+    "legacy_ms": 57.759,
+    "notification_ms": 57.659,
+    "write_ms": 58.394
+   },
+   {
+    "i": 17,
+    "source": "XSY_8068.JPG",
+    "sha256": "58fd10b89f4ff7a7d56d87f80f24cf79e9f26b07d42149e8e9f4122217ade9c1",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 708235,
+    "legacy_ms": 46.914,
+    "notification_ms": 46.914,
+    "write_ms": 47.45
+   },
+   {
+    "i": 18,
+    "source": "XSY_3535.JPG",
+    "sha256": "3a4fb4c763f65dc9881a20f18b1e04f87d5be85e3ec57149518d1bc1b1f7761f",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 862356,
+    "legacy_ms": 72.264,
+    "notification_ms": 72.264,
+    "write_ms": 72.977
+   },
+   {
+    "i": 19,
+    "source": "XSY_3490.JPG",
+    "sha256": "018984b6943d751e47cfb33fbbc956a1ad4e3625cdcb3e38e79c507bf0b5ac5c",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 1251487,
+    "legacy_ms": 59.397,
+    "notification_ms": 59.397,
+    "write_ms": 59.873
+   },
+   {
+    "i": 20,
+    "source": "XSY_3652.JPG",
+    "sha256": "d4f6b8d03a402e2503c361f62588282d43274d8ff1ea1f04e3458f5d188fac7b",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 1027244,
+    "legacy_ms": 55.336,
+    "notification_ms": 55.336,
+    "write_ms": 55.836
+   },
+   {
+    "i": 21,
+    "source": "XSY_8040.JPG",
+    "sha256": "afe8c1fb05539623cacea1f0e0ae08e486748cf9a3c9052cc1c7292f23404ee0",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 399784,
+    "legacy_ms": 50.97,
+    "notification_ms": 50.97,
+    "write_ms": 51.548
+   },
+   {
+    "i": 22,
+    "source": "XSY_3653.JPG",
+    "sha256": "a32bd50977951145cde36d368e71152199d0f2d2679a7234d996dc6eb8e903b5",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 929253,
+    "legacy_ms": 50.549,
+    "notification_ms": 50.549,
+    "write_ms": 51.067
+   },
+   {
+    "i": 23,
+    "source": "IMG_0001.JPG",
+    "sha256": "6b898fd0dffe42b90b93e7d75ed4369777dc556df0705fc557e93e110753709b",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 333617,
+    "legacy_ms": 42.312,
+    "notification_ms": 42.312,
+    "write_ms": 42.863
+   },
+   {
+    "i": 24,
+    "source": "XSY_8049.JPG",
+    "sha256": "43bde2a609cfbcfafbf790b1cefade6641451762ad60f5a8e59f3be0436770ee",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 737006,
+    "legacy_ms": 68.287,
+    "notification_ms": 68.287,
+    "write_ms": 68.925
+   },
+   {
+    "i": 25,
+    "source": "IMG_0003.JPG",
+    "sha256": "9bf205a81f30ebab4781ed29de9bc631bb9108237b27d9eea67ca2a00757670d",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 819162,
+    "legacy_ms": 54.346,
+    "notification_ms": 54.346,
+    "write_ms": 54.783
+   },
+   {
+    "i": 26,
+    "source": "XSY_8078.JPG",
+    "sha256": "fb5e287054ca9acfc340d741b330c71cd0aab8ef681c77c4de9b9ac9cc694c51",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 813586,
+    "legacy_ms": 53.946,
+    "notification_ms": 53.946,
+    "write_ms": 54.306
+   },
+   {
+    "i": 27,
+    "source": "XSY_8064.JPG",
+    "sha256": "74d8db1705a213e5d8587476ba4d493324d20f54dcacf9fe87acd09064512550",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 674058,
+    "legacy_ms": 43.436,
+    "notification_ms": 43.436,
+    "write_ms": 44.104
+   },
+   {
+    "i": 28,
+    "source": "XSY_8095.JPG",
+    "sha256": "0abbb000b0b2302c848325307836aeb82086808653abca2ccf51fb69ea9328af",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 810662,
+    "legacy_ms": 63.083,
+    "notification_ms": 63.083,
+    "write_ms": 63.68
+   },
+   {
+    "i": 29,
+    "source": "XSY_8112.JPG",
+    "sha256": "e450d1f6f2e0fcce1d2f07fda4a3d2cc8e23bfad53de3ab5b67ad9c6b1cc457b",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 738005,
+    "legacy_ms": 54.527,
+    "notification_ms": 54.527,
+    "write_ms": 55.099
+   },
+   {
+    "i": 30,
+    "source": "XSY_3755.JPG",
+    "sha256": "0948e0b1aeb7ef9ac98088a0d72c577c02ea13072cfd402df7c598a8db4c7a51",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 764646,
+    "legacy_ms": 44.782,
+    "notification_ms": 44.582,
+    "write_ms": 45.416
+   },
+   {
+    "i": 31,
+    "source": "XSY_3818.JPG",
+    "sha256": "0b59555ba7c8f34b724d3faffd71f1136c062cef02a2449b2109ad39cbbcb208",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 1057243,
+    "legacy_ms": 66.194,
+    "notification_ms": 66.194,
+    "write_ms": 67.387
+   },
+   {
+    "i": 32,
+    "source": "XSY_8051.JPG",
+    "sha256": "ddc3035adbb9f6f2aee00fbba14a982c1aaee59d5c9a42321389445343aec614",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 676717,
+    "legacy_ms": 56.973,
+    "notification_ms": 56.973,
+    "write_ms": 57.595
+   },
+   {
+    "i": 33,
+    "source": "XSY_8082.JPG",
+    "sha256": "12db2cc2432a23f0f8e1723d111bf82cdc35e61af54bcd3c6c929af30cba66bd",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 747152,
+    "legacy_ms": 52.22,
+    "notification_ms": 52.22,
+    "write_ms": 52.891
+   },
+   {
+    "i": 34,
+    "source": "XSY_3518.JPG",
+    "sha256": "320047a57c0ba8a62152809ec87fe94fc22a7e58230df4b006c5d0c375d15a4d",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 1057599,
+    "legacy_ms": 80.271,
+    "notification_ms": 47.571,
+    "write_ms": 48.374
+   },
+   {
+    "i": 35,
+    "source": "XSY_3530.JPG",
+    "sha256": "159b65005a484efecabe356c33a9b2aa29e4c1a16a1a66e1878e9ca23e063d30",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 783273,
+    "legacy_ms": 74.979,
+    "notification_ms": 42.279,
+    "write_ms": 43.102
+   },
+   {
+    "i": 36,
+    "source": "XSY_8113.JPG",
+    "sha256": "bf82bb1fe4206728cdfe64f6fb0ccddd0cdc8b4dee477ce42212c6b9ed14fec9",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 790513,
+    "legacy_ms": 50.225,
+    "notification_ms": 50.225,
+    "write_ms": 71.505
+   },
+   {
+    "i": 37,
+    "source": "XSY_8061.JPG",
+    "sha256": "768127df000a14c610c56c00e5898220a41d599576012e5944bea06785b408c4",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 633708,
+    "legacy_ms": 56.575,
+    "notification_ms": 56.575,
+    "write_ms": 57.513
+   },
+   {
+    "i": 38,
+    "source": "XSY_3608.JPG",
+    "sha256": "ea5f9a4b0967c7788ff29076dd09badc4e7daca9716b2db2ae2fe5894f2c25cf",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 837885,
+    "legacy_ms": 44.031,
+    "notification_ms": 43.931,
+    "write_ms": 44.487
+   },
+   {
+    "i": 39,
+    "source": "XSY_8072.JPG",
+    "sha256": "de917691d8c1f2a3a56af183f2315d123565d7efa4380610e777be376394bd80",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 802431,
+    "legacy_ms": 62.728,
+    "notification_ms": 62.728,
+    "write_ms": 63.329
+   },
+   {
+    "i": 40,
+    "source": "XSY_3498.JPG",
+    "sha256": "2122c9b47f2aa7546c2f7ac10011cdd55fdf0dffcf0f977f6629547fec49ae74",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 1360807,
+    "legacy_ms": 50.847,
+    "notification_ms": 50.847,
+    "write_ms": 51.465
+   },
+   {
+    "i": 41,
+    "source": "XSY_8062.JPG",
+    "sha256": "718ea1a1ed7c3b2969866313ae41be89cf7ae8953d54c55c72a2d8df0e389852",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 721691,
+    "legacy_ms": 71.063,
+    "notification_ms": 71.063,
+    "write_ms": 71.778
+   },
+   {
+    "i": 42,
+    "source": "XSY_8056.JPG",
+    "sha256": "db12f04e3b98937785e294bc3daad4dbc6ea43f5d5d2813172c20fde9767138a",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 805299,
+    "legacy_ms": 57.21,
+    "notification_ms": 57.21,
+    "write_ms": 58.05
+   },
+   {
+    "i": 43,
+    "source": "XSY_3596.JPG",
+    "sha256": "f9a411a99b2394495d7fd5da61e9f6d3d5e29f8f3a51d3bef3f3bfd96e9bed4d",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 775544,
+    "legacy_ms": 56.997,
+    "notification_ms": 56.997,
+    "write_ms": 57.82
+   },
+   {
+    "i": 44,
+    "source": "XSY_3527.JPG",
+    "sha256": "0b952bfa71189bfdf37d7a91a8bf0942696c5b9ad23722d95a9e517c42ff4df1",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 992008,
+    "legacy_ms": 45.315,
+    "notification_ms": 45.315,
+    "write_ms": 45.904
+   },
+   {
+    "i": 45,
+    "source": "XSY_8054.JPG",
+    "sha256": "de4506fbcec683402856a130aa20f021c8a8d129a17e05114ac50a72c209a9f8",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 846506,
+    "legacy_ms": 64.404,
+    "notification_ms": 64.404,
+    "write_ms": 65.014
+   },
+   {
+    "i": 46,
+    "source": "XSY_3761.JPG",
+    "sha256": "66b6daef13fc8876614858cd8496c1875a6965885ce1af5ca9e7e5bdc78047af",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 800705,
+    "legacy_ms": 54.177,
+    "notification_ms": 54.077,
+    "write_ms": 54.66
+   },
+   {
+    "i": 47,
+    "source": "XSY_3644.JPG",
+    "sha256": "d0a9a5aae2170dce41d6c3ca33133870d05a6c5873fff717e67490cb768aa0f3",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 922139,
+    "legacy_ms": 73.517,
+    "notification_ms": 41.317,
+    "write_ms": 42.175
+   },
+   {
+    "i": 48,
+    "source": "XSY_3556.JPG",
+    "sha256": "ca4153b58dab84523ef77969f2d1685371636bfb3ac676a577649f4e047123e7",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 942241,
+    "legacy_ms": 62.795,
+    "notification_ms": 62.795,
+    "write_ms": 63.73
+   },
+   {
+    "i": 49,
+    "source": "XSY_3562.JPG",
+    "sha256": "30c9a14d52d42505c27242c51638bdb26abc0337460b4c73475a2af0bc3ba8b5",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 753272,
+    "legacy_ms": 62.361,
+    "notification_ms": 62.361,
+    "write_ms": 63.171
+   },
+   {
+    "i": 50,
+    "source": "XSY_3648.JPG",
+    "sha256": "2e722870c0e9313644960804d89d05252e3f846ae7cba0e3dfb8dbefd1793adc",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 1040087,
+    "legacy_ms": 48.617,
+    "notification_ms": 48.517,
+    "write_ms": 49.198
+   },
+   {
+    "i": 51,
+    "source": "XSY_3620.JPG",
+    "sha256": "ae204928b79242a06b9f77a5c8006936e486f97c98abfd6734eaaef53f1c3065",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 746791,
+    "legacy_ms": 45.71,
+    "notification_ms": 45.71,
+    "write_ms": 46.534
+   },
+   {
+    "i": 52,
+    "source": "XSY_3705.JPG",
+    "sha256": "fbbe3f05b1ccac5ddb8353da2877854f75ab2e799bf12b792fe527d832ddbef0",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 790698,
+    "legacy_ms": 64.791,
+    "notification_ms": 64.791,
+    "write_ms": 65.404
+   },
+   {
+    "i": 53,
+    "source": "XSY_3585.JPG",
+    "sha256": "4bfd569174b7ab5a1c145471ed3a685f7e150a83e591b1f2b0232e7af6411620",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 707084,
+    "legacy_ms": 52.345,
+    "notification_ms": 52.345,
+    "write_ms": 52.982
+   },
+   {
+    "i": 54,
+    "source": "XSY_3651.JPG",
+    "sha256": "4c67945508adc05545da3f4ca6bfd710ea9e33238d614cc5bba46897e7040302",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 907281,
+    "legacy_ms": 71.495,
+    "notification_ms": 71.395,
+    "write_ms": 71.959
+   },
+   {
+    "i": 55,
+    "source": "XSY_8070.JPG",
+    "sha256": "12001065e583945fd07b40636276405062d91c8f9c4a2782db8b3fcf5e9a51d5",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 795353,
+    "legacy_ms": 56.439,
+    "notification_ms": 56.439,
+    "write_ms": 57.179
+   },
+   {
+    "i": 56,
+    "source": "XSY_8060.JPG",
+    "sha256": "b7f504a834996e600b946985ffbb3f82e5fec3ff9dbc3362376091cc9514bb62",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 641374,
+    "legacy_ms": 70.797,
+    "notification_ms": 70.797,
+    "write_ms": 85.512
+   },
+   {
+    "i": 57,
+    "source": "XSY_3711.JPG",
+    "sha256": "f32ed18537a61c9441a4ef0e557bc78a7bceb53e84457e9e19450243c71ad34b",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 866698,
+    "legacy_ms": 50.175,
+    "notification_ms": 50.175,
+    "write_ms": 50.99
+   },
+   {
+    "i": 58,
+    "source": "XSY_8074.JPG",
+    "sha256": "9c13a62ec544c01e96268062ddd979743399e57cf39b9a16f16c4335b2ea4da3",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 754116,
+    "legacy_ms": 49.184,
+    "notification_ms": 49.084,
+    "write_ms": 49.65
+   },
+   {
+    "i": 59,
+    "source": "XSY_8103.JPG",
+    "sha256": "67fbcf07c58e359039873009abba65545424094b7f078bc29a9c570d41f964ed",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 771107,
+    "legacy_ms": 165.06,
+    "notification_ms": 132.96,
+    "write_ms": 147.041
+   },
+   {
+    "i": 60,
+    "source": "XSY_3638.JPG",
+    "sha256": "213c13f869821dbcbf7dcf529bfecb932d893b08a0910d1a9a86404a674c6e2a",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 768421,
+    "legacy_ms": 42.193,
+    "notification_ms": 42.193,
+    "write_ms": 43.016
+   },
+   {
+    "i": 61,
+    "source": "XSY_8104.JPG",
+    "sha256": "d104f2be08d87f547f6c784bce2b8d41b4089c965873b83d22ea78601a7ef898",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 779247,
+    "legacy_ms": 63.214,
+    "notification_ms": 63.214,
+    "write_ms": 63.896
+   },
+   {
+    "i": 62,
+    "source": "XSY_3470.JPG",
+    "sha256": "b9e617e77e189f16ae7027f7dfe1f6ce09c4367f5e7b68087e0e6a347ea4e793",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 1492666,
+    "legacy_ms": 58.265,
+    "notification_ms": 58.265,
+    "write_ms": 58.997
+   },
+   {
+    "i": 63,
+    "source": "XSY_8108.JPG",
+    "sha256": "e893c957f8353ecf03aadfb7cc1f940bf91e7c6cd8cb7b396a2d737098e85e91",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 820733,
+    "legacy_ms": 52.836,
+    "notification_ms": 52.836,
+    "write_ms": 53.602
+   },
+   {
+    "i": 64,
+    "source": "XSY_3767.JPG",
+    "sha256": "dae3db980b506a6c432c47290a620f2f955281b3a5689787f9a598dbbf1600dc",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 924416,
+    "legacy_ms": 72.515,
+    "notification_ms": 39.415,
+    "write_ms": 40.144
+   },
+   {
+    "i": 65,
+    "source": "XSY_8055.JPG",
+    "sha256": "82144f04b7ee3c045c08f3f4687a6dc847d7da087cdd6f7a1416ad12e06a2dca",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 800854,
+    "legacy_ms": 69.114,
+    "notification_ms": 69.114,
+    "write_ms": 69.61
+   },
+   {
+    "i": 66,
+    "source": "XSY_3727.JPG",
+    "sha256": "e610d334242660af284978bcfab9614e1327e4486d0ec04c6fe312b301188654",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 791834,
+    "legacy_ms": 62.726,
+    "notification_ms": 62.726,
+    "write_ms": 63.451
+   },
+   {
+    "i": 67,
+    "source": "XSY_8044.JPG",
+    "sha256": "61f806362bb140a907d67f434456c3e6a6dc1c09fd3d37086d78953d97e41363",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 800314,
+    "legacy_ms": 61.736,
+    "notification_ms": 61.736,
+    "write_ms": 62.385
+   },
+   {
+    "i": 68,
+    "source": "XSY_3659.JPG",
+    "sha256": "10ae5559db66c2aef45073085d9efa4f6187b4dc5ab04dda1c8be2200f9db906",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 846203,
+    "legacy_ms": 59.714,
+    "notification_ms": 59.614,
+    "write_ms": 60.494
+   },
+   {
+    "i": 69,
+    "source": "XSY_8059.JPG",
+    "sha256": "7bccbcc9c09b52e777f1b39f87eaa6ba8b8f2279491b8800c346e3a39813f66c",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 766982,
+    "legacy_ms": 57.791,
+    "notification_ms": 57.791,
+    "write_ms": 58.349
+   },
+   {
+    "i": 70,
+    "source": "XSY_8043.JPG",
+    "sha256": "a8e98883fde523ba33f052b2b13b10126b829a6e7160c89f31a2898356ddd7e1",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 806725,
+    "legacy_ms": 75.856,
+    "notification_ms": 43.056,
+    "write_ms": 43.784
+   },
+   {
+    "i": 71,
+    "source": "XSY_8096.JPG",
+    "sha256": "e1594d667746bd36a150fe259bbcd44134f90269d36f4e4dc428db2948542d83",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 751034,
+    "legacy_ms": 68.612,
+    "notification_ms": 68.512,
+    "write_ms": 69.318
+   },
+   {
+    "i": 72,
+    "source": "IMG_0005.JPG",
+    "sha256": "1f4be5c33828d72e74a887b8b548adf0789481cd7cf1e2c713d2a155a8729607",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 794210,
+    "legacy_ms": 63.681,
+    "notification_ms": 63.581,
+    "write_ms": 64.449
+   },
+   {
+    "i": 73,
+    "source": "XSY_3733.JPG",
+    "sha256": "4ad2c12b5574d01638f7966df2bee1c4b763f4f1454851de8d8e9b1dc255fc83",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 730082,
+    "legacy_ms": 60.537,
+    "notification_ms": 60.437,
+    "write_ms": 60.977
+   },
+   {
+    "i": 74,
+    "source": "XSY_8077.JPG",
+    "sha256": "48010bdfd8aa9a48fcd4751429ac4bd05ab335c8ced4dc6564a42908424760e0",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 833809,
+    "legacy_ms": 57.628,
+    "notification_ms": 57.628,
+    "write_ms": 58.258
+   },
+   {
+    "i": 75,
+    "source": "XSY_8063.JPG",
+    "sha256": "8521b138d420c3a8b5cce17be1a75426a5dae0f4eb3db77cffb073afd5a6befc",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 711233,
+    "legacy_ms": 79.153,
+    "notification_ms": 46.553,
+    "write_ms": 47.305
+   },
+   {
+    "i": 76,
+    "source": "XSY_8067.JPG",
+    "sha256": "3de2d865138f342cdff3a79ea145b4ebf8dcc92ad1bc4380c96d826edb1a9bac",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 604415,
+    "legacy_ms": 69.212,
+    "notification_ms": 69.212,
+    "write_ms": 70.257
+   },
+   {
+    "i": 77,
+    "source": "XSY_3641.JPG",
+    "sha256": "d9e3a6853c0d504b24a51d76f829c2b357d42633a84a13b8dd1922245335a852",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 687842,
+    "legacy_ms": 63.659,
+    "notification_ms": 63.659,
+    "write_ms": 64.391
+   },
+   {
+    "i": 78,
+    "source": "XSY_8065.JPG",
+    "sha256": "8b72f313fb76af22e68a893cef1d362e138e2dae8b7b6b9e075551a194f1f448",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 726129,
+    "legacy_ms": 49.227,
+    "notification_ms": 49.227,
+    "write_ms": 49.91
+   },
+   {
+    "i": 79,
+    "source": "XSY_8109.JPG",
+    "sha256": "8ee78ced70de2427ca24a99aa10f529887a5347fb50ac161cdd083a2269d8769",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 963695,
+    "legacy_ms": 77.934,
+    "notification_ms": 45.334,
+    "write_ms": 46.073
+   },
+   {
+    "i": 80,
+    "source": "XSY_3686.JPG",
+    "sha256": "d4f347c42ea916b51c1be18f9dd90aa9d1da8cfe7508592806f36db79067e3a9",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 986873,
+    "legacy_ms": 70.984,
+    "notification_ms": 70.884,
+    "write_ms": 71.701
+   },
+   {
+    "i": 81,
+    "source": "XSY_8079.JPG",
+    "sha256": "f3c8aa6de8921ae4567fa6413d10528145f67ae6c9152a8faa846bc8e471ed0c",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 815383,
+    "legacy_ms": 64.78,
+    "notification_ms": 64.78,
+    "write_ms": 65.896
+   },
+   {
+    "i": 82,
+    "source": "XSY_3600.JPG",
+    "sha256": "5245cb3cff8632f5343939a6e9aca70aa8916b502d5b35c9f233c9f72ff1f5e7",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 785453,
+    "legacy_ms": 60.966,
+    "notification_ms": 60.966,
+    "write_ms": 61.558
+   },
+   {
+    "i": 83,
+    "source": "XSY_3506.JPG",
+    "sha256": "8a677d6366e711b58bd2290b8ef54fa2f2131e43f5bf85da1cae7f12e59ecc86",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 1353549,
+    "legacy_ms": 52.629,
+    "notification_ms": 52.629,
+    "write_ms": 53.439
+   },
+   {
+    "i": 84,
+    "source": "XSY_8101.JPG",
+    "sha256": "79cf37db90575d88be0737e2f3a17c72f5e43abb9ee59086eb145f1f86ff2624",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 684934,
+    "legacy_ms": 42.156,
+    "notification_ms": 42.156,
+    "write_ms": 42.838
+   },
+   {
+    "i": 85,
+    "source": "XSY_8048.JPG",
+    "sha256": "4cb4bc75a51c87a3b1ff155ed74cfb3983231f4ebc46ff44d51e6904b7514eb5",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 653746,
+    "legacy_ms": 69.636,
+    "notification_ms": 69.536,
+    "write_ms": 70.236
+   },
+   {
+    "i": 86,
+    "source": "XSY_3604.JPG",
+    "sha256": "5f179cdaea5a97c2e24d4ffd822feebe69afd91e971c1cb109c36131648bfd55",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 890084,
+    "legacy_ms": 66.813,
+    "notification_ms": 66.813,
+    "write_ms": 67.706
+   },
+   {
+    "i": 87,
+    "source": "XSY_8089.JPG",
+    "sha256": "690375b23e3168e76e64e21dcd3386bde33b496363aaa4a9abe70430e87be695",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 744061,
+    "legacy_ms": 61.45,
+    "notification_ms": 61.35,
+    "write_ms": 62.183
+   },
+   {
+    "i": 88,
+    "source": "XSY_8093.JPG",
+    "sha256": "aa250550c3d29598649689f05548de9f7ecdda2f93b0b5c3141d0e67718fd280",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 675113,
+    "legacy_ms": 59.107,
+    "notification_ms": 59.007,
+    "write_ms": 59.584
+   },
+   {
+    "i": 89,
+    "source": "XSY_8045.JPG",
+    "sha256": "299c2467902e92160bf185f2956dc584665f5ceb3c36a06c41cfe0db3a7d98ad",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 800622,
+    "legacy_ms": 55.436,
+    "notification_ms": 55.336,
+    "write_ms": 56.098
+   },
+   {
+    "i": 90,
+    "source": "XSY_3489.JPG",
+    "sha256": "032c39e2bbd0717865902fb1a5cbda03a23d599a23992e0a5d0737f588d6d59b",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 1274237,
+    "legacy_ms": 50.96,
+    "notification_ms": 50.96,
+    "write_ms": 51.771
+   },
+   {
+    "i": 91,
+    "source": "XSY_3568.JPG",
+    "sha256": "91a9dc1870b5910391a137d64888eee91cecd4f368e2b27c00d966649b82e775",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 775910,
+    "legacy_ms": 44.872,
+    "notification_ms": 44.872,
+    "write_ms": 45.443
+   },
+   {
+    "i": 92,
+    "source": "XSY_8090.JPG",
+    "sha256": "227f3cc4147eed730d891e4e901bdb6c3cdc27227be611a8900f3278e8ce1323",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 717887,
+    "legacy_ms": 75.338,
+    "notification_ms": 42.338,
+    "write_ms": 43.087
+   },
+   {
+    "i": 93,
+    "source": "XSY_8086.JPG",
+    "sha256": "06f5cc0d3b3c0355feae6fe5803d68c6e466cb082d3076b622b22d235218b95b",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 855729,
+    "legacy_ms": 65.268,
+    "notification_ms": 65.268,
+    "write_ms": 66.123
+   },
+   {
+    "i": 94,
+    "source": "XSY_3599.JPG",
+    "sha256": "ce8115811947a84693605d4f25aef1b58edd25f3fc2b64180a2c2eee76d5440d",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 789019,
+    "legacy_ms": 60.752,
+    "notification_ms": 60.752,
+    "write_ms": 61.557
+   },
+   {
+    "i": 95,
+    "source": "XSY_3494.JPG",
+    "sha256": "22e22e186d740fdc21d0bbc71d3c47f4a01b11334710577735413f2c9ff21ae9",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 1207737,
+    "legacy_ms": 55.089,
+    "notification_ms": 54.989,
+    "write_ms": 55.6
+   },
+   {
+    "i": 96,
+    "source": "XSY_8047.JPG",
+    "sha256": "a8b6b607f4806953232628a4c1da56e98e6270c6be36575d265af96bfbe7e7fd",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 801800,
+    "legacy_ms": 62.918,
+    "notification_ms": 62.918,
+    "write_ms": 80.773
+   },
+   {
+    "i": 97,
+    "source": "XSY_3758.JPG",
+    "sha256": "f8eba5ec2434738ff092e98863be2aa9c629216eead0e4afde5fe3677ec7c59d",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 799853,
+    "legacy_ms": 45.722,
+    "notification_ms": 45.722,
+    "write_ms": 46.234
+   },
+   {
+    "i": 98,
+    "source": "XSY_3463.JPG",
+    "sha256": "0c3b9544bfc7c40cdaa10695b32440fdd5eca41a05c8f0d73eb4e794f47aaddf",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 1504037,
+    "legacy_ms": 72.358,
+    "notification_ms": 72.358,
+    "write_ms": 73.005
+   },
+   {
+    "i": 99,
+    "source": "XSY_8081.JPG",
+    "sha256": "fccd6587dc6b84f5d1dd46a3be802923ae06afd707cb8a98d2f3b94b1b5dba31",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 820396,
+    "legacy_ms": 68.638,
+    "notification_ms": 68.638,
+    "write_ms": 69.168
+   },
+   {
+    "i": 100,
+    "source": "XSY_8053.JPG",
+    "sha256": "22a6a66c62be0fd7a6978d0261dc9a2f0f6cad34519f12cb3fbc91de30fb2e77",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 657143,
+    "legacy_ms": 64.789,
+    "notification_ms": 64.789,
+    "write_ms": 65.759
+   },
+   {
+    "i": 101,
+    "source": "IMG_0002.JPG",
+    "sha256": "bb540f073b92d4874cb546172e2f0468acd85ababf14b2fbb2e1cf62ce4b79bc",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 851942,
+    "legacy_ms": 62.94,
+    "notification_ms": 62.94,
+    "write_ms": 63.799
+   },
+   {
+    "i": 102,
+    "source": "XSY_8088.JPG",
+    "sha256": "0bac291ed42ba40fbeba30195a8e0b643de976dd5d6ce4d5a43ebd63fac2461e",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 777347,
+    "legacy_ms": 59.238,
+    "notification_ms": 59.238,
+    "write_ms": 59.998
+   },
+   {
+    "i": 103,
+    "source": "XSY_8099.JPG",
+    "sha256": "e2c1333d1bb595c3da15b1b2266b6146e193b6c3eaeeca33909e0735bff37a9f",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 821880,
+    "legacy_ms": 52.601,
+    "notification_ms": 52.501,
+    "write_ms": 53.263
+   },
+   {
+    "i": 104,
+    "source": "XSY_3569.JPG",
+    "sha256": "a72c80d08cd5175ef333c8f59b8fef46928dc072737a06720195fe5d01ac6114",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 826657,
+    "legacy_ms": 73.522,
+    "notification_ms": 40.522,
+    "write_ms": 41.522
+   },
+   {
+    "i": 105,
+    "source": "XSY_8073.JPG",
+    "sha256": "3a926359b207987c52d923e73d41efc9e36d8d803af9430d04c1cda5b85e78a3",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 833131,
+    "legacy_ms": 71.047,
+    "notification_ms": 71.047,
+    "write_ms": 71.562
+   },
+   {
+    "i": 106,
+    "source": "XSY_3800.JPG",
+    "sha256": "59b1b21282900a0095afaa3802ddf667e14497a40f84230b752b6789e1916669",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 1398627,
+    "legacy_ms": 62.191,
+    "notification_ms": 62.191,
+    "write_ms": 63.003
+   },
+   {
+    "i": 107,
+    "source": "XSY_8102.JPG",
+    "sha256": "dabe224ee8a306ba7caa702ac8f8eebee94348bb64029ed9d94d026d18839d44",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 767112,
+    "legacy_ms": 53.391,
+    "notification_ms": 53.391,
+    "write_ms": 53.933
+   },
+   {
+    "i": 108,
+    "source": "XSY_8069.JPG",
+    "sha256": "556ba193a0b6135ef00ff17c53a89d8d001d0941fa8670a9bbb90f1df8db4ab2",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 862522,
+    "legacy_ms": 45.471,
+    "notification_ms": 45.371,
+    "write_ms": 45.91
+   },
+   {
+    "i": 109,
+    "source": "XSY_3723.JPG",
+    "sha256": "8b76a4eabd7c0d43f0df1d56a03315d3b8323c1685489af273c49f4343d4c1b8",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 724577,
+    "legacy_ms": 66.988,
+    "notification_ms": 66.988,
+    "write_ms": 67.717
+   },
+   {
+    "i": 110,
+    "source": "XSY_8110.JPG",
+    "sha256": "2f211188b0f30236a00294a30a170c02079a96cc2c44e1a0ab18a665da232ef4",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 906444,
+    "legacy_ms": 60.32,
+    "notification_ms": 60.32,
+    "write_ms": 60.821
+   },
+   {
+    "i": 111,
+    "source": "XSY_3732.JPG",
+    "sha256": "8371c9c23a49a9769863bb61aa908b01b563f854852b6177bce6596b9eb2a735",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 818811,
+    "legacy_ms": 53.805,
+    "notification_ms": 53.805,
+    "write_ms": 54.237
+   },
+   {
+    "i": 112,
+    "source": "XSY_3570.JPG",
+    "sha256": "78774d388e6b0fdb07ac74428ad3ae35e480354b496c58a34664644610fd3f57",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 836217,
+    "legacy_ms": 80.725,
+    "notification_ms": 47.725,
+    "write_ms": 48.289
+   },
+   {
+    "i": 113,
+    "source": "XSY_8106.JPG",
+    "sha256": "0a943f1b8abdf374fa0372d4a7b0d905358cff7f6c5c4738d6d126c3b3a3067b",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 728556,
+    "legacy_ms": 72.206,
+    "notification_ms": 39.106,
+    "write_ms": 39.74
+   },
+   {
+    "i": 114,
+    "source": "XSY_3598.JPG",
+    "sha256": "701b50fcd803c648c07f4250a6e530ce265f5cb640897120aba8c27795eba9d2",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 885170,
+    "legacy_ms": 70.555,
+    "notification_ms": 70.555,
+    "write_ms": 71.133
+   },
+   {
+    "i": 115,
+    "source": "XSY_3826.JPG",
+    "sha256": "01233183b82a9330d579bab1d32f66df64e0afcb4933ef308ee6c651fd47d7a8",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 1442067,
+    "legacy_ms": 56.301,
+    "notification_ms": 56.301,
+    "write_ms": 56.685
+   },
+   {
+    "i": 116,
+    "source": "XSY_8087.JPG",
+    "sha256": "620cbe4b57183214d6c7f8bd4c7c74fa95b6d160b84cc77a3e594e4d3d38ade7",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 825460,
+    "legacy_ms": 69.74,
+    "notification_ms": 69.64,
+    "write_ms": 78.647
+   },
+   {
+    "i": 117,
+    "source": "XSY_3792.JPG",
+    "sha256": "96e7448ee1396824780cda37183a9c59207b2d5cdb9679536648474c341ef0c1",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 1020241,
+    "legacy_ms": 70.221,
+    "notification_ms": 70.221,
+    "write_ms": 70.906
+   },
+   {
+    "i": 118,
+    "source": "XSY_3745.JPG",
+    "sha256": "7cb5093e51ebfe973739ad4bf055d8092775fcec899d575f0c8e10569f4730ca",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 805709,
+    "legacy_ms": 66.259,
+    "notification_ms": 66.259,
+    "write_ms": 67.448
+   },
+   {
+    "i": 119,
+    "source": "XSY_3707.JPG",
+    "sha256": "9b421ecda591be7037109bf32105ebc49129b4f16a0e8c88d51035c90e8b4314",
+    "size": [
+     2400,
+     1600
+    ],
+    "bytes": 844504,
+    "legacy_ms": 57.883,
+    "notification_ms": 57.883,
+    "write_ms": 58.623
+   }
+  ]
+ }
+}
